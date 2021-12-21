@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./libraries/Oracle.sol";
+import "../libraries/Oracle.sol";
 
 abstract contract OverlayFeed {
     using Oracle for Oracle.Data;

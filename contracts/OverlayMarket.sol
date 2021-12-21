@@ -33,8 +33,8 @@ contract OverlayMarket {
     // trading fee related quantities
     address public tradingFeeRecipient;
 
-    // oracle feeds
-    address[2] public feeds;
+    // oracle feed
+    address public feed;
 
     // oi related quantities
     uint256 public oiLong;
@@ -45,8 +45,8 @@ contract OverlayMarket {
     // positions
     Position.Info[] public positions;
 
-    // last update call
-    uint256 public updatedLast;
+    // last call to funding
+    uint256 public fundingPaidLast;
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
@@ -56,7 +56,7 @@ contract OverlayMarket {
 
     constructor(
         address _ovl,
-        address[2] memory _feeds,
+        address _feed,
         uint256 _k,
         uint256 _lmbda,
         uint256 _delta,
@@ -68,12 +68,10 @@ contract OverlayMarket {
         uint256 _tradingFeeRate
     ) {
         ovl = OverlayToken(_ovl);
-        for (uint256 i=0; i < _feeds.length; i++) {
-            feeds[i] = _feeds[i];
-        }
+        feed = _feed;
         governor = msg.sender;
         tradingFeeRecipient = msg.sender;
-        updatedLast = block.timestamp;
+        fundingPaidLast = block.timestamp;
 
         // set the gov params
         k = _k;
@@ -94,7 +92,7 @@ contract OverlayMarket {
         bool isLong,
         uint256 oiMinimum
     ) external returns (uint256 positionId_) {
-        Oracle.Data[2] memory data = update();
+        Oracle.Data memory data = update();
 
         // transfer in the OVL collateral needed to back the position
         ovl.transferFrom(msg.sender, address(this), collateral);
@@ -102,7 +100,7 @@ contract OverlayMarket {
         // calculate oi adjusted for fees. fees are taken from collateral
         uint256 oi = collateral * leverage;
         uint256 capOiAdjusted = capOiWithAdjustments(data);
-        uint256 impactFee = registerMarketImpact(oi, capOiAdjusted);
+        uint256 impactFee = _registerMarketImpact(oi, capOiAdjusted);
         uint256 tradingFee = oi * tradingFeeRate;
         collateral -= impactFee + tradingFee;
         oi = collateral * leverage;
@@ -113,7 +111,7 @@ contract OverlayMarket {
         else { oiShort += oi; oiShortShares += oi; }
 
         // longs get the ask and shorts get the bid on build
-        uint256 price = isLong ? ask(data[0]) : bid(data[0]);
+        uint256 price = isLong ? ask(data) : bid(data);
 
         // store the position info data
         positions.push(Position.Info({
@@ -133,24 +131,23 @@ contract OverlayMarket {
 
     /// @dev unwinds shares of an existing position
     function unwind(uint256 positionId, uint256 shares) external {
-        Oracle.Data[2] memory data = update();
+        Oracle.Data memory data = update();
     }
 
     /// @dev liquidates a liquidatable position
     function liquidate(uint256 positionId) external {
-        Oracle.Data[2] memory data = update();
+        Oracle.Data memory data = update();
     }
 
-    /// @dev updates market and fetches freshest data from feeds
-    function update() public returns (Oracle.Data[2] memory) {
-        _payFunding();
-        Oracle.Data[2] memory data = _getDataFromFeeds();
-        updatedLast = block.timestamp;
+    /// @dev updates market and fetches freshest data from feed
+    function update() public returns (Oracle.Data memory) {
+        payFunding();
+        Oracle.Data memory data = getDataFromFeed();
         return data;
     }
 
-    /// @dev funding payments from overweight oi side to underweight
-    function _payFunding() private {
+    /// @dev funding payments from overweight oi side to underweight oi side
+    function payFunding() public {
         bool isLongOverweight = oiLong > oiShort;
 
         uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
@@ -158,7 +155,7 @@ contract OverlayMarket {
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE * (1-2*k)).powUp(ONE * (block.timestamp - updatedLast));
+        uint256 drawdownFactor = (ONE * (1-2*k)).powUp(ONE * (block.timestamp - fundingPaidLast));
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
@@ -172,17 +169,12 @@ contract OverlayMarket {
 
         oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+        fundingPaidLast = block.timestamp;
     }
 
     /// @dev gets latest oracle data from feed
-    function _getDataFromFeeds() private returns (Oracle.Data[2] memory) {
-        Oracle.Data[2] memory data;
-        for (uint256 i=0; i < feeds.length; i++) {
-            address feed = feeds[i];
-            Oracle.Data memory d = IOverlayFeed(feed).latest();
-            data[i] = d;
-        }
-        return data;
+    function getDataFromFeed() public returns (Oracle.Data memory) {
+        return IOverlayFeed(feed).latest();
     }
 
     /// @dev gets bid price given oracle data
@@ -203,21 +195,21 @@ contract OverlayMarket {
         ask_ = ask(data);
     }
 
-    /// @dev market impact fee based on open interest proposed for build
-    /// @dev and current level of capOi with adjustments
-    function registerMarketImpact(uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
-        /// TODO: register the impact and return the fee
-    }
-
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event we've printed a lot in recent past
-    function capOiWithAdjustments(Oracle.Data[2] memory data) public view returns (uint256) {
+    function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
         uint256 cap = capOi;
 
         // TODO: apply adjustments
 
         return cap;
+    }
+
+    /// @dev market impact fee based on open interest proposed for build
+    /// @dev and current level of capOi with adjustments
+    function _registerMarketImpact(uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
+        /// TODO: register the impact and return the fee
     }
 
     // TODO: setters for all gov params and associated checks
