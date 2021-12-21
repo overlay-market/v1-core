@@ -3,20 +3,20 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "./interfaces/IOverlayFeed.sol";
+import "./interfaces/IOverlayV1Feed.sol";
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
-import "./OverlayToken.sol";
+import "./OverlayV1Token.sol";
 
-contract OverlayMarket {
+contract OverlayV1Market {
     using Oracle for Oracle.Data;
     using Position for Position.Info;
     using FixedPoint for uint256;
 
     uint256 internal constant ONE = 1e18; // 18 decimal places
 
-    OverlayToken immutable public ovl;
+    OverlayV1Token immutable public ovl;
     address public governor;
 
     // risk params
@@ -67,7 +67,7 @@ contract OverlayMarket {
         uint256 _maintenanceMarginBurnRate,
         uint256 _tradingFeeRate
     ) {
-        ovl = OverlayToken(_ovl);
+        ovl = OverlayV1Token(_ovl);
         feed = _feed;
         governor = msg.sender;
         tradingFeeRecipient = msg.sender;
@@ -174,7 +174,7 @@ contract OverlayMarket {
 
     /// @dev gets latest oracle data from feed
     function getDataFromFeed() public returns (Oracle.Data memory) {
-        return IOverlayFeed(feed).latest();
+        return IOverlayV1Feed(feed).latest();
     }
 
     /// @dev gets bid price given oracle data

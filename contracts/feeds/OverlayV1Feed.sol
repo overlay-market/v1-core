@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import "../libraries/Oracle.sol";
 
-abstract contract OverlayFeed {
+abstract contract OverlayV1Feed {
     using Oracle for Oracle.Data;
 
     uint256 immutable public microWindow;
