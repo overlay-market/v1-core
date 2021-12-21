@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.10;
 
 import "@uniswapv3/contracts/interfaces/IUniswapV3Pool.sol";
+
 import "../OverlayFeed.sol";
 
 contract UniswapV3OverlayFeed is OverlayFeed {
@@ -43,6 +44,42 @@ contract UniswapV3OverlayFeed is OverlayFeed {
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// for micro and macro window averaging intervals
     function _fetch() internal virtual override returns (Oracle.Data memory) {
+        (int24[2] memory arithmeticMeanTicksMarket, uint128[2] memory harmonicMeanLiquiditiesMarket) =
+            _consult(marketPool);
+        (int24[2] memory arithmeticMeanTicksOvlWeth, uint128[2] memory harmonicMeanLiquiditiesOvlWeth) =
+            _consult(ovlWethPool);
+    }
 
+    function _consult(address pool) private returns (
+        int24[2] memory arithmeticMeanTicks_,
+        uint128[2] memory harmonicMeanLiquidities_
+    ) {
+        // COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
+        uint32[] memory secondsAgos = new uint32[](3);
+        secondsAgos[0] = uint32(macroWindow);
+        secondsAgos[1] = uint32(microWindow);
+        secondsAgos[2] = 0;
+
+        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
+            IUniswapV3Pool(pool).observe(secondsAgos);
+
+        for (uint256 i=0; i < secondsAgos.length-1; i++) {
+            uint32 secondsAgo = secondsAgos[i];
+
+            int56 tickCumulativesDelta = tickCumulatives[secondsAgos.length-1] - tickCumulatives[i];
+            uint160 secondsPerLiquidityCumulativesDelta =
+                secondsPerLiquidityCumulativeX128s[secondsAgos.length-1] - secondsPerLiquidityCumulativeX128s[i];
+
+            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(secondsAgo)));
+            // Always round to negative infinity
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(int32(secondsAgo)) != 0)) arithmeticMeanTick--;
+
+            // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity doesn't overflow uint128
+            uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
+            uint128 harmonicMeanLiquidity = uint128(secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
+
+            arithmeticMeanTicks_[i] = arithmeticMeanTick;
+            harmonicMeanLiquidities_[i] = harmonicMeanLiquidity;
+        }
     }
 }
