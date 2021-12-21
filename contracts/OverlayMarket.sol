@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import "./interfaces/IOverlayFeed.sol";
+import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
 import "./OverlayToken.sol";
@@ -11,6 +12,9 @@ import "./OverlayToken.sol";
 contract OverlayMarket {
     using Oracle for Oracle.Data;
     using Position for Position.Info;
+    using FixedPoint for uint256;
+
+    uint256 internal constant ONE = 1e18; // 18 decimal places
 
     OverlayToken immutable public ovl;
     address public governor;
@@ -41,6 +45,9 @@ contract OverlayMarket {
     // positions
     Position.Info[] public positions;
 
+    // last update call
+    uint256 public updatedLast;
+
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
         require(msg.sender == governor, "OVLV1:!governor");
@@ -66,6 +73,7 @@ contract OverlayMarket {
         }
         governor = msg.sender;
         tradingFeeRecipient = msg.sender;
+        updatedLast = block.timestamp;
 
         // set the gov params
         k = _k;
@@ -135,16 +143,39 @@ contract OverlayMarket {
 
     /// @dev updates market and fetches freshest data from feeds
     function update() public returns (Oracle.Data[2] memory) {
-        payFunding();
-        Oracle.Data[2] memory data = getDataFromFeeds();
+        _payFunding();
+        Oracle.Data[2] memory data = _getDataFromFeeds();
+        updatedLast = block.timestamp;
         return data;
     }
 
     /// @dev funding payments from overweight oi side to underweight
-    function payFunding() public {}
+    function _payFunding() private {
+        bool isLongOverweight = oiLong > oiShort;
+
+        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+        uint256 oiTotal = oiLong + oiShort;
+
+        // draw down the imbalance by factor of (1-2k)^(t)
+        uint256 drawdownFactor = (ONE * (1-2*k)).powUp(ONE * (block.timestamp - updatedLast));
+        uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
+
+        if (oiUnderweight == 0) {
+            // effectively user pays the protocol if one side has zero oi
+            oiOverweight = oiImbalanceNow;
+        } else {
+            // overweight pays underweight side if oi on both sides
+            oiOverweight = (oiTotal + oiImbalanceNow) / 2;
+            oiUnderweight = (oiTotal - oiImbalanceNow) / 2;
+        }
+
+        oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+        oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+    }
 
     /// @dev gets latest oracle data from feed
-    function getDataFromFeeds() public returns (Oracle.Data[2] memory) {
+    function _getDataFromFeeds() private returns (Oracle.Data[2] memory) {
         Oracle.Data[2] memory data;
         for (uint256 i=0; i < feeds.length; i++) {
             address feed = feeds[i];
@@ -152,12 +183,6 @@ contract OverlayMarket {
             data[i] = d;
         }
         return data;
-    }
-
-    /// @dev gets price quotes for the bid and the ask
-    function getPriceQuotes(Oracle.Data memory data) public view returns (uint256 bid_, uint256 ask_) {
-        bid_ = bid(data);
-        ask_ = ask(data);
     }
 
     /// @dev gets bid price given oracle data
@@ -170,6 +195,12 @@ contract OverlayMarket {
     function ask(Oracle.Data memory data) public view returns (uint256 ask_) {
         ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
         ask_ += delta; // approx for e^(delta) = 1+delta
+    }
+
+    /// @dev gets price quotes for the bid and the ask
+    function getPriceQuotes(Oracle.Data memory data) external view returns (uint256 bid_, uint256 ask_) {
+        bid_ = bid(data);
+        ask_ = ask(data);
     }
 
     /// @dev market impact fee based on open interest proposed for build
