@@ -1,26 +1,22 @@
+# use Ganache's forked mainnet mode as the default network
 networks:
-  default: development
-  development:
-    gas_limit: max
-    cmd_settings:
-      gas_limit: 9007199254740991
+  default: mainnet-fork
 
+# automatically fetch contract sources from Etherscan
+autofetch_sources: True
+
+# automatically load the local .env file
+dotenv: .env
+
+# require OpenZepplin, Uniswap Contracts
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.3.3
+  - Uniswap/v3-core@1.0.0
+
+# path remapping to support imports from GitHub/NPM
 compiler:
-  evm_version: "london"
   solc:
     version: 0.8.10
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.3"
       - "@uniswap/v3-core=Uniswap/v3-core@1.0.0"
-    optimizer:
-      enabled: true
-      runs: 400
-    outputSelection:
-        "*":
-          "*":
-            - "storageLayout"
-
-autofetch_sources: True
-dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.3.3
-  - Uniswap/v3-core@1.0.0

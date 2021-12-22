@@ -27,7 +27,7 @@ contract OverlayV1Market {
     uint256 public delta; // bid-ask static spread constant
     uint256 public capPayoff; // payoff cap
     uint256 public capOi; // static oi cap
-    uint256 public capLeverage; // leverage cap (initial)
+    uint256 public capLeverage; // initial leverage cap
     uint256 public maintenanceMargin; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
     uint256 public tradingFeeRate;

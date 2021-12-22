@@ -72,11 +72,11 @@ def create_quanto_feed(gov, token, pool_daiweth_30bps, pool_ensweth_30bps,
                        dai, weth, ens, request):
     micro, macro, p, r = request.param
 
-    mkt_pool = pool_daiweth_30bps.address()
-    oe_pool = pool_ensweth_30bps.address()
-    tok = token.address()
-    mkt_base_tok = weth.address()
-    mkt_quote_tok = dai.address()
+    mkt_pool = pool_daiweth_30bps.address
+    oe_pool = pool_ensweth_30bps.address
+    tok = token.address
+    mkt_base_tok = weth.address
+    mkt_quote_tok = dai.address
     mkt_base_amt = 1 * 10 ** weth.decimals()
 
     def create_feed(market_pool=mkt_pool, ovlweth_pool=oe_pool, ovl=tok,
@@ -101,11 +101,12 @@ def quanto_feed(create_quanto_feed):
 def create_inverse_feed(gov, token, pool_ensweth_30bps, weth, ens, request):
     micro, macro, p, r = request.param
 
-    mkt_pool = pool_ensweth_30bps.address()
-    oe_pool = pool_ensweth_30bps.address()
-    tok = token.address()
-    mkt_base_tok = weth.address()
-    mkt_quote_tok = ens.address()
+    # treating ens as ovl for testing
+    mkt_pool = pool_ensweth_30bps.address
+    oe_pool = pool_ensweth_30bps.address
+    tok = token.address
+    mkt_base_tok = weth.address
+    mkt_quote_tok = ens.address
     mkt_base_amt = 1 * 10 ** ens.decimals()
 
     def create_feed(market_pool=mkt_pool, ovlweth_pool=oe_pool, ovl=tok,
