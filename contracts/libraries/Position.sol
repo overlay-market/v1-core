@@ -6,7 +6,7 @@ import "./FixedPoint.sol";
 
 library Position {
     using FixedPoint for uint256;
-    uint256 constant TWO = 2e18;
+    uint256 constant internal TWO = 2e18;
 
     struct Info {
         uint256 leverage; // discrete initial leverage amount

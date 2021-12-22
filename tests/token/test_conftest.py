@@ -26,3 +26,4 @@ def test_erc20(token):
     assert token.decimals() == 18
     assert token.name() == "Overlay"
     assert token.symbol() == "OVL"
+    assert token.totalSupply() == 8000000 * 1e18

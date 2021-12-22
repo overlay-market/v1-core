@@ -14,7 +14,7 @@ contract OverlayV1Market {
     using Position for Position.Info;
     using FixedPoint for uint256;
 
-    uint256 internal constant ONE = 1e18; // 18 decimal places
+    uint256 constant internal ONE = 1e18; // 18 decimal places
 
     OverlayV1Token immutable public ovl;
     address public governor;

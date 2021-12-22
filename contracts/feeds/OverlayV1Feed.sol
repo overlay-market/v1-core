@@ -22,6 +22,7 @@ abstract contract OverlayV1Feed {
         if (block.timestamp > data.timestamp) {
             data = _fetch();
             oracleDataLast = data;
+            // TODO: emit event
         }
         return data;
     }

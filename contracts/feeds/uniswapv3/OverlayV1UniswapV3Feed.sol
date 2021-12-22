@@ -11,7 +11,7 @@ import "../OverlayV1Feed.sol";
 
 contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     address constant public WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
+    uint128 constant internal ONE = 1e18; // 18 decimal places for ovl
 
     address immutable public marketPool;
     address immutable public ovlWethPool;

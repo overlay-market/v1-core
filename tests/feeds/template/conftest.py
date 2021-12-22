@@ -1,5 +1,5 @@
 import pytest
-from brownie import OverlayV1QuadraticFeedMock
+from brownie import OverlayV1FeedMock
 
 
 @pytest.fixture(scope="module")
@@ -22,12 +22,12 @@ def rando(accounts):
     yield accounts[3]
 
 
-@pytest.fixture(scope="module", params=[(600, 3600, 1, 2)])
+@pytest.fixture(scope="module", params=[(600, 3600, 1e18, 2e18)])
 def create_feed(gov, request):
-    micro, macro, m_p, m_r = request.param
+    micro, macro, p, r = request.param
 
-    def create_feed(micro_window=micro, macro_window=macro, m_price=m_p, m_reserve=m_r):
-        feed = gov.deploy(OverlayV1QuadraticFeedMock, micro_window, macro_window, m_price, m_reserve)
+    def create_feed(micro_window=micro, macro_window=macro, price=p, reserves=r):
+        feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window, price, reserves)
         return feed
 
     yield create_feed
