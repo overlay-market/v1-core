@@ -50,6 +50,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
 
+        // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = IUniswapV3Pool(_ovlWethPool).token0();
         address _ovlWethToken1 = IUniswapV3Pool(_ovlWethPool).token1();
 
@@ -162,6 +163,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         }
     }
 
+    /// @dev returns the virtual balance of WETH in the pool in OVL terms
     function getReserveInOvl(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
@@ -176,7 +178,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         reserveInOvl_ = FullMath.mulDiv(reserveInWeth, uint256(ONE), amountOfWethPerOvl);
     }
 
-    /// @dev returns the virtual balance of WETH in the pool in OVL terms
+    /// @dev returns the virtual balance of WETH in the pool
     function getReserveInWeth(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket
