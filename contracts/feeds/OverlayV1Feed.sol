@@ -11,6 +11,13 @@ abstract contract OverlayV1Feed {
 
     Oracle.Data public oracleDataLast;
 
+    event Fetch(
+        uint256 priceOverMicroWindow,
+        uint256 priceOverMacroWindow,
+        uint256 reservesOverMicroWindow,
+        uint256 reservesOverMacroWindow
+    );
+
     constructor(uint256 _microWindow, uint256 _macroWindow) {
         microWindow = _microWindow;
         macroWindow = _macroWindow;
@@ -22,7 +29,12 @@ abstract contract OverlayV1Feed {
         if (block.timestamp > data.timestamp) {
             data = _fetch();
             oracleDataLast = data;
-            // TODO: emit event
+            emit Fetch(
+                data.priceOverMicroWindow,
+                data.priceOverMacroWindow,
+                data.reservesOverMicroWindow,
+                data.reservesOverMacroWindow
+            );
         }
         return data;
     }

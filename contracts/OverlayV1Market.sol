@@ -16,7 +16,9 @@ contract OverlayV1Market {
 
     uint256 constant internal ONE = 1e18; // 18 decimal places
 
-    OverlayV1Token immutable public ovl;
+    OverlayV1Token immutable public ovl; // ovl token
+    address immutable public feed; // oracle feed
+
     address public governor;
 
     // risk params
@@ -32,9 +34,6 @@ contract OverlayV1Market {
 
     // trading fee related quantities
     address public tradingFeeRecipient;
-
-    // oracle feed
-    address public feed;
 
     // oi related quantities
     uint256 public oiLong;
@@ -142,7 +141,7 @@ contract OverlayV1Market {
     /// @dev updates market and fetches freshest data from feed
     function update() public returns (Oracle.Data memory) {
         payFunding();
-        Oracle.Data memory data = getDataFromFeed();
+        Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         return data;
     }
 
@@ -170,11 +169,6 @@ contract OverlayV1Market {
         oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
         fundingPaidLast = block.timestamp;
-    }
-
-    /// @dev gets latest oracle data from feed
-    function getDataFromFeed() public returns (Oracle.Data memory) {
-        return IOverlayV1Feed(feed).latest();
     }
 
     /// @dev gets bid price given oracle data
