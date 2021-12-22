@@ -34,8 +34,6 @@ def test_latest_updates_data_on_first_call(feed):
     assert expect_event == actual_event
 
 
-
-
 def test_latest_updates_data_on_subsequent_calls(feed):
     actual_oracle_data_last = feed.oracleDataLast()
 
@@ -54,7 +52,9 @@ def test_latest_updates_data_on_subsequent_calls(feed):
                   reserves, reserves)
 
         assert actual == expect
-        assert actual != actual_oracle_data_last # state was updated since time passed
+
+        # state was updated since time passed
+        assert actual != actual_oracle_data_last
 
         expect_oracle_data_last = expect
         actual_oracle_data_last = feed.oracleDataLast()

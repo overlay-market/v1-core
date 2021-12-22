@@ -26,8 +26,10 @@ def rando(accounts):
 def create_feed(gov, request):
     micro, macro, p, r = request.param
 
-    def create_feed(micro_window=micro, macro_window=macro, price=p, reserves=r):
-        feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window, price, reserves)
+    def create_feed(micro_window=micro, macro_window=macro,
+                    price=p, reserves=r):
+        feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
+                          price, reserves)
         return feed
 
     yield create_feed
