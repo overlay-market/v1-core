@@ -34,6 +34,7 @@ def weth():
 
 @pytest.fixture(scope="module")
 def uni():
+    # to be used as example ovl
     yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
 
 

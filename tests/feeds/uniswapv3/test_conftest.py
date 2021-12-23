@@ -16,6 +16,9 @@ def test_pool_fixtures(dai, weth, uni, pool_daiweth_30bps, pool_uniweth_30bps):
 
 def test_quanto_feed_fixture(dai, weth, uni, pool_daiweth_30bps,
                              pool_uniweth_30bps, quanto_feed):
+    assert quanto_feed.microWindow() == 600
+    assert quanto_feed.macroWindow() == 3600
+
     assert quanto_feed.marketPool() == pool_daiweth_30bps
     assert quanto_feed.ovlWethPool() == pool_uniweth_30bps
     assert quanto_feed.ovl() == uni
@@ -32,6 +35,9 @@ def test_quanto_feed_fixture(dai, weth, uni, pool_daiweth_30bps,
 
 def test_inverse_feed_fixture(dai, weth, uni, pool_daiweth_30bps,
                               pool_uniweth_30bps, inverse_feed):
+    assert inverse_feed.microWindow() == 600
+    assert inverse_feed.macroWindow() == 3600
+
     assert inverse_feed.marketPool() == pool_uniweth_30bps
     assert inverse_feed.ovlWethPool() == pool_uniweth_30bps
     assert inverse_feed.ovl() == uni
