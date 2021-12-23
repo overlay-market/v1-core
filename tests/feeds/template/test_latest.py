@@ -7,11 +7,11 @@ def test_latest_updates_data_on_first_call(feed):
     micro_window = feed.microWindow()
     macro_window = feed.macroWindow()
     price = feed.price()
-    reserves = feed.reserves()
+    reserve = feed.reserve()
 
     # check new data returned
     expect = (timestamp, micro_window, macro_window, price, price,
-              reserves, reserves)
+              reserve, reserve)
 
     tx = feed.latest()
     actual = tx.return_value
@@ -28,8 +28,8 @@ def test_latest_updates_data_on_first_call(feed):
     expect_event = OrderedDict({
         'priceOverMicroWindow': price,
         'priceOverMacroWindow': price,
-        'reservesOverMicroWindow': reserves,
-        'reservesOverMacroWindow': reserves,
+        'reserveOverMicroWindow': reserve,
+        'reserveOverMacroWindow': reserve,
     })
     actual_event = tx.events['Fetch']
     assert expect_event == actual_event
@@ -45,10 +45,10 @@ def test_latest_updates_data_on_subsequent_calls(feed):
         micro_window = feed.microWindow()
         macro_window = feed.macroWindow()
         price = feed.price()
-        reserves = feed.reserves()
+        reserve = feed.reserve()
 
         expect = (timestamp, micro_window, macro_window, price, price,
-                  reserves, reserves)
+                  reserve, reserve)
 
         tx = feed.latest()
         actual = tx.return_value

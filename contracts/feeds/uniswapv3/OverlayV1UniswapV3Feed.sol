@@ -104,8 +104,8 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             macroWindow: macroWindow,
             priceOverMicroWindow: prices[1],
             priceOverMacroWindow: prices[0],
-            reservesOverMicroWindow: reserves[1],
-            reservesOverMacroWindow: reserves[0]
+            reserveOverMicroWindow: reserves[1],
+            reserveOverMacroWindow: reserves[0]
         });
     }
 

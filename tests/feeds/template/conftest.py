@@ -27,9 +27,9 @@ def create_feed(gov, request):
     micro, macro, p, r = request.param
 
     def create_feed(micro_window=micro, macro_window=macro,
-                    price=p, reserves=r):
+                    price=p, reserve=r):
         feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
-                          price, reserves)
+                          price, reserve)
         return feed
 
     yield create_feed

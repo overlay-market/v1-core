@@ -14,8 +14,8 @@ abstract contract OverlayV1Feed {
     event Fetch(
         uint256 priceOverMicroWindow,
         uint256 priceOverMacroWindow,
-        uint256 reservesOverMicroWindow,
-        uint256 reservesOverMacroWindow
+        uint256 reserveOverMicroWindow,
+        uint256 reserveOverMacroWindow
     );
 
     constructor(uint256 _microWindow, uint256 _macroWindow) {
@@ -32,8 +32,8 @@ abstract contract OverlayV1Feed {
             emit Fetch(
                 data.priceOverMicroWindow,
                 data.priceOverMacroWindow,
-                data.reservesOverMicroWindow,
-                data.reservesOverMacroWindow
+                data.reserveOverMicroWindow,
+                data.reserveOverMacroWindow
             );
         }
         return data;

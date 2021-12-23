@@ -11,9 +11,9 @@ def test_feed_constructor(feed):
     expect_price = feed.price()
     assert actual_price == expect_price
 
-    actual_reserves = 2000000000000000000
-    expect_reserves = feed.reserves()
-    assert actual_reserves == expect_reserves
+    actual_reserve = 2000000000000000000
+    expect_reserve = feed.reserve()
+    assert actual_reserve == expect_reserve
 
 
 def test_feed_oracle_data_last(feed):

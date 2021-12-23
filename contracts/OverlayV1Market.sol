@@ -210,7 +210,8 @@ contract OverlayV1Market {
     function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
         uint256 cap = capOi;
 
-        // TODO: apply adjustments
+        // TODO: apply adjustments; use linear drift reversion for dynamic
+        // instead of rollers to save gas
 
         return cap;
     }
@@ -218,7 +219,8 @@ contract OverlayV1Market {
     /// @dev market impact fee based on open interest proposed for build
     /// @dev and current level of capOi with adjustments
     function _registerMarketImpact(uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
-        /// TODO: register the impact and return the fee
+        // TODO: register the impact and return the fee; use linear drift
+        // reversion for cumulative impact instead of rollers to save gas
     }
 
     // TODO: setters for all gov params and associated checks

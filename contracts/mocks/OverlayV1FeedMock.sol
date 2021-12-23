@@ -6,16 +6,16 @@ import "../feeds/OverlayV1Feed.sol";
 
 contract OverlayV1FeedMock is OverlayV1Feed {
     uint256 immutable public price;
-    uint256 immutable public reserves;
+    uint256 immutable public reserve;
 
     constructor(
         uint256 _microWindow,
         uint256 _macroWindow,
         uint256 _price,
-        uint256 _reserves
+        uint256 _reserve
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         price = _price;
-        reserves = _reserves;
+        reserve = _reserve;
     }
 
     /// @dev mock fetched data assumes values for price, reserve are constant
@@ -26,8 +26,8 @@ contract OverlayV1FeedMock is OverlayV1Feed {
             macroWindow: macroWindow,
             priceOverMicroWindow: price,
             priceOverMacroWindow: price,
-            reservesOverMicroWindow: reserves,
-            reservesOverMacroWindow: reserves
+            reserveOverMicroWindow: reserve,
+            reserveOverMacroWindow: reserve
         });
     }
 }
