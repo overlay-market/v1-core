@@ -72,9 +72,9 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         secondsAgos[1] = uint32(microWindow);
         secondsAgos[2] = 0;
 
-        (int24[2] memory arithmeticMeanTicksMarket, uint128[2] memory harmonicMeanLiquiditiesMarket) =
+        (int24[] memory arithmeticMeanTicksMarket, uint128[] memory harmonicMeanLiquiditiesMarket) =
             consult(marketPool, secondsAgos);
-        (int24[2] memory arithmeticMeanTicksOvlWeth, uint128[2] memory harmonicMeanLiquiditiesOvlWeth) =
+        (int24[] memory arithmeticMeanTicksOvlWeth, uint128[] memory harmonicMeanLiquiditiesOvlWeth) =
             consult(ovlWethPool, secondsAgos);
 
         uint256[2] memory prices;
@@ -112,13 +112,18 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     // TODO: function _checkData(Oracle.Data memory data) to verify price is ok with require() statement
 
     /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
+    /// @dev assumes last element of secondsAgos is the current cumulative value from which we
+    /// @dev want to calculate rolling average tick and liquidity values
     function consult(address pool, uint32[] memory secondsAgos) public view returns (
-        int24[2] memory arithmeticMeanTicks_,
-        uint128[2] memory harmonicMeanLiquidities_
+        int24[] memory arithmeticMeanTicks_,
+        uint128[] memory harmonicMeanLiquidities_
     ) {
         // TODO: test this extensively
         (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
             IUniswapV3Pool(pool).observe(secondsAgos);
+
+        arithmeticMeanTicks_ = new int24[](secondsAgos.length-1);
+        harmonicMeanLiquidities_ = new uint128[](secondsAgos.length-1);
 
         for (uint256 i=0; i < secondsAgos.length-1; i++) {
             uint32 secondsAgo = secondsAgos[i];
