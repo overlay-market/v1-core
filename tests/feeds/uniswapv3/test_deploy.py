@@ -12,8 +12,7 @@ def pool_daiusdc_5bps():
     yield Contract.from_explorer("0x6c6Bc977E13Df9b0de53b251522280BB72383700")
 
 
-def test_deploy_feed_reverts_on_market_token_not_weth(gov, weth,
-                                                      dai, usdc, uni,
+def test_deploy_feed_reverts_on_market_token_not_weth(gov, dai, usdc, uni,
                                                       pool_daiusdc_5bps,
                                                       pool_uniweth_30bps):
     market_pool = pool_daiusdc_5bps
@@ -32,13 +31,13 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, weth,
 
 
 def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
-                                                      dai, usdc, uni,
+                                                      dai, rando, uni,
                                                       pool_daiweth_30bps,
                                                       pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
     ovlweth_pool = pool_uniweth_30bps
     ovl = uni
-    market_base_token = usdc
+    market_base_token = rando
     market_quote_token = weth
     market_base_amount = 1000000
     micro_window = 600
@@ -50,15 +49,14 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
                    market_base_amount, micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_market_token_not_quote(gov, weth,
-                                                       dai, usdc, uni,
+def test_deploy_feed_reverts_on_market_token_not_quote(gov, dai, rando, uni,
                                                        pool_daiweth_30bps,
                                                        pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
     ovlweth_pool = pool_uniweth_30bps
     ovl = uni
     market_base_token = dai
-    market_quote_token = usdc
+    market_quote_token = rando
     market_base_amount = 1000000
     micro_window = 600
     macro_window = 3600
@@ -69,8 +67,7 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, weth,
                    market_base_amount, micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth,
-                                                         dai, usdc, uni,
+def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai,
                                                          pool_daiweth_30bps,
                                                          pool_daiusdc_5bps):
     market_pool = pool_daiweth_30bps
@@ -88,8 +85,7 @@ def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth,
                    market_base_amount, micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth,
-                                                        dai, usdc, uni,
+def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
                                                         pool_daiweth_30bps,
                                                         pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
