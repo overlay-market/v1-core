@@ -16,6 +16,9 @@ contract OverlayV1Market {
 
     uint256 constant internal ONE = 1e18; // 18 decimal places
 
+    uint256 constant public MIN_COLLATERAL = 1e14;
+    uint256 constant public MIN_LEVERAGE = 1e18;
+
     OverlayV1Token immutable public ovl; // ovl token
     address immutable public feed; // oracle feed
 
@@ -91,23 +94,35 @@ contract OverlayV1Market {
         bool isLong,
         uint256 oiMinimum
     ) external returns (uint256 positionId_) {
+        require(leverage >= MIN_LEVERAGE, "OVLV1:lev<min");
+        require(leverage <= capLeverage, "OVLV1:lev>max");
+
         Oracle.Data memory data = update();
 
         // transfer in the OVL collateral needed to back the position
         ovl.transferFrom(msg.sender, address(this), collateral);
 
         // calculate oi adjusted for fees. fees are taken from collateral
-        uint256 oi = collateral * leverage;
+        uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 impactFee = _registerMarketImpact(oi, capOiAdjusted);
-        uint256 tradingFee = oi * tradingFeeRate;
+        uint256 tradingFee = oi.mulUp(tradingFeeRate);
         collateral -= impactFee + tradingFee;
-        oi = collateral * leverage;
+        oi = collateral.mulUp(leverage);
+
+        require(collateral >= MIN_COLLATERAL, "OVLV1:collateral<min");
+        require(oi >= oiMinimum, "OVLV1:oi<min");
 
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
-        if (isLong) { oiLong += oi; oiLongShares += oi; }
-        else { oiShort += oi; oiShortShares += oi; }
+        if (isLong) {
+            oiLong += oi; oiLongShares += oi;
+            require(oiLong <= capOiAdjusted, "OVLV1:>cap");
+        }
+        else {
+            oiShort += oi; oiShortShares += oi;
+            require(oiShort <= capOiAdjusted, "OVLV1:>cap");
+        }
 
         // longs get the ask and shorts get the bid on build
         uint256 price = isLong ? ask(data) : bid(data);

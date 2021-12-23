@@ -3,9 +3,6 @@ from collections import OrderedDict
 
 
 def test_latest_updates_data_on_first_call(feed):
-    tx = feed.latest()
-    actual = tx.return_value
-
     timestamp = brownie.chain.time()
     micro_window = feed.microWindow()
     macro_window = feed.macroWindow()
@@ -15,6 +12,10 @@ def test_latest_updates_data_on_first_call(feed):
     # check new data returned
     expect = (timestamp, micro_window, macro_window, price, price,
               reserves, reserves)
+
+    tx = feed.latest()
+    actual = tx.return_value
+
     assert actual == expect
 
     # check oracleDataLast state changed
@@ -39,8 +40,6 @@ def test_latest_updates_data_on_subsequent_calls(feed):
 
     for i in range(3):
         brownie.chain.mine(timedelta=1)
-        tx = feed.latest()
-        actual = tx.return_value
 
         timestamp = brownie.chain.time()
         micro_window = feed.microWindow()
@@ -50,6 +49,9 @@ def test_latest_updates_data_on_subsequent_calls(feed):
 
         expect = (timestamp, micro_window, macro_window, price, price,
                   reserves, reserves)
+
+        tx = feed.latest()
+        actual = tx.return_value
 
         assert actual == expect
 
