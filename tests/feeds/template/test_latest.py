@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 
 def test_latest_updates_data_on_first_call(feed):
+    brownie.chain.mine(timedelta=1)
+
     timestamp = brownie.chain.time()
     micro_window = feed.microWindow()
     macro_window = feed.macroWindow()

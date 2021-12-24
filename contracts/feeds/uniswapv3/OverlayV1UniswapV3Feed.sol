@@ -77,8 +77,8 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         (int24[] memory arithmeticMeanTicksOvlWeth, uint128[] memory harmonicMeanLiquiditiesOvlWeth) =
             consult(ovlWethPool, secondsAgos);
 
-        uint256[2] memory prices;
-        uint256[2] memory reserves;
+        uint256[] memory prices = new uint256[](2);
+        uint256[] memory reserves = new uint256[](2);
         for (uint256 i=0; i < 2; i++) {
             uint256 price = getQuoteAtTick(
                 arithmeticMeanTicksMarket[i],
@@ -90,7 +90,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             uint256 reserve = getReserveInOvl(
                 arithmeticMeanTicksMarket[i],
                 harmonicMeanLiquiditiesMarket[i],
-                arithmeticMeanTicksOvlWeth[i]
+                arithmeticMeanTicksOvlWeth[i] // TODO: use micro ovl/weth twap for conversion? (safe?)
             );
 
             prices[i] = price;
@@ -118,7 +118,6 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         int24[] memory arithmeticMeanTicks_,
         uint128[] memory harmonicMeanLiquidities_
     ) {
-        // TODO: test this extensively
         (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) =
             IUniswapV3Pool(pool).observe(secondsAgos);
 
@@ -174,7 +173,6 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         uint128 harmonicMeanLiquidityMarket,
         int24 arithmeticMeanTickOvlWeth
     ) public view returns (uint256 reserveInOvl_) {
-        // TODO: test this extensively
         uint256 reserveInWeth = getReserveInWeth(
             arithmeticMeanTickMarket,
             harmonicMeanLiquidityMarket
@@ -188,7 +186,6 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket
     ) public view returns (uint256 reserveInWeth_) {
-        // TODO: test this extensively
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(arithmeticMeanTickMarket);
         reserveInWeth_ = marketToken0 == WETH
             ? FullMath.mulDiv(1 << 96, uint256(harmonicMeanLiquidityMarket), uint256(sqrtPriceX96)) // x (token0)
