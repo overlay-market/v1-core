@@ -16,8 +16,7 @@ abstract contract OverlayV1Feed {
 
     /// @dev returns freshest possible data from oracle
     function latest() external view returns (Oracle.Data memory) {
-        Oracle.Data memory data = _fetch();
-        return data;
+        return _fetch();
     }
 
     /// @dev fetches data from oracle. should be implemented differently

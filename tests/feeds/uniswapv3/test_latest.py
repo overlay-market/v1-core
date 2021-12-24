@@ -116,10 +116,6 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
                   reserves[1], reserves[0])
-
-        print('expect', expect)
-        print('actual', actual)
-
         assert expect == actual
 
 
@@ -160,8 +156,4 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
 
         expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
                   reserves[1], reserves[0])
-
-        print('expect', expect)
-        print('actual', actual)
-
         assert expect == actual
