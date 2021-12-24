@@ -66,7 +66,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
 
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// for micro and macro window averaging intervals
-    function _fetch() internal virtual override returns (Oracle.Data memory) {
+    function _fetch() internal view virtual override returns (Oracle.Data memory) {
         uint32[] memory secondsAgos = new uint32[](3);
         secondsAgos[0] = uint32(macroWindow);
         secondsAgos[1] = uint32(microWindow);

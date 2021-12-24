@@ -16,9 +16,6 @@ contract OverlayV1Market {
 
     uint256 constant internal ONE = 1e18; // 18 decimal places
 
-    uint256 constant public MIN_COLLATERAL = 1e14;
-    uint256 constant public MIN_LEVERAGE = 1e18;
-
     OverlayV1Token immutable public ovl; // ovl token
     address immutable public feed; // oracle feed
 
@@ -33,7 +30,8 @@ contract OverlayV1Market {
     uint256 public capLeverage; // initial leverage cap
     uint256 public maintenanceMargin; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
-    uint256 public tradingFeeRate;
+    uint256 public tradingFeeRate; // trading fee charged on build/unwind
+    uint256 public minCollateral; // minimum ovl collateral to open position
 
     // trading fee related quantities
     address public tradingFeeRecipient;
@@ -67,7 +65,8 @@ contract OverlayV1Market {
         uint256 _capLeverage,
         uint256 _maintenanceMargin,
         uint256 _maintenanceMarginBurnRate,
-        uint256 _tradingFeeRate
+        uint256 _tradingFeeRate,
+        uint256 _minCollateral
     ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
@@ -85,6 +84,7 @@ contract OverlayV1Market {
         maintenanceMargin = _maintenanceMargin;
         maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
         tradingFeeRate = _tradingFeeRate;
+        minCollateral = _minCollateral;
     }
 
     /// @dev builds a new position
@@ -92,9 +92,9 @@ contract OverlayV1Market {
         uint256 collateral,
         uint256 leverage,
         bool isLong,
-        uint256 oiMinimum
+        uint256 minOi
     ) external returns (uint256 positionId_) {
-        require(leverage >= MIN_LEVERAGE, "OVLV1:lev<min");
+        require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= capLeverage, "OVLV1:lev>max");
 
         Oracle.Data memory data = update();
@@ -110,8 +110,8 @@ contract OverlayV1Market {
         collateral -= impactFee + tradingFee;
         oi = collateral.mulUp(leverage);
 
-        require(collateral >= MIN_COLLATERAL, "OVLV1:collateral<min");
-        require(oi >= oiMinimum, "OVLV1:oi<min");
+        require(collateral >= minCollateral, "OVLV1:collateral<min");
+        require(oi >= minOi, "OVLV1:oi<min");
 
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued

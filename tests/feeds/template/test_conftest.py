@@ -14,9 +14,3 @@ def test_feed_constructor(feed):
     actual_reserve = 2000000000000000000
     expect_reserve = feed.reserve()
     assert actual_reserve == expect_reserve
-
-
-def test_feed_oracle_data_last(feed):
-    expect = (0, 0, 0, 0, 0, 0, 0)
-    actual = feed.oracleDataLast()
-    assert actual == expect
