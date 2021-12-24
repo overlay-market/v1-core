@@ -36,3 +36,12 @@ def test_market_fixture(market, feed, ovl, gov):
     # check market has minter and burner roles on ovl token
     assert ovl.hasRole(ovl.MINTER_ROLE(), market) is True
     assert ovl.hasRole(ovl.BURNER_ROLE(), market) is True
+
+    # check oi related quantities are zero
+    assert market.oiLong() == 0
+    assert market.oiShort() == 0
+    assert market.oiLongShares() == 0
+    assert market.oiShortShares() == 0
+
+    # check no positions exist
+    assert market.nextPositionId() == 0

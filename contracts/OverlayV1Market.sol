@@ -17,7 +17,7 @@ contract OverlayV1Market {
     uint256 constant internal ONE = 1e18; // 18 decimal places
 
     OverlayV1Token immutable public ovl; // ovl token
-    address immutable public feed; // oracle feed
+    address public feed; // oracle feed
 
     address public governor;
 
@@ -163,13 +163,12 @@ contract OverlayV1Market {
     /// @dev funding payments from overweight oi side to underweight oi side
     function payFunding() public {
         bool isLongOverweight = oiLong > oiShort;
-
         uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
         uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE * (1-2*k)).powUp(ONE * (block.timestamp - fundingPaidLast));
+        uint256 drawdownFactor = (ONE-2*k).powUp(ONE * (block.timestamp - fundingPaidLast));
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
@@ -184,6 +183,11 @@ contract OverlayV1Market {
         oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
         fundingPaidLast = block.timestamp;
+    }
+
+    /// @return next position id
+    function nextPositionId() external view returns (uint256) {
+        return positions.length;
     }
 
     /// @dev gets bid price given oracle data
