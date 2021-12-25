@@ -128,6 +128,7 @@ contract OverlayV1Market {
         uint256 price = isLong ? ask(data) : bid(data);
 
         // store the position info data
+        // TODO: pack position.info to get gas close to 200k
         positions.push(Position.Info({
             leverage: leverage,
             isLong: isLong,
