@@ -117,11 +117,11 @@ contract OverlayV1Market {
         // and increase number of oi shares issued
         if (isLong) {
             oiLong += oi; oiLongShares += oi;
-            require(oiLong <= capOiAdjusted, "OVLV1:>cap");
+            require(oiLong <= capOiAdjusted, "OVLV1:oi>cap");
         }
         else {
             oiShort += oi; oiShortShares += oi;
-            require(oiShort <= capOiAdjusted, "OVLV1:>cap");
+            require(oiShort <= capOiAdjusted, "OVLV1:oi>cap");
         }
 
         // longs get the ask and shorts get the bid on build

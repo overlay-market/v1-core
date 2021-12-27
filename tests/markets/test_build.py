@@ -1,7 +1,7 @@
 from pytest import approx
+from brownie import reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from collections import OrderedDict
 
 
 def calculate_position_info(oi: Decimal,
@@ -81,7 +81,7 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     oi=strategy('decimal', min_value='0.001', max_value='800000'),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
     is_long=strategy('bool'))
-def test_build_adds_oi(market, feed, ovl, alice, oi, leverage, is_long):
+def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     input_collateral = int(oi / leverage * Decimal(1e18))
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
@@ -120,7 +120,7 @@ def test_build_adds_oi(market, feed, ovl, alice, oi, leverage, is_long):
     oi=strategy('decimal', min_value='0.001', max_value='800000'),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
     is_long=strategy('bool'))
-def test_build_executes_transfers(market, feed, ovl, alice, oi, leverage,
+def test_build_executes_transfers(market, ovl, alice, oi, leverage,
                                   is_long):
     input_collateral = int(oi / leverage * Decimal(1e18))
     input_leverage = int(leverage * Decimal(1e18))
@@ -171,7 +171,7 @@ def test_build_executes_transfers(market, feed, ovl, alice, oi, leverage,
     oi=strategy('decimal', min_value='0.001', max_value='800000'),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
     is_long=strategy('bool'))
-def test_build_transfers_collateral_to_market(market, feed, ovl, alice, oi,
+def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
                                               leverage, is_long):
     input_collateral = int(oi / leverage * Decimal(1e18))
     input_leverage = int(leverage * Decimal(1e18))
@@ -203,3 +203,120 @@ def test_build_transfers_collateral_to_market(market, feed, ovl, alice, oi,
     assert int(actual_balance_alice) == approx(expect_balance_alice, rel=1e-4)
     assert int(actual_balance_market) == approx(expect_balance_market,
                                                 rel=1e-4)
+
+
+@given(
+    oi=strategy('decimal', min_value='0.001', max_value='800000'),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    is_long=strategy('bool'))
+def test_build_transfers_trading_fees(market, ovl, alice, oi,
+                                      leverage, is_long):
+    input_collateral = int(oi / leverage * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+    input_min_oi = 0  # NOTE: testing for min_oi below
+
+    # priors actual values
+    recipient = market.tradingFeeRecipient()
+    expect = ovl.balanceOf(recipient)
+
+    # approve market for spending then build
+    ovl.approve(market, input_collateral, {"from": alice})
+    _ = market.build(input_collateral, input_leverage, input_is_long,
+                     input_min_oi, {"from": alice})
+
+    # calculate expected collateral info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    lmbda = Decimal(market.lmbda() / 1e18)
+    cap_oi = Decimal(market.capOi() / 1e18)
+    _, _, _, _, trade_fee = calculate_position_info(oi, leverage,
+                                                    trading_fee_rate,
+                                                    lmbda, cap_oi)
+
+    expect += int(trade_fee * Decimal(1e18))
+    actual = ovl.balanceOf(recipient)
+
+    assert int(actual) == approx(expect)
+
+
+@given(
+    oi=strategy('decimal', min_value='0.001', max_value='800000'),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    is_long=strategy('bool'))
+def test_build_reverts_when_oi_less_than_min(market, ovl, alice, oi, leverage,
+                                             is_long):
+    expect_pos_id = market.nextPositionId()
+
+    input_collateral = int(oi / leverage * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve market for spending before build
+    ovl.approve(market, input_collateral, {"from": alice})
+
+    # calculate expected oi info data before build to use for min oi value
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    lmbda = Decimal(market.lmbda() / 1e18)
+    cap_oi = Decimal(market.capOi() / 1e18)
+    _, oi_adjusted, _, _, _ = calculate_position_info(oi, leverage,
+                                                      trading_fee_rate,
+                                                      lmbda, cap_oi)
+
+    tol = 1e-4  # tolerance put at +/- 1bps
+    input_min_oi = int(oi_adjusted * Decimal(1+tol) * Decimal(1e18))
+
+    # check build reverts for min_oi > oi_adjusted (w tolerance)
+    with reverts("OVLV1:oi<min"):
+        _ = market.build(input_collateral, input_leverage, input_is_long,
+                         input_min_oi, {"from": alice})
+
+    # check build succeeds for min_oi < oi_adjusted (w tolerance)
+    input_min_oi = int(oi_adjusted * Decimal(1-tol) * Decimal(1e18))
+
+    _ = market.build(input_collateral, input_leverage, input_is_long,
+                     input_min_oi, {"from": alice})
+
+    expect_pos_id += 1
+    actual_pos_id = market.nextPositionId()
+    assert expect_pos_id == actual_pos_id
+
+
+@given(
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    is_long=strategy('bool'))
+def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
+                                                     leverage, is_long):
+    expect_pos_id = market.nextPositionId()
+
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+    input_min_oi = 0
+
+    tol = 1e-4  # tolerance put at +/- 1bps
+    min_collateral = market.minCollateral()
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+
+    # check build reverts for min_collateral > collateral (w tolerance)
+    # TODO: include impact fee
+    input_min_collateral = Decimal(min_collateral) / \
+        Decimal(1 - leverage * trading_fee_rate)
+    input_collateral = int(input_min_collateral * Decimal(1-tol))
+
+    # approve market for spending then build
+    ovl.approve(market, int(input_min_collateral * Decimal(1+tol)),
+                {"from": alice})
+
+    # check build reverts for min_collat > collat_adjusted (w tolerance)
+    with reverts("OVLV1:collateral<min"):
+        _ = market.build(input_collateral, input_leverage, input_is_long,
+                         input_min_oi, {"from": alice})
+
+    # check build succeeds for min_collat < collat_adjusted (w tolerance)
+    input_collateral = int(input_min_collateral * Decimal(1+tol))
+    _ = market.build(input_collateral, input_leverage, input_is_long,
+                     input_min_oi, {"from": alice})
+
+    expect_pos_id += 1
+    actual_pos_id = market.nextPositionId()
+
+    assert expect_pos_id == actual_pos_id
