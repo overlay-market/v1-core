@@ -5,7 +5,7 @@ V1 core smart contracts
 
 ## Diagram
 
-![diagram](./docs/assets/diagram.png)
+![diagram](./docs/assets/diagram.svg)
 
 
 ## Modules
