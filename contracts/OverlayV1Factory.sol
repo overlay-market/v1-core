@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "./interfaces/IOverlayV1FeedFactory.sol";
 
 import "./OverlayV1Token.sol";
 import "./OverlayV1Market.sol";
@@ -44,10 +45,15 @@ contract OverlayV1Factory is AccessControlEnumerable {
     // ovl token
     OverlayV1Token immutable public ovl;
 
+    // registry of supported feed factories
+    mapping(address => bool) public isFeedFactory;
+
     // registry of markets; for a given feed address, returns associated market
     mapping(address => address) public getMarket;
 
-    event MarketDeployed(address market, address feed);
+    // events for factory functions
+    event MarketDeployed(address indexed user, address market, address feed);
+    event FeedFactoryAdded(address indexed user, address feedFactory);
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
@@ -62,9 +68,17 @@ contract OverlayV1Factory is AccessControlEnumerable {
         ovl = OverlayV1Token(_ovl);
     }
 
+    /// @dev adds a supported feed factory
+    function addFeedFactory(address feedFactory) external onlyGovernor {
+        require(!isFeedFactory[feedFactory], "OVLV1: feed factory already supported");
+        isFeedFactory[feedFactory] = true;
+        emit FeedFactoryAdded(msg.sender, feedFactory);
+    }
+
     /// @dev deploys a new market contract
     /// @return market_ address of the new market
-    function deploy(
+    function deployMarket(
+        address feedFactory,
         address feed,
         uint256 k,
         uint256 lmbda,
@@ -77,6 +91,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
         uint256 tradingFeeRate,
         uint256 minCollateral
     ) external onlyGovernor returns (address market_) {
+        require(getMarket[feed] == address(0), "OVLV1: market already exists");
+        require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
+        require(IOverlayV1FeedFactory(feedFactory).isFeed(), "OVLV1: feed does not exist");
+
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.
@@ -100,7 +118,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         ovl.grantRole(ovl.BURNER_ROLE(), market_);
 
         getMarket[feed] = market_;
-        emit MarketDeployed(market_, feed);
+        emit MarketDeployed(msg.sender, market_, feed);
     }
 
     /// below are per-market risk parameter setters,
