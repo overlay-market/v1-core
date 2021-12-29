@@ -100,4 +100,4 @@ The process to add a new market is as follows:
 
 Edge cases need to be thought through:
 
-- Do we make `OverlayV1Market.sol::feed` an immutable storage variable? If so, would mean we need to deploy a new market every time we'd like to upgrade a feed. If not (as it currently is), governance can deploy an upgraded feed and point the market's `feed` variable to that new address, but there are potential issues here around interfering with live trading we need to think through.
+- Do we make `OverlayV1Market.sol::feed` an immutable storage variable? If so (as it currently is), would mean we need to deploy a new market every time we'd like to upgrade a feed. If not, governance can deploy an upgraded feed and point the market's `feed` variable to that new address, but there are potential issues here around interfering with live trading we need to think through.

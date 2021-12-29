@@ -18,7 +18,7 @@ def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
 def test_market_fixture(market, feed, ovl, gov):
     market.ovl() == ovl
     market.feed() == feed
-    market.governor() == gov
+    market.factory() == gov
     market.tradingFeeRecipient() == gov
 
     # risk params

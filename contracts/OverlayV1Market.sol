@@ -17,9 +17,9 @@ contract OverlayV1Market {
     uint256 constant internal ONE = 1e18; // 18 decimal places
 
     OverlayV1Token immutable public ovl; // ovl token
-    address public feed; // oracle feed
+    address immutable public feed; // oracle feed
 
-    address public governor;
+    address public factory;
 
     // risk params
     uint256 public k; // funding constant
@@ -48,9 +48,9 @@ contract OverlayV1Market {
     // last call to funding
     uint256 public fundingPaidLast;
 
-    // governor modifier for governance sensitive functions
-    modifier onlyGovernor() {
-        require(msg.sender == governor, "OVLV1:!governor");
+    // factory modifier for governance sensitive functions
+    modifier onlyFactory() {
+        require(msg.sender == factory, "OVLV1: !factory");
         _;
     }
 
@@ -70,7 +70,7 @@ contract OverlayV1Market {
     ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
-        governor = msg.sender;
+        factory = msg.sender;
         tradingFeeRecipient = msg.sender;
         fundingPaidLast = block.timestamp;
 
@@ -228,5 +228,42 @@ contract OverlayV1Market {
         // reversion for cumulative impact instead of rollers to save gas
     }
 
-    // TODO: setters for all gov params and associated checks
+    /// @dev governance adjustable risk parameter setters
+    /// @dev bounds checks to risk params imposed at factory level
+    /// TODO: checks that parameters are valid (e.g. mm given spread and capLeverage)
+    function setK(uint256 _k) external onlyFactory {
+        k = _k;
+    }
+
+    function setLmbda(uint256 _lmbda) external onlyFactory {
+        lmbda = _lmbda;
+    }
+
+    function setDelta(uint256 _delta) external onlyFactory {
+        delta = _delta;
+    }
+
+    function setCapPayoff(uint256 _capPayoff) external onlyFactory {
+        capPayoff = _capPayoff;
+    }
+
+    function setCapLeverage(uint256 _capLeverage) external onlyFactory {
+        capLeverage = _capLeverage;
+    }
+
+    function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
+        maintenanceMargin = _maintenanceMargin;
+    }
+
+    function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external onlyFactory {
+        maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
+    }
+
+    function setTradingFeeRate(uint256 _tradingFeeRate) external onlyFactory {
+        tradingFeeRate = _tradingFeeRate;
+    }
+
+    function setMinCollateral(uint256 _minCollateral) external onlyFactory {
+        minCollateral = _minCollateral;
+    }
 }
