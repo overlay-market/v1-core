@@ -13,21 +13,13 @@ V1 core smart contracts
 V1 core relies on three modules:
 
 - [Markets Module](#markets-module)
-- [Feeds Module](#feeds-module`)
+- [Feeds Module](#feeds-module)
 - [OVL Module](#ovl-module)
-
-The process to add a new market is as follows:
-
-1. Deploy a feed contract for the data stream we wish to offer a market on. Developers inherit from [`OverlayV1Feed.sol`](./contracts/fees/OverlayV1Feed.sol) to implement a feed contract for the specific type of oracle provider they wish to support (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools). The feed contract ingests the data stream directly from the oracle provider and formats the data in a form consumable by the market
-
-2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1. Traders interact directly with this market contract to take positions out on the feed. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
-
-3. Grant the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. This will be accomplished through a market deployer contract (not yet implemented), which is granted admin privileges on the OVL token by governance.
 
 
 ### Markets Module
 
-Traders interact directly with the market contract to take positions on the data stream. Core functions are:
+Traders interact directly with the market contract to take positions on a data stream. Core functions are:
 
 - `build()`
 - `unwind()`
@@ -36,7 +28,7 @@ Traders interact directly with the market contract to take positions on the data
 
 Traders transfer OVL collateral to the market contract to back a position. This collateral is held in the market contract until the trader unwinds their position when exiting the trade. OVL is the only collateral supported for V1.
 
-The market contract tracks the current open interest for all outstanding positions on a market as well as [information about the position](./contracts/libraries/Position.sol), that we need in order to calculate the current value of the position in OVL terms:
+The market contract tracks the current open interest for all outstanding positions on a market as well as [information about each position](./contracts/libraries/Position.sol), that we need in order to calculate the current value of the position in OVL terms:
 
 ```
 library Position {
@@ -51,14 +43,14 @@ library Position {
 }
 ```
 
-For each market contract, there is an associated feed contract that delivers the data from the data stream. The market contract stores a pointer to the `feed` contract that it retrieves new data from, and the market uses its `update()` function to retrieve the most recent price and liquidity data from the feed. This call occurs every time a user interacts with the market.
+For each market contract, there is an associated feed contract that delivers the data from the data stream. The market contract stores a pointer to the `feed` contract that it retrieves new data from, and the market uses its `update()` function to retrieve the most recent price and liquidity data from the feed through a call to `IOverlayV1Feed(feed).latest()`. This call occurs every time a user interacts with the market.
 
 All markets are implemented by the contract `OverlayV1Market.sol`, regardless of the underlying feed type.
 
 
 ### Feeds Module
 
-The feed contract formats data from the oracle in a format consumable by any market contract. The feed contract is limited to a single core external view function
+The feed contract ingests the data stream directly from the oracle provider and formats the data in a format consumable by any market contract. The feed contract is limited to a single core external view function
 
 - `latest()`
 
@@ -93,8 +85,19 @@ For each oracle provider we support, there should be a specific implementation o
 OVL module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OVL to compensate traders for their PnL on positions.
 
 
+## Deployments
+
+The process to add a new market is as follows:
+
+1. Deploy a feed contract for the data stream we wish to offer a market on. Developers inherit from [`OverlayV1Feed.sol`](./contracts/fees/OverlayV1Feed.sol) to implement a feed contract for the specific type of oracle provider they wish to support if it hasn't already been implemented (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools). The feed contract ingests the data stream directly from the oracle provider and formats the data in a form consumable by the market
+
+2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. Traders interact directly with this market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
+
+3. Grant the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. This will be accomplished through a market deployer contract (not yet implemented), which is granted admin privileges on the OVL token by governance.
+
+
 ## Edge Cases
 
 Edge cases need to be thought through:
 
-- Do make `OverlayV1Market.sol::feed` an immutable storage variable? If so, would mean we need to deploy a new market every time we'd like to upgrade a feed. If not (as it currently is), governance can deploy an upgraded feed and point the market's `feed` variable to that new address, but there are potential issues here when interfering with live trading we need to think through.
+- Do we make `OverlayV1Market.sol::feed` an immutable storage variable? If so, would mean we need to deploy a new market every time we'd like to upgrade a feed. If not (as it currently is), governance can deploy an upgraded feed and point the market's `feed` variable to that new address, but there are potential issues here around interfering with live trading we need to think through.
