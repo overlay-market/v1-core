@@ -320,3 +320,6 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
     actual_pos_id = market.nextPositionId()
 
     assert expect_pos_id == actual_pos_id
+
+
+# TODO: remaining revert tests on build
