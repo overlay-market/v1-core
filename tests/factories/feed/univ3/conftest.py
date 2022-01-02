@@ -52,9 +52,9 @@ def create_factory(gov, pool_uniweth_30bps, weth, uni, request):
 
     def create_factory(ovlweth_pool=oe_pool, ovl=tok, micro_window=micro,
                        macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Factory, ovlweth_pool, ovl,
-                          micro_window, macro_window)
-        return feed
+        factory = gov.deploy(OverlayV1UniswapV3Factory, ovlweth_pool, ovl,
+                             micro_window, macro_window)
+        return factory
 
     yield create_factory
 

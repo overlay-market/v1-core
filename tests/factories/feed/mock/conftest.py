@@ -27,8 +27,9 @@ def create_factory(gov, request):
     micro, macro = request.param
 
     def create_factory(micro_window=micro, macro_window=macro):
-        feed = gov.deploy(OverlayV1FeedFactoryMock, micro_window, macro_window)
-        return feed
+        factory = gov.deploy(OverlayV1FeedFactoryMock, micro_window,
+                             macro_window)
+        return factory
 
     yield create_factory
 
