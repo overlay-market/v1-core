@@ -12,6 +12,8 @@ def test_deploy_feed_creates_quanto_feed(factory, pool_uniweth_30bps, uni,
     market_quote_token = dai
     market_base_amount = 1000000000000000000  # 1e18
 
+    # TODO: check is not feed prior to deploy
+
     tx = factory.deployFeed(market_pool, market_base_token, market_quote_token,
                             market_base_amount, {"from": alice})
     actual_feed = tx.return_value
@@ -45,6 +47,8 @@ def test_deploy_feed_creates_inverse_feed(factory, pool_uniweth_30bps, uni,
     market_base_token = weth
     market_quote_token = uni
     market_base_amount = 1000000000000000000  # 1e18
+
+    # TODO: check is not feed prior to deploy
 
     tx = factory.deployFeed(market_pool, market_base_token, market_quote_token,
                             market_base_amount, {"from": alice})
@@ -80,6 +84,12 @@ def test_deploy_feed_reverts_when_feed_already_exits(factory, uni, dai, weth,
     market_quote_token = dai
     market_base_amount = 1000000000000000000  # 1e18
 
+    # Check feed already exists first from prior unit test above
+    feed = factory.getFeed(market_pool, market_base_token, market_quote_token,
+                           market_base_amount)
+    assert factory.isFeed(feed) is True
+
+    # check reverts when attempt to deploy again
     with reverts("OVLV1: feed already exists"):
         _ = factory.deployFeed(market_pool, market_base_token,
                                market_quote_token, market_base_amount,

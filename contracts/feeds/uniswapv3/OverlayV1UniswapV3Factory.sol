@@ -46,7 +46,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
             macroWindow
         ));
 
-        // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo\
+        // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo
         // and mark feed address as feed
         getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] = feed_;
         isFeed[feed_] = true;
