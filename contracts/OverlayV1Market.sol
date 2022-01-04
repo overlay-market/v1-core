@@ -18,8 +18,7 @@ contract OverlayV1Market {
 
     OverlayV1Token immutable public ovl; // ovl token
     address immutable public feed; // oracle feed
-
-    address public factory;
+    address immutable public factory; // factory that deployed this market
 
     // risk params
     uint256 public k; // funding constant

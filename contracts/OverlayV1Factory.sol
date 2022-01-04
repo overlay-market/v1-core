@@ -51,6 +51,9 @@ contract OverlayV1Factory is AccessControlEnumerable {
     // registry of markets; for a given feed address, returns associated market
     mapping(address => address) public getMarket;
 
+    // registry of deployed markets by factory
+    mapping(address => bool) public isMarket;
+
     // events for factory functions
     event MarketDeployed(address indexed user, address market, address feed);
     event FeedFactoryAdded(address indexed user, address feedFactory);
@@ -93,7 +96,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
     ) external onlyGovernor returns (address market_) {
         require(getMarket[feed] == address(0), "OVLV1: market already exists");
         require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
-        require(IOverlayV1FeedFactory(feedFactory).isFeed(), "OVLV1: feed does not exist");
+        require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
 
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already
@@ -117,7 +120,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
         ovl.grantRole(ovl.MINTER_ROLE(), market_);
         ovl.grantRole(ovl.BURNER_ROLE(), market_);
 
+        // store market registry record for given feed
+        // and record address as a deployed market
         getMarket[feed] = market_;
+        isMarket[market_] = true;
         emit MarketDeployed(msg.sender, market_, feed);
     }
 

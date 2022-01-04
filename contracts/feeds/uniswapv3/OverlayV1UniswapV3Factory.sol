@@ -10,6 +10,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
     address immutable public ovlWethPool;
     address immutable public ovl;
 
+    // registry of feeds; for a given (pool, base, quote, amount) pair, returns associated feed
     mapping(address => mapping(address => mapping(address => mapping(uint128 => address)))) public getFeed;
 
     constructor(
@@ -47,7 +48,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
         ));
 
         // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo
-        // and mark feed address as feed
+        // and record address as deployed feed
         getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] = feed_;
         isFeed[feed_] = true;
         emit FeedDeployed(msg.sender, feed_);

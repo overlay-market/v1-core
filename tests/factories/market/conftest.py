@@ -46,13 +46,26 @@ def ovl(create_token):
     yield create_token()
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+@pytest.fixture(scope="module", params=[
+    (600, 3600, 1000000000000000000, 2000000000000000000,
+     2000000000000000000, 3000000000000000000)
+])
 def create_feed_factory(gov, request, ovl):
-    micro, macro = request.param
+    (micro, macro, price_one, reserve_one, price_two,
+     reserve_two) = request.param
 
-    def create_feed_factory(tok=ovl, micro_window=micro, macro_window=macro):
+    def create_feed_factory(tok=ovl, micro_window=micro, macro_window=macro,
+                            mock_price_one=price_one,
+                            mock_reserve_one=reserve_one,
+                            mock_price_two=price_two,
+                            mock_reserve_two=reserve_two):
         factory = gov.deploy(OverlayV1FeedFactoryMock, micro_window,
                              macro_window)
+
+        # deploy the two feeds from the factory to add to registry
+        factory.deployFeed(mock_price_one, mock_reserve_one)
+        factory.deployFeed(mock_price_two, mock_reserve_two)
+
         return factory
 
     yield create_feed_factory
@@ -61,6 +74,18 @@ def create_feed_factory(gov, request, ovl):
 @pytest.fixture(scope="module")
 def feed_factory(create_feed_factory):
     yield create_feed_factory()
+
+
+@pytest.fixture(scope="module")
+def feed_one(feed_factory):
+    feed = feed_factory.getFeed(1000000000000000000, 2000000000000000000)
+    yield feed
+
+
+@pytest.fixture(scope="module")
+def feed_two(feed_factory):
+    feed = feed_factory.getFeed(2000000000000000000, 3000000000000000000)
+    yield feed
 
 
 @pytest.fixture(scope="module")
