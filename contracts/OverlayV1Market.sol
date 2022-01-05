@@ -98,8 +98,8 @@ contract OverlayV1Market {
 
         Oracle.Data memory data = update();
 
-        // transfer in the OVL collateral needed to back the position
-        ovl.transferFrom(msg.sender, address(this), collateral);
+        // amount of collateral to transfer in to back the position
+        uint256 collateralIn = collateral;
 
         // calculate oi adjusted for fees. fees are taken from collateral
         uint256 oi = collateral.mulUp(leverage);
@@ -138,8 +138,13 @@ contract OverlayV1Market {
         }));
         positionId_ = positions.length - 1;
 
-        // burn the impact fee and send trading fees to trading fee recipient
+        // transfer in the OVL collateral needed to back the position
+        ovl.transferFrom(msg.sender, address(this), collateralIn);
+
+        // burn the impact fee
         ovl.burn(impactFee);
+
+        // send trading fees to trading fee recipient
         ovl.transfer(tradingFeeRecipient, tradingFee);
     }
 

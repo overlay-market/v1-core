@@ -1,7 +1,15 @@
+import pytest
 from pytest import approx
 from brownie import reverts
 from brownie.test import given, strategy
 from decimal import Decimal
+
+
+# NOTE: Tests passing with isolation fixture
+# TODO: Fix tests to pass even without isolation fixture (?)
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
 
 
 def calculate_position_info(oi: Decimal,
