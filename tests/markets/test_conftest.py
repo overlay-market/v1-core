@@ -22,7 +22,7 @@ def test_market_fixture(market, feed, ovl, gov):
     market.tradingFeeRecipient() == gov
 
     # risk params
-    market.k() == 8587500000000
+    market.k() == 1220000000000
     market.lmbda() == 1000000000000000000
     market.delta() == 2500000000000000
     market.capPayoff() == 5000000000000000000

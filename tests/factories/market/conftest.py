@@ -1,5 +1,7 @@
 import pytest
-from brownie import OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock
+from brownie import (
+    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock
+)
 
 
 @pytest.fixture(scope="module")
@@ -47,24 +49,32 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 2000000000000000000,
-     2000000000000000000, 3000000000000000000)
+    (600, 3600, 1000000000000000000, 1000000000000000000,
+     2000000000000000000, 2000000000000000000, 3000000000000000000,
+     3000000000000000000)
 ])
 def create_feed_factory(gov, request, ovl):
+    """
+    Creates a new feed factory and deploys three mock feeds for testing.
+    Below, third mock is used in creating a market for test_setters.py
+    """
     (micro, macro, price_one, reserve_one, price_two,
-     reserve_two) = request.param
+     reserve_two, price_three, reserve_three) = request.param
 
     def create_feed_factory(tok=ovl, micro_window=micro, macro_window=macro,
                             mock_price_one=price_one,
                             mock_reserve_one=reserve_one,
                             mock_price_two=price_two,
-                            mock_reserve_two=reserve_two):
+                            mock_reserve_two=reserve_two,
+                            mock_price_three=price_three,
+                            mock_reserve_three=reserve_three):
         factory = gov.deploy(OverlayV1FeedFactoryMock, micro_window,
                              macro_window)
 
         # deploy the two feeds from the factory to add to registry
         factory.deployFeed(mock_price_one, mock_reserve_one)
         factory.deployFeed(mock_price_two, mock_reserve_two)
+        factory.deployFeed(mock_price_three, mock_reserve_three)
 
         return factory
 
@@ -78,13 +88,19 @@ def feed_factory(create_feed_factory):
 
 @pytest.fixture(scope="module")
 def feed_one(feed_factory):
-    feed = feed_factory.getFeed(1000000000000000000, 2000000000000000000)
+    feed = feed_factory.getFeed(1000000000000000000, 1000000000000000000)
     yield feed
 
 
 @pytest.fixture(scope="module")
 def feed_two(feed_factory):
-    feed = feed_factory.getFeed(2000000000000000000, 3000000000000000000)
+    feed = feed_factory.getFeed(2000000000000000000, 2000000000000000000)
+    yield feed
+
+
+@pytest.fixture(scope="module")
+def feed_three(feed_factory):
+    feed = feed_factory.getFeed(3000000000000000000, 3000000000000000000)
     yield feed
 
 
@@ -103,3 +119,39 @@ def create_factory(gov, request, ovl, feed_factory):
 @pytest.fixture(scope="module")
 def factory(create_factory):
     yield create_factory()
+
+
+# NOTE: market creation tested in test_deploy_market.py
+@pytest.fixture(scope="module")
+def create_market(gov, factory):
+    def create_market(feed_fact, feed, k, lmbda, delta, cap_payoff, cap_oi,
+                      cap_leverage, maintenance, maintenance_burn,
+                      trade_fee, min_collateral, governance=gov, ovl=ovl):
+        # deploy the market
+        tx = factory.deployMarket(feed_fact, feed, k, lmbda, delta,
+                                  cap_payoff, cap_oi, cap_leverage,
+                                  maintenance, maintenance_burn, trade_fee,
+                                  min_collateral, {"from": gov})
+        market = tx.return_value
+
+        # return the interface
+        return interface.IOverlayV1Market(market)
+
+    yield create_market
+
+
+@pytest.fixture(scope="module", params=[(
+    1220000000000,  # k
+    1000000000000000000,  # lmbda
+    2500000000000000,  # delta
+    5000000000000000000,  # capPayoff
+    800000000000000000000000,  # capOi
+    5000000000000000000,  # capLeverage
+    100000000000000000,  # maintenanceMargin
+    100000000000000000,  # maintenanceMarginBurnRate
+    750000000000000,  # tradingFeeRate
+    100000000000000,  # minCollateral
+)])
+def market(gov, feed_factory, feed_three, ovl, create_market, request):
+    yield create_market(feed_factory, feed_three, governance=gov, ovl=ovl,
+                        *request.param)

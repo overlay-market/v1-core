@@ -14,7 +14,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_feed = feed_one
 
     # risk params
-    expect_k = 8587500000000
+    expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
@@ -100,7 +100,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_feed = feed_two
 
     # risk params
-    expect_k = 8587500000000
+    expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
@@ -142,7 +142,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
         != "0x0000000000000000000000000000000000000000"
 
     # risk params
-    expect_k = 8587500000000
+    expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
@@ -180,7 +180,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_feed = feed_two
 
     # risk params
-    expect_k = 8587500000000
+    expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
@@ -216,7 +216,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_feed = rando
 
     # risk params
-    expect_k = 8587500000000
+    expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000

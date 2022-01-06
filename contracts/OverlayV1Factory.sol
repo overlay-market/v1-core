@@ -13,7 +13,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
 
     // risk param bounds
     uint256 public constant MIN_K = 4e8; // ~ 0.1 bps / 8 hr
-    uint256 public constant MAX_K = 2e12; // ~ 560 bps / 8 hr
+    uint256 public constant MAX_K = 4e12; // ~ 1000 bps / 8 hr
     uint256 public constant MIN_LMBDA = 1e17; // 0.1
     uint256 public constant MAX_LMBDA = 1e19; // 10
     uint256 public constant MIN_DELTA = 1e14; // 0.01% (1 bps)
@@ -32,15 +32,15 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
 
     // events for risk param updates
-    event FundingUpdated(address indexed user, uint256 k);
-    event ImpactUpdated(address indexed user, uint256 lmbda);
-    event BidAskSpreadUpdated(address indexed user, uint256 delta);
-    event PayoffCapUpdated(address indexed user, uint256 capPayoff);
-    event LeverageCapUpdated(address indexed user, uint256 capLeverage);
-    event MaintenanceMarginUpdated(address indexed user, uint256 maintenanceMargin);
-    event MaintenanceMarginBurnRateUpdated(address indexed user, uint256 maintenanceMarginBurnRate);
-    event TradingFeeRateUpdated(address indexed user, uint256 tradingFeeRate);
-    event MinimumCollateralUpdated(address indexed user, uint256 minCollateral);
+    event FundingUpdated(address indexed user, address indexed market, uint256 k);
+    event ImpactUpdated(address indexed user, address indexed market, uint256 lmbda);
+    event BidAskSpreadUpdated(address indexed user, address indexed market, uint256 delta);
+    event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
+    event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
+    event MaintenanceMarginUpdated(address indexed user, address indexed market, uint256 maintenanceMargin);
+    event MaintenanceMarginBurnRateUpdated(address indexed user, address indexed market, uint256 maintenanceMarginBurnRate);
+    event TradingFeeRateUpdated(address indexed user, address indexed market, uint256 tradingFeeRate);
+    event MinimumCollateralUpdated(address indexed user, address indexed market, uint256 minCollateral);
 
     // ovl token
     OverlayV1Token immutable public ovl;
@@ -98,6 +98,17 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
         require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
 
+        // check risk parameters are within bounds
+        require(k >= MIN_K && k <= MAX_K, "OVLV1: k out of bounds");
+        require(lmbda >= MIN_LMBDA && lmbda <= MAX_LMBDA, "OVLV1: lmbda out of bounds");
+        require(delta >= MIN_DELTA && delta <= MAX_DELTA, "OVLV1: delta out of bounds");
+        require(capPayoff >= MIN_CAP_PAYOFF && capPayoff <= MAX_CAP_PAYOFF, "OVLV1: capPayoff out of bounds");
+        require(capLeverage >= MIN_CAP_LEVERAGE && capLeverage <= MAX_CAP_LEVERAGE, "OVLV1: capLeverage out of bounds");
+        require(maintenanceMargin >= MIN_MAINTENANCE_MARGIN && maintenanceMargin <= MAX_MAINTENANCE_MARGIN, "OVLV1: maintenanceMargin out of bounds");
+        require(maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE && maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE, "OVLV1: maintenanceMarginBurnRate out of bounds");
+        require(tradingFeeRate >= MIN_TRADING_FEE_RATE && tradingFeeRate <= MAX_TRADING_FEE_RATE, "OVLV1: tradingFeeRate out of bounds");
+        require(minCollateral >= MIN_MINIMUM_COLLATERAL && minCollateral <= MAX_MINIMUM_COLLATERAL, "OVLV1: minCollateral out of bounds");
+
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.
@@ -135,7 +146,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(k >= MIN_K && k <= MAX_K, "OVLV1: k out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setK(k);
-        emit FundingUpdated(msg.sender, k);
+        emit FundingUpdated(msg.sender, address(market), k);
     }
 
     /// @dev market impact parameter setter
@@ -143,7 +154,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(lmbda >= MIN_LMBDA && lmbda <= MAX_LMBDA, "OVLV1: lmbda out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setLmbda(lmbda);
-        emit ImpactUpdated(msg.sender, lmbda);
+        emit ImpactUpdated(msg.sender, address(market), lmbda);
     }
 
     /// @dev bid-ask spread setter
@@ -151,7 +162,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(delta >= MIN_DELTA && delta <= MAX_DELTA, "OVLV1: delta out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setDelta(delta);
-        emit BidAskSpreadUpdated(msg.sender, delta);
+        emit BidAskSpreadUpdated(msg.sender, address(market), delta);
     }
 
     /// @dev payoff cap setter
@@ -159,7 +170,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(capPayoff >= MIN_CAP_PAYOFF && capPayoff <= MAX_CAP_PAYOFF, "OVLV1: capPayoff out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCapPayoff(capPayoff);
-        emit PayoffCapUpdated(msg.sender, capPayoff);
+        emit PayoffCapUpdated(msg.sender, address(market), capPayoff);
     }
 
     /// @dev initial leverage cap setter
@@ -167,7 +178,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(capLeverage >= MIN_CAP_LEVERAGE && capLeverage <= MAX_CAP_LEVERAGE, "OVLV1: capLeverage out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCapLeverage(capLeverage);
-        emit LeverageCapUpdated(msg.sender, capLeverage);
+        emit LeverageCapUpdated(msg.sender, address(market), capLeverage);
     }
 
     /// @dev maintenance margin setter
@@ -175,7 +186,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(maintenanceMargin >= MIN_MAINTENANCE_MARGIN && maintenanceMargin <= MAX_MAINTENANCE_MARGIN, "OVLV1: maintenanceMargin out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setMaintenanceMargin(maintenanceMargin);
-        emit MaintenanceMarginUpdated(msg.sender, maintenanceMargin);
+        emit MaintenanceMarginUpdated(msg.sender, address(market), maintenanceMargin);
     }
 
     /// @dev burn % of maintenance margin on liquidation setter
@@ -183,7 +194,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE && maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE, "OVLV1: maintenanceMarginBurnRate out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setMaintenanceMarginBurnRate(maintenanceMarginBurnRate);
-        emit MaintenanceMarginBurnRateUpdated(msg.sender, maintenanceMarginBurnRate);
+        emit MaintenanceMarginBurnRateUpdated(msg.sender, address(market), maintenanceMarginBurnRate);
     }
 
     /// @dev trading fee % setter
@@ -191,7 +202,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(tradingFeeRate >= MIN_TRADING_FEE_RATE && tradingFeeRate <= MAX_TRADING_FEE_RATE, "OVLV1: tradingFeeRate out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setTradingFeeRate(tradingFeeRate);
-        emit TradingFeeRateUpdated(msg.sender, tradingFeeRate);
+        emit TradingFeeRateUpdated(msg.sender, address(market), tradingFeeRate);
     }
 
     /// @dev minimum collateral to build position setter
@@ -199,6 +210,6 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(minCollateral >= MIN_MINIMUM_COLLATERAL && minCollateral <= MAX_MINIMUM_COLLATERAL, "OVLV1: minCollateral out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setMinCollateral(minCollateral);
-        emit MinimumCollateralUpdated(msg.sender, minCollateral);
+        emit MinimumCollateralUpdated(msg.sender, address(market), minCollateral);
     }
 }
