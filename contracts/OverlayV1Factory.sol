@@ -20,6 +20,8 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_DELTA = 2e16; // 2% (200 bps)
     uint256 public constant MIN_CAP_PAYOFF = 1e18; // 1x
     uint256 public constant MAX_CAP_PAYOFF = 1e19; // 10x
+    uint256 public constant MIN_CAP_OI = 0; // 0 OVL
+    uint256 public constant MAX_CAP_OI = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_CAP_LEVERAGE = 1e18; // 1x
     uint256 public constant MAX_CAP_LEVERAGE = 2e19; // 20x
     uint256 public constant MIN_MAINTENANCE_MARGIN = 1e16; // 1%
@@ -34,8 +36,9 @@ contract OverlayV1Factory is AccessControlEnumerable {
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);
     event ImpactUpdated(address indexed user, address indexed market, uint256 lmbda);
-    event BidAskSpreadUpdated(address indexed user, address indexed market, uint256 delta);
+    event SpreadUpdated(address indexed user, address indexed market, uint256 delta);
     event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
+    event OpenInterestCapUpdated(address indexed user, address indexed market, uint256 capOi);
     event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
     event MaintenanceMarginUpdated(address indexed user, address indexed market, uint256 maintenanceMargin);
     event MaintenanceMarginBurnRateUpdated(address indexed user, address indexed market, uint256 maintenanceMarginBurnRate);
@@ -103,6 +106,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(lmbda >= MIN_LMBDA && lmbda <= MAX_LMBDA, "OVLV1: lmbda out of bounds");
         require(delta >= MIN_DELTA && delta <= MAX_DELTA, "OVLV1: delta out of bounds");
         require(capPayoff >= MIN_CAP_PAYOFF && capPayoff <= MAX_CAP_PAYOFF, "OVLV1: capPayoff out of bounds");
+        require(capOi >= MIN_CAP_OI && capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
         require(capLeverage >= MIN_CAP_LEVERAGE && capLeverage <= MAX_CAP_LEVERAGE, "OVLV1: capLeverage out of bounds");
         require(maintenanceMargin >= MIN_MAINTENANCE_MARGIN && maintenanceMargin <= MAX_MAINTENANCE_MARGIN, "OVLV1: maintenanceMargin out of bounds");
         require(maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE && maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE, "OVLV1: maintenanceMarginBurnRate out of bounds");
@@ -162,7 +166,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         require(delta >= MIN_DELTA && delta <= MAX_DELTA, "OVLV1: delta out of bounds");
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setDelta(delta);
-        emit BidAskSpreadUpdated(msg.sender, address(market), delta);
+        emit SpreadUpdated(msg.sender, address(market), delta);
     }
 
     /// @dev payoff cap setter
@@ -171,6 +175,14 @@ contract OverlayV1Factory is AccessControlEnumerable {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCapPayoff(capPayoff);
         emit PayoffCapUpdated(msg.sender, address(market), capPayoff);
+    }
+
+    /// @dev oi cap setter
+    function setCapOi(address feed, uint256 capOi) external onlyGovernor {
+        require(capOi >= MIN_CAP_OI && capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setCapOi(capOi);
+        emit OpenInterestCapUpdated(msg.sender, address(market), capOi);
     }
 
     /// @dev initial leverage cap setter

@@ -251,6 +251,10 @@ contract OverlayV1Market {
         capPayoff = _capPayoff;
     }
 
+    function setCapOi(uint256 _capOi) external onlyFactory {
+        capOi = _capOi;
+    }
+
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
         capLeverage = _capLeverage;
     }

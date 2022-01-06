@@ -244,3 +244,6 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
             expect_min_collateral,
             {"from": gov}
         )
+
+
+# TODO: deploy market reverts when each risk param is out of bounds
