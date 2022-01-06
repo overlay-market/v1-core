@@ -404,7 +404,8 @@ def test_set_maintenance_margin_reverts_when_not_gov(factory, market, alice):
 
     # check can't set maintenanceMargin with non gov account
     with reverts("OVLV1: !governor"):
-        _ = factory.setCapOi(feed, expect_maintenance_margin, {"from": alice})
+        _ = factory.setMaintenanceMargin(feed, expect_maintenance_margin,
+                                         {"from": alice})
 
 
 def test_set_maintenance_margin_reverts_when_less_than_min(factory, market,
