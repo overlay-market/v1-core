@@ -105,12 +105,34 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, request, ovl, feed_factory):
+def create_factory(gov, request, ovl, feed_factory, feed_three):
 
-    def create_factory(tok=ovl, feeds=feed_factory):
+    def create_factory(tok=ovl, feeds=feed_factory, feed=feed_three):
+        # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok)
+
+        # grant market factory token admin role
         tok.grantRole(tok.ADMIN_ROLE(), factory, {"from": gov})
-        factory.addFeedFactory(feeds.address, {"from": gov})
+
+        # add the feed factory
+        factory.addFeedFactory(feeds, {"from": gov})
+
+        # deploy a single market on feed three
+        k = 1220000000000
+        lmbda = 1000000000000000000
+        delta = 2500000000000000
+        cap_payoff = 5000000000000000000
+        cap_oi = 800000000000000000000000
+        cap_leverage = 5000000000000000000
+        maintenance = 100000000000000000
+        maintenance_burn = 100000000000000000
+        trade_fee = 750000000000000
+        min_collateral = 100000000000000
+        _ = factory.deployMarket(feeds, feed, k, lmbda, delta,
+                                 cap_payoff, cap_oi, cap_leverage,
+                                 maintenance, maintenance_burn, trade_fee,
+                                 min_collateral, {"from": gov})
+
         return factory
 
     yield create_factory
@@ -121,37 +143,7 @@ def factory(create_factory):
     yield create_factory()
 
 
-# NOTE: market creation tested in test_deploy_market.py
 @pytest.fixture(scope="module")
-def create_market(gov, factory):
-    def create_market(feed_fact, feed, k, lmbda, delta, cap_payoff, cap_oi,
-                      cap_leverage, maintenance, maintenance_burn,
-                      trade_fee, min_collateral, governance=gov, ovl=ovl):
-        # deploy the market
-        tx = factory.deployMarket(feed_fact, feed, k, lmbda, delta,
-                                  cap_payoff, cap_oi, cap_leverage,
-                                  maintenance, maintenance_burn, trade_fee,
-                                  min_collateral, {"from": gov})
-        market = tx.return_value
-
-        # return the interface
-        return interface.IOverlayV1Market(market)
-
-    yield create_market
-
-
-@pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
-    1000000000000000000,  # lmbda
-    2500000000000000,  # delta
-    5000000000000000000,  # capPayoff
-    800000000000000000000000,  # capOi
-    5000000000000000000,  # capLeverage
-    100000000000000000,  # maintenanceMargin
-    100000000000000000,  # maintenanceMarginBurnRate
-    750000000000000,  # tradingFeeRate
-    100000000000000,  # minCollateral
-)])
-def market(gov, feed_factory, feed_three, ovl, create_market, request):
-    yield create_market(feed_factory, feed_three, governance=gov, ovl=ovl,
-                        *request.param)
+def market(factory, feed_three):
+    market_addr = factory.getMarket(feed_three)
+    yield interface.IOverlayV1Market(market_addr)

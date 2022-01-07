@@ -124,6 +124,8 @@ contract OverlayV1Market {
         }
 
         // longs get the ask and shorts get the bid on build
+        // TODO: have market impact change the price given no longer using ERC1155
+        // so something like price = _adjustePriceForMarketImpact(data, oi, capOiAdjusted, isLong, isBuild);
         uint256 price = isLong ? ask(data) : bid(data);
 
         // store the position info data

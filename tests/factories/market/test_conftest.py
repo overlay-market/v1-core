@@ -1,4 +1,4 @@
-def test_factory_fixture(factory, feed_factory, ovl, gov):
+def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov, market):
     # check params set properly
     assert factory.ovl() == ovl
 
@@ -11,6 +11,10 @@ def test_factory_fixture(factory, feed_factory, ovl, gov):
 
     # check feed factory has been added to registry
     assert factory.isFeedFactory(feed_factory) is True
+
+    # check market deployed for feed three has been added to registry
+    assert factory.getMarket(feed_three) == market
+    assert factory.isMarket(market) is True
 
 
 def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
