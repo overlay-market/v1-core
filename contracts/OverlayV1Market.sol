@@ -102,6 +102,8 @@ contract OverlayV1Market {
         uint256 collateralIn = collateral;
 
         // calculate oi adjusted for fees. fees are taken from collateral
+        // TODO: change market impact so not an upfront fee but an adjustment to price
+        // TODO: along w market impact change, change minOi to minSlippage since on price
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 impactFee = _registerMarketImpact(oi, capOiAdjusted);
