@@ -7,22 +7,10 @@ def test_only_minter_on_mint(token, alice, bob):
         token.mint(bob, 1 * 10 ** token.decimals(), {"from": alice})
 
 
-def test_only_burner_on_burn_from(token, alice, bob):
+def test_only_burner_on_burn(token, alice):
     EXPECTED_ERROR_MSG = 'ERC20: !burner'
     with brownie.reverts(EXPECTED_ERROR_MSG):
-        token.burnFrom(alice, 1 * 10 ** token.decimals(), {"from": bob})
-
-
-def test_only_burner_on_burn(token, bob):
-    EXPECTED_ERROR_MSG = 'ERC20: !burner'
-    with brownie.reverts(EXPECTED_ERROR_MSG):
-        token.burn(1 * 10 ** token.decimals(), {"from": bob})
-
-
-def test_burn_from_exceeds_allowance(token, burner, bob):
-    EXPECTED_ERROR_MSG = 'ERC20: burn amount exceeds allowance'
-    with brownie.reverts(EXPECTED_ERROR_MSG):
-        token.burnFrom(bob, 1 * 10 ** token.decimals(), {"from": burner})
+        token.burn(1 * 10 ** token.decimals(), {"from": alice})
 
 
 def test_mint(token, minter, alice):
@@ -41,16 +29,6 @@ def test_burn(token, burner, minter):
     assert token.balanceOf(burner) == before - amount
 
 
-def test_burn_from(token, burner, bob):
-    before = token.balanceOf(bob)
-    amount = 1 * 10 ** token.decimals()
-
-    token.approve(burner, amount, {"from": bob})
-    token.burnFrom(bob, amount, {"from": burner})
-
-    assert token.balanceOf(bob) == before - amount
-
-
 def test_mint_then_burn(token, market, alice):
     before = token.balanceOf(alice)
 
@@ -58,17 +36,24 @@ def test_mint_then_burn(token, market, alice):
     mid = before + 20 * 10 ** token.decimals()
     assert token.balanceOf(alice) == mid
 
-    token.approve(market, 20 * 10 ** token.decimals(), {"from": alice})
-    token.burnFrom(alice, 15 * 10 ** token.decimals(), {"from": market})
-    assert token.balanceOf(alice) == mid - 15 * 10 ** token.decimals()
-
     before_market = token.balanceOf(market)
+    token.approve(market, 20 * 10 ** token.decimals(), {"from": alice})
+    token.transfer(market, 15 * 10 ** token.decimals(), {"from": alice})
+
+    assert token.balanceOf(alice) == mid - 15 * 10 ** token.decimals()
+    assert token.balanceOf(market) == \
+        before_market + 15 * 10 ** token.decimals()
+
+    token.burn(15 * 10 ** token.decimals(), {"from": market})
+    assert token.balanceOf(market) == before_market
+
+    mid_market = token.balanceOf(market)
     token.transfer(market, 5 * 10 ** token.decimals(), {"from": alice})
-    assert token.balanceOf(market) == before_market + \
+    assert token.balanceOf(market) == mid_market + \
         5 * 10 ** token.decimals()
     assert token.balanceOf(alice) == mid - 20 * 10 ** token.decimals()
 
-    before_market += 5 * 10 ** token.decimals()
+    mid_market += 5 * 10 ** token.decimals()
     token.burn(5 * 10 ** token.decimals(), {"from": market})
-    assert token.balanceOf(market) == before_market - \
+    assert token.balanceOf(market) == mid_market - \
         5 * 10 ** token.decimals()

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
@@ -32,15 +32,5 @@ contract OverlayV1Token is AccessControlEnumerable, ERC20("Overlay", "OVL") {
 
   function burn(uint256 _amount) external onlyBurner {
       _burn(msg.sender, _amount);
-  }
-
-  // See: OpenZeppelin Contracts v4.4.0 (token/ERC20/extensions/ERC20Burnable.sol)
-  function burnFrom(address _account, uint256 _amount) external onlyBurner {
-      uint256 _currentAllowance = allowance(_account, msg.sender);
-      require(_currentAllowance >= _amount, "ERC20: burn amount exceeds allowance");
-      unchecked {
-          _approve(_account, msg.sender, _currentAllowance - _amount);
-      }
-      _burn(_account, _amount);
   }
 }
