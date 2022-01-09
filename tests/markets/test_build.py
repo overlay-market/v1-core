@@ -1,6 +1,6 @@
 import pytest
 from pytest import approx
-from brownie import reverts
+from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
 
@@ -15,23 +15,21 @@ def isolation(fn_isolation):
 def calculate_position_info(oi: Decimal,
                             leverage: Decimal,
                             trading_fee_rate: Decimal,
-                            lmbda: Decimal,
                             cap_oi: Decimal) -> (Decimal, Decimal, Decimal,
                                                  Decimal, Decimal):
     collateral = oi / leverage
-    impact_fee = 0  # TODO: add in
     trade_fee = oi * trading_fee_rate
 
-    collateral_adjusted = collateral - impact_fee - trade_fee
+    collateral_adjusted = collateral - trade_fee
     oi_adjusted = collateral_adjusted * leverage
     debt = oi_adjusted - collateral_adjusted
 
-    return collateral_adjusted, oi_adjusted, debt, impact_fee, trade_fee
+    return collateral_adjusted, oi_adjusted, debt, trade_fee
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
                                 is_long):
@@ -53,16 +51,27 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    collateral_adjusted, oi_adjusted, debt, _, _ \
-        = calculate_position_info(oi, leverage, trading_fee_rate, lmbda,
-                                  cap_oi)
+    collateral_adjusted, oi_adjusted, debt, _ \
+        = calculate_position_info(oi, leverage, trading_fee_rate, cap_oi)
 
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
-    price = market.ask(data) if is_long else market.bid(data)
+    expect_volume = int((oi_adjusted / cap_oi) * Decimal(1e18))
+    price = market.ask(data, expect_volume) if is_long \
+        else market.bid(data, expect_volume)
+
+    # check rolling volume values for ask or bid are updated
+    actual_volume = market.rollingVolumeAsk() if is_long else \
+        market.rollingVolumeBid()
+    assert int(actual_volume) == approx(expect_volume)
+
+    # check rolling volume last update timestamp updated
+    expect_volume_last_updated = chain[tx.block_number]['timestamp']
+    actual_volume_last_updated = market.askTakenLast() if is_long \
+        else market.bidTakenLast()
+    assert actual_volume_last_updated == expect_volume_last_updated
 
     # expect values
     expect_leverage = int(leverage * Decimal(1e18))
@@ -79,15 +88,15 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
 
     assert actual_leverage == expect_leverage
     assert actual_is_long == expect_is_long
-    assert actual_entry_price == expect_entry_price
+    assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
     assert int(actual_debt) == approx(expect_debt, rel=1e-4)
     assert int(actual_cost) == approx(expect_cost, rel=1e-4)
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     input_collateral = int(oi / leverage * Decimal(1e18))
@@ -108,11 +117,10 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
 
     # calculate expected oi info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    _, oi_adjusted, _, _, _ = calculate_position_info(oi, leverage,
-                                                      trading_fee_rate, lmbda,
-                                                      cap_oi)
+    _, oi_adjusted, _, _ = calculate_position_info(oi, leverage,
+                                                   trading_fee_rate,
+                                                   cap_oi)
     expect_oi += int(oi_adjusted * Decimal(1e18))
     expect_oi_shares += int(oi_adjusted * Decimal(1e18))
 
@@ -125,8 +133,8 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_executes_transfers(market, ovl, alice, oi, leverage,
                                   is_long):
@@ -142,42 +150,32 @@ def test_build_executes_transfers(market, ovl, alice, oi, leverage,
 
     # calculate expected info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    _, _, _, impact_fee, trade_fee = calculate_position_info(oi, leverage,
-                                                             trading_fee_rate,
-                                                             lmbda, cap_oi)
+    _, _, _, trade_fee = calculate_position_info(oi, leverage,
+                                                 trading_fee_rate, cap_oi)
 
-    expect_impact_fee = int(impact_fee * Decimal(1e18))
     expect_trade_fee = int(trade_fee * Decimal(1e18))
 
     # check Transfer events for:
-    # 1. collateral in; 2. impact burn; 3. trade fees out
+    # 1. collateral in; 2. trade fees out
     assert 'Transfer' in tx.events
-    assert len(tx.events['Transfer']) == 3
+    assert len(tx.events['Transfer']) == 2
 
     # check collateral in event (1)
     assert tx.events['Transfer'][0]['from'] == alice.address
     assert tx.events['Transfer'][0]['to'] == market.address
     assert int(tx.events['Transfer'][0]['value']) == input_collateral
 
-    # check impact burn event (2)
+    # check trade fee out event (2)
     assert tx.events['Transfer'][1]['from'] == market.address
-    assert tx.events['Transfer'][1]['to'] \
-        == "0x0000000000000000000000000000000000000000"
-    assert int(tx.events['Transfer'][1]['value']) == approx(expect_impact_fee,
-                                                            rel=1e-4)
-
-    # check trade fee out event (3)
-    assert tx.events['Transfer'][2]['from'] == market.address
-    assert tx.events['Transfer'][2]['to'] == market.tradingFeeRecipient()
-    assert int(tx.events['Transfer'][2]['value']) == approx(expect_trade_fee,
+    assert tx.events['Transfer'][1]['to'] == market.tradingFeeRecipient()
+    assert int(tx.events['Transfer'][1]['value']) == approx(expect_trade_fee,
                                                             rel=1e-4)
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
                                               leverage, is_long):
@@ -197,11 +195,10 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
 
     # calculate expected collateral info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    collateral_adjusted, _, _, _, _ = calculate_position_info(oi, leverage,
-                                                              trading_fee_rate,
-                                                              lmbda, cap_oi)
+    collateral_adjusted, _, _, _ = calculate_position_info(oi, leverage,
+                                                           trading_fee_rate,
+                                                           cap_oi)
     expect_balance_alice -= input_collateral
     expect_balance_market += int(collateral_adjusted * Decimal(1e18))
 
@@ -214,8 +211,8 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_transfers_trading_fees(market, ovl, alice, oi,
                                       leverage, is_long):
@@ -235,11 +232,10 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
 
     # calculate expected collateral info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    _, _, _, _, trade_fee = calculate_position_info(oi, leverage,
-                                                    trading_fee_rate,
-                                                    lmbda, cap_oi)
+    _, _, _, trade_fee = calculate_position_info(oi, leverage,
+                                                 trading_fee_rate,
+                                                 cap_oi)
 
     expect += int(trade_fee * Decimal(1e18))
     actual = ovl.balanceOf(recipient)
@@ -304,8 +300,8 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
 
 
 @given(
-    oi=strategy('decimal', min_value='0.001', max_value='800000'),
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_reverts_when_oi_less_than_min(market, ovl, alice, oi, leverage,
                                              is_long):
@@ -320,11 +316,10 @@ def test_build_reverts_when_oi_less_than_min(market, ovl, alice, oi, leverage,
 
     # calculate expected oi info data before build to use for min oi value
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    _, oi_adjusted, _, _, _ = calculate_position_info(oi, leverage,
-                                                      trading_fee_rate,
-                                                      lmbda, cap_oi)
+    _, oi_adjusted, _, _ = calculate_position_info(oi, leverage,
+                                                   trading_fee_rate,
+                                                   cap_oi)
 
     tol = 1e-4  # tolerance put at +/- 1bps
     input_min_oi = int(oi_adjusted * Decimal(1+tol) * Decimal(1e18))
@@ -346,7 +341,7 @@ def test_build_reverts_when_oi_less_than_min(market, ovl, alice, oi, leverage,
 
 
 @given(
-    leverage=strategy('decimal', min_value='1.0', max_value='5.0'),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
                                                      leverage, is_long):
@@ -361,7 +356,6 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
 
     # check build reverts for min_collateral > collateral (w tolerance)
-    # TODO: include impact fee
     input_min_collateral = Decimal(min_collateral) / \
         Decimal(1 - leverage * trading_fee_rate)
     input_collateral = int(input_min_collateral * Decimal(1-tol))
@@ -418,11 +412,10 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 
     # calculate expected pos info data
     input_oi = int(Decimal(input_collateral * leverage) / Decimal(1e18))
-    lmbda = Decimal(market.lmbda() / 1e18)
     cap_oi = Decimal(market.capOi() / 1e18)
-    collateral_adjusted, oi_adjusted, debt, _, _ \
+    collateral_adjusted, oi_adjusted, debt, _ \
         = calculate_position_info(input_oi, leverage, trading_fee_rate,
-                                  lmbda, cap_oi)
+                                  cap_oi)
 
     # expect values
     expect_oi_shares = int(oi_adjusted * Decimal(1e18))

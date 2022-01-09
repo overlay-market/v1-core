@@ -15,6 +15,11 @@ contract OverlayV1Market {
     using FixedPoint for uint256;
 
     uint256 constant internal ONE = 1e18; // 18 decimal places
+    uint256 constant internal MAX_NATURAL_EXPONENT = 41e18; // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
+
+    // TODO: think about implementing FixedPoint.expUp() and FixedPoint.expDown() functions (with tests)
+    uint256 constant internal EULER = 2718281828459045091; // 2.71828e18
+    uint256 constant internal INVERSE_EULER = 367879441171442334; // 0.367879e18
 
     OverlayV1Token immutable public ovl; // ovl token
     address immutable public feed; // oracle feed
@@ -40,6 +45,14 @@ contract OverlayV1Market {
     uint256 public oiShort;
     uint256 public oiLongShares;
     uint256 public oiShortShares;
+
+    // rolling volume related quantities normalized wrt cap oi
+    uint256 public rollingVolumeBid;
+    uint256 public rollingVolumeAsk;
+
+    // last call to update rolling volume numbers
+    uint256 public bidTakenLast;
+    uint256 public askTakenLast;
 
     // positions
     Position.Info[] public positions;
@@ -102,13 +115,11 @@ contract OverlayV1Market {
         uint256 collateralIn = collateral;
 
         // calculate oi adjusted for fees. fees are taken from collateral
-        // TODO: change market impact so not an upfront fee but an adjustment to price
-        // TODO: along w market impact change, change minOi to minSlippage since on price
+        // TODO: change minOi to minSlippage since impact now on price
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
-        uint256 impactFee = _registerMarketImpact(oi, capOiAdjusted);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
-        collateral -= impactFee + tradingFee;
+        collateral -= tradingFee;
         oi = collateral.mulUp(leverage);
 
         require(collateral >= minCollateral, "OVLV1:collateral<min");
@@ -126,9 +137,9 @@ contract OverlayV1Market {
         }
 
         // longs get the ask and shorts get the bid on build
-        // TODO: have market impact change the price given no longer using ERC1155
-        // so something like price = _adjustePriceForMarketImpact(data, oi, capOiAdjusted, isLong, isBuild);
-        uint256 price = isLong ? ask(data) : bid(data);
+        // register the additional volume taking either the ask or bid
+        uint256 volume = isLong ? _registerVolumeAsk(oi, capOiAdjusted) : _registerVolumeBid(oi, capOiAdjusted);
+        uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
         // TODO: pack position.info to get gas close to 200k
@@ -144,9 +155,6 @@ contract OverlayV1Market {
 
         // transfer in the OVL collateral needed to back the position
         ovl.transferFrom(msg.sender, address(this), collateralIn);
-
-        // burn the impact fee
-        ovl.burn(impactFee);
 
         // send trading fees to trading fee recipient
         ovl.transfer(tradingFeeRecipient, tradingFee);
@@ -199,24 +207,6 @@ contract OverlayV1Market {
         return positions.length;
     }
 
-    /// @dev gets bid price given oracle data
-    function bid(Oracle.Data memory data) public view returns (uint256 bid_) {
-        bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        bid_ -= delta; // approx for e^(-delta) = 1-delta
-    }
-
-    /// @dev gets ask price given oracle data
-    function ask(Oracle.Data memory data) public view returns (uint256 ask_) {
-        ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        ask_ += delta; // approx for e^(delta) = 1+delta
-    }
-
-    /// @dev gets price quotes for the bid and the ask
-    function getPriceQuotes(Oracle.Data memory data) external view returns (uint256 bid_, uint256 ask_) {
-        bid_ = bid(data);
-        ask_ = ask(data);
-    }
-
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event we've printed a lot in recent past
@@ -229,11 +219,56 @@ contract OverlayV1Market {
         return cap;
     }
 
-    /// @dev market impact fee based on open interest proposed for build
-    /// @dev and current level of capOi with adjustments
-    function _registerMarketImpact(uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
-        // TODO: register the impact and return the fee; use linear drift
-        // reversion for cumulative impact instead of rollers to save gas
+    /// @dev gets bid price given oracle data and recent volume for market impact
+    function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
+        bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
+
+        uint256 pow = delta + lmbda.mulUp(volume);
+        require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
+
+        bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
+    }
+
+    /// @dev gets ask price given oracle data and recent volume for market impact
+    function ask(Oracle.Data memory data, uint256 volume) public view returns (uint256 ask_) {
+        ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
+
+        uint256 pow = delta + lmbda.mulUp(volume);
+        require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
+
+        ask_ = ask_.mulUp(EULER.powUp(pow));
+    }
+
+    /// @dev looks at the rolling volume on bid side with linear decay adjustments
+    /// since last time a bid was taken
+    function rollingVolumeBidWithDecay() public view returns (uint256) {
+        // TODO: add in linear decay function
+        return rollingVolumeBid;
+    }
+
+    /// @dev looks at the rolling volume on ask side with linear decay adjustments
+    /// since last time a bid was taken
+    function rollingVolumeAskWithDecay() public view returns (uint256) {
+        // TODO: add in linear decay function
+        return rollingVolumeAsk;
+    }
+
+    /// @dev rolling volume adjustments on bid side to be used for price market impact
+    function _registerVolumeBid(uint256 oi, uint256 capOiAdjusted) private returns (uint256 volume_) {
+        volume_ = rollingVolumeBidWithDecay();
+        volume_ += oi.divUp(capOiAdjusted);
+
+        bidTakenLast = block.timestamp;
+        rollingVolumeBid = volume_;
+    }
+
+    /// @dev rolling volume adjustments on ask side to be used for price market impact
+    function _registerVolumeAsk(uint256 oi, uint256 capOiAdjusted) private returns (uint256 volume_) {
+        volume_ = rollingVolumeAskWithDecay();
+        volume_ += oi.divUp(capOiAdjusted);
+
+        askTakenLast = block.timestamp;
+        rollingVolumeAsk = volume_;
     }
 
     /// @dev governance adjustable risk parameter setters
