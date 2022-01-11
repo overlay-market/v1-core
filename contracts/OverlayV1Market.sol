@@ -287,8 +287,8 @@ contract OverlayV1Market {
         return volume;
     }
 
-    /// @dev adjusts accumulator value downward linearly. accumulatorNow_ should go to zero
-    /// as one windowNow_ passes
+    /// @dev adjusts accumulator value downward linearly over time.
+    /// accumulatorLast should go to zero as one windowLast passes
     function decayOverWindow(
         uint256 accumulatorLast,
         uint256 timestampLast,
@@ -311,8 +311,10 @@ contract OverlayV1Market {
         accumulatorNow_ = accumulatorLast + value;
 
         // recalculate windowNow_ for future decay as a value weighted average time
-        uint256 numerator = accumulatorNow_ - accumulatorLast.mulDown(dt * ONE).divDown(windowLast * ONE);
-        windowNow_ = window.mulUp(numerator).divUp(accumulatorNow_);
+        // of time left in windowLast for accumulatorLast and window for value
+        // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) / (accumulatorLastWithDecay + value)
+        uint256 numerator = accumulatorLast.mulUp(ONE * (windowLast - dt)) + value.mulUp(window);
+        windowNow_ = numerator.divUp(accumulatorNow_);
     }
 
     /// @dev governance adjustable risk parameter setters
