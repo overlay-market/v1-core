@@ -51,14 +51,18 @@ contract OverlayV1Market {
     uint256 public rollingVolumeAsk;
 
     // last call to update rolling volume numbers
-    uint256 public bidTakenLast;
-    uint256 public askTakenLast;
+    uint256 public timestampBidLast;
+    uint256 public timestampAskLast;
+
+    // window over which rolling volume numbers are currently decaying
+    uint256 public windowBidLast;
+    uint256 public windowAskLast;
 
     // positions
     Position.Info[] public positions;
 
     // last call to funding
-    uint256 public fundingPaidLast;
+    uint256 public timestampFundingLast;
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
@@ -84,7 +88,7 @@ contract OverlayV1Market {
         feed = _feed;
         factory = msg.sender;
         tradingFeeRecipient = msg.sender;
-        fundingPaidLast = block.timestamp;
+        timestampFundingLast = block.timestamp;
 
         // set the gov params
         k = _k;
@@ -138,7 +142,7 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
-        uint256 volume = isLong ? _registerVolumeAsk(oi, capOiAdjusted) : _registerVolumeBid(oi, capOiAdjusted);
+        uint256 volume = isLong ? _registerVolumeAsk(data, oi, capOiAdjusted) : _registerVolumeBid(data, oi, capOiAdjusted);
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
@@ -185,7 +189,7 @@ contract OverlayV1Market {
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE-2*k).powUp(ONE * (block.timestamp - fundingPaidLast));
+        uint256 drawdownFactor = (ONE-2*k).powUp(ONE * (block.timestamp - timestampFundingLast));
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
@@ -199,7 +203,7 @@ contract OverlayV1Market {
 
         oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-        fundingPaidLast = block.timestamp;
+        timestampFundingLast = block.timestamp;
     }
 
     /// @return next position id
@@ -239,36 +243,76 @@ contract OverlayV1Market {
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
 
-    /// @dev looks at the rolling volume on bid side with linear decay adjustments
-    /// since last time a bid was taken
-    function rollingVolumeBidWithDecay() public view returns (uint256) {
-        // TODO: add in linear decay function
-        return rollingVolumeBid;
+    /// @dev rolling volume adjustments on bid side to be used for market impact. volume values are normalized
+    /// with respect to oi cap
+    function _registerVolumeBid(Oracle.Data memory data, uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
+        // calculates the decay in the rolling volume for ask side since timestamp last
+        // and determines new window to decay over
+        uint256 value = oi.divUp(capOiAdjusted);
+        (uint256 volume, uint256 window) = decayOverWindow(
+            rollingVolumeBid,
+            timestampBidLast,
+            windowBidLast,
+            value,
+            data.microWindow
+        );
+
+        timestampBidLast = block.timestamp;
+        windowBidLast = window;
+        rollingVolumeBid = volume;
+
+        // return the volume
+        return volume;
     }
 
-    /// @dev looks at the rolling volume on ask side with linear decay adjustments
-    /// since last time a bid was taken
-    function rollingVolumeAskWithDecay() public view returns (uint256) {
-        // TODO: add in linear decay function
-        return rollingVolumeAsk;
+    /// @dev rolling volume adjustments on ask side to be used for market impact. volume values are normalized
+    /// with respect to oi cap
+    function _registerVolumeAsk(Oracle.Data memory data, uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
+        // calculates the decay in the rolling volume for ask side since timestamp last
+        // and determines new window to decay over
+        uint256 value = oi.divUp(capOiAdjusted);
+        (uint256 volume, uint256 window) = decayOverWindow(
+            rollingVolumeAsk,
+            timestampAskLast,
+            windowAskLast,
+            value,
+            data.microWindow
+        );
+
+        timestampAskLast = block.timestamp;
+        windowAskLast = window;
+        rollingVolumeAsk = volume;
+
+        // return the volume
+        return volume;
     }
 
-    /// @dev rolling volume adjustments on bid side to be used for price market impact
-    function _registerVolumeBid(uint256 oi, uint256 capOiAdjusted) private returns (uint256 volume_) {
-        volume_ = rollingVolumeBidWithDecay();
-        volume_ += oi.divUp(capOiAdjusted);
+    /// @dev adjusts accumulator value downward linearly. accumulatorNow_ should go to zero
+    /// as one windowNow_ passes
+    function decayOverWindow(
+        uint256 accumulatorLast,
+        uint256 timestampLast,
+        uint256 windowLast,
+        uint256 value,
+        uint256 window
+    ) public view returns (uint256 accumulatorNow_, uint256 windowNow_) {
+        uint256 dt = block.timestamp - timestampLast;
+        if (dt >= windowLast) {
+            // if one window has passed, prior value has decayed to zero
+            return (value, window);
+        }
 
-        bidTakenLast = block.timestamp;
-        rollingVolumeBid = volume_;
-    }
+        // otherwise, calculate fraction of value remaining given linear decay.
+        // fraction of value to take off due to decay (linear drift toward zero)
+        // is fraction of windowLast that has elapsed since timestampLast
+        accumulatorLast -= accumulatorLast.mulDown(dt * ONE).divDown(windowLast * ONE);
 
-    /// @dev rolling volume adjustments on ask side to be used for price market impact
-    function _registerVolumeAsk(uint256 oi, uint256 capOiAdjusted) private returns (uint256 volume_) {
-        volume_ = rollingVolumeAskWithDecay();
-        volume_ += oi.divUp(capOiAdjusted);
+        // add in the new value for accumulator now
+        accumulatorNow_ = accumulatorLast + value;
 
-        askTakenLast = block.timestamp;
-        rollingVolumeAsk = volume_;
+        // recalculate windowNow_ for future decay as a value weighted average time
+        uint256 numerator = accumulatorNow_ - accumulatorLast.mulDown(dt * ONE).divDown(windowLast * ONE);
+        windowNow_ = window.mulUp(numerator).divUp(accumulatorNow_);
     }
 
     /// @dev governance adjustable risk parameter setters

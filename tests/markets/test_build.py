@@ -69,8 +69,8 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
 
     # check rolling volume last update timestamp updated
     expect_volume_last_updated = chain[tx.block_number]['timestamp']
-    actual_volume_last_updated = market.askTakenLast() if is_long \
-        else market.bidTakenLast()
+    actual_volume_last_updated = market.timestampAskLast() if is_long \
+        else market.timestampBidLast()
     assert actual_volume_last_updated == expect_volume_last_updated
 
     # expect values

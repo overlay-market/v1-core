@@ -23,5 +23,5 @@ interface IOverlayV1Market {
     function tradingFeeRecipient() external view returns (address);
 
     // funding related quantities
-    function fundingPaidLast() external view returns (uint256);
+    function timestampFundingLast() external view returns (uint256);
 }

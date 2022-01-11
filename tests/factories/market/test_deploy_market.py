@@ -93,7 +93,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.tradingFeeRecipient() == factory
 
     # check funding paid last timestamp is last block's
-    assert market_contract.fundingPaidLast() \
+    assert market_contract.timestampFundingLast() \
         == chain[tx.block_number]['timestamp']
 
 

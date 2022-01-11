@@ -9,12 +9,12 @@ def test_update_fetches_from_feed(market, feed, rando):
 
 
 def test_update_pays_funding(market, feed, rando):
-    prior = market.fundingPaidLast()
+    prior = market.timestampFundingLast()
 
     # NOTE: payFunding() tests in test_funding.py
     tx = market.update()
 
-    actual = market.fundingPaidLast()
+    actual = market.timestampFundingLast()
     expect = chain[tx.block_number]['timestamp']
 
     assert prior != actual
