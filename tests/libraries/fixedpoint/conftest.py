@@ -1,0 +1,35 @@
+import pytest
+from brownie import FixedPointMock
+
+
+@pytest.fixture(scope="module")
+def gov(accounts):
+    yield accounts[0]
+
+
+@pytest.fixture(scope="module")
+def alice(accounts):
+    yield accounts[1]
+
+
+@pytest.fixture(scope="module")
+def bob(accounts):
+    yield accounts[2]
+
+
+@pytest.fixture(scope="module")
+def rando(accounts):
+    yield accounts[3]
+
+
+@pytest.fixture(scope="module")
+def create_fixed_point(alice):
+    def create_fixed_point():
+        fixed_point = alice.deploy(FixedPointMock)
+        return fixed_point
+    yield create_fixed_point
+
+
+@pytest.fixture(scope="module")
+def fixed_point(create_fixed_point):
+    yield create_fixed_point()
