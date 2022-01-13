@@ -104,6 +104,7 @@ library FixedPoint {
     function powDown(uint256 x, uint256 y) internal pure returns (uint256) {
 
         if (0 == y || x == ONE) return ONE;
+        else if (x == 0) return 0;
 
         uint256 raw = LogExpMath.pow(x, y);
         uint256 maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1);
@@ -123,6 +124,7 @@ library FixedPoint {
     function powUp(uint256 x, uint256 y) internal pure returns (uint256) {
 
         if (ONE == x || y == 0) return ONE;
+        else if (x == 0) return 0;
 
         uint256 raw = LogExpMath.pow(x, y);
         uint256 maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1);

@@ -64,7 +64,7 @@ library Position {
             isUnder_ = currentOi.mulDown(priceFrame) < self.debt;
         } else {
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) + self.debt < ( currentOi * 2 );
+            isUnder_ = currentOi.mulDown(priceFrame) + self.debt > ( currentOi * 2 );
         }
     }
 
@@ -174,13 +174,13 @@ library Position {
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
-        uint256 priceFrame
+        uint256 currentPrice
     ) internal view returns (uint256) {
         return _notional(
             self,
             totalOi,
             totalOiShares,
-            priceFrame
+            currentPrice
         );
     }
 
