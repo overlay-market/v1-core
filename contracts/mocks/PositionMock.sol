@@ -6,7 +6,7 @@ import "../libraries/Position.sol";
 contract PositionMock {
     using Position for Position.Info;
 
-    function initialOi (Position.Info memory pos) internal view returns (uint256) {
+    function initialOi (Position.Info memory pos) external view returns (uint256) {
         return pos.initialOi();
     }
 
@@ -14,7 +14,7 @@ contract PositionMock {
         Position.Info memory pos,
         uint256 totalOi,
         uint256 totalOiShares
-    ) internal view returns (uint256) {
+    ) external view returns (uint256) {
         return pos.oi(totalOi, totalOiShares);
     }
 

@@ -21,11 +21,14 @@ library Position {
         return self.cost + self.debt;
     }
 
+    /// @dev returns zero when oiShares = totalOi = totalOiShares = 0 to avoid
+    /// div by zero errors
     function _oi(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares
     ) private pure returns (uint256) {
+        if (self.oiShares == 0 || totalOi == 0) return 0;
         return self.oiShares
             .mulDown(totalOi)
             .divUp(totalOiShares);
