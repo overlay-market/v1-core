@@ -1,6 +1,8 @@
 import brownie
+import pytest
 
 
+@pytest.mark.skip(reason="Skip")
 def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
                                                            pool_uniweth_30bps,
                                                            quanto_feed):
@@ -40,6 +42,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
     assert expect == actual
 
 
+@pytest.mark.skip(reason="Skip")
 def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
                                                             inverse_feed):
     timestamp = brownie.chain.time()
@@ -78,6 +81,7 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
     assert expect == actual
 
 
+@pytest.mark.skip(reason="Skip")
 def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
                                                            pool_uniweth_30bps,
                                                            quanto_feed):
