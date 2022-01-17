@@ -6,11 +6,15 @@ import "../libraries/Position.sol";
 contract PositionMock {
     using Position for Position.Info;
 
-    function initialOi (Position.Info memory pos) external view returns (uint256) {
+    function initialOi(Position.Info memory pos)
+        external
+        view
+        returns (uint256)
+    {
         return pos.initialOi();
     }
 
-    function oi (
+    function oi(
         Position.Info memory pos,
         uint256 totalOi,
         uint256 totalOiShares
@@ -52,12 +56,13 @@ contract PositionMock {
         uint256 currentPrice,
         uint256 marginMaintenance
     ) external view returns (bool) {
-        return pos.isLiquidatable(
-            totalOi,
-            totalOiShares,
-            currentPrice,
-            marginMaintenance
-        );
+        return
+            pos.isLiquidatable(
+                totalOi,
+                totalOiShares,
+                currentPrice,
+                marginMaintenance
+            );
     }
 
     function liquidationPrice(
@@ -66,10 +71,6 @@ contract PositionMock {
         uint256 totalOiShares,
         uint256 marginMaintenance
     ) external view returns (uint256) {
-        return pos.liquidationPrice(
-            totalOi,
-            totalOiShares,
-            marginMaintenance
-        );
+        return pos.liquidationPrice(totalOi, totalOiShares, marginMaintenance);
     }
 }

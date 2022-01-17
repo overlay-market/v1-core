@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.0;
 
-/// COPIED AND MODIFIED FROM: https://github.com/Uniswap/v3-core/blob/v1.0.0/contracts/libraries/FullMath.sol
+/// COPIED AND MODIFIED FROM:
+/// https://github.com/Uniswap/v3-core/blob/v1.0.0/contracts/libraries/FullMath.sol
 /// CTRL-F: XXX FOR CHANGES
 
 /// @title Contains 512-bit math functions
-/// @notice Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
-/// @dev Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
+/// @notice Facilitates multiplication and division that can have overflow of an intermediate value
+/// @notice without any loss of precision
+/// @dev Handles "phantom overflow" i.e., allows multiplication and division where an intermediate
+/// @dev value overflows 256 bits
 library FullMath {
-    /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a
+    /// @notice uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
     /// @param denominator The divisor
@@ -109,7 +113,8 @@ library FullMath {
         return result;
     }
 
-    /// @notice Calculates ceil(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @notice Calculates ceil(a×b÷denominator) with full precision. Throws if result overflows a
+    /// @notice uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
     /// @param denominator The divisor

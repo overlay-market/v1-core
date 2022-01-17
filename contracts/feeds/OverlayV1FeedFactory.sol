@@ -4,8 +4,8 @@ pragma solidity 0.8.10;
 import "../libraries/Oracle.sol";
 
 abstract contract OverlayV1FeedFactory {
-    uint256 immutable public microWindow;
-    uint256 immutable public macroWindow;
+    uint256 public immutable microWindow;
+    uint256 public immutable macroWindow;
 
     // registry of deployed feeds by factory
     mapping(address => bool) public isFeed;
