@@ -1,4 +1,4 @@
-name: Overlay V1 Core Solidity Linter
+name: Overlay V1 Core Lint Solidity
 
 on:
   push:
