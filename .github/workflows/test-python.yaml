@@ -1,4 +1,4 @@
-name: Overlay V1 Core Test
+name: Overlay V1 Core Test Python
 
 on:
   push:

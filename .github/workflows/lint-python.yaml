@@ -1,4 +1,4 @@
-name: Overlay V1 Core Repo Linter
+name: Overlay V1 Core Lint Python
 
 on:
   push:
