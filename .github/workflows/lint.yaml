@@ -1,0 +1,25 @@
+name: Overlay V1 Core Repo Linter
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  flake8-lint:
+    runs-on: ubuntu-latest
+    name: Lint
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.9"
+      - name: flake8 lint
+        uses: py-actions/flake8@v1
+        with:
+          exclude: "scripts/old/*"
