@@ -6,15 +6,18 @@ import "./FixedPoint.sol";
 
 library Position {
     using FixedPoint for uint256;
-    uint256 constant internal TWO = 2e18;
+    uint256 internal constant TWO = 2e18;
 
     struct Info {
         uint256 leverage; // discrete initial leverage amount
         bool isLong; // whether long or short
         uint256 entryPrice; // price received at entry
-        uint256 oiShares; // shares of total open interest attributed to this position on long/short side, depending on isLong value
+        // shares of total open interest attributed to this position on long/short side, depending
+        // on isLong value
+        uint256 oiShares;
         uint256 debt; // total debt associated with this position
-        uint256 cost; // total amount of collateral initially locked; effectively, cost to enter position
+        // total amount of collateral initially locked; effectively, cost to enter position
+        uint256 cost;
     }
 
     function _initialOi(Info memory self) private pure returns (uint256) {
@@ -29,9 +32,7 @@ library Position {
         uint256 totalOiShares
     ) private pure returns (uint256) {
         if (self.oiShares == 0 || totalOi == 0) return 0;
-        return self.oiShares
-            .mulDown(totalOi)
-            .divUp(totalOiShares);
+        return self.oiShares.mulDown(totalOi).divUp(totalOiShares);
     }
 
     /// @dev Floors to zero, so won't properly compute if self is underwater
@@ -42,11 +43,13 @@ library Position {
         uint256 currentPrice
     ) private pure returns (uint256 val_) {
         uint256 currentOi = _oi(self, totalOi, totalOiShares);
-        if (self.isLong) { // oi * priceFrame - debt
+        if (self.isLong) {
+            // oi * priceFrame - debt
             uint256 priceFrame = currentPrice.divDown(self.entryPrice);
             val_ = currentOi.mulDown(priceFrame);
             val_ -= Math.min(val_, self.debt); // floor to 0
-        } else { // oi * (2 - priceFrame) - debt
+        } else {
+            // oi * (2 - priceFrame) - debt
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
             val_ = currentOi.mulDown(2e18);
             val_ -= Math.min(val_, self.debt + currentOi.mulDown(priceFrame)); // floor to 0
@@ -67,7 +70,8 @@ library Position {
             isUnder_ = currentOi.mulDown(priceFrame) < self.debt;
         } else {
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) + self.debt > ( currentOi * 2 );
+            isUnder_ =
+                currentOi.mulDown(priceFrame) + self.debt > (currentOi * 2);
         }
     }
 
@@ -78,12 +82,7 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) private pure returns (uint256 notional_) {
-        uint256 val = _value(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice
-        );
+        uint256 val = _value(self, totalOi, totalOiShares, currentPrice);
         notional_ = val + self.debt;
     }
 
@@ -94,15 +93,8 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice,
         uint256 marginMaintenance
-    ) private pure returns (
-        bool can_
-    ) {
-        uint val = _value(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice
-        );
+    ) private pure returns (bool can_) {
+        uint256 val = _value(self, totalOi, totalOiShares, currentPrice);
         uint256 maintenanceMargin = _initialOi(self).mulUp(marginMaintenance);
         can_ = val < maintenanceMargin;
     }
@@ -113,25 +105,24 @@ library Position {
         uint256 totalOiShares,
         uint256 marginMaintenance
     ) private pure returns (uint256 liqPrice_) {
-
         uint256 posOi = _oi(self, totalOi, totalOiShares);
         uint256 posInitialOi = _initialOi(self);
 
-        uint256 oiFrame = posInitialOi.mulUp(marginMaintenance)
+        uint256 oiFrame = posInitialOi
+            .mulUp(marginMaintenance)
             .add(self.debt)
             .divDown(posOi);
 
         if (self.isLong) liqPrice_ = self.entryPrice.mulUp(oiFrame);
         else liqPrice_ = self.entryPrice.mulUp(TWO.sub(oiFrame));
-
     }
 
-    function initialOi (Info memory self) internal view returns (uint256) {
+    function initialOi(Info memory self) internal view returns (uint256) {
         return _initialOi(self);
     }
 
     /// @notice Computes the open interest of a position
-    function oi (
+    function oi(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares
@@ -147,12 +138,7 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal view returns (uint256) {
-        return _value(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice
-        );
+        return _value(self, totalOi, totalOiShares, currentPrice);
     }
 
     /// @notice Whether position is underwater
@@ -163,12 +149,7 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal view returns (bool) {
-        return _isUnderwater(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice
-        );
+        return _isUnderwater(self, totalOi, totalOiShares, currentPrice);
     }
 
     /// @notice Computes the notional of a position
@@ -179,12 +160,7 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal view returns (uint256) {
-        return _notional(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice
-        );
+        return _notional(self, totalOi, totalOiShares, currentPrice);
     }
 
     /// @notice Whether a position can be liquidated
@@ -196,14 +172,14 @@ library Position {
         uint256 currentPrice,
         uint256 marginMaintenance
     ) internal view returns (bool) {
-        return _isLiquidatable(
-            self,
-            totalOi,
-            totalOiShares,
-            currentPrice,
-            marginMaintenance
-        );
-
+        return
+            _isLiquidatable(
+                self,
+                totalOi,
+                totalOiShares,
+                currentPrice,
+                marginMaintenance
+            );
     }
 
     /// @notice Computes the liquidation price of a position
@@ -214,12 +190,7 @@ library Position {
         uint256 totalOiShares,
         uint256 marginMaintenance
     ) internal view returns (uint256) {
-        return _liquidationPrice(
-            self,
-            totalOi,
-            totalOiShares,
-            marginMaintenance
-        );
-
+        return
+            _liquidationPrice(self, totalOi, totalOiShares, marginMaintenance);
     }
 }

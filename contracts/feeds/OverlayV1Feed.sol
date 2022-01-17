@@ -6,8 +6,8 @@ import "../libraries/Oracle.sol";
 abstract contract OverlayV1Feed {
     using Oracle for Oracle.Data;
 
-    uint256 immutable public microWindow;
-    uint256 immutable public macroWindow;
+    uint256 public immutable microWindow;
+    uint256 public immutable macroWindow;
 
     constructor(uint256 _microWindow, uint256 _macroWindow) {
         microWindow = _microWindow;

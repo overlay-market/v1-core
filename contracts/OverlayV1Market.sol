@@ -14,16 +14,18 @@ contract OverlayV1Market {
     using Position for Position.Info;
     using FixedPoint for uint256;
 
-    uint256 constant internal ONE = 1e18; // 18 decimal places
-    uint256 constant internal MAX_NATURAL_EXPONENT = 41e18; // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
+    uint256 internal constant ONE = 1e18; // 18 decimal places
+    // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
+    uint256 internal constant MAX_NATURAL_EXPONENT = 41e18;
 
-    // TODO: think about implementing FixedPoint.expUp() and FixedPoint.expDown() functions (with tests)
-    uint256 constant internal EULER = 2718281828459045091; // 2.71828e18
-    uint256 constant internal INVERSE_EULER = 367879441171442334; // 0.367879e18
+    // TODO: think about implementing FixedPoint.expUp() and FixedPoint.expDown() functions (with
+    // tests)
+    uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
+    uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
-    OverlayV1Token immutable public ovl; // ovl token
-    address immutable public feed; // oracle feed
-    address immutable public factory; // factory that deployed this market
+    OverlayV1Token public immutable ovl; // ovl token
+    address public immutable feed; // oracle feed
+    address public immutable factory; // factory that deployed this market
 
     // risk params
     uint256 public k; // funding constant
@@ -132,29 +134,34 @@ contract OverlayV1Market {
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
         if (isLong) {
-            oiLong += oi; oiLongShares += oi;
+            oiLong += oi;
+            oiLongShares += oi;
             require(oiLong <= capOiAdjusted, "OVLV1:oi>cap");
-        }
-        else {
-            oiShort += oi; oiShortShares += oi;
+        } else {
+            oiShort += oi;
+            oiShortShares += oi;
             require(oiShort <= capOiAdjusted, "OVLV1:oi>cap");
         }
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
-        uint256 volume = isLong ? _registerVolumeAsk(data, oi, capOiAdjusted) : _registerVolumeBid(data, oi, capOiAdjusted);
+        uint256 volume = isLong
+            ? _registerVolumeAsk(data, oi, capOiAdjusted)
+            : _registerVolumeBid(data, oi, capOiAdjusted);
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
         // TODO: pack position.info to get gas close to 200k
-        positions.push(Position.Info({
-            leverage: leverage,
-            isLong: isLong,
-            entryPrice: price,
-            oiShares: oi,
-            debt: oi - collateral,
-            cost: collateral
-        }));
+        positions.push(
+            Position.Info({
+                leverage: leverage,
+                isLong: isLong,
+                entryPrice: price,
+                oiShares: oi,
+                debt: oi - collateral,
+                cost: collateral
+            })
+        );
         positionId_ = positions.length - 1;
 
         // transfer in the OVL collateral needed to back the position
@@ -189,8 +196,12 @@ contract OverlayV1Market {
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE-2*k).powUp(ONE * (block.timestamp - timestampFundingLast));
-        uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
+        uint256 drawdownFactor = (ONE - 2 * k).powUp(
+            ONE * (block.timestamp - timestampFundingLast)
+        );
+        uint256 oiImbalanceNow = drawdownFactor.mulUp(
+            oiOverweight - oiUnderweight
+        );
 
         if (oiUnderweight == 0) {
             // effectively user pays the protocol if one side has zero oi
@@ -214,7 +225,11 @@ contract OverlayV1Market {
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event we've printed a lot in recent past
-    function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
+    function capOiWithAdjustments(Oracle.Data memory data)
+        public
+        view
+        returns (uint256)
+    {
         uint256 cap = capOi;
 
         // TODO: apply adjustments; use linear drift reversion for dynamic
@@ -224,7 +239,11 @@ contract OverlayV1Market {
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact
-    function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
+    function bid(Oracle.Data memory data, uint256 volume)
+        public
+        view
+        returns (uint256 bid_)
+    {
         bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
         uint256 pow = delta + lmbda.mulUp(volume);
@@ -234,7 +253,11 @@ contract OverlayV1Market {
     }
 
     /// @dev gets ask price given oracle data and recent volume for market impact
-    function ask(Oracle.Data memory data, uint256 volume) public view returns (uint256 ask_) {
+    function ask(Oracle.Data memory data, uint256 volume)
+        public
+        view
+        returns (uint256 ask_)
+    {
         ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
         uint256 pow = delta + lmbda.mulUp(volume);
@@ -243,9 +266,15 @@ contract OverlayV1Market {
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
 
-    /// @dev rolling volume adjustments on bid side to be used for market impact. volume values are normalized
-    /// with respect to oi cap
-    function _registerVolumeBid(Oracle.Data memory data, uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
+    /**
+      @dev Rolling volume adjustments on bid side to be used for market impact.
+      @dev Volume values are dev normalized with respect to oi cap.
+     **/
+    function _registerVolumeBid(
+        Oracle.Data memory data,
+        uint256 oi,
+        uint256 capOiAdjusted
+    ) private returns (uint256) {
         // calculates the decay in the rolling volume for ask side since timestamp last
         // and determines new window to decay over
         uint256 value = oi.divUp(capOiAdjusted);
@@ -265,9 +294,15 @@ contract OverlayV1Market {
         return volume;
     }
 
-    /// @dev rolling volume adjustments on ask side to be used for market impact. volume values are normalized
-    /// with respect to oi cap
-    function _registerVolumeAsk(Oracle.Data memory data, uint256 oi, uint256 capOiAdjusted) private returns (uint256) {
+    /**
+      @dev rolling volume adjustments on ask side to be used for market impact. 
+      @dev Volume values are normalized with respect to oi cap.
+     **/
+    function _registerVolumeAsk(
+        Oracle.Data memory data,
+        uint256 oi,
+        uint256 capOiAdjusted
+    ) private returns (uint256) {
         // calculates the decay in the rolling volume for ask side since timestamp last
         // and determines new window to decay over
         uint256 value = oi.divUp(capOiAdjusted);
@@ -305,15 +340,19 @@ contract OverlayV1Market {
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        accumulatorLast -= accumulatorLast.mulDown(dt * ONE).divDown(windowLast * ONE);
+        accumulatorLast -= accumulatorLast.mulDown(dt * ONE).divDown(
+            windowLast * ONE
+        );
 
         // add in the new value for accumulator now
         accumulatorNow_ = accumulatorLast + value;
 
         // recalculate windowNow_ for future decay as a value weighted average time
         // of time left in windowLast for accumulatorLast and window for value
-        // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) / (accumulatorLastWithDecay + value)
-        uint256 numerator = accumulatorLast.mulUp(ONE * (windowLast - dt)) + value.mulUp(window);
+        // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) /
+        //        (accumulatorLastWithDecay + value)
+        uint256 numerator = accumulatorLast.mulUp(ONE * (windowLast - dt)) +
+            value.mulUp(window);
         windowNow_ = numerator.divUp(accumulatorNow_);
     }
 
@@ -344,11 +383,17 @@ contract OverlayV1Market {
         capLeverage = _capLeverage;
     }
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
+    function setMaintenanceMargin(uint256 _maintenanceMargin)
+        external
+        onlyFactory
+    {
         maintenanceMargin = _maintenanceMargin;
     }
 
-    function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external onlyFactory {
+    function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate)
+        external
+        onlyFactory
+    {
         maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
     }
 

@@ -16,8 +16,6 @@ pragma solidity 0.8.10;
 import "./LogExpMath.sol";
 import "../utils/Errors.sol";
 
-/* solhint-disable private-vars-leading-underscore */
-
 library FixedPoint {
     uint256 internal constant ONE = 1e18; // 18 decimal places
     uint256 internal constant MAX_POW_RELATIVE_ERROR = 10000; // 10^(-14)
@@ -97,12 +95,10 @@ library FixedPoint {
         }
     }
 
-    /**
-     * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The result is guaranteed to not be above
-     * the true value (that is, the error function expected - actual is always positive).
-     */
+    /// @dev Returns x^y, assuming both are fixed point numbers, rounding down. The result is
+    /// @dev guaranteed to not be above the true value (that is, the error function expected -
+    /// @dev actual is always positive).
     function powDown(uint256 x, uint256 y) internal pure returns (uint256) {
-
         if (0 == y || x == ONE) return ONE;
         else if (x == 0) return 0;
 
@@ -114,15 +110,12 @@ library FixedPoint {
         } else {
             return sub(raw, maxError);
         }
-
     }
 
-    /**
-     * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The result is guaranteed to not be below
-     * the true value (that is, the error function expected - actual is always negative).
-     */
+    /// @dev Returns x^y, assuming both are fixed point numbers, rounding up. The result is
+    /// @dev guaranteed to not be below the true value (that is, the error function expected -
+    /// @dev actual is always negative).
     function powUp(uint256 x, uint256 y) internal pure returns (uint256) {
-
         if (ONE == x || y == 0) return ONE;
         else if (x == 0) return 0;
 
@@ -130,15 +123,11 @@ library FixedPoint {
         uint256 maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1);
 
         return add(raw, maxError);
-
     }
 
-    /**
-     * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
-     *
-     * Useful when computing the complement for values with some level of relative error, as it strips this error and
-     * prevents intermediate negative values.
-     */
+    /// @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
+    /// @dev Useful when computing the complement for values with some level of relative error, as
+    /// @dev it strips this error and prevents intermediate negative values.
     function complement(uint256 x) internal pure returns (uint256) {
         return (x < ONE) ? (ONE - x) : 0;
     }
