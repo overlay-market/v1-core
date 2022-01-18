@@ -75,15 +75,24 @@ library Position {
         }
     }
 
-    /// @dev Floors to _self.debt, so won't properly compute if _self is underwater
+    /// @dev Floors to zero, so won't properly compute if _self is underwater
     function _notional(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
     ) private pure returns (uint256 notional_) {
-        uint256 val = _value(self, totalOi, totalOiShares, currentPrice);
-        notional_ = val + self.debt;
+        uint256 currentOi = _oi(self, totalOi, totalOiShares);
+        if (self.isLong) {
+            // oi * priceFrame
+            uint256 priceFrame = currentPrice.divDown(self.entryPrice);
+            notional_ = currentOi.mulDown(priceFrame);
+        } else {
+            // oi * (2 - priceFrame)
+            uint256 priceFrame = currentPrice.divUp(self.entryPrice);
+            notional_ = currentOi.mulDown(2e18);
+            notional_ -= Math.min(notional_, currentOi.mulDown(priceFrame)); // floor to 0
+        }
     }
 
     /// @dev is true when open margin < maintenance margin
