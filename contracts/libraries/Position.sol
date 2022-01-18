@@ -12,12 +12,9 @@ library Position {
         uint256 leverage; // discrete initial leverage amount
         bool isLong; // whether long or short
         uint256 entryPrice; // price received at entry
-        // shares of total open interest attributed to this position on long/short side, depending
-        // on isLong value
-        uint256 oiShares;
-        uint256 debt; // total debt associated with this position
-        // total amount of collateral initially locked; effectively, cost to enter position
-        uint256 cost;
+        uint256 oiShares; // shares of open interest
+        uint256 debt; // debt
+        uint256 cost; // amount of collateral initially locked
     }
 
     function initialOi(Info memory self) internal view returns (uint256) {
@@ -147,7 +144,9 @@ library Position {
             isUnder_ = currentOi.mulDown(priceFrame) < self.debt;
         } else {
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) + self.debt > currentOi.mulDown(TWO);
+            isUnder_ =
+                currentOi.mulDown(priceFrame) + self.debt >
+                currentOi.mulDown(TWO);
         }
     }
 
