@@ -51,7 +51,7 @@ library Position {
         } else {
             // oi * (2 - priceFrame) - debt
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            val_ = currentOi.mulDown(2e18);
+            val_ = currentOi.mulDown(TWO);
             val_ -= Math.min(val_, self.debt + currentOi.mulDown(priceFrame)); // floor to 0
         }
     }
@@ -70,8 +70,7 @@ library Position {
             isUnder_ = currentOi.mulDown(priceFrame) < self.debt;
         } else {
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            isUnder_ =
-                currentOi.mulDown(priceFrame) + self.debt > (currentOi * 2);
+            isUnder_ = currentOi.mulDown(priceFrame) + self.debt > currentOi.mulDown(TWO);
         }
     }
 
@@ -90,7 +89,7 @@ library Position {
         } else {
             // oi * (2 - priceFrame)
             uint256 priceFrame = currentPrice.divUp(self.entryPrice);
-            notional_ = currentOi.mulDown(2e18);
+            notional_ = currentOi.mulDown(TWO);
             notional_ -= Math.min(notional_, currentOi.mulDown(priceFrame)); // floor to 0
         }
     }

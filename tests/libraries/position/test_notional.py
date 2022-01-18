@@ -1,6 +1,3 @@
-# TODO: fuzzing with strategies?
-
-
 def test_value(position):
     leverage = 1250000000000000000  # 1.25x
     entry_price = 100000000000000000000  # 100
