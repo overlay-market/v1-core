@@ -20,6 +20,83 @@ library Position {
         uint256 cost;
     }
 
+    function initialOi(Info memory self) internal view returns (uint256) {
+        return _initialOi(self);
+    }
+
+    /// @notice Computes the open interest of a position
+    function oi(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares
+    ) internal view returns (uint256) {
+        return _oi(self, totalOi, totalOiShares);
+    }
+
+    /// @notice Computes the value of a position
+    /// @dev Floors to zero, so won't properly compute if self is underwater
+    function value(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 currentPrice
+    ) internal view returns (uint256) {
+        return _value(self, totalOi, totalOiShares, currentPrice);
+    }
+
+    /// @notice Whether position is underwater
+    /// @dev is true when position value <= 0
+    function isUnderwater(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 currentPrice
+    ) internal view returns (bool) {
+        return _isUnderwater(self, totalOi, totalOiShares, currentPrice);
+    }
+
+    /// @notice Computes the notional of a position
+    /// @dev Floors to _self.debt if value <= 0
+    function notional(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 currentPrice
+    ) internal view returns (uint256) {
+        return _notional(self, totalOi, totalOiShares, currentPrice);
+    }
+
+    /// @notice Whether a position can be liquidated
+    /// @dev is true when value < maintenance margin
+    function isLiquidatable(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 currentPrice,
+        uint256 marginMaintenance
+    ) internal view returns (bool) {
+        return
+            _isLiquidatable(
+                self,
+                totalOi,
+                totalOiShares,
+                currentPrice,
+                marginMaintenance
+            );
+    }
+
+    /// @notice Computes the liquidation price of a position
+    /// @dev price when value < maintenance margin
+    function liquidationPrice(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 marginMaintenance
+    ) internal view returns (uint256) {
+        return
+            _liquidationPrice(self, totalOi, totalOiShares, marginMaintenance);
+    }
+
     function _initialOi(Info memory self) private pure returns (uint256) {
         return self.cost + self.debt;
     }
@@ -121,84 +198,10 @@ library Position {
             .add(self.debt)
             .divDown(posOi);
 
-        if (self.isLong) liqPrice_ = self.entryPrice.mulUp(oiFrame);
-        else liqPrice_ = self.entryPrice.mulUp(TWO.sub(oiFrame));
-    }
-
-    function initialOi(Info memory self) internal view returns (uint256) {
-        return _initialOi(self);
-    }
-
-    /// @notice Computes the open interest of a position
-    function oi(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares
-    ) internal view returns (uint256) {
-        return _oi(self, totalOi, totalOiShares);
-    }
-
-    /// @notice Computes the value of a position
-    /// @dev Floors to zero, so won't properly compute if self is underwater
-    function value(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) internal view returns (uint256) {
-        return _value(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Whether position is underwater
-    /// @dev is true when position value <= 0
-    function isUnderwater(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) internal view returns (bool) {
-        return _isUnderwater(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Computes the notional of a position
-    /// @dev Floors to _self.debt if value <= 0
-    function notional(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) internal view returns (uint256) {
-        return _notional(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Whether a position can be liquidated
-    /// @dev is true when value < maintenance margin
-    function isLiquidatable(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice,
-        uint256 marginMaintenance
-    ) internal view returns (bool) {
-        return
-            _isLiquidatable(
-                self,
-                totalOi,
-                totalOiShares,
-                currentPrice,
-                marginMaintenance
-            );
-    }
-
-    /// @notice Computes the liquidation price of a position
-    /// @dev price when value < maintenance margin
-    function liquidationPrice(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 marginMaintenance
-    ) internal view returns (uint256) {
-        return
-            _liquidationPrice(self, totalOi, totalOiShares, marginMaintenance);
+        if (self.isLong) {
+            liqPrice_ = self.entryPrice.mulUp(oiFrame);
+        } else {
+            liqPrice_ = self.entryPrice.mulUp(TWO.sub(oiFrame));
+        }
     }
 }
