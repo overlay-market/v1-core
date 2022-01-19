@@ -192,6 +192,9 @@ library Position {
         uint256 posOi = _oi(self, totalOi, totalOiShares);
         uint256 posInitialOi = _initialOi(self);
 
+        // TODO: decide what to return when posOi = 0 to avoid
+        // div by zero error
+
         uint256 oiFrame = posInitialOi
             .mulUp(marginMaintenance)
             .add(self.debt)
