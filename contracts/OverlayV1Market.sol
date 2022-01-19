@@ -332,7 +332,7 @@ contract OverlayV1Market {
         uint256 window
     ) public view returns (uint256 accumulatorNow_, uint256 windowNow_) {
         uint256 dt = block.timestamp - timestampLast;
-        if (dt >= windowLast) {
+        if (dt >= windowLast || windowLast == 0) {
             // if one window has passed, prior value has decayed to zero
             return (value, window);
         }
@@ -340,20 +340,23 @@ contract OverlayV1Market {
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        accumulatorLast -= accumulatorLast.mulDown(dt * ONE).divDown(
-            windowLast * ONE
-        );
+        accumulatorLast -= (accumulatorLast * dt) / windowLast;
 
         // add in the new value for accumulator now
         accumulatorNow_ = accumulatorLast + value;
+        if (accumulatorNow_ == 0) {
+            // if accumulator now is zero, windowNow is simply window
+            // to avoid 0/0 case below
+            return (0, window);
+        }
 
         // recalculate windowNow_ for future decay as a value weighted average time
         // of time left in windowLast for accumulatorLast and window for value
         // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) /
         //        (accumulatorLastWithDecay + value)
-        uint256 numerator = accumulatorLast.mulUp(ONE * (windowLast - dt)) +
-            value.mulUp(window);
-        windowNow_ = numerator.divUp(accumulatorNow_);
+        uint256 numerator = accumulatorLast * (windowLast - dt);
+        numerator += value * window;
+        windowNow_ = numerator / accumulatorNow_;
     }
 
     /// @dev governance adjustable risk parameter setters
