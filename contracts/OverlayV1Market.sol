@@ -295,7 +295,7 @@ contract OverlayV1Market {
     }
 
     /**
-      @dev rolling volume adjustments on ask side to be used for market impact. 
+      @dev rolling volume adjustments on ask side to be used for market impact.
       @dev Volume values are normalized with respect to oi cap.
      **/
     function _registerVolumeAsk(
