@@ -6,7 +6,7 @@ import pytest
 def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
                                                            pool_uniweth_30bps,
                                                            quanto_feed):
-    timestamp = brownie.chain.time()
+    timestamp = brownie.chain.time()  # TODO: brownie.chain[-1]['timestamp']
     micro_window = quanto_feed.microWindow()
     macro_window = quanto_feed.macroWindow()
     market_base_amount = quanto_feed.marketBaseAmount()
@@ -45,7 +45,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
 @pytest.mark.skip(reason="Skip")
 def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
                                                             inverse_feed):
-    timestamp = brownie.chain.time()
+    timestamp = brownie.chain.time()  # TODO: brownie.chain[-1]['timestamp']
     micro_window = inverse_feed.microWindow()
     macro_window = inverse_feed.macroWindow()
     market_base_amount = inverse_feed.marketBaseAmount()
@@ -94,7 +94,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
     # fetch from feed 3 times in a row w 60s in between
     for i in range(3):
         brownie.chain.mine(timedelta=60)
-        timestamp = brownie.chain.time()
+        timestamp = brownie.chain.time()  # TODO:brownie.chain[-1]['timestamp']
         actual = quanto_feed.latest()
 
         # calculate the avg tick and liquidity values from pool.observe
@@ -134,7 +134,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
     # fetch from feed 3 times in a row w 60s in between
     for i in range(3):
         brownie.chain.mine(timedelta=60)
-        timestamp = brownie.chain.time()
+        timestamp = brownie.chain.time()  # TODO:brownie.chain[-1]['timestamp']
         actual = inverse_feed.latest()
 
         # calculate the avg tick and liquidity values from pool.observe
