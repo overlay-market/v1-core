@@ -340,7 +340,7 @@ contract OverlayV1Market {
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        accumulatorLast -= accumulatorLast * dt / windowLast;
+        accumulatorLast -= (accumulatorLast * dt) / windowLast;
 
         // add in the new value for accumulator now
         accumulatorNow_ = accumulatorLast + value;
@@ -354,7 +354,8 @@ contract OverlayV1Market {
         // of time left in windowLast for accumulatorLast and window for value
         // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) /
         //        (accumulatorLastWithDecay + value)
-        uint256 numerator = accumulatorLast * (windowLast - dt) + value * window;
+        uint256 numerator = accumulatorLast * (windowLast - dt);
+        numerator += value * window;
         windowNow_ = numerator / accumulatorNow_;
     }
 
