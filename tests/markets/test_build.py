@@ -58,20 +58,9 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
-    expect_volume = int((oi_adjusted / cap_oi) * Decimal(1e18))
-    price = market.ask(data, expect_volume) if is_long \
-        else market.bid(data, expect_volume)
-
-    # check rolling volume values for ask or bid are updated
-    actual_volume = market.rollingVolumeAsk() if is_long else \
-        market.rollingVolumeBid()
-    assert int(actual_volume) == approx(expect_volume)
-
-    # check rolling volume last update timestamp updated
-    expect_volume_last_updated = chain[tx.block_number]['timestamp']
-    actual_volume_last_updated = market.timestampAskLast() if is_long \
-        else market.timestampBidLast()
-    assert actual_volume_last_updated == expect_volume_last_updated
+    volume = int((oi_adjusted / cap_oi) * Decimal(1e18))
+    price = market.ask(data, volume) if is_long \
+        else market.bid(data, volume)
 
     # expect values
     expect_leverage = int(leverage * Decimal(1e18))
@@ -130,6 +119,65 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
 
     assert int(actual_oi) == approx(expect_oi, rel=1e-4)
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
+
+
+@given(
+    oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
+    leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
+    is_long=strategy('bool'))
+def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
+                                is_long):
+    input_collateral = int(oi / leverage * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+    input_min_oi = 0  # NOTE: testing for min_oi below
+
+    # priors actual values
+    _ = market.update({"from": alice})  # update funding prior
+    last_volume = market.rollingVolumeAsk() if is_long else \
+        market.rollingVolumeBid()
+    last_timestamp = market.timestampAskLast() if is_long else \
+        market.timestampBidLast()
+    last_window = market.windowAskLast() if is_long else \
+        market.windowBidLast()
+
+    # approve market for spending then build
+    ovl.approve(market, input_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_min_oi, {"from": alice})
+
+    # calculate expected oi info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    cap_oi = Decimal(market.capOi() / 1e18)
+    _, oi_adjusted, _, _ = calculate_position_info(oi, leverage,
+                                                   trading_fee_rate,
+                                                   cap_oi)
+
+    # calculate expected rolling volume and window numbers when
+    # adjusted for decay
+    # NOTE: decayOverWindow() tested in test_rollers.py
+    _, micro_window, _, _, _, _, _ = feed.latest()
+    input_volume = int((oi_adjusted / cap_oi) * Decimal(1e18))
+    input_window = micro_window
+    input_timestamp = chain[tx.block_number]['timestamp']
+
+    expect_volume, expect_window = market.decayOverWindow(
+        last_volume, last_timestamp, last_window, input_volume,
+        input_timestamp, input_window
+    )
+    expect_timestamp = input_timestamp
+
+    # compare with actual rolling volume, timestamp last, window last values
+    actual_volume = market.rollingVolumeAsk() if is_long else \
+        market.rollingVolumeBid()
+    actual_timestamp = market.timestampAskLast() if is_long else \
+        market.timestampBidLast()
+    actual_window = market.windowAskLast() if is_long else \
+        market.windowBidLast()
+
+    assert int(actual_volume) == approx(expect_volume)
+    assert actual_timestamp == expect_timestamp
+    assert int(actual_window) == approx(expect_window)
 
 
 @given(

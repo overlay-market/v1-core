@@ -10,6 +10,7 @@ def test_decay_over_window(market):
     timestamp_last = chain[-1]['timestamp'] - 200
     window_last = 1000
     value = 500000000000000000  # 50% of cap
+    now = chain[-1]['timestamp']
     window = 600
     dt = 200
 
@@ -27,7 +28,7 @@ def test_decay_over_window(market):
 
     expect = (expect_value_now, expect_window_now)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect
 
 
@@ -36,13 +37,14 @@ def test_decay_over_window_when_last_window_passed(market):
     timestamp_last = chain[-1]['timestamp'] - 1000
     window_last = 1000
     value = 500000000000000000  # 50% of cap
+    now = chain[-1]['timestamp']
     window = 600
 
     # check after windowLast has passed, all accumulatorLast has decayed
     # to zero. Should return just (value, window)
     expect = (value, window)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect
 
 
@@ -53,12 +55,13 @@ def test_decay_over_window_when_last_accumulator_zero(market):
     timestamp_last = chain[-1]['timestamp'] - 1000
     window_last = 1000
     value = 500000000000000000  # 50% of cap
+    now = chain[-1]['timestamp']
     window = 600
 
     # Check decayOverWindow simply returns (value, window)
     expect = (value, window)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect
 
 
@@ -69,12 +72,13 @@ def test_decay_over_window_when_now_accumulator_zero(market):
     timestamp_last = chain[-1]['timestamp'] - 1000
     window_last = 1000
     value = 0  # 0% of cap
+    now = chain[-1]['timestamp']
     window = 600
 
     # Check decayOverWindow simply returns (value, window)
     expect = (value, window)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect
 
 
@@ -84,13 +88,14 @@ def test_decay_over_window_when_last_window_zero(market):
     timestamp_last = chain[-1]['timestamp'] - 1000
     window_last = 0
     value = 500000000000000000  # 50% of cap
+    now = chain[-1]['timestamp']
     window = 600
 
     # Check decayOverWindow simply returns (value, window) to avoid
     # div by zero errors
     expect = (value, window)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect
 
 
@@ -100,10 +105,11 @@ def test_decay_over_window_when_last_timestamp_zero(market):
     timestamp_last = 0
     window_last = 1000
     value = 500000000000000000  # 50% of cap
+    now = chain[-1]['timestamp']
     window = 600
 
     # Check decayOverWindow simply returns (value, window)
     expect = (value, window)
     actual = market.decayOverWindow(
-        accumulator_last, timestamp_last, window_last, value, window)
+        accumulator_last, timestamp_last, window_last, value, now, window)
     assert actual == expect

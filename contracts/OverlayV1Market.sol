@@ -283,6 +283,7 @@ contract OverlayV1Market {
             timestampBidLast,
             windowBidLast,
             value,
+            block.timestamp,
             data.microWindow
         );
 
@@ -311,6 +312,7 @@ contract OverlayV1Market {
             timestampAskLast,
             windowAskLast,
             value,
+            block.timestamp,
             data.microWindow
         );
 
@@ -329,9 +331,10 @@ contract OverlayV1Market {
         uint256 timestampLast,
         uint256 windowLast,
         uint256 value,
+        uint256 now,
         uint256 window
-    ) public view returns (uint256 accumulatorNow_, uint256 windowNow_) {
-        uint256 dt = block.timestamp - timestampLast;
+    ) public pure returns (uint256 accumulatorNow_, uint256 windowNow_) {
+        uint256 dt = now - timestampLast;
         if (dt >= windowLast || windowLast == 0) {
             // if one window has passed, prior value has decayed to zero
             return (value, window);
