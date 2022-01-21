@@ -31,9 +31,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
         uint128 marketBaseAmount
     ) external returns (address feed_) {
         require(
-            getFeed[marketPool][marketBaseToken][marketQuoteToken][
-                marketBaseAmount
-            ] == address(0),
+            getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] == address(0),
             "OVLV1: feed already exists"
         );
 
@@ -44,12 +42,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
         feed_ = address(
             new OverlayV1UniswapV3Feed{
                 salt: keccak256(
-                    abi.encode(
-                        marketPool,
-                        marketBaseToken,
-                        marketQuoteToken,
-                        marketBaseAmount
-                    )
+                    abi.encode(marketPool, marketBaseToken, marketQuoteToken, marketBaseAmount)
                 )
             }(
                 marketPool,
@@ -65,9 +58,7 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
 
         // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo
         // and record address as deployed feed
-        getFeed[marketPool][marketBaseToken][marketQuoteToken][
-            marketBaseAmount
-        ] = feed_;
+        getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] = feed_;
         isFeed[feed_] = true;
         emit FeedDeployed(msg.sender, feed_);
     }

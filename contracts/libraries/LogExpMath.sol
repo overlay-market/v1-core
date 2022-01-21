@@ -60,8 +60,8 @@ library LogExpMath {
 
     // 18 decimal constants
     int256 constant x0 = 128000000000000000000; // 2ˆ7
-    int256 constant a0 =
-        38877084059945950922200000000000000000000000000000000000; // eˆ(x0) (no decimals)
+    // eˆ(x0) (no decimals)
+    int256 constant a0 = 38877084059945950922200000000000000000000000000000000000;
     int256 constant x1 = 64000000000000000000; // 2ˆ6
     int256 constant a1 = 6235149080811616882910000000; // eˆ(x1) (no decimals)
 
@@ -133,8 +133,7 @@ library LogExpMath {
 
             // Finally, we compute exp(y * ln(x)) to arrive at x^y
             _require(
-                MIN_NATURAL_EXPONENT <= logx_times_y &&
-                    logx_times_y <= MAX_NATURAL_EXPONENT,
+                MIN_NATURAL_EXPONENT <= logx_times_y && logx_times_y <= MAX_NATURAL_EXPONENT,
                 Errors.PRODUCT_OUT_OF_BOUNDS
             );
 
@@ -148,10 +147,7 @@ library LogExpMath {
      * Reverts if `x` is smaller than MIN_NATURAL_EXPONENT, or larger than `MAX_NATURAL_EXPONENT`.
      */
     function exp(int256 x) internal pure returns (int256) {
-        _require(
-            x >= MIN_NATURAL_EXPONENT && x <= MAX_NATURAL_EXPONENT,
-            Errors.INVALID_EXPONENT
-        );
+        _require(x >= MIN_NATURAL_EXPONENT && x <= MAX_NATURAL_EXPONENT, Errors.INVALID_EXPONENT);
 
         unchecked {
             if (x < 0) {

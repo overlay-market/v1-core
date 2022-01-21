@@ -21,5 +21,3 @@ jobs:
           python-version: "3.9"
       - name: flake8 lint
         uses: py-actions/flake8@v1
-        with:
-          exclude: "scripts/old/*"
