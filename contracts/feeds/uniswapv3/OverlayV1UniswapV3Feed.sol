@@ -217,12 +217,13 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         returns (uint256 reserveInWeth_)
     {
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(arithmeticMeanTickMarket);
+        // WETH ? x (token0) : y(token1)
         reserveInWeth_ = marketToken0 == WETH
-            ? FullMath.mulDiv(1 << 96, uint256(harmonicMeanLiquidityMarket), uint256(sqrtPriceX96)) // x (token0)
+            ? FullMath.mulDiv(1 << 96, uint256(harmonicMeanLiquidityMarket), uint256(sqrtPriceX96))
             : FullMath.mulDiv(
                 uint256(harmonicMeanLiquidityMarket),
                 uint256(sqrtPriceX96),
                 1 << 96
-            ); // y (token1)
+            );
     }
 }
