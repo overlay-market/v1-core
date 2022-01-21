@@ -15,6 +15,8 @@ contract OverlayV1Market {
     using FixedPoint for uint256;
 
     uint256 internal constant ONE = 1e18; // 18 decimal places
+    uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
+
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     uint256 internal constant MAX_NATURAL_EXPONENT = 41e18;
     uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
@@ -252,7 +254,7 @@ contract OverlayV1Market {
 
         // TODO: macroWindow should be in blocks in current spec. What to do here to be
         // futureproof vs having an average block time constant (BAD)
-        uint256 window = (data.macroWindow * ONE) / 13; // assuming average block time is 13s
+        uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
