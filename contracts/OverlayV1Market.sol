@@ -17,9 +17,6 @@ contract OverlayV1Market {
     uint256 internal constant ONE = 1e18; // 18 decimal places
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     uint256 internal constant MAX_NATURAL_EXPONENT = 41e18;
-
-    // TODO: think about implementing FixedPoint.expUp() and FixedPoint.expDown() functions (with
-    // tests)
     uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
     uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
@@ -226,10 +223,37 @@ contract OverlayV1Market {
     function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
         uint256 cap = capOi;
 
-        // TODO: apply adjustments; use linear drift reversion for dynamic
-        // instead of rollers to save gas
+        // Adjust cap downward if exceeds bounds from front run attack
+        cap = Math.min(cap, capOiFrontRunBound(data));
+
+        // Adjust cap downward if exceeds bounds from back run attack
+        cap = Math.min(cap, capOiBackRunBound(data));
+
+        // TODO: adjust cap downward for circuit breaker
 
         return cap;
+    }
+
+    /// @dev bound on open interest cap to mitigate front-running attack
+    /// @dev bound = lmbda * reserveInOvl / 2
+    function capOiFrontRunBound(Oracle.Data memory data) public view returns (uint256) {
+        if (!data.hasReserve) {
+            return capOi;
+        }
+        return lmbda.mulDown(data.reserveOverMicroWindow).divDown(2 * ONE);
+    }
+
+    /// @dev bound on open interest cap to mitigate back-running attack
+    /// @dev bound = macroWindow * reserveInOvl * 2 * delta
+    function capOiBackRunBound(Oracle.Data memory data) public view returns (uint256) {
+        if (!data.hasReserve) {
+            return capOi;
+        }
+
+        // TODO: macroWindow should be in blocks in current spec. What to do here to be
+        // futureproof vs having an average block time constant (BAD)
+        uint window = data.macroWindow * ONE / 13; // assuming average block time is 13s
+        return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact

@@ -114,7 +114,6 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             reserves[i] = reserve;
         }
 
-        // TODO: _checkData();
         return
             Oracle.Data({
                 timestamp: block.timestamp,
@@ -123,12 +122,10 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
                 priceOverMicroWindow: prices[1],
                 priceOverMacroWindow: prices[0],
                 reserveOverMicroWindow: reserves[1],
-                reserveOverMacroWindow: reserves[0]
+                reserveOverMacroWindow: reserves[0],
+                hasReserve: true
             });
     }
-
-    // TODO: function _checkData(Oracle.Data memory data) to verify price is ok with require()
-    // statement
 
     /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
     /// @dev assumes last element of secondsAgos is the current cumulative value from which we
