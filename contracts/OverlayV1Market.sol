@@ -252,7 +252,7 @@ contract OverlayV1Market {
 
         // TODO: macroWindow should be in blocks in current spec. What to do here to be
         // futureproof vs having an average block time constant (BAD)
-        uint window = data.macroWindow * ONE / 13; // assuming average block time is 13s
+        uint256 window = (data.macroWindow * ONE) / 13; // assuming average block time is 13s
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
