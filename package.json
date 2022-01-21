@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "format": "prettier --write 'contracts/**/*.sol' --verbose --config './.prettierrc.json'",
-    "format:check": "prettier --check '**/*.*(sol|json)' --config './.prettierrc.json'",
-    "format:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose --config './.prettierrc.json'",
+    "format:check": "prettier --check '**/*.sol' --config './.prettierrc.json'",
+    "format:fix": "pretty-quick --pattern '**/*.sol' --staged --verbose --config './.prettierrc.json'",
     "hint": "solhint \"contracts/**/*.sol\""
   },
   "devDependencies": {
