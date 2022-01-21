@@ -40,21 +40,16 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         address _marketToken0 = IUniswapV3Pool(_marketPool).token0();
         address _marketToken1 = IUniswapV3Pool(_marketPool).token1();
 
-        require(
-            _marketToken0 == WETH || _marketToken1 == WETH,
-            "OVLV1Feed: marketToken != WETH"
-        );
+        require(_marketToken0 == WETH || _marketToken1 == WETH, "OVLV1Feed: marketToken != WETH");
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
 
         require(
-            _marketToken0 == _marketBaseToken ||
-                _marketToken1 == _marketBaseToken,
+            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
             "OVLV1Feed: marketToken != marketBaseToken"
         );
         require(
-            _marketToken0 == _marketQuoteToken ||
-                _marketToken1 == _marketQuoteToken,
+            _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
             "OVLV1Feed: marketToken != marketQuoteToken"
         );
         marketBaseToken = _marketBaseToken;
@@ -83,13 +78,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
 
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// for micro and macro window averaging intervals
-    function _fetch()
-        internal
-        view
-        virtual
-        override
-        returns (Oracle.Data memory)
-    {
+    function _fetch() internal view virtual override returns (Oracle.Data memory) {
         uint32[] memory secondsAgos = new uint32[](3);
         secondsAgos[0] = uint32(macroWindow);
         secondsAgos[1] = uint32(microWindow);
@@ -147,10 +136,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     function consult(address pool, uint32[] memory secondsAgos)
         public
         view
-        returns (
-            int24[] memory arithmeticMeanTicks_,
-            uint128[] memory harmonicMeanLiquidities_
-        )
+        returns (int24[] memory arithmeticMeanTicks_, uint128[] memory harmonicMeanLiquidities_)
     {
         (
             int56[] memory tickCumulatives,
@@ -163,28 +149,22 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         for (uint256 i = 0; i < secondsAgos.length - 1; i++) {
             uint32 secondsAgo = secondsAgos[i];
 
-            int56 tickCumulativesDelta = tickCumulatives[
-                secondsAgos.length - 1
-            ] - tickCumulatives[i];
+            int56 tickCumulativesDelta = tickCumulatives[secondsAgos.length - 1] -
+                tickCumulatives[i];
             uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[
-                    secondsAgos.length - 1
-                ] - secondsPerLiquidityCumulativeX128s[i];
+                secondsAgos.length - 1
+            ] - secondsPerLiquidityCumulativeX128s[i];
 
-            int24 arithmeticMeanTick = int24(
-                tickCumulativesDelta / int56(int32(secondsAgo))
-            );
+            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(secondsAgo)));
             // Always round to negative infinity
-            if (
-                tickCumulativesDelta < 0 &&
-                (tickCumulativesDelta % int56(int32(secondsAgo)) != 0)
-            ) arithmeticMeanTick--;
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(int32(secondsAgo)) != 0))
+                arithmeticMeanTick--;
 
             // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity
             // doesn't overflow uint128
             uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
             uint128 harmonicMeanLiquidity = uint128(
-                secondsAgoX160 /
-                    (uint192(secondsPerLiquidityCumulativesDelta) << 32)
+                secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
             );
 
             arithmeticMeanTicks_[i] = arithmeticMeanTick;
@@ -209,11 +189,7 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
                 ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
                 : FullMath.mulDiv(1 << 192, baseAmount, ratioX192);
         } else {
-            uint256 ratioX128 = FullMath.mulDiv(
-                sqrtRatioX96,
-                sqrtRatioX96,
-                1 << 64
-            );
+            uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
             quoteAmount_ = baseToken < quoteToken
                 ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
                 : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
@@ -230,33 +206,19 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             arithmeticMeanTickMarket,
             harmonicMeanLiquidityMarket
         );
-        uint256 amountOfWethPerOvl = getQuoteAtTick(
-            arithmeticMeanTickOvlWeth,
-            ONE,
-            ovl,
-            WETH
-        );
-        reserveInOvl_ = FullMath.mulDiv(
-            reserveInWeth,
-            uint256(ONE),
-            amountOfWethPerOvl
-        );
+        uint256 amountOfWethPerOvl = getQuoteAtTick(arithmeticMeanTickOvlWeth, ONE, ovl, WETH);
+        reserveInOvl_ = FullMath.mulDiv(reserveInWeth, uint256(ONE), amountOfWethPerOvl);
     }
 
     /// @dev returns the virtual balance of WETH in the pool
-    function getReserveInWeth(
-        int24 arithmeticMeanTickMarket,
-        uint128 harmonicMeanLiquidityMarket
-    ) public view returns (uint256 reserveInWeth_) {
-        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(
-            arithmeticMeanTickMarket
-        );
+    function getReserveInWeth(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
+        public
+        view
+        returns (uint256 reserveInWeth_)
+    {
+        uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(arithmeticMeanTickMarket);
         reserveInWeth_ = marketToken0 == WETH
-            ? FullMath.mulDiv(
-                1 << 96,
-                uint256(harmonicMeanLiquidityMarket),
-                uint256(sqrtPriceX96)
-            ) // x (token0)
+            ? FullMath.mulDiv(1 << 96, uint256(harmonicMeanLiquidityMarket), uint256(sqrtPriceX96)) // x (token0)
             : FullMath.mulDiv(
                 uint256(harmonicMeanLiquidityMarket),
                 uint256(sqrtPriceX96),

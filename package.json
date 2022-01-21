@@ -2,9 +2,9 @@
   "name": "Overlay V1 Core",
   "version": "1.0.0",
   "scripts": {
-    "format": "prettier --write 'contracts/**/*.sol' --verbose",
-    "format:check": "prettier --check '**/*.*(sol|json)'",
-    "format:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose",
+    "format": "prettier --write 'contracts/**/*.sol' --verbose --config './.prettierrc.json'",
+    "format:check": "prettier --check '**/*.*(sol|json)' --config './.prettierrc.json'",
+    "format:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose --config './.prettierrc.json'",
     "hint": "solhint \"contracts/**/*.sol\""
   },
   "devDependencies": {

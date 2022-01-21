@@ -199,9 +199,7 @@ contract OverlayV1Market {
         uint256 drawdownFactor = (ONE - 2 * k).powUp(
             ONE * (block.timestamp - timestampFundingLast)
         );
-        uint256 oiImbalanceNow = drawdownFactor.mulUp(
-            oiOverweight - oiUnderweight
-        );
+        uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
             // effectively user pays the protocol if one side has zero oi
@@ -225,11 +223,7 @@ contract OverlayV1Market {
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event we've printed a lot in recent past
-    function capOiWithAdjustments(Oracle.Data memory data)
-        public
-        view
-        returns (uint256)
-    {
+    function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
         uint256 cap = capOi;
 
         // TODO: apply adjustments; use linear drift reversion for dynamic
@@ -239,11 +233,7 @@ contract OverlayV1Market {
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact
-    function bid(Oracle.Data memory data, uint256 volume)
-        public
-        view
-        returns (uint256 bid_)
-    {
+    function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
         bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
         uint256 pow = delta + lmbda.mulUp(volume);
@@ -253,11 +243,7 @@ contract OverlayV1Market {
     }
 
     /// @dev gets ask price given oracle data and recent volume for market impact
-    function ask(Oracle.Data memory data, uint256 volume)
-        public
-        view
-        returns (uint256 ask_)
-    {
+    function ask(Oracle.Data memory data, uint256 volume) public view returns (uint256 ask_) {
         ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
         uint256 pow = delta + lmbda.mulUp(volume);
@@ -389,10 +375,7 @@ contract OverlayV1Market {
         capLeverage = _capLeverage;
     }
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin)
-        external
-        onlyFactory
-    {
+    function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
         maintenanceMargin = _maintenanceMargin;
     }
 

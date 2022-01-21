@@ -12,14 +12,8 @@ contract OverlayV1FeedFactoryMock is OverlayV1FeedFactory {
     {}
 
     /// @dev deploy mock feed
-    function deployFeed(uint256 price, uint256 reserve)
-        external
-        returns (address feed_)
-    {
-        require(
-            getFeed[price][reserve] == address(0),
-            "OVLV1: feed already exists"
-        );
+    function deployFeed(uint256 price, uint256 reserve) external returns (address feed_) {
+        require(getFeed[price][reserve] == address(0), "OVLV1: feed already exists");
 
         // Use the CREATE2 opcode to deploy a new Feed contract.
         // Will revert if feed which accepts (price, reserve)
