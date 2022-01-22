@@ -40,8 +40,6 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     input_is_long = is_long
     input_min_oi = 0  # NOTE: testing for min_oi below
 
-    print('feed.latest()', feed.latest())
-
     # approve market for spending then build
     ovl.approve(market, input_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
