@@ -5,8 +5,7 @@ library Roller {
     struct Snapshot {
         uint256 timestamp; // time last snapshot was taken
         uint256 window; // window (length of time) over which will decay
-        uint256 accumulator; // accumulator value which will decay over window
-        bool isNegative; // whether accumulator value is negative
+        int256 accumulator; // accumulator value which will decay to zero over window
     }
 
     /// @dev adjusts accumulator value downward linearly over time.
@@ -15,51 +14,35 @@ library Roller {
         Snapshot memory self,
         uint256 timestamp,
         uint256 window,
-        uint256 value
+        int256 value
     ) internal view returns (Snapshot memory) {
         uint256 dt = timestamp - self.timestamp;
         if (dt >= self.window || self.window == 0) {
             // if one window has passed, prior value has decayed to zero
-            return
-                Snapshot({
-                    timestamp: timestamp,
-                    window: window,
-                    accumulator: value,
-                    isNegative: self.isNegative
-                });
+            return Snapshot({timestamp: timestamp, window: window, accumulator: value});
         }
 
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        self.accumulator -= (self.accumulator * dt) / self.window;
+        self.accumulator -= (self.accumulator * int256(dt)) / int256(self.window);
 
         // add in the new value for accumulator now
-        uint256 accumulatorNow = self.accumulator + value;
+        int256 accumulatorNow = self.accumulator + value;
         if (accumulatorNow == 0) {
             // if accumulator now is zero, windowNow is simply window
             // to avoid 0/0 case below
-            return
-                Snapshot({
-                    timestamp: timestamp,
-                    window: window,
-                    accumulator: 0,
-                    isNegative: self.isNegative
-                });
+            return Snapshot({timestamp: timestamp, window: window, accumulator: 0});
         }
 
         // recalculate windowNow_ for future decay as a value weighted average time
         // of time left in windowLast for accumulatorLast and window for value
-        // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) /
-        //        (accumulatorLastWithDecay + value)
-        uint256 numerator = self.accumulator * (self.window - dt) + value * window;
-        uint256 windowNow = numerator / accumulatorNow;
-        return
-            Snapshot({
-                timestamp: timestamp,
-                window: windowNow,
-                accumulator: accumulatorNow,
-                isNegative: self.isNegative
-            });
+        // vwat = (|accumulatorLastWithDecay| * (windowLast - dt) + |value| * window) /
+        //        (|accumulatorLastWithDecay| + |value|)
+        // TODO: Use SignedMath in next open zeppelin release 4.5.0
+        uint256 w1 = uint256(self.accumulator >= 0 ? self.accumulator : -self.accumulator);
+        uint256 w2 = uint256(value >= 0 ? value : -value);
+        uint256 windowNow = (w1 * (self.window - dt) + w2 * window) / (w1 + w2);
+        return Snapshot({timestamp: timestamp, window: windowNow, accumulator: accumulatorNow});
     }
 }

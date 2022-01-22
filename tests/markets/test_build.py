@@ -136,7 +136,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     _ = market.update({"from": alice})  # update funding prior
     snapshot_volume = market.snapshotVolumeAsk() if is_long else \
         market.snapshotVolumeBid()
-    last_timestamp, last_window, last_volume, _ = snapshot_volume
+    last_timestamp, last_window, last_volume = snapshot_volume
 
     # approve market for spending then build
     ovl.approve(market, input_collateral, {"from": alice})
@@ -172,18 +172,16 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
                     + input_window * input_volume)
     expect_window = int(numerator / expect_volume)
     expect_timestamp = input_timestamp
-    expect_is_negative = False
 
     # compare with actual rolling volume, timestamp last, window last values
     actual = market.snapshotVolumeAsk() if is_long else \
         market.snapshotVolumeBid()
 
-    actual_timestamp, actual_window, actual_volume, actual_is_negative = actual
+    actual_timestamp, actual_window, actual_volume = actual
 
     assert actual_timestamp == expect_timestamp
     assert int(actual_window) == approx(expect_window)
     assert int(actual_volume) == approx(expect_volume)
-    assert expect_is_negative == actual_is_negative
 
 
 @given(

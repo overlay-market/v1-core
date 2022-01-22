@@ -10,7 +10,7 @@ contract RollerMock {
         Roller.Snapshot memory snap,
         uint256 timestamp,
         uint256 window,
-        uint256 value
+        int256 value
     ) external view returns (Roller.Snapshot memory) {
         return snap.transform(timestamp, window, value);
     }

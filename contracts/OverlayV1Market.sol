@@ -52,7 +52,7 @@ contract OverlayV1Market {
     // rollers
     Roller.Snapshot public snapshotVolumeBid;
     Roller.Snapshot public snapshotVolumeAsk;
-    // TODO: snapshot printing roller
+    Roller.Snapshot public snapshotMinted;
 
     // positions
     Position.Info[] public positions;
@@ -285,7 +285,7 @@ contract OverlayV1Market {
     ) private returns (uint256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotVolumeBid;
-        uint256 value = oi.divUp(capOiAdjusted);
+        int256 value = int256(oi.divUp(capOiAdjusted));
 
         // calculates the decay in the rolling volume since last snapshot
         // and determines new window to decay over
@@ -295,7 +295,8 @@ contract OverlayV1Market {
         snapshotVolumeBid = snapshot;
 
         // return the volume
-        return snapshot.accumulator;
+        uint256 volume = uint256(snapshot.accumulator);
+        return volume;
     }
 
     /**
@@ -309,7 +310,7 @@ contract OverlayV1Market {
     ) private returns (uint256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotVolumeAsk;
-        uint256 value = oi.divUp(capOiAdjusted);
+        int256 value = int256(oi.divUp(capOiAdjusted));
 
         // calculates the decay in the rolling volume since last snapshot
         // and determines new window to decay over
@@ -319,7 +320,8 @@ contract OverlayV1Market {
         snapshotVolumeAsk = snapshot;
 
         // return the volume
-        return snapshot.accumulator;
+        uint256 volume = uint256(snapshot.accumulator);
+        return volume;
     }
 
     /// @dev governance adjustable risk parameter setters

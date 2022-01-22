@@ -13,10 +13,9 @@ def test_transform(roller):
     now = chain[-1]['timestamp']
     window = 600
     dt = 200
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # expect accumulator now to be calculated as
     # accumulatorLast * (1 - dt/windowLast) + value
@@ -32,13 +31,14 @@ def test_transform(roller):
 
     # expect timestamp is just now
     expect_timestamp = now
-    expect_is_negative = is_negative
 
-    expect = (expect_timestamp, expect_window, expect_value,
-              expect_is_negative)
+    expect = (expect_timestamp, expect_window, expect_value)
 
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
+
+
+# TODO: test_transform with negative values
 
 
 def test_transform_when_last_window_passed(roller):
@@ -48,14 +48,13 @@ def test_transform_when_last_window_passed(roller):
     value = 500000000000000000  # 50% of cap
     now = chain[-1]['timestamp']
     window = 600
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # check after windowLast has passed, all accumulatorLast has decayed
     # to zero. Should return just (value, window)
-    expect = (now, window, value, is_negative)
+    expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
 
@@ -69,13 +68,12 @@ def test_transform_when_last_accumulator_zero(roller):
     value = 500000000000000000  # 50% of cap
     now = chain[-1]['timestamp']
     window = 600
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # Check transform simply returns (window, value)
-    expect = (now, window, value, is_negative)
+    expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
 
@@ -89,13 +87,12 @@ def test_transform_when_now_accumulator_zero(roller):
     value = 0  # 0% of cap
     now = chain[-1]['timestamp']
     window = 600
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # Check transform simply returns (value, window)
-    expect = (now, window, value, is_negative)
+    expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
 
@@ -108,14 +105,13 @@ def test_transform_when_last_window_zero(roller):
     value = 500000000000000000  # 50% of cap
     now = chain[-1]['timestamp']
     window = 600
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # Check transform simply returns (value, window) to avoid
     # div by zero errors
-    expect = (now, window, value, is_negative)
+    expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
 
@@ -128,12 +124,11 @@ def test_transform_when_last_timestamp_zero(roller):
     value = 500000000000000000  # 50% of cap
     now = chain[-1]['timestamp']
     window = 600
-    is_negative = False
 
     # assemble Roller.snapshot struct
-    snapshot = (timestamp_last, window_last, accumulator_last, is_negative)
+    snapshot = (timestamp_last, window_last, accumulator_last)
 
     # Check transform simply returns (value, window)
-    expect = (now, window, value, is_negative)
+    expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
