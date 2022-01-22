@@ -139,7 +139,10 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
-        uint256 volume = _registerVolume(data, oi, capOiAdjusted, isLong);
+        // TODO: pack snapshotVolumes to get gas close to 200k
+        uint256 volume = isLong
+            ? _registerVolumeAsk(data, oi, capOiAdjusted)
+            : _registerVolumeBid(data, oi, capOiAdjusted);
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
@@ -272,17 +275,16 @@ contract OverlayV1Market {
     }
 
     /**
-      @dev Rolling volume adjustments on bid/ask side to be used for market impact.
-      @dev Volume values are dev normalized with respect to oi cap.
+      @dev Rolling volume adjustments on bid side to be used for market impact.
+      @dev Volume values are normalized with respect to oi cap.
      **/
-    function _registerVolume(
+    function _registerVolumeBid(
         Oracle.Data memory data,
         uint256 oi,
-        uint256 capOiAdjusted,
-        bool onAskSide
+        uint256 capOiAdjusted
     ) private returns (uint256) {
         // save gas with snapshot in memory
-        Roller.Snapshot memory snapshot = onAskSide ? snapshotVolumeAsk : snapshotVolumeBid;
+        Roller.Snapshot memory snapshot = snapshotVolumeBid;
         uint256 value = oi.divUp(capOiAdjusted);
 
         // calculates the decay in the rolling volume since last snapshot
@@ -290,11 +292,31 @@ contract OverlayV1Market {
         snapshot = snapshot.transform(block.timestamp, data.microWindow, value);
 
         // store the transformed snapshot
-        if (onAskSide) {
-            snapshotVolumeAsk = snapshot;
-        } else {
-            snapshotVolumeBid = snapshot;
-        }
+        snapshotVolumeBid = snapshot;
+
+        // return the volume
+        return snapshot.accumulator;
+    }
+
+    /**
+      @dev Rolling volume adjustments on ask side to be used for market impact.
+      @dev Volume values are normalized with respect to oi cap.
+     **/
+    function _registerVolumeAsk(
+        Oracle.Data memory data,
+        uint256 oi,
+        uint256 capOiAdjusted
+    ) private returns (uint256) {
+        // save gas with snapshot in memory
+        Roller.Snapshot memory snapshot = snapshotVolumeAsk;
+        uint256 value = oi.divUp(capOiAdjusted);
+
+        // calculates the decay in the rolling volume since last snapshot
+        // and determines new window to decay over
+        snapshot = snapshot.transform(block.timestamp, data.microWindow, value);
+
+        // store the transformed snapshot
+        snapshotVolumeAsk = snapshot;
 
         // return the volume
         return snapshot.accumulator;
