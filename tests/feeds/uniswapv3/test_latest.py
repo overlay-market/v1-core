@@ -23,6 +23,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
 
     prices = []
     reserves = []
+    has_reserve = True
     for i in range(2):
         # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
         price = quanto_feed.getQuoteAtTick(
@@ -35,7 +36,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
         reserves.append(reserve)
 
     expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-              reserves[1], reserves[0])
+              reserves[1], reserves[0], has_reserve)
 
     assert expect == actual
 
@@ -61,6 +62,7 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
 
     prices = []
     reserves = []
+    has_reserve = True
     for i in range(2):
         # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
         price = inverse_feed.getQuoteAtTick(
@@ -73,7 +75,7 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
         reserves.append(reserve)
 
     expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-              reserves[1], reserves[0])
+              reserves[1], reserves[0], has_reserve)
 
     assert expect == actual
 
@@ -103,6 +105,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         prices = []
         reserves = []
+        has_reserve = True
         for i in range(2):
             # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
             price = quanto_feed.getQuoteAtTick(
@@ -115,7 +118,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
             reserves.append(reserve)
 
         expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-                  reserves[1], reserves[0])
+                  reserves[1], reserves[0], has_reserve)
         assert expect == actual
 
 
@@ -143,6 +146,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
 
         prices = []
         reserves = []
+        has_reserve = True
         for i in range(2):
             # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
             price = inverse_feed.getQuoteAtTick(
@@ -155,5 +159,5 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
             reserves.append(reserve)
 
         expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-                  reserves[1], reserves[0])
+                  reserves[1], reserves[0], has_reserve)
         assert expect == actual

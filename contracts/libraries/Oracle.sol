@@ -13,5 +13,6 @@ library Oracle {
         uint256 priceOverMacroWindow;
         uint256 reserveOverMicroWindow; // in ovl
         uint256 reserveOverMacroWindow; // in ovl
+        bool hasReserve; // whether oracle has manipulable reserve pool
     }
 }
