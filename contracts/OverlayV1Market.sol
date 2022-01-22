@@ -287,11 +287,7 @@ contract OverlayV1Market {
 
         // calculates the decay in the rolling volume since last snapshot
         // and determines new window to decay over
-        snapshot = snapshot.transform(
-            block.timestamp,
-            data.microWindow,
-            value
-        );
+        snapshot = snapshot.transform(block.timestamp, data.microWindow, value);
 
         // store the transformed snapshot
         if (onAskSide) {
