@@ -50,9 +50,9 @@ contract OverlayV1Market {
     uint256 public oiShortShares;
 
     // rollers
-    Roller.Snapshot public snapshotVolumeBid;
-    Roller.Snapshot public snapshotVolumeAsk;
-    Roller.Snapshot public snapshotMinted;
+    Roller.Snapshot public snapshotVolumeBid; // snapshot of recent volume on bid
+    Roller.Snapshot public snapshotVolumeAsk; // snapshot of recent volume on ask
+    Roller.Snapshot public snapshotMinted; // snapshot of recent PnL minted/burned
 
     // positions
     Position.Info[] public positions;
