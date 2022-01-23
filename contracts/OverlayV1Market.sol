@@ -108,22 +108,19 @@ contract OverlayV1Market {
     ) external returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= capLeverage, "OVLV1:lev>max");
+        require(collateral >= minCollateral, "OVLV1:collateral<min");
 
         Oracle.Data memory data = update();
 
-        // amount of collateral to transfer in to back the position
-        uint256 collateralIn = collateral;
-
-        // calculate oi adjusted for fees. fees are taken from collateral
+        // calculate oi and fees. fees are added to collateral needed to
+        // transfer in to back a position
         // TODO: change minOi to minSlippage since impact now on price
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
-        collateral -= tradingFee;
-        oi = collateral.mulUp(leverage);
 
-        require(collateral >= minCollateral, "OVLV1:collateral<min");
-        require(oi >= minOi, "OVLV1:oi<min");
+        // amount of collateral to transfer in + fees
+        uint256 collateralIn = collateral + tradingFee;
 
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
