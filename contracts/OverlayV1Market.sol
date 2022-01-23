@@ -7,12 +7,14 @@ import "./interfaces/IOverlayV1Feed.sol";
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
+import "./libraries/Roller.sol";
 import "./OverlayV1Token.sol";
 
 contract OverlayV1Market {
+    using FixedPoint for uint256;
     using Oracle for Oracle.Data;
     using Position for Position.Info;
-    using FixedPoint for uint256;
+    using Roller for Roller.Snapshot;
 
     uint256 internal constant ONE = 1e18; // 18 decimal places
     uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
@@ -47,17 +49,10 @@ contract OverlayV1Market {
     uint256 public oiLongShares;
     uint256 public oiShortShares;
 
-    // rolling volume related quantities normalized wrt cap oi
-    uint256 public rollingVolumeBid;
-    uint256 public rollingVolumeAsk;
-
-    // last call to update rolling volume numbers
-    uint256 public timestampBidLast;
-    uint256 public timestampAskLast;
-
-    // window over which rolling volume numbers are currently decaying
-    uint256 public windowBidLast;
-    uint256 public windowAskLast;
+    // rollers
+    Roller.Snapshot public snapshotVolumeBid; // snapshot of recent volume on bid
+    Roller.Snapshot public snapshotVolumeAsk; // snapshot of recent volume on ask
+    Roller.Snapshot public snapshotMinted; // snapshot of recent PnL minted/burned
 
     // positions
     Position.Info[] public positions;
@@ -144,6 +139,7 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
+        // TODO: pack snapshotVolumes to get gas close to 200k
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
             : _registerVolumeBid(data, oi, capOiAdjusted);
@@ -280,35 +276,31 @@ contract OverlayV1Market {
 
     /**
       @dev Rolling volume adjustments on bid side to be used for market impact.
-      @dev Volume values are dev normalized with respect to oi cap.
+      @dev Volume values are normalized with respect to oi cap.
      **/
     function _registerVolumeBid(
         Oracle.Data memory data,
         uint256 oi,
         uint256 capOiAdjusted
     ) private returns (uint256) {
-        // calculates the decay in the rolling volume for ask side since timestamp last
-        // and determines new window to decay over
-        uint256 value = oi.divUp(capOiAdjusted);
-        (uint256 volume, uint256 window) = decayOverWindow(
-            rollingVolumeBid,
-            timestampBidLast,
-            windowBidLast,
-            value,
-            block.timestamp,
-            data.microWindow
-        );
+        // save gas with snapshot in memory
+        Roller.Snapshot memory snapshot = snapshotVolumeBid;
+        int256 value = int256(oi.divUp(capOiAdjusted));
 
-        timestampBidLast = block.timestamp;
-        windowBidLast = window;
-        rollingVolumeBid = volume;
+        // calculates the decay in the rolling volume since last snapshot
+        // and determines new window to decay over
+        snapshot = snapshot.transform(block.timestamp, data.microWindow, value);
+
+        // store the transformed snapshot
+        snapshotVolumeBid = snapshot;
 
         // return the volume
+        uint256 volume = uint256(snapshot.accumulator);
         return volume;
     }
 
     /**
-      @dev rolling volume adjustments on ask side to be used for market impact.
+      @dev Rolling volume adjustments on ask side to be used for market impact.
       @dev Volume values are normalized with respect to oi cap.
      **/
     function _registerVolumeAsk(
@@ -316,62 +308,20 @@ contract OverlayV1Market {
         uint256 oi,
         uint256 capOiAdjusted
     ) private returns (uint256) {
-        // calculates the decay in the rolling volume for ask side since timestamp last
-        // and determines new window to decay over
-        uint256 value = oi.divUp(capOiAdjusted);
-        (uint256 volume, uint256 window) = decayOverWindow(
-            rollingVolumeAsk,
-            timestampAskLast,
-            windowAskLast,
-            value,
-            block.timestamp,
-            data.microWindow
-        );
+        // save gas with snapshot in memory
+        Roller.Snapshot memory snapshot = snapshotVolumeAsk;
+        int256 value = int256(oi.divUp(capOiAdjusted));
 
-        timestampAskLast = block.timestamp;
-        windowAskLast = window;
-        rollingVolumeAsk = volume;
+        // calculates the decay in the rolling volume since last snapshot
+        // and determines new window to decay over
+        snapshot = snapshot.transform(block.timestamp, data.microWindow, value);
+
+        // store the transformed snapshot
+        snapshotVolumeAsk = snapshot;
 
         // return the volume
+        uint256 volume = uint256(snapshot.accumulator);
         return volume;
-    }
-
-    /// @dev adjusts accumulator value downward linearly over time.
-    /// accumulatorLast should go to zero as one windowLast passes
-    function decayOverWindow(
-        uint256 accumulatorLast,
-        uint256 timestampLast,
-        uint256 windowLast,
-        uint256 value,
-        uint256 now,
-        uint256 window
-    ) public pure returns (uint256 accumulatorNow_, uint256 windowNow_) {
-        uint256 dt = now - timestampLast;
-        if (dt >= windowLast || windowLast == 0) {
-            // if one window has passed, prior value has decayed to zero
-            return (value, window);
-        }
-
-        // otherwise, calculate fraction of value remaining given linear decay.
-        // fraction of value to take off due to decay (linear drift toward zero)
-        // is fraction of windowLast that has elapsed since timestampLast
-        accumulatorLast -= (accumulatorLast * dt) / windowLast;
-
-        // add in the new value for accumulator now
-        accumulatorNow_ = accumulatorLast + value;
-        if (accumulatorNow_ == 0) {
-            // if accumulator now is zero, windowNow is simply window
-            // to avoid 0/0 case below
-            return (0, window);
-        }
-
-        // recalculate windowNow_ for future decay as a value weighted average time
-        // of time left in windowLast for accumulatorLast and window for value
-        // vwat = (accumulatorLastWithDecay * (windowLast - dt) + value * window) /
-        //        (accumulatorLastWithDecay + value)
-        uint256 numerator = accumulatorLast * (windowLast - dt);
-        numerator += value * window;
-        windowNow_ = numerator / accumulatorNow_;
     }
 
     /// @dev governance adjustable risk parameter setters

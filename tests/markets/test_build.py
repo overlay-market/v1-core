@@ -40,8 +40,6 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     input_is_long = is_long
     input_min_oi = 0  # NOTE: testing for min_oi below
 
-    print('feed.latest()', feed.latest())
-
     # approve market for spending then build
     ovl.approve(market, input_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
@@ -136,12 +134,9 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
 
     # priors actual values
     _ = market.update({"from": alice})  # update funding prior
-    last_volume = market.rollingVolumeAsk() if is_long else \
-        market.rollingVolumeBid()
-    last_timestamp = market.timestampAskLast() if is_long else \
-        market.timestampBidLast()
-    last_window = market.windowAskLast() if is_long else \
-        market.windowBidLast()
+    snapshot_volume = market.snapshotVolumeAsk() if is_long else \
+        market.snapshotVolumeBid()
+    last_timestamp, last_window, last_volume = snapshot_volume
 
     # approve market for spending then build
     ovl.approve(market, input_collateral, {"from": alice})
@@ -163,23 +158,30 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     input_window = micro_window
     input_timestamp = chain[tx.block_number]['timestamp']
 
-    expect_volume, expect_window = market.decayOverWindow(
-        last_volume, last_timestamp, last_window, input_volume,
-        input_timestamp, input_window
-    )
+    # expect accumulator now to be calculated as
+    # accumulatorLast * (1 - dt/windowLast) + value
+    dt = input_timestamp - last_timestamp
+    last_volume_decayed = last_volume * (1 - dt/last_window) \
+        if last_window != 0 and dt >= last_window else 0
+    expect_volume = int(last_volume_decayed + input_volume)
+
+    # expect window now to be calculated as weighted average
+    # of remaining time left in last window and total time in new window
+    # weights are accumulator values for the respective time window
+    numerator = int((last_window - dt) * last_volume_decayed
+                    + input_window * input_volume)
+    expect_window = int(numerator / expect_volume)
     expect_timestamp = input_timestamp
 
     # compare with actual rolling volume, timestamp last, window last values
-    actual_volume = market.rollingVolumeAsk() if is_long else \
-        market.rollingVolumeBid()
-    actual_timestamp = market.timestampAskLast() if is_long else \
-        market.timestampBidLast()
-    actual_window = market.windowAskLast() if is_long else \
-        market.windowBidLast()
+    actual = market.snapshotVolumeAsk() if is_long else \
+        market.snapshotVolumeBid()
 
-    assert int(actual_volume) == approx(expect_volume)
+    actual_timestamp, actual_window, actual_volume = actual
+
     assert actual_timestamp == expect_timestamp
     assert int(actual_window) == approx(expect_window)
+    assert int(actual_volume) == approx(expect_volume)
 
 
 @given(
