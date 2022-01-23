@@ -13,6 +13,9 @@ dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.4.2
   - Uniswap/v3-core@1.0.0
 
+hypothesis:
+  max_examples: 50 # default
+
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
