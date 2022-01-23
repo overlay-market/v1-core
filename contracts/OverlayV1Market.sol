@@ -8,6 +8,7 @@ import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
 import "./libraries/Roller.sol";
+import "./libraries/SafeCast.sol";
 import "./OverlayV1Token.sol";
 
 contract OverlayV1Market {
@@ -150,9 +151,9 @@ contract OverlayV1Market {
         positions.push(
             Position.Info({
                 entryPrice: price,
-                oiShares: oi,
-                debt: oi - collateral,
-                cost: collateral,
+                oiShares: SafeCast.toUint128(oi),
+                debt: SafeCast.toUint128(oi - collateral),
+                cost: SafeCast.toUint128(collateral),
                 isLong: isLong
             })
         );

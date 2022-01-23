@@ -2,17 +2,26 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "./SafeCast.sol";
 import "./FixedPoint.sol";
 
 library Position {
     using FixedPoint for uint256;
     uint256 internal constant TWO = 2e18;
 
+    // struct Info {
+    //     uint256 entryPrice; // price received at entry
+    //     uint256 oiShares; // shares of open interest
+    //     uint256 debt; // debt
+    //     uint256 cost; // amount of collateral initially locked
+    //     bool isLong; // whether long or short
+    // }
+
     struct Info {
         uint256 entryPrice; // price received at entry
-        uint256 oiShares; // shares of open interest
-        uint256 debt; // debt
-        uint256 cost; // amount of collateral initially locked
+        uint128 oiShares; // shares of open interest
+        uint128 debt; // debt
+        uint128 cost; // amount of collateral initially locked
         bool isLong; // whether long or short
     }
 
@@ -97,7 +106,8 @@ library Position {
         uint256 totalOiShares
     ) private pure returns (uint256) {
         if (self.oiShares == 0 || totalOi == 0) return 0;
-        return self.oiShares.mulDown(totalOi).divUp(totalOiShares);
+        // TODO: Sanity check the casting up of self.oiShares is a safe operation
+        return uint256(self.oiShares).mulDown(totalOi).divUp(totalOiShares);
     }
 
     /// @dev Floors to zero, so won't properly compute if self is underwater
