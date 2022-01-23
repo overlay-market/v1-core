@@ -63,7 +63,7 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
         else market.bid(data, volume)
 
     # expect values
-    expect_leverage = int(leverage * Decimal(1e18))
+    #  expect_leverage = int(leverage * Decimal(1e18))
     expect_is_long = is_long
     expect_entry_price = price
     expect_oi_shares = int(oi_adjusted * Decimal(1e18))
@@ -72,10 +72,12 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
 
     # check position info
     actual_pos = market.positions(actual_pos_id)
-    (actual_leverage, actual_is_long, actual_entry_price, actual_oi_shares,
-     actual_debt, actual_cost) = actual_pos
+    (actual_entry_price, actual_oi_shares, actual_debt, actual_cost,
+     actual_is_long) = actual_pos
+    #  (actual_leverage, actual_is_long, actual_entry_price, actual_oi_shares,
+    #   actual_debt, actual_cost) = actual_pos
 
-    assert actual_leverage == expect_leverage
+    #  assert actual_leverage == expect_leverage
     assert actual_is_long == expect_is_long
     assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
@@ -295,62 +297,6 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     assert int(actual) == approx(expect)
 
 
-def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
-    expect_pos_id = market.nextPositionId()
-
-    input_collateral = int(100 * Decimal(1e18))
-    input_is_long = True
-    input_min_oi = 0
-
-    # approve market for spending before build
-    ovl.approve(market, input_collateral, {"from": alice})
-
-    # check build reverts when input leverage is less than one (ONE = 1e18)
-    input_leverage = int(Decimal(1e18) - 1)
-    with reverts("OVLV1:lev<min"):
-        _ = market.build(input_collateral, input_leverage, input_is_long,
-                         input_min_oi, {"from": alice})
-
-    # check build succeeds when input leverage is equal to one
-    input_leverage = int(Decimal(1e18))
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_min_oi, {"from": alice})
-
-    # check position info
-    expect_leverage = input_leverage
-    actual_pos = market.positions(expect_pos_id)
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
-
-
-def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
-    expect_pos_id = market.nextPositionId()
-
-    input_collateral = int(100 * Decimal(1e18))
-    input_is_long = True
-    input_min_oi = 0
-
-    # approve market for spending before build
-    ovl.approve(market, input_collateral, {"from": alice})
-
-    # check build reverts when input leverage is less than one (ONE = 1e18)
-    input_leverage = market.capLeverage() + 1
-    with reverts("OVLV1:lev>max"):
-        _ = market.build(input_collateral, input_leverage, input_is_long,
-                         input_min_oi, {"from": alice})
-
-    # check build succeeds when input leverage is equal to cap
-    input_leverage = market.capLeverage()
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_min_oi, {"from": alice})
-
-    # check position info
-    expect_leverage = input_leverage
-    actual_pos = market.positions(expect_pos_id)
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
-
-
 @given(
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
@@ -475,7 +421,8 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 
     # check position info
     actual_pos = market.positions(expect_pos_id)
-    (_, _, _, actual_oi_shares, _, actual_cost) = actual_pos
+    #  (_, _, _, actual_oi_shares, _, actual_cost) = actual_pos
+    (_, actual_oi_shares, _, actual_cost, _) = actual_pos
 
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
     assert int(actual_cost) == approx(expect_cost, rel=1e-4)

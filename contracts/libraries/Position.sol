@@ -9,12 +9,11 @@ library Position {
     uint256 internal constant TWO = 2e18;
 
     struct Info {
-        uint256 leverage; // discrete initial leverage amount
-        bool isLong; // whether long or short
         uint256 entryPrice; // price received at entry
         uint256 oiShares; // shares of open interest
         uint256 debt; // debt
         uint256 cost; // amount of collateral initially locked
+        bool isLong; // whether long or short
     }
 
     function initialOi(Info memory self) internal view returns (uint256) {

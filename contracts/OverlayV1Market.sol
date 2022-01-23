@@ -149,12 +149,11 @@ contract OverlayV1Market {
         // TODO: pack position.info to get gas close to 200k
         positions.push(
             Position.Info({
-                leverage: leverage,
-                isLong: isLong,
                 entryPrice: price,
                 oiShares: oi,
                 debt: oi - collateral,
-                cost: collateral
+                cost: collateral,
+                isLong: isLong
             })
         );
         positionId_ = positions.length - 1;
