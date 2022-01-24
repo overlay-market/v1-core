@@ -103,8 +103,7 @@ contract OverlayV1Market {
     function build(
         uint256 collateral,
         uint256 leverage,
-        bool isLong,
-        uint256 minOi
+        bool isLong
     ) external returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= capLeverage, "OVLV1:lev>max");
@@ -114,7 +113,6 @@ contract OverlayV1Market {
 
         // calculate oi and fees. fees are added to collateral needed to
         // transfer in to back a position
-        // TODO: change minOi to minSlippage since impact now on price
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
@@ -137,6 +135,7 @@ contract OverlayV1Market {
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
         // TODO: pack snapshotVolumes to get gas close to 200k
+        // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
             : _registerVolumeBid(data, oi, capOiAdjusted);
