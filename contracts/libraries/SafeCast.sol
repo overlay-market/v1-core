@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 
 // Overlay Note:
-// This contract is OpenZeppelin's SafeCast.sol contract from the release-v3 branch found here:
+// This contract is forked from OpenZeppelin's SafeCast.sol contract from the release-v3 branch
+// found here:
 // https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.4/contracts/utils
 // /SafeCast.sol
 //
-// A copy is used because SafeCast.sol is not included in the OpenZeppelin v4.3.2 contracts, which
-// is the version that the Overlay V1 contracts use.
+// A hard copy is used because SafeCast.sol is not included in the OpenZeppelin v4.3.2 contracts,
+// which is the version that the Overlay V1 contracts use.
 // The only change is updating the solidity version from `pragma solidity >=0.6.0 =0.8.0;` to
 // `pragma solidity >=0.6.0 <=0.8.10;`.
+//
+// Overlay added the `toUint96` function to this contract.
 
 pragma solidity >=0.6.0 <=0.8.10;
 
@@ -41,6 +44,22 @@ library SafeCast {
     function toUint128(uint256 value) internal pure returns (uint128) {
         require(value < 2**128, "SafeCast: value doesn't fit in 128 bits");
         return uint128(value);
+    }
+
+    /**
+     * Function added by Overlay.
+     * @dev Returns the downcasted uint96 from uint256, reverting on
+     * overflow (when the input is greater than largest uint96).
+     *
+     * Counterpart to Solidity's `uint96` operator.
+     *
+     * equirements:
+     *
+     * - input must fit into 96 bits
+     */
+    function toUint96(uint256 value) internal pure returns (uint96) {
+        require(value < 2**96, "SafeCast: value doesn't fit in 96 bits");
+        return uint96(value);
     }
 
     /**

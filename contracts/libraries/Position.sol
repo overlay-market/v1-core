@@ -21,7 +21,7 @@ library Position {
         uint256 entryPrice; // price received at entry
         uint128 oiShares; // shares of open interest
         uint128 debt; // debt
-        uint128 cost; // amount of collateral initially locked
+        uint96 cost; // amount of collateral initially locked
         bool isLong; // whether long or short
     }
 

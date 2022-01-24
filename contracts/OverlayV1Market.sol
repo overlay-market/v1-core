@@ -153,7 +153,7 @@ contract OverlayV1Market {
                 entryPrice: price,
                 oiShares: SafeCast.toUint128(oi),
                 debt: SafeCast.toUint128(oi - collateral),
-                cost: SafeCast.toUint128(collateral),
+                cost: SafeCast.toUint96(collateral),
                 isLong: isLong
             })
         );
