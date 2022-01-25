@@ -1,8 +1,9 @@
 import pytest
 from pytest import approx
-from brownie import chain, reverts
+from brownie import chain, reverts, web3
 from brownie.test import given, strategy
 from decimal import Decimal
+from hexbytes import HexBytes
 
 
 # NOTE: Tests passing with isolation fixture
@@ -25,12 +26,21 @@ def calculate_position_info(oi: Decimal,
     return collateral, oi, debt, trade_fee
 
 
+def get_position_key(owner: str, id: int) -> HexBytes:
+    """
+    Returns the position key to retrieve an individual position
+    from positions mapping
+    """
+    return web3.solidityKeccak(['address', 'uint256'], [owner, id])
+
+
 @given(
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
                                 is_long):
+    # get position key/id related info
     expect_pos_id = market.nextPositionId()
 
     # calculate expected pos info data
@@ -55,6 +65,10 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     actual_pos_id = tx.return_value
     assert actual_pos_id == expect_pos_id
 
+    expect_next_pos_id = expect_pos_id + 1
+    actual_next_pos_id = market.nextPositionId()
+    assert actual_next_pos_id == expect_next_pos_id
+
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
@@ -70,9 +84,12 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     expect_oi_shares = int(oi * Decimal(1e18))
     expect_debt = int(debt * Decimal(1e18))
     expect_cost = int(collateral * Decimal(1e18))
+    expect_pos = (expect_leverage, expect_is_long, expect_entry_price,
+                  expect_oi_shares, expect_debt, expect_cost)
 
     # check position info
-    actual_pos = market.positions(actual_pos_id)
+    expect_pos_key = get_position_key(alice.address, expect_pos_id)
+    actual_pos = market.positions(expect_pos_key)
     (actual_leverage, actual_is_long, actual_entry_price, actual_oi_shares,
      actual_debt, actual_cost) = actual_pos
 
@@ -313,6 +330,7 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
 
 
 def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
+    # get position key/id related info
     expect_pos_id = market.nextPositionId()
 
     input_collateral = int(100 * Decimal(1e18))
@@ -333,13 +351,16 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
                      {"from": alice})
 
     # check position info
+    expect_pos_key = get_position_key(alice.address, expect_pos_id)
+    actual_pos = market.positions(expect_pos_key)
+
     expect_leverage = input_leverage
-    actual_pos = market.positions(expect_pos_id)
     (actual_leverage, _, _, _, _, _) = actual_pos
     assert actual_leverage == expect_leverage
 
 
 def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
+    # get position key/id related info
     expect_pos_id = market.nextPositionId()
 
     input_collateral = int(100 * Decimal(1e18))
@@ -360,8 +381,10 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
                      {"from": alice})
 
     # check position info
+    expect_pos_key = get_position_key(alice.address, expect_pos_id)
+    actual_pos = market.positions(expect_pos_key)
+
     expect_leverage = input_leverage
-    actual_pos = market.positions(expect_pos_id)
     (actual_leverage, _, _, _, _, _) = actual_pos
     assert actual_leverage == expect_leverage
 
@@ -374,6 +397,7 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     is_long=strategy('bool'))
 def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
                                                      leverage, is_long):
+    # get position key/id related info
     expect_pos_id = market.nextPositionId()
 
     input_leverage = int(leverage * Decimal(1e18))
@@ -402,6 +426,7 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
 # TODO: fix this for cap adjustments
 @given(is_long=strategy('bool'))
 def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
+    # get position key/id related info
     expect_pos_id = market.nextPositionId()
 
     input_leverage = int(1e18)
@@ -431,7 +456,8 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     expect_cost = int(collateral * Decimal(1e18))
 
     # check position info
-    actual_pos = market.positions(expect_pos_id)
+    expect_pos_key = get_position_key(alice.address, expect_pos_id)
+    actual_pos = market.positions(expect_pos_key)
     (_, _, _, actual_oi_shares, _, actual_cost) = actual_pos
 
     assert int(actual_oi_shares) == approx(expect_oi_shares)
