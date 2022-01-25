@@ -84,8 +84,6 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     expect_oi_shares = int(oi * Decimal(1e18))
     expect_debt = int(debt * Decimal(1e18))
     expect_cost = int(collateral * Decimal(1e18))
-    expect_pos = (expect_leverage, expect_is_long, expect_entry_price,
-                  expect_oi_shares, expect_debt, expect_cost)
 
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)

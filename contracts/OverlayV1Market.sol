@@ -146,14 +146,18 @@ contract OverlayV1Market {
         // store the position info data
         // TODO: pack position.info to get gas close to 200k
         positionId_ = _totalPositions;
-        positions.set(msg.sender, positionId_, Position.Info({
-            leverage: leverage,
-            isLong: isLong,
-            entryPrice: price,
-            oiShares: oi,
-            debt: oi - collateral,
-            cost: collateral
-        }));
+        positions.set(
+            msg.sender,
+            positionId_,
+            Position.Info({
+                leverage: leverage,
+                isLong: isLong,
+                entryPrice: price,
+                oiShares: oi,
+                debt: oi - collateral,
+                cost: collateral
+            })
+        );
         _totalPositions++;
 
         // transfer in the OVL collateral needed to back the position
