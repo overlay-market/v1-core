@@ -21,7 +21,7 @@ library Position {
                         POSITIONS MAPPING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // TODO: test ...
+    /// @notice Retrieves a position from positions mapping
     function get(
         mapping(bytes32 => Info) storage self,
         address owner,
@@ -30,7 +30,7 @@ library Position {
         position_ = self[keccak256(abi.encodePacked(owner, id))];
     }
 
-    // TODO: test ...
+    /// @notice Stores a position in positions mapping
     function set(
         mapping(bytes32 => Info) storage self,
         address owner,
