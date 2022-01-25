@@ -17,6 +17,33 @@ library Position {
         uint256 cost; // amount of collateral initially locked
     }
 
+    /*///////////////////////////////////////////////////////////////
+                        POSITIONS MAPPING FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Retrieves a position from positions mapping
+    function get(
+        mapping(bytes32 => Info) storage self,
+        address owner,
+        uint256 id
+    ) internal view returns (Info storage position_) {
+        position_ = self[keccak256(abi.encodePacked(owner, id))];
+    }
+
+    /// @notice Stores a position in positions mapping
+    function set(
+        mapping(bytes32 => Info) storage self,
+        address owner,
+        uint256 id,
+        Info memory position
+    ) internal {
+        self[keccak256(abi.encodePacked(owner, id))] = position;
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                            POSITION FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
     function initialOi(Info memory self) internal view returns (uint256) {
         return _initialOi(self);
     }

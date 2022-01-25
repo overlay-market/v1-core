@@ -13,6 +13,7 @@ import "./OverlayV1Token.sol";
 contract OverlayV1Market {
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
+    using Position for mapping(bytes32 => Position.Info);
     using Position for Position.Info;
     using Roller for Roller.Snapshot;
 
@@ -55,7 +56,8 @@ contract OverlayV1Market {
     Roller.Snapshot public snapshotMinted; // snapshot of recent PnL minted/burned
 
     // positions
-    Position.Info[] public positions;
+    mapping(bytes32 => Position.Info) public positions;
+    uint256 private _totalPositions;
 
     // last call to funding
     uint256 public timestampFundingLast;
@@ -143,7 +145,10 @@ contract OverlayV1Market {
 
         // store the position info data
         // TODO: pack position.info to get gas close to 200k
-        positions.push(
+        positionId_ = _totalPositions;
+        positions.set(
+            msg.sender,
+            positionId_,
             Position.Info({
                 leverage: leverage,
                 isLong: isLong,
@@ -153,7 +158,7 @@ contract OverlayV1Market {
                 cost: collateral
             })
         );
-        positionId_ = positions.length - 1;
+        _totalPositions++;
 
         // transfer in the OVL collateral needed to back the position
         ovl.transferFrom(msg.sender, address(this), collateralIn);
@@ -208,7 +213,7 @@ contract OverlayV1Market {
 
     /// @return next position id
     function nextPositionId() external view returns (uint256) {
-        return positions.length;
+        return _totalPositions;
     }
 
     /// @dev current open interest cap with adjustments to prevent
