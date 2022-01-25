@@ -103,27 +103,22 @@ contract OverlayV1Market {
     function build(
         uint256 collateral,
         uint256 leverage,
-        bool isLong,
-        uint256 minOi
+        bool isLong
     ) external returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= capLeverage, "OVLV1:lev>max");
+        require(collateral >= minCollateral, "OVLV1:collateral<min");
 
         Oracle.Data memory data = update();
 
-        // amount of collateral to transfer in to back the position
-        uint256 collateralIn = collateral;
-
-        // calculate oi adjusted for fees. fees are taken from collateral
-        // TODO: change minOi to minSlippage since impact now on price
+        // calculate oi and fees. fees are added to collateral needed to
+        // transfer in to back a position
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
-        collateral -= tradingFee;
-        oi = collateral.mulUp(leverage);
 
-        require(collateral >= minCollateral, "OVLV1:collateral<min");
-        require(oi >= minOi, "OVLV1:oi<min");
+        // amount of collateral to transfer in + fees
+        uint256 collateralIn = collateral + tradingFee;
 
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
@@ -140,6 +135,7 @@ contract OverlayV1Market {
         // longs get the ask and shorts get the bid on build
         // register the additional volume taking either the ask or bid
         // TODO: pack snapshotVolumes to get gas close to 200k
+        // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
             : _registerVolumeBid(data, oi, capOiAdjusted);
