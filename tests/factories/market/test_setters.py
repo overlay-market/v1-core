@@ -374,6 +374,142 @@ def test_set_cap_leverage_reverts_when_greater_than_max(factory, market, gov):
     assert actual_cap_leverage == expect_cap_leverage
 
 
+# circuitBreakerWindow tests
+def test_set_circuit_breaker_window(factory, market, gov):
+    feed = market.feed()
+    expect_circuit_breaker_window = 172800
+
+    # set circuitBreakerWindow
+    tx = factory.setCircuitBreakerWindow(feed, expect_circuit_breaker_window,
+                                         {"from": gov})
+
+    # check circuitBreakerWindow changed
+    actual_circuit_breaker_window = market.circuitBreakerWindow()
+    assert expect_circuit_breaker_window == actual_circuit_breaker_window
+
+    # check event emitted
+    assert 'CircuitBreakerWindowUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "market": market,
+        "circuitBreakerWindow": expect_circuit_breaker_window
+    })
+    actual_event = tx.events['CircuitBreakerWindowUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_circuit_breaker_window_reverts_when_not_gov(factory, market,
+                                                         alice):
+    feed = market.feed()
+    expect_circuit_breaker_window = 172800
+
+    # check can't set maintenanceMargin with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setCircuitBreakerWindow(feed,
+                                            expect_circuit_breaker_window,
+                                            {"from": alice})
+
+
+def test_set_circuit_breaker_window_reverts_when_less_than_min(factory, market,
+                                                               gov):
+    feed = market.feed()
+    expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW() - 1
+
+    # check can't set circuitBreakerWindow less than min
+    with reverts("OVLV1: circuitBreakerWindow out of bounds"):
+        _ = factory.setCircuitBreakerWindow(feed,
+                                            expect_circuit_breaker_window,
+                                            {"from": gov})
+
+    # check can set circuitBreakerWindow when equal to min
+    expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW()
+    factory.setCircuitBreakerWindow(feed, expect_circuit_breaker_window,
+                                    {"from": gov})
+
+    actual_circuit_breaker_window = market.circuitBreakerWindow()
+    assert actual_circuit_breaker_window == expect_circuit_breaker_window
+
+
+def test_set_circuit_breaker_window_reverts_when_greater_than_max(factory,
+                                                                  market,
+                                                                  gov):
+    feed = market.feed()
+    expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW() + 1
+
+    # check can't set circuitBreakerWindow greater than max
+    with reverts("OVLV1: circuitBreakerWindow out of bounds"):
+        _ = factory.setCircuitBreakerWindow(feed,
+                                            expect_circuit_breaker_window,
+                                            {"from": gov})
+
+    # check can set circuitBreakerWindow when equal to max
+    expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW()
+    factory.setCircuitBreakerWindow(feed, expect_circuit_breaker_window,
+                                    {"from": gov})
+
+    actual_circuit_breaker_window = market.circuitBreakerWindow()
+    assert actual_circuit_breaker_window == expect_circuit_breaker_window
+
+
+# circuitBreakerMintTarget tests
+def test_set_circuit_breaker_mint_target(factory, market, gov):
+    feed = market.feed()
+    expect_circuit_breaker_mint_target = 100000000000000000000000
+
+    # set circuitBreakerMintTarget
+    tx = factory.setCircuitBreakerMintTarget(
+        feed, expect_circuit_breaker_mint_target, {"from": gov})
+
+    # check circuitBreakerMintTarget changed
+    actual_circuit_breaker_mint_target = market.circuitBreakerMintTarget()
+    assert expect_circuit_breaker_mint_target == \
+        actual_circuit_breaker_mint_target
+
+    # check event emitted
+    assert 'CircuitBreakerMintTargetUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "market": market,
+        "circuitBreakerMintTarget": expect_circuit_breaker_mint_target
+    })
+    actual_event = tx.events['CircuitBreakerMintTargetUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_circuit_breaker_target_reverts_when_not_gov(factory, market,
+                                                         alice):
+    feed = market.feed()
+    expect_circuit_breaker_mint_target = 100000000000000000000000
+
+    # check can't set circuitBreakerMintTarget with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setCircuitBreakerMintTarget(
+            feed, expect_circuit_breaker_mint_target, {"from": alice})
+
+
+def test_set_circuit_breaker_target_reverts_when_greater_than_max(factory,
+                                                                  market,
+                                                                  gov):
+    feed = market.feed()
+    expect_circuit_breaker_mint_target = \
+        factory.MAX_CIRCUIT_BREAKER_MINT_TARGET() + 1
+
+    # check can't set circuitBreakerMintTarget greater than max
+    with reverts("OVLV1: circuitBreakerMintTarget out of bounds"):
+        _ = factory.setCircuitBreakerMintTarget(
+            feed, expect_circuit_breaker_mint_target, {"from": gov})
+
+    # check can set circuitBreakerMintTarget when equal to max
+    expect_circuit_breaker_mint_target = \
+        factory.MAX_CIRCUIT_BREAKER_MINT_TARGET()
+    factory.setCircuitBreakerMintTarget(
+        feed, expect_circuit_breaker_mint_target, {"from": gov})
+
+    actual_circuit_breaker_mint_target = market.circuitBreakerMintTarget()
+    assert actual_circuit_breaker_mint_target == \
+        expect_circuit_breaker_mint_target
+
+
 # maintenanceMargin tests
 def test_set_maintenance_margin(factory, market, gov):
     feed = market.feed()

@@ -26,6 +26,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_CAP_OI = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_CAP_LEVERAGE = 1e18; // 1x
     uint256 public constant MAX_CAP_LEVERAGE = 2e19; // 20x
+    uint256 public constant MIN_CIRCUIT_BREAKER_WINDOW = 86400; // 1 day
+    uint256 public constant MAX_CIRCUIT_BREAKER_WINDOW = 15552000; // 180 days
+    uint256 public constant MIN_CIRCUIT_BREAKER_MINT_TARGET = 0; // 0 OVL
+    uint256 public constant MAX_CIRCUIT_BREAKER_MINT_TARGET = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_MAINTENANCE_MARGIN = 1e16; // 1%
     uint256 public constant MAX_MAINTENANCE_MARGIN = 2e17; // 20%
     uint256 public constant MIN_MAINTENANCE_MARGIN_BURN_RATE = 1e16; // 1%
@@ -42,6 +46,16 @@ contract OverlayV1Factory is AccessControlEnumerable {
     event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
     event OpenInterestCapUpdated(address indexed user, address indexed market, uint256 capOi);
     event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
+    event CircuitBreakerWindowUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 circuitBreakerWindow
+    );
+    event CircuitBreakerMintTargetUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 circuitBreakerMintTarget
+    );
     event MaintenanceMarginUpdated(
         address indexed user,
         address indexed market,
@@ -156,6 +170,16 @@ contract OverlayV1Factory is AccessControlEnumerable {
             "OVLV1: capLeverage out of bounds"
         );
         require(
+            params.circuitBreakerWindow >= MIN_CIRCUIT_BREAKER_WINDOW &&
+                params.circuitBreakerWindow <= MAX_CIRCUIT_BREAKER_WINDOW,
+            "OVLV1: circuitBreakerWindow out of bounds"
+        );
+        require(
+            params.circuitBreakerMintTarget >= MIN_CIRCUIT_BREAKER_MINT_TARGET &&
+                params.circuitBreakerMintTarget <= MAX_CIRCUIT_BREAKER_MINT_TARGET,
+            "OVLV1: circuitBreakerMintTarget out of bounds"
+        );
+        require(
             params.maintenanceMargin >= MIN_MAINTENANCE_MARGIN &&
                 params.maintenanceMargin <= MAX_MAINTENANCE_MARGIN,
             "OVLV1: maintenanceMargin out of bounds"
@@ -230,6 +254,30 @@ contract OverlayV1Factory is AccessControlEnumerable {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCapLeverage(capLeverage);
         emit LeverageCapUpdated(msg.sender, address(market), capLeverage);
+    }
+
+    /// @dev circuit breaker window setter
+    function setCircuitBreakerWindow(address feed, uint256 circuitBreakerWindow) external onlyGovernor {
+        require(
+            circuitBreakerWindow >= MIN_CIRCUIT_BREAKER_WINDOW &&
+                circuitBreakerWindow <= MAX_CIRCUIT_BREAKER_WINDOW,
+            "OVLV1: circuitBreakerWindow out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setCircuitBreakerWindow(circuitBreakerWindow);
+        emit CircuitBreakerWindowUpdated(msg.sender, address(market), circuitBreakerWindow);
+    }
+
+    /// @dev circuit breaker mint target setter
+    function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget) external onlyGovernor {
+        require(
+            circuitBreakerMintTarget >= MIN_CIRCUIT_BREAKER_MINT_TARGET &&
+                circuitBreakerMintTarget <= MAX_CIRCUIT_BREAKER_MINT_TARGET,
+            "OVLV1: circuitBreakerMintTarget out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setCircuitBreakerMintTarget(circuitBreakerMintTarget);
+        emit CircuitBreakerMintTargetUpdated(msg.sender, address(market), circuitBreakerMintTarget);
     }
 
     /// @dev maintenance margin setter

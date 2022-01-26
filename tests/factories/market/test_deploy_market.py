@@ -869,6 +869,181 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     )
 
 
+# circuitBreakerWindow tests
+def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+
+    # check can't deploy with circuitBreakerWindow less than min
+    expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW() - 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    with reverts("OVLV1: circuitBreakerWindow out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with circuitBreakerWindow equal to min
+    expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
+def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+
+    # check can't deploy with circuitBreakerWindow greater than max
+    expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW() + 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    with reverts("OVLV1: circuitBreakerWindow out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with circuitBreakerWindow equal to max
+    expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
+# circuitBreakerMintTarget tests
+def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_window = 2592000
+    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+
+    # check can't deploy with circuitBreakerWindow greater than max
+    expect_circuit_breaker_mint_target = \
+        factory.MAX_CIRCUIT_BREAKER_MINT_TARGET() + 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    with reverts("OVLV1: circuitBreakerMintTarget out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with circuitBreakerWindow equal to max
+    expect_circuit_breaker_mint_target = \
+        factory.MAX_CIRCUIT_BREAKER_MINT_TARGET()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
 # maintenanceMargin tests
 def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     factory,

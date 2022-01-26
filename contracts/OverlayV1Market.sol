@@ -344,6 +344,14 @@ contract OverlayV1Market {
         capLeverage = _capLeverage;
     }
 
+    function setCircuitBreakerWindow(uint256 _circuitBreakerWindow) external onlyFactory {
+        circuitBreakerWindow = _circuitBreakerWindow;
+    }
+
+    function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external onlyFactory {
+        circuitBreakerMintTarget = _circuitBreakerMintTarget;
+    }
+
     function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
         maintenanceMargin = _maintenanceMargin;
     }
