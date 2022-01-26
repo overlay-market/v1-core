@@ -224,8 +224,12 @@ contract OverlayV1Market {
         // Adjust cap downward if exceeds bounds from back run attack
         cap = Math.min(cap, capOiBackRunBound(data));
 
-        // Adjust cap downward for circuit breaker
-        cap = Math.min(cap, capOiCircuitBreaker());
+        // Adjust cap downward for circuit breaker. Use snapshotMinted
+        // but transformed to account for decay in magnitude of minted since
+        // last snapshot taken. Use value = 0 since not minting/burning here
+        Roller.Snapshot memory snapshot = snapshotMinted;
+        snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, 0);
+        cap = Math.min(cap, capOiCircuitBreaker(snapshot));
 
         return cap;
     }
@@ -253,20 +257,11 @@ contract OverlayV1Market {
     }
 
     /// @dev bound on open interest cap from circuit breaker
-    /// TODO: tests
-    function capOiCircuitBreaker() public view returns (uint256) {
-        // save gas with snapshot in memory
-        Roller.Snapshot memory snapshot = snapshotMinted;
-
-        // calculates the decay in the magnitude of the rolling amount minted
-        // since last snapshot. use value = 0 since not minting/burning anything
-        int256 value = 0;
-        snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, value);
-
-        // return the circuit breaker adjusted cap. three cases:
-        //  1. burned over last rolling circuitBreakerWindow: return capOi
-        //  2. minted 2x expected amount over circuitBreakerWindow: return 0
-        //  3. minted between 0x and 2x expected amount: return capOi * (2 - minted/target)
+    /// @dev Three cases:
+    /// @dev 1. burned over last rolling circuitBreakerWindow: return capOi
+    /// @dev 2. minted 2x expected amount over circuitBreakerWindow: return 0
+    /// @dev 3. minted between 0x and 2x expected amount: return capOi * (2 - minted/target)
+    function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
         int256 minted = snapshot.accumulator;
         if (minted <= 0) {
             return capOi;
