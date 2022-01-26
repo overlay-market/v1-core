@@ -41,6 +41,8 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.capPayoff() == 5000000000000000000
     assert market.capOi() == 800000000000000000000000
     assert market.capLeverage() == 5000000000000000000
+    assert market.circuitBreakerWindow() == 2592000
+    assert market.circuitBreakerMintTarget() == 66670000000000000000000
     assert market.maintenanceMargin() == 100000000000000000
     assert market.maintenanceMarginBurnRate() == 100000000000000000
     assert market.tradingFeeRate() == 750000000000000
