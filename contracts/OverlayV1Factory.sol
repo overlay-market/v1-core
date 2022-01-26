@@ -130,11 +130,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.
         market_ = address(
-            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(
-                address(ovl),
-                feed,
-                params
-            )
+            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, params)
         );
 
         // grant market mint and burn priveleges on ovl
@@ -158,13 +154,22 @@ contract OverlayV1Factory is AccessControlEnumerable {
     /// @notice checks risk params are within acceptable bounds
     function _checkRiskParamsBeforeDeployMarket(Risk.Params memory params) private {
         require(params.k >= MIN_K && params.k <= MAX_K, "OVLV1: k out of bounds");
-        require(params.lmbda >= MIN_LMBDA && params.lmbda <= MAX_LMBDA, "OVLV1: lmbda out of bounds");
-        require(params.delta >= MIN_DELTA && params.delta <= MAX_DELTA, "OVLV1: delta out of bounds");
+        require(
+            params.lmbda >= MIN_LMBDA && params.lmbda <= MAX_LMBDA,
+            "OVLV1: lmbda out of bounds"
+        );
+        require(
+            params.delta >= MIN_DELTA && params.delta <= MAX_DELTA,
+            "OVLV1: delta out of bounds"
+        );
         require(
             params.capPayoff >= MIN_CAP_PAYOFF && params.capPayoff <= MAX_CAP_PAYOFF,
             "OVLV1: capPayoff out of bounds"
         );
-        require(params.capOi >= MIN_CAP_OI && params.capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
+        require(
+            params.capOi >= MIN_CAP_OI && params.capOi <= MAX_CAP_OI,
+            "OVLV1: capOi out of bounds"
+        );
         require(
             params.capLeverage >= MIN_CAP_LEVERAGE && params.capLeverage <= MAX_CAP_LEVERAGE,
             "OVLV1: capLeverage out of bounds"
@@ -190,11 +195,13 @@ contract OverlayV1Factory is AccessControlEnumerable {
             "OVLV1: maintenanceMarginBurnRate out of bounds"
         );
         require(
-            params.tradingFeeRate >= MIN_TRADING_FEE_RATE && params.tradingFeeRate <= MAX_TRADING_FEE_RATE,
+            params.tradingFeeRate >= MIN_TRADING_FEE_RATE &&
+                params.tradingFeeRate <= MAX_TRADING_FEE_RATE,
             "OVLV1: tradingFeeRate out of bounds"
         );
         require(
-            params.minCollateral >= MIN_MINIMUM_COLLATERAL && params.minCollateral <= MAX_MINIMUM_COLLATERAL,
+            params.minCollateral >= MIN_MINIMUM_COLLATERAL &&
+                params.minCollateral <= MAX_MINIMUM_COLLATERAL,
             "OVLV1: minCollateral out of bounds"
         );
     }
@@ -257,7 +264,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
     }
 
     /// @dev circuit breaker window setter
-    function setCircuitBreakerWindow(address feed, uint256 circuitBreakerWindow) external onlyGovernor {
+    function setCircuitBreakerWindow(address feed, uint256 circuitBreakerWindow)
+        external
+        onlyGovernor
+    {
         require(
             circuitBreakerWindow >= MIN_CIRCUIT_BREAKER_WINDOW &&
                 circuitBreakerWindow <= MAX_CIRCUIT_BREAKER_WINDOW,
@@ -269,7 +279,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
     }
 
     /// @dev circuit breaker mint target setter
-    function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget) external onlyGovernor {
+    function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget)
+        external
+        onlyGovernor
+    {
         require(
             circuitBreakerMintTarget >= MIN_CIRCUIT_BREAKER_MINT_TARGET &&
                 circuitBreakerMintTarget <= MAX_CIRCUIT_BREAKER_MINT_TARGET,
@@ -277,7 +290,11 @@ contract OverlayV1Factory is AccessControlEnumerable {
         );
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCircuitBreakerMintTarget(circuitBreakerMintTarget);
-        emit CircuitBreakerMintTargetUpdated(msg.sender, address(market), circuitBreakerMintTarget);
+        emit CircuitBreakerMintTargetUpdated(
+            msg.sender,
+            address(market),
+            circuitBreakerMintTarget
+        );
     }
 
     /// @dev maintenance margin setter

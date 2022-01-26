@@ -71,7 +71,11 @@ contract OverlayV1Market {
         _;
     }
 
-    constructor(address _ovl, address _feed, Risk.Params memory params) {
+    constructor(
+        address _ovl,
+        address _feed,
+        Risk.Params memory params
+    ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
         factory = msg.sender;
