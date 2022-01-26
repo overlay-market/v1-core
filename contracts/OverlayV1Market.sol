@@ -38,7 +38,7 @@ contract OverlayV1Market {
     uint256 public capOi; // static oi cap
     uint256 public capLeverage; // initial leverage cap
     uint256 public circuitBreakerWindow; // trailing window for circuit breaker
-    uint256 public circuitBreakerMintTarget; // target worst case inflation rate over trailing window
+    uint256 public circuitBreakerMintTarget; // target mint rate for circuit breaker
     uint256 public maintenanceMargin; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
     uint256 public tradingFeeRate; // trading fee charged on build/unwind

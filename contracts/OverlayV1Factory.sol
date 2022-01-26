@@ -29,7 +29,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MIN_CIRCUIT_BREAKER_WINDOW = 86400; // 1 day
     uint256 public constant MAX_CIRCUIT_BREAKER_WINDOW = 15552000; // 180 days
     uint256 public constant MIN_CIRCUIT_BREAKER_MINT_TARGET = 0; // 0 OVL
-    uint256 public constant MAX_CIRCUIT_BREAKER_MINT_TARGET = 8e24; // 8,000,000 OVL (initial supply)
+    uint256 public constant MAX_CIRCUIT_BREAKER_MINT_TARGET = 8e24; // 8,000,000 OVL
     uint256 public constant MIN_MAINTENANCE_MARGIN = 1e16; // 1%
     uint256 public constant MAX_MAINTENANCE_MARGIN = 2e17; // 20%
     uint256 public constant MIN_MAINTENANCE_MARGIN_BURN_RATE = 1e16; // 1%
