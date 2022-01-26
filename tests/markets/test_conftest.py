@@ -28,6 +28,8 @@ def test_market_fixture(market, feed, ovl, gov):
     market.capPayoff() == 5000000000000000000
     market.capOi() == 800000000000000000000000
     market.capLeverage() == 5000000000000000000
+    market.circuitBreakerWindow() == 2592000
+    market.circuitBreakerMintTarget() == 66670000000000000000000
     market.maintenanceMargin() == 100000000000000000
     market.maintenanceMarginBurnRate() == 100000000000000000
     market.tradingFeeRate() == 750000000000000
