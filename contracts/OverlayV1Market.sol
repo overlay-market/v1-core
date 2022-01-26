@@ -220,7 +220,8 @@ contract OverlayV1Market {
         // Adjust cap downward if exceeds bounds from back run attack
         cap = Math.min(cap, capOiBackRunBound(data));
 
-        // TODO: adjust cap downward for circuit breaker
+        // Adjust cap downward for circuit breaker
+        cap = Math.min(cap, capOiCircuitBreaker());
 
         return cap;
     }
@@ -245,6 +246,33 @@ contract OverlayV1Market {
         // futureproof vs having an average block time constant (BAD)
         uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
+    }
+
+    /// @dev bound on open interest cap from circuit breaker
+    /// TODO: tests
+    function capOiCircuitBreaker() public view returns (uint256) {
+        // save gas with snapshot in memory
+        Roller.Snapshot memory snapshot = snapshotMinted;
+
+        // calculates the decay in the magnitude of the rolling amount minted
+        // since last snapshot. use value = 0 since not minting/burning anything
+        int256 value = 0;
+        snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, value);
+
+        // return the circuit breaker adjusted cap. three cases:
+        //  1. burned over last rolling circuitBreakerWindow: return capOi
+        //  2. minted 2x expected amount over circuitBreakerWindow: return 0
+        //  3. minted between 0x and 2x expected amount: return capOi * (2 - minted/target)
+        int256 minted = snapshot.accumulator;
+        if (minted <= 0) {
+            return capOi;
+        } else if (minted >= 2 * int256(circuitBreakerMintTarget)) {
+            return 0;
+        }
+
+        // case 3 (circuit breaker adjustment downward)
+        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(circuitBreakerMintTarget));
+        return capOi.mulDown(adjustment);
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact

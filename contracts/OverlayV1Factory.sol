@@ -120,7 +120,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         address feed,
         Risk.Params memory params
     ) external onlyGovernor returns (address market_) {
-        // checks feed and feed factory are available for a new market
+        // check feed and feed factory are available for a new market
         _checkFeedBeforeDeployMarket(feedFactory, feed);
 
         // check risk parameters are within bounds
