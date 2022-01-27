@@ -1,5 +1,6 @@
 from decimal import Decimal
 from pytest import approx
+from brownie.test import given, strategy
 
 
 def test_cap_oi_front_run_bound(market, feed):
@@ -54,3 +55,62 @@ def test_cap_oi_back_run_bound_when_no_reserve(market):
     expect = cap_oi
     actual = market.capOiBackRunBound(data)
     assert actual == expect
+
+
+# NOTE: strategy min/max rely on circuitBreakerMintTarget set in conftest.py
+@given(
+    minted=strategy('decimal', min_value='66670', max_value='133340',
+                    places=1))
+def test_cap_oi_circuit_breaker(market, minted):
+    cap_oi = market.capOi()
+    target = market.circuitBreakerMintTarget()
+
+    # assemble Roller.snapshot struct
+    timestamp = 1643247197
+    window = 2592000
+    minted = int(minted * Decimal(1e18))
+    snapshot = (timestamp, window, minted)
+
+    # check breaker bound returns capOi
+    expect = int(cap_oi * (2 - minted / target))
+    actual = market.capOiCircuitBreaker(snapshot)
+    assert int(actual) == approx(expect)
+
+
+# NOTE: strategy min/max rely on circuitBreakerMintTarget set in conftest.py
+@given(
+    minted=strategy('decimal', min_value='-133340', max_value='66670',
+                    places=1))
+def test_cap_oi_circuit_breaker_when_minted_less_than_target(market, minted):
+    # assemble Roller.snapshot struct
+    timestamp = 1643247197
+    window = 2592000
+    minted = int(minted * Decimal(1e18))
+    snapshot = (timestamp, window, minted)
+
+    # check breaker bound returns capOi
+    expect = market.capOi()
+    actual = market.capOiCircuitBreaker(snapshot)
+    assert actual == expect
+
+
+# NOTE: strategy min/max rely on circuitBreakerMintTarget set in conftest.py
+@given(
+    minted=strategy('decimal', min_value='133340', max_value='266680',
+                    places=1))
+def test_cap_oi_circuit_breaker_when_minted_greater_than_2x_target(market,
+                                                                   minted):
+
+    # assemble Roller.snapshot struct
+    timestamp = 1643247197
+    window = 2592000
+    minted = int(minted * Decimal(1e18))
+    snapshot = (timestamp, window, minted)
+
+    # check breaker bound returns capOi
+    expect = 0
+    actual = market.capOiCircuitBreaker(snapshot)
+    assert actual == expect
+
+
+# TODO: test_cap_oi_with_adjustments

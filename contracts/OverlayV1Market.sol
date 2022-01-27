@@ -226,7 +226,7 @@ contract OverlayV1Market {
 
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
-        // last snapshot taken. Use value = 0 since not minting/burning here
+        // last snapshot taken
         Roller.Snapshot memory snapshot = snapshotMinted;
         snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, 0);
         cap = Math.min(cap, capOiCircuitBreaker(snapshot));
@@ -258,12 +258,12 @@ contract OverlayV1Market {
 
     /// @dev bound on open interest cap from circuit breaker
     /// @dev Three cases:
-    /// @dev 1. burned over last rolling circuitBreakerWindow: return capOi
-    /// @dev 2. minted 2x expected amount over circuitBreakerWindow: return 0
-    /// @dev 3. minted between 0x and 2x expected amount: return capOi * (2 - minted/target)
+    /// @dev 1. minted <= 1x target amount over circuitBreakerWindow: return capOi
+    /// @dev 2. minted 2x target amount over last circuitBreakerWindow: return 0
+    /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
         int256 minted = snapshot.accumulator;
-        if (minted <= 0) {
+        if (minted <= int256(circuitBreakerMintTarget)) {
             return capOi;
         } else if (minted >= 2 * int256(circuitBreakerMintTarget)) {
             return 0;
