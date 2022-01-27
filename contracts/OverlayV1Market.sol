@@ -183,7 +183,8 @@ contract OverlayV1Market {
         (oiOverweight, oiUnderweight) = oiAfterFunding(
             oiOverweight,
             oiUnderweight,
-            timestampUpdateLast
+            timestampUpdateLast,
+            block.timestamp
         );
 
         // pay funding
@@ -206,13 +207,14 @@ contract OverlayV1Market {
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timestampFundingLast
+        uint256 timestampLast,
+        uint256 timestampNow
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
         uint256 drawdownFactor = (ONE - 2 * k).powUp(
-            ONE * (block.timestamp - timestampFundingLast)
+            ONE * (timestampNow - timestampLast)
         );
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
@@ -363,6 +365,9 @@ contract OverlayV1Market {
         uint256 volume = uint256(snapshot.accumulator);
         return volume;
     }
+
+    /// TODO: emergencyWithdraw: allows withdrawal of original collateral
+    /// TODO: without profit/loss if system in emergencyShutdown mode
 
     /// @dev governance adjustable risk parameter setters
     /// @dev bounds checks to risk params imposed at factory level
