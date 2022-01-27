@@ -113,4 +113,20 @@ def test_cap_oi_circuit_breaker_when_minted_greater_than_2x_target(market,
     assert actual == expect
 
 
-# TODO: test_cap_oi_with_adjustments
+def test_cap_oi_with_adjustments(market, feed):
+    # Test cap oi adjustments is min of all bounds and circuit breaker
+    cap_oi = market.capOi()
+    data = feed.latest()
+    snapshot = market.snapshotMinted()
+
+    # calculate all cap oi bounds:
+    # 1. front run bound; 2. back run bound; 3. circuit breaker
+    cap_oi_front_run_bound = market.capOiFrontRunBound(data)
+    cap_oi_back_run_bound = market.capOiBackRunBound(data)
+    cap_oi_circuit_breaker = market.capOiCircuitBreaker(snapshot)
+
+    # expect is the min of all cap quantities
+    expect = min(cap_oi, cap_oi_front_run_bound, cap_oi_back_run_bound,
+                 cap_oi_circuit_breaker)
+    actual = market.capOiWithAdjustments(data)
+    assert actual == expect
