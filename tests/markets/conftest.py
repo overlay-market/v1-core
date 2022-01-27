@@ -105,14 +105,8 @@ def feed(create_feed):
 
 @pytest.fixture(scope="module")
 def create_market(gov, ovl):
-    def create_market(feed, k, lmbda, delta, cap_payoff, cap_oi,
-                      cap_leverage, maintenance, maintenance_burn,
-                      trade_fee, min_collateral, governance=gov, ovl=ovl):
-        market = governance.deploy(OverlayV1Market, ovl, feed, k, lmbda, delta,
-                                   cap_payoff, cap_oi, cap_leverage,
-                                   maintenance, maintenance_burn, trade_fee,
-                                   min_collateral)
-
+    def create_market(feed, risk_params, governance=gov, ovl=ovl):
+        market = governance.deploy(OverlayV1Market, ovl, feed, risk_params)
         ovl.grantRole(ovl.MINTER_ROLE(), market, {"from": governance})
         ovl.grantRole(ovl.BURNER_ROLE(), market, {"from": governance})
         return market
@@ -127,10 +121,14 @@ def create_market(gov, ovl):
     5000000000000000000,  # capPayoff
     800000000000000000000000,  # capOi
     5000000000000000000,  # capLeverage
+    2592000,  # circuitBreakerWindow
+    66670000000000000000000,  # circuitBreakerMintTarget
     100000000000000000,  # maintenanceMargin
     100000000000000000,  # maintenanceMarginBurnRate
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
 )])
 def market(gov, feed, ovl, create_market, request):
-    yield create_market(feed, governance=gov, ovl=ovl, *request.param)
+    risk_params = request.param
+    yield create_market(feed=feed, risk_params=risk_params,
+                        governance=gov, ovl=ovl)

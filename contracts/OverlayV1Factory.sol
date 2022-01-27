@@ -2,7 +2,9 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+
 import "./interfaces/IOverlayV1FeedFactory.sol";
+import "./libraries/Risk.sol";
 
 import "./OverlayV1Token.sol";
 import "./OverlayV1Market.sol";
@@ -24,6 +26,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_CAP_OI = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_CAP_LEVERAGE = 1e18; // 1x
     uint256 public constant MAX_CAP_LEVERAGE = 2e19; // 20x
+    uint256 public constant MIN_CIRCUIT_BREAKER_WINDOW = 86400; // 1 day
+    uint256 public constant MAX_CIRCUIT_BREAKER_WINDOW = 15552000; // 180 days
+    uint256 public constant MIN_CIRCUIT_BREAKER_MINT_TARGET = 0; // 0 OVL
+    uint256 public constant MAX_CIRCUIT_BREAKER_MINT_TARGET = 8e24; // 8,000,000 OVL
     uint256 public constant MIN_MAINTENANCE_MARGIN = 1e16; // 1%
     uint256 public constant MAX_MAINTENANCE_MARGIN = 2e17; // 20%
     uint256 public constant MIN_MAINTENANCE_MARGIN_BURN_RATE = 1e16; // 1%
@@ -40,6 +46,16 @@ contract OverlayV1Factory is AccessControlEnumerable {
     event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
     event OpenInterestCapUpdated(address indexed user, address indexed market, uint256 capOi);
     event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
+    event CircuitBreakerWindowUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 circuitBreakerWindow
+    );
+    event CircuitBreakerMintTargetUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 circuitBreakerMintTarget
+    );
     event MaintenanceMarginUpdated(
         address indexed user,
         address indexed market,
@@ -102,71 +118,19 @@ contract OverlayV1Factory is AccessControlEnumerable {
     function deployMarket(
         address feedFactory,
         address feed,
-        uint256 k,
-        uint256 lmbda,
-        uint256 delta,
-        uint256 capPayoff,
-        uint256 capOi,
-        uint256 capLeverage,
-        uint256 maintenanceMargin,
-        uint256 maintenanceMarginBurnRate,
-        uint256 tradingFeeRate,
-        uint256 minCollateral
+        Risk.Params memory params
     ) external onlyGovernor returns (address market_) {
-        require(getMarket[feed] == address(0), "OVLV1: market already exists");
-        require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
-        require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
+        // check feed and feed factory are available for a new market
+        _checkFeedBeforeDeployMarket(feedFactory, feed);
 
         // check risk parameters are within bounds
-        require(k >= MIN_K && k <= MAX_K, "OVLV1: k out of bounds");
-        require(lmbda >= MIN_LMBDA && lmbda <= MAX_LMBDA, "OVLV1: lmbda out of bounds");
-        require(delta >= MIN_DELTA && delta <= MAX_DELTA, "OVLV1: delta out of bounds");
-        require(
-            capPayoff >= MIN_CAP_PAYOFF && capPayoff <= MAX_CAP_PAYOFF,
-            "OVLV1: capPayoff out of bounds"
-        );
-        require(capOi >= MIN_CAP_OI && capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
-        require(
-            capLeverage >= MIN_CAP_LEVERAGE && capLeverage <= MAX_CAP_LEVERAGE,
-            "OVLV1: capLeverage out of bounds"
-        );
-        require(
-            maintenanceMargin >= MIN_MAINTENANCE_MARGIN &&
-                maintenanceMargin <= MAX_MAINTENANCE_MARGIN,
-            "OVLV1: maintenanceMargin out of bounds"
-        );
-        require(
-            maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE &&
-                maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE,
-            "OVLV1: maintenanceMarginBurnRate out of bounds"
-        );
-        require(
-            tradingFeeRate >= MIN_TRADING_FEE_RATE && tradingFeeRate <= MAX_TRADING_FEE_RATE,
-            "OVLV1: tradingFeeRate out of bounds"
-        );
-        require(
-            minCollateral >= MIN_MINIMUM_COLLATERAL && minCollateral <= MAX_MINIMUM_COLLATERAL,
-            "OVLV1: minCollateral out of bounds"
-        );
+        _checkRiskParamsBeforeDeployMarket(params);
 
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.
         market_ = address(
-            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(
-                address(ovl),
-                feed,
-                k,
-                lmbda,
-                delta,
-                capPayoff,
-                capOi,
-                capLeverage,
-                maintenanceMargin,
-                maintenanceMarginBurnRate,
-                tradingFeeRate,
-                minCollateral
-            )
+            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, params)
         );
 
         // grant market mint and burn priveleges on ovl
@@ -178,6 +142,68 @@ contract OverlayV1Factory is AccessControlEnumerable {
         getMarket[feed] = market_;
         isMarket[market_] = true;
         emit MarketDeployed(msg.sender, market_, feed);
+    }
+
+    /// @notice checks market doesn't exist on feed and feed is from a supported factory
+    function _checkFeedBeforeDeployMarket(address feedFactory, address feed) private {
+        require(getMarket[feed] == address(0), "OVLV1: market already exists");
+        require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
+        require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
+    }
+
+    /// @notice checks risk params are within acceptable bounds
+    function _checkRiskParamsBeforeDeployMarket(Risk.Params memory params) private {
+        require(params.k >= MIN_K && params.k <= MAX_K, "OVLV1: k out of bounds");
+        require(
+            params.lmbda >= MIN_LMBDA && params.lmbda <= MAX_LMBDA,
+            "OVLV1: lmbda out of bounds"
+        );
+        require(
+            params.delta >= MIN_DELTA && params.delta <= MAX_DELTA,
+            "OVLV1: delta out of bounds"
+        );
+        require(
+            params.capPayoff >= MIN_CAP_PAYOFF && params.capPayoff <= MAX_CAP_PAYOFF,
+            "OVLV1: capPayoff out of bounds"
+        );
+        require(
+            params.capOi >= MIN_CAP_OI && params.capOi <= MAX_CAP_OI,
+            "OVLV1: capOi out of bounds"
+        );
+        require(
+            params.capLeverage >= MIN_CAP_LEVERAGE && params.capLeverage <= MAX_CAP_LEVERAGE,
+            "OVLV1: capLeverage out of bounds"
+        );
+        require(
+            params.circuitBreakerWindow >= MIN_CIRCUIT_BREAKER_WINDOW &&
+                params.circuitBreakerWindow <= MAX_CIRCUIT_BREAKER_WINDOW,
+            "OVLV1: circuitBreakerWindow out of bounds"
+        );
+        require(
+            params.circuitBreakerMintTarget >= MIN_CIRCUIT_BREAKER_MINT_TARGET &&
+                params.circuitBreakerMintTarget <= MAX_CIRCUIT_BREAKER_MINT_TARGET,
+            "OVLV1: circuitBreakerMintTarget out of bounds"
+        );
+        require(
+            params.maintenanceMargin >= MIN_MAINTENANCE_MARGIN &&
+                params.maintenanceMargin <= MAX_MAINTENANCE_MARGIN,
+            "OVLV1: maintenanceMargin out of bounds"
+        );
+        require(
+            params.maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE &&
+                params.maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE,
+            "OVLV1: maintenanceMarginBurnRate out of bounds"
+        );
+        require(
+            params.tradingFeeRate >= MIN_TRADING_FEE_RATE &&
+                params.tradingFeeRate <= MAX_TRADING_FEE_RATE,
+            "OVLV1: tradingFeeRate out of bounds"
+        );
+        require(
+            params.minCollateral >= MIN_MINIMUM_COLLATERAL &&
+                params.minCollateral <= MAX_MINIMUM_COLLATERAL,
+            "OVLV1: minCollateral out of bounds"
+        );
     }
 
     /// below are per-market risk parameter setters,
@@ -235,6 +261,40 @@ contract OverlayV1Factory is AccessControlEnumerable {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setCapLeverage(capLeverage);
         emit LeverageCapUpdated(msg.sender, address(market), capLeverage);
+    }
+
+    /// @dev circuit breaker window setter
+    function setCircuitBreakerWindow(address feed, uint256 circuitBreakerWindow)
+        external
+        onlyGovernor
+    {
+        require(
+            circuitBreakerWindow >= MIN_CIRCUIT_BREAKER_WINDOW &&
+                circuitBreakerWindow <= MAX_CIRCUIT_BREAKER_WINDOW,
+            "OVLV1: circuitBreakerWindow out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setCircuitBreakerWindow(circuitBreakerWindow);
+        emit CircuitBreakerWindowUpdated(msg.sender, address(market), circuitBreakerWindow);
+    }
+
+    /// @dev circuit breaker mint target setter
+    function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget)
+        external
+        onlyGovernor
+    {
+        require(
+            circuitBreakerMintTarget >= MIN_CIRCUIT_BREAKER_MINT_TARGET &&
+                circuitBreakerMintTarget <= MAX_CIRCUIT_BREAKER_MINT_TARGET,
+            "OVLV1: circuitBreakerMintTarget out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setCircuitBreakerMintTarget(circuitBreakerMintTarget);
+        emit CircuitBreakerMintTargetUpdated(
+            msg.sender,
+            address(market),
+            circuitBreakerMintTarget
+        );
     }
 
     /// @dev maintenance margin setter

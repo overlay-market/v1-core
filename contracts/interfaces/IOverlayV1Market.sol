@@ -22,6 +22,10 @@ interface IOverlayV1Market {
 
     function capLeverage() external view returns (uint256);
 
+    function circuitBreakerWindow() external view returns (uint256);
+
+    function circuitBreakerMintTarget() external view returns (uint256);
+
     function maintenanceMargin() external view returns (uint256);
 
     function maintenanceMarginBurnRate() external view returns (uint256);

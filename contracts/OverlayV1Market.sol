@@ -7,6 +7,7 @@ import "./interfaces/IOverlayV1Feed.sol";
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
+import "./libraries/Risk.sol";
 import "./libraries/Roller.sol";
 import "./OverlayV1Token.sol";
 
@@ -36,6 +37,8 @@ contract OverlayV1Market {
     uint256 public capPayoff; // payoff cap
     uint256 public capOi; // static oi cap
     uint256 public capLeverage; // initial leverage cap
+    uint256 public circuitBreakerWindow; // trailing window for circuit breaker
+    uint256 public circuitBreakerMintTarget; // target mint rate for circuit breaker
     uint256 public maintenanceMargin; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
@@ -71,16 +74,7 @@ contract OverlayV1Market {
     constructor(
         address _ovl,
         address _feed,
-        uint256 _k,
-        uint256 _lmbda,
-        uint256 _delta,
-        uint256 _capPayoff,
-        uint256 _capOi,
-        uint256 _capLeverage,
-        uint256 _maintenanceMargin,
-        uint256 _maintenanceMarginBurnRate,
-        uint256 _tradingFeeRate,
-        uint256 _minCollateral
+        Risk.Params memory params
     ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
@@ -89,16 +83,18 @@ contract OverlayV1Market {
         timestampFundingLast = block.timestamp;
 
         // set the gov params
-        k = _k;
-        lmbda = _lmbda;
-        delta = _delta;
-        capPayoff = _capPayoff;
-        capOi = _capOi;
-        capLeverage = _capLeverage;
-        maintenanceMargin = _maintenanceMargin;
-        maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
-        tradingFeeRate = _tradingFeeRate;
-        minCollateral = _minCollateral;
+        k = params.k;
+        lmbda = params.lmbda;
+        delta = params.delta;
+        capPayoff = params.capPayoff;
+        capOi = params.capOi;
+        capLeverage = params.capLeverage;
+        circuitBreakerWindow = params.circuitBreakerWindow;
+        circuitBreakerMintTarget = params.circuitBreakerMintTarget;
+        maintenanceMargin = params.maintenanceMargin;
+        maintenanceMarginBurnRate = params.maintenanceMarginBurnRate;
+        tradingFeeRate = params.tradingFeeRate;
+        minCollateral = params.minCollateral;
     }
 
     /// @dev builds a new position
@@ -228,7 +224,12 @@ contract OverlayV1Market {
         // Adjust cap downward if exceeds bounds from back run attack
         cap = Math.min(cap, capOiBackRunBound(data));
 
-        // TODO: adjust cap downward for circuit breaker
+        // Adjust cap downward for circuit breaker. Use snapshotMinted
+        // but transformed to account for decay in magnitude of minted since
+        // last snapshot taken
+        Roller.Snapshot memory snapshot = snapshotMinted;
+        snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, 0);
+        cap = Math.min(cap, capOiCircuitBreaker(snapshot));
 
         return cap;
     }
@@ -253,6 +254,24 @@ contract OverlayV1Market {
         // futureproof vs having an average block time constant (BAD)
         uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
+    }
+
+    /// @dev bound on open interest cap from circuit breaker
+    /// @dev Three cases:
+    /// @dev 1. minted <= 1x target amount over circuitBreakerWindow: return capOi
+    /// @dev 2. minted 2x target amount over last circuitBreakerWindow: return 0
+    /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
+    function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
+        int256 minted = snapshot.accumulator;
+        if (minted <= int256(circuitBreakerMintTarget)) {
+            return capOi;
+        } else if (minted >= 2 * int256(circuitBreakerMintTarget)) {
+            return 0;
+        }
+
+        // case 3 (circuit breaker adjustment downward)
+        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(circuitBreakerMintTarget));
+        return capOi.mulDown(adjustment);
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact
@@ -350,6 +369,14 @@ contract OverlayV1Market {
 
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
         capLeverage = _capLeverage;
+    }
+
+    function setCircuitBreakerWindow(uint256 _circuitBreakerWindow) external onlyFactory {
+        circuitBreakerWindow = _circuitBreakerWindow;
+    }
+
+    function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external onlyFactory {
+        circuitBreakerMintTarget = _circuitBreakerMintTarget;
     }
 
     function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {

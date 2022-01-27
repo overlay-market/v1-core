@@ -124,14 +124,17 @@ def create_factory(gov, request, ovl, feed_factory, feed_three):
         cap_payoff = 5000000000000000000
         cap_oi = 800000000000000000000000
         cap_leverage = 5000000000000000000
+        circuit_breaker_window = 2592000  # 30d
+        circuit_breaker_mint_target = 66670000000000000000000  # 10% per year
         maintenance = 100000000000000000
         maintenance_burn = 100000000000000000
         trade_fee = 750000000000000
         min_collateral = 100000000000000
-        _ = factory.deployMarket(feeds, feed, k, lmbda, delta,
-                                 cap_payoff, cap_oi, cap_leverage,
-                                 maintenance, maintenance_burn, trade_fee,
-                                 min_collateral, {"from": gov})
+
+        params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
+                  circuit_breaker_window, circuit_breaker_mint_target,
+                  maintenance, maintenance_burn, trade_fee, min_collateral)
+        _ = factory.deployMarket(feeds, feed, params, {"from": gov})
 
         return factory
 
