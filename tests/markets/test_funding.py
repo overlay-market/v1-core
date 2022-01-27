@@ -1,27 +1,25 @@
-import pytest
+def test_oi_after_funding_when_longs_and_shorts_are_zero(market):
+    oi_long = 0
+    oi_short = 0
+    timestamp = 1643247197
+
+    actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(
+        oi_long, oi_short, timestamp)
+
+    assert actual_oi_overweight == 0
+    assert actual_oi_underweight == 0
 
 
-# use isolation to reset state for each test in the file
-@pytest.fixture(autouse=True)
-def isolation(fn_isolation):
+# TODO:
+def test_oi_after_funding_when_longs_outweigh_shorts(market, feed, rando):
     pass
 
 
-def test_pay_funding_when_longs_and_shorts_are_zero(market, feed, rando):
-    _ = market.payFunding()
-    assert market.oiLong() == 0
-    assert market.oiShort() == 0
-    assert market.oiLongShares() == 0
-    assert market.oiShortShares() == 0
-
-
-def test_pay_funding_when_longs_outweigh_shorts(market, feed, rando):
+# TODO:
+def test_oi_after_funding_when_shorts_are_zero(market, feed, rando):
     pass
 
 
-def test_pay_funding_when_shorts_are_zero(market, feed, rando):
-    pass
-
-
-def test_pay_funding_when_longs_are_zero(market, feed, rando):
+# TODO:
+def test_oi_after_funding_when_longs_are_zero(market, feed, rando):
     pass

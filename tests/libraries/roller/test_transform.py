@@ -45,7 +45,7 @@ def test_transform(roller, accumulator_last, window_last, value, window, dt):
     (actual_timestamp, actual_window, actual_value) = actual
 
     assert actual_timestamp == expect_timestamp
-    assert int(actual_window) == approx(expect_window)
+    assert actual_window == expect_window
     assert int(actual_value) == approx(expect_value)
 
 

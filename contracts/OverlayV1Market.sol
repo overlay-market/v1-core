@@ -189,10 +189,15 @@ contract OverlayV1Market {
         // pay funding
         oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-        timestampUpdateLast = block.timestamp;
 
         // fetch new oracle data from feed
+        // TODO: apply sanity checks in case of data manipulation:
+        // TODO: simple rough check would be |log(price)| bounded by
+        // TODO: confidenceConstant * dt; (assumes a ~ 1, mu ~ 0)
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+
+        // refresh last update timestamp
+        timestampUpdateLast = block.timestamp;
         return data;
     }
 
