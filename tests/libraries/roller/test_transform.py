@@ -1,3 +1,4 @@
+from pytest import approx
 from brownie import chain
 from brownie.test import given, strategy
 from decimal import Decimal
@@ -6,20 +7,20 @@ from decimal import Decimal
 @given(
     accumulator_last=strategy('decimal', min_value='-10.000',
                               max_value='10.000', places=3),
+    window_last=strategy('uint256', min_value='100', max_value='1000'),
     value=strategy('decimal', min_value='-10.000', max_value='10.000',
-                   places=3))
-def test_transform(roller, accumulator_last, value):
+                   places=3),
+    window=strategy('uint256', min_value='100', max_value='1000'),
+    dt=strategy('uint256', min_value='0', max_value='100'))
+def test_transform(roller, accumulator_last, window_last, value, window, dt):
     """
     Tests (success) for transform when
     dt = block.timestamp - timestampLast < windowLast
     """
     accumulator_last = int(accumulator_last * Decimal(1e18))
-    timestamp_last = chain[-1]['timestamp'] - 200
-    window_last = 1000
+    timestamp_last = chain[-1]['timestamp'] - dt
     value = int(value * Decimal(1e18))
     now = chain[-1]['timestamp']
-    window = 600
-    dt = 200
 
     # assemble Roller.snapshot struct
     snapshot = (timestamp_last, window_last, accumulator_last)
@@ -40,9 +41,12 @@ def test_transform(roller, accumulator_last, value):
     # expect timestamp is just now
     expect_timestamp = now
 
-    expect = (expect_timestamp, expect_window, expect_value)
     actual = roller.transform(snapshot, now, window, value)
-    assert actual == expect
+    (actual_timestamp, actual_window, actual_value) = actual
+
+    assert actual_timestamp == expect_timestamp
+    assert int(actual_window) == approx(expect_window)
+    assert int(actual_value) == approx(expect_value)
 
 
 def test_transform_when_last_window_passed(roller):
