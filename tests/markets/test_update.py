@@ -8,13 +8,19 @@ def test_update_fetches_from_feed(market, feed, rando):
     assert actual == expect
 
 
+# TODO:
 def test_update_pays_funding(market, feed, rando):
-    prior = market.timestampFundingLast()
+    pass
 
-    # NOTE: payFunding() tests in test_funding.py
+
+def test_update_sets_last_timestamp(market, feed, rando):
+    prior = market.timestampUpdateLast()
+
+    # NOTE: oiAfterFunding() tests in test_funding.py
+    # NOTE: feed.latest() tests in feeds/<feed>/test_latest.py
     tx = market.update()
 
-    actual = market.timestampFundingLast()
+    actual = market.timestampUpdateLast()
     expect = chain[tx.block_number]['timestamp']
 
     assert prior != actual
