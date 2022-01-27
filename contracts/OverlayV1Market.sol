@@ -62,8 +62,8 @@ contract OverlayV1Market {
     mapping(bytes32 => Position.Info) public positions;
     uint256 private _totalPositions;
 
-    // last call to funding
-    uint256 public timestampFundingLast;
+    // last call to update
+    uint256 public timestampUpdateLast;
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
@@ -80,7 +80,7 @@ contract OverlayV1Market {
         feed = _feed;
         factory = msg.sender;
         tradingFeeRecipient = msg.sender;
-        timestampFundingLast = block.timestamp;
+        timestampUpdateLast = block.timestamp;
 
         // set the gov params
         k = params.k;
@@ -173,18 +173,36 @@ contract OverlayV1Market {
         Oracle.Data memory data = update();
     }
 
-    /// @dev updates market and fetches freshest data from feed
+    /// @dev updates market: pays funding and fetches freshest data from feed
+    /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
-        payFunding();
+        // calculate adjustments to oi due to funding
+        bool isLongOverweight = oiLong > oiShort;
+        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+        (oiOverweight, oiUnderweight) = oiAfterFunding(
+            oiOverweight,
+            oiUnderweight,
+            timestampUpdateLast
+        );
+
+        // pay funding
+        oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+        oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+        timestampUpdateLast = block.timestamp;
+
+        // fetch new oracle data from feed
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         return data;
     }
 
-    /// @dev funding payments from overweight oi side to underweight oi side
-    function payFunding() public {
-        bool isLongOverweight = oiLong > oiShort;
-        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+    /// @dev current open interest after incurred funding payments transferred
+    /// @dev from overweight oi side to underweight oi side
+    function oiAfterFunding(
+        uint256 oiOverweight,
+        uint256 oiUnderweight,
+        uint256 timestampFundingLast
+    ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiLong + oiShort;
 
         // draw down the imbalance by factor of (1-2k)^(t)
@@ -201,10 +219,7 @@ contract OverlayV1Market {
             oiOverweight = (oiTotal + oiImbalanceNow) / 2;
             oiUnderweight = (oiTotal - oiImbalanceNow) / 2;
         }
-
-        oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-        oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-        timestampFundingLast = block.timestamp;
+        return (oiOverweight, oiUnderweight);
     }
 
     /// @return next position id
