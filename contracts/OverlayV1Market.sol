@@ -210,7 +210,7 @@ contract OverlayV1Market {
         uint256 timestampLast,
         uint256 timestampNow
     ) public view returns (uint256, uint256) {
-        uint256 oiTotal = oiLong + oiShort;
+        uint256 oiTotal = oiOverweight + oiUnderweight;
 
         // draw down the imbalance by factor of (1-2k)^(t)
         uint256 drawdownFactor = (ONE - 2 * k).powUp(ONE * (timestampNow - timestampLast));
