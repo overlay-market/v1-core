@@ -9,10 +9,10 @@ library Position {
     uint256 internal constant TWO = 2e18;
 
     struct Info {
+        bool isLong; // whether long or short
         uint88 oiShares; // shares of open interest
         uint88 cost; // amount of collateral initially locked
         uint88 debt; // debt
-        bool isLong; // whether long or short
         uint256 entryPrice; // price received at entry
     }
 

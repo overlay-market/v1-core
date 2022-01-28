@@ -10,7 +10,7 @@ def test_is_underwater(position):
     is_long = True
     current_price = 80000000000000000000 * (1 - tol)  # 80 * (1-tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -18,7 +18,7 @@ def test_is_underwater(position):
     is_long = True
     current_price = 80000000000000000000 * (1 + tol)  # 80 * (1+tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -26,7 +26,7 @@ def test_is_underwater(position):
     is_long = False
     current_price = 120000000000000000000 * (1 + tol)  # 120 * (1+tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -34,7 +34,7 @@ def test_is_underwater(position):
     is_long = False
     current_price = 120000000000000000000 * (1 - tol)  # 120 * (1-tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -49,14 +49,14 @@ def test_is_underwater_when_oi_zero(position):
     # check returns True when long oi is zero and has debt
     is_long = True
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
     # check returns True when short oi is zero and has debt
     is_long = False
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -73,7 +73,7 @@ def test_is_underwater_when_leverage_one(position):
     is_long = True
     current_price = 75000000000000000000  # 75
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -81,7 +81,7 @@ def test_is_underwater_when_leverage_one(position):
     is_long = False
     current_price = 200000000000000000000 * (1 - tol)  # 200 * (1-tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -89,7 +89,7 @@ def test_is_underwater_when_leverage_one(position):
     is_long = False
     current_price = 200000000000000000000 * (1 + tol)  # 200 * (1+tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isUnderwater(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -108,7 +108,7 @@ def test_is_liquidatable(position):
     is_long = True
     current_price = 90000000000000000000 * (1 - tol)  # 90 * (1-tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -116,7 +116,7 @@ def test_is_liquidatable(position):
     is_long = True
     current_price = 90000000000000000000 * (1 + tol)  # 90 * (1+tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -124,7 +124,7 @@ def test_is_liquidatable(position):
     is_long = False
     current_price = 110000000000000000000 * (1 + tol)  # 110 * (1+tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -132,7 +132,7 @@ def test_is_liquidatable(position):
     is_long = False
     current_price = 110000000000000000000 * (1 - tol)  # 110 * (1-tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -148,14 +148,14 @@ def test_is_liquidatable_when_oi_zero(position):
     # check returns True when long oi is zero
     is_long = True
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
     # check returns True when short oi is zero
     is_long = False
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -173,7 +173,7 @@ def test_is_liquidatable_when_leverage_one(position):
     is_long = True
     current_price = 10000000000000000000 * (1 + tol)  # 10 * (1+tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -181,7 +181,7 @@ def test_is_liquidatable_when_leverage_one(position):
     is_long = True
     current_price = 10000000000000000000 * (1 - tol)  # 10 * (1-tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -189,7 +189,7 @@ def test_is_liquidatable_when_leverage_one(position):
     is_long = False
     current_price = 190000000000000000000 * (1 - tol)  # 190 * (1-tol)
     expect = False
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -197,7 +197,7 @@ def test_is_liquidatable_when_leverage_one(position):
     is_long = False
     current_price = 190000000000000000000 * (1 + tol)  # 190 * (1+tol)
     expect = True
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.isLiquidatable(pos, oi, oi, current_price, maintenance)
     assert expect == actual
 
@@ -213,14 +213,14 @@ def test_liquidation_price(position):
     # check returns correct liquidation price for long
     is_long = True
     expect = 90000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.liquidationPrice(pos, oi, oi, maintenance)
     assert expect == actual
 
     # check returns correct liquidation price for short
     is_long = False
     expect = 110000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.liquidationPrice(pos, oi, oi, maintenance)
     assert expect == actual
 

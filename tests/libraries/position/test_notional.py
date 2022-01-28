@@ -9,7 +9,7 @@ def test_value(position):
     # when long
     is_long = True
     expect = 13000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -17,7 +17,7 @@ def test_value(position):
     # when short
     is_long = False
     expect = 3000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -32,7 +32,7 @@ def test_value_when_underwater(position):
     is_long = True
     current_price = 75000000000000000000  # 75
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -40,7 +40,7 @@ def test_value_when_underwater(position):
     is_long = False
     current_price = 125000000000000000000  # 125
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -55,14 +55,14 @@ def test_value_when_oi_zero(position):
     # check value returns zero when oi is zero and is long
     is_long = True
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
     # check value returns zero when oi is zero and is short
     is_long = False
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.value(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -78,7 +78,7 @@ def test_notional(position):
     # when long
     is_long = True
     expect = 15000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.notional(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -86,7 +86,7 @@ def test_notional(position):
     # when short
     is_long = False
     expect = 5000000000000000000
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.notional(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -101,7 +101,7 @@ def test_notional_when_underwater(position):
     is_long = False
     current_price = 225000000000000000000  # 225
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.notional(pos, oi, oi, current_price)
     assert expect == actual
 
@@ -116,13 +116,13 @@ def test_notional_when_oi_zero(position):
     # check notional returns zero when oi is zero and is long
     is_long = True
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.notional(pos, oi, oi, current_price)
     assert expect == actual
 
     # check notional returns zero when oi is zero and is short
     is_long = False
     expect = 0
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     actual = position.notional(pos, oi, oi, current_price)
     assert expect == actual

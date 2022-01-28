@@ -87,7 +87,7 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_oi_shares, actual_cost, actual_debt, actual_is_long,
+    (actual_is_long, actual_oi_shares, actual_cost, actual_debt,
         actual_entry_price) = actual_pos
 
     assert actual_is_long == expect_is_long
@@ -391,7 +391,7 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_oi_shares, actual_cost, _, _, _) = actual_pos
+    (_, actual_oi_shares, actual_cost, _, _) = actual_pos
 
     assert int(actual_oi_shares) == approx(expect_oi_shares)
     assert int(actual_cost) == approx(expect_cost)

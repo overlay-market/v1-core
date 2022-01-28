@@ -20,7 +20,7 @@ def test_positions_setter(position, alice):
     entry_price = 100000000000000000000  # 100
     is_long = True
 
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     position.set(owner, id, pos)
 
     # pos key
@@ -43,7 +43,7 @@ def test_positions_getter(position, bob):
     entry_price = 100000000000000000000  # 100
     is_long = True
 
-    pos = (oi, cost, debt, is_long, entry_price)
+    pos = (is_long, oi, cost, debt, entry_price)
     position.set(owner, id, pos)
 
     # check retrieved position is expected
