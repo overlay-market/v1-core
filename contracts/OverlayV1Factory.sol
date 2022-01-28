@@ -7,7 +7,7 @@ import "./interfaces/IOverlayV1FeedFactory.sol";
 import "./libraries/Risk.sol";
 
 import "./OverlayV1Token.sol";
-import "./OverlayV1Market.sol";
+import "./OverlayV1Deployer.sol";
 
 contract OverlayV1Factory is AccessControlEnumerable {
     bytes32 public constant ADMIN_ROLE = 0x00;
@@ -80,6 +80,9 @@ contract OverlayV1Factory is AccessControlEnumerable {
     // ovl token
     OverlayV1Token public immutable ovl;
 
+    // market deployer
+    OverlayV1Deployer public immutable deployer;
+
     // registry of supported feed factories
     mapping(address => bool) public isFeedFactory;
 
@@ -104,6 +107,7 @@ contract OverlayV1Factory is AccessControlEnumerable {
         _setupRole(GOVERNOR_ROLE, msg.sender);
 
         ovl = OverlayV1Token(_ovl);
+        deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
     }
 
     /// @dev adds a supported feed factory
@@ -121,17 +125,13 @@ contract OverlayV1Factory is AccessControlEnumerable {
         Risk.Params memory params
     ) external onlyGovernor returns (address market_) {
         // check feed and feed factory are available for a new market
-        _checkFeedBeforeDeployMarket(feedFactory, feed);
+        _checkFeed(feedFactory, feed);
 
         // check risk parameters are within bounds
-        _checkRiskParamsBeforeDeployMarket(params);
+        _checkRiskParams(params);
 
-        // Use the CREATE2 opcode to deploy a new Market contract.
-        // Will revert if market which accepts feed in its constructor has already
-        // been deployed since salt would be the same and can't deploy with it twice.
-        market_ = address(
-            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, params)
-        );
+        // deploy the new market
+        market_ = deployer.deploy(address(ovl), feed, params);
 
         // grant market mint and burn priveleges on ovl
         ovl.grantRole(ovl.MINTER_ROLE(), market_);
@@ -145,14 +145,14 @@ contract OverlayV1Factory is AccessControlEnumerable {
     }
 
     /// @notice checks market doesn't exist on feed and feed is from a supported factory
-    function _checkFeedBeforeDeployMarket(address feedFactory, address feed) private {
+    function _checkFeed(address feedFactory, address feed) private {
         require(getMarket[feed] == address(0), "OVLV1: market already exists");
         require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
         require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
     }
 
     /// @notice checks risk params are within acceptable bounds
-    function _checkRiskParamsBeforeDeployMarket(Risk.Params memory params) private {
+    function _checkRiskParams(Risk.Params memory params) private {
         require(params.k >= MIN_K && params.k <= MAX_K, "OVLV1: k out of bounds");
         require(
             params.lmbda >= MIN_LMBDA && params.lmbda <= MAX_LMBDA,

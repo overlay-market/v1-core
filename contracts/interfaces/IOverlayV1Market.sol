@@ -34,9 +34,13 @@ interface IOverlayV1Market {
 
     function minCollateral() external view returns (uint256);
 
+    function priceDriftUpperLimit() external view returns (uint256);
+
     // trading fee related quantities
     function tradingFeeRecipient() external view returns (address);
 
     // update related quantities
     function timestampUpdateLast() external view returns (uint256);
+
+    function priceUpdateLast() external view returns (uint256);
 }

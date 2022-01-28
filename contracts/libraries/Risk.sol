@@ -15,5 +15,6 @@ library Risk {
         uint256 maintenanceMarginBurnRate; // burn rate for mm constant
         uint256 tradingFeeRate; // trading fee charged on build/unwind
         uint256 minCollateral; // minimum ovl collateral to open position
+        uint256 priceDriftUpperLimit; // upper limit for feed price changes since last update: uses 1-alpha confidence level from distr
     }
 }
