@@ -76,12 +76,13 @@ contract OverlayV1Market {
     constructor(
         address _ovl,
         address _feed,
+        address _factory,
         Risk.Params memory params
     ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
-        factory = msg.sender;
-        tradingFeeRecipient = msg.sender;
+        factory = _factory;
+        tradingFeeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
         // TODO: test

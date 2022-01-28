@@ -34,6 +34,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
@@ -41,7 +42,8 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
 
     # deploy market
     tx = factory.deployMarket(
@@ -92,6 +94,8 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
         == expect_maintenance_margin_burn_rate
     assert market_contract.tradingFeeRate() == expect_trading_fee_rate
     assert market_contract.minCollateral() == expect_min_collateral
+    assert market_contract.priceDriftUpperLimit() == \
+        expect_price_drift_upper_limit
 
     # check trading fee recipient is factory
     assert market_contract.tradingFeeRecipient() == factory

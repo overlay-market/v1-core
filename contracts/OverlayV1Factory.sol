@@ -107,7 +107,10 @@ contract OverlayV1Factory is AccessControlEnumerable {
         _setupRole(ADMIN_ROLE, msg.sender);
         _setupRole(GOVERNOR_ROLE, msg.sender);
 
+        // set ovl
         ovl = OverlayV1Token(_ovl);
+
+        // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
     }
 
@@ -206,6 +209,9 @@ contract OverlayV1Factory is AccessControlEnumerable {
             "OVLV1: minCollateral out of bounds"
         );
     }
+
+    // TODO: function disburse(): should send any trading fees
+    // in factory contract to a trading fee repository
 
     /// below are per-market risk parameter setters,
     /// adjustable by governance

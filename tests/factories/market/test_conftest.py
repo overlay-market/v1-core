@@ -24,8 +24,8 @@ def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov,
 
 def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
     # check params set properly
-    feed_factory.microWindow() == 600
-    feed_factory.macroWindow() == 3600
+    assert feed_factory.microWindow() == 600
+    assert feed_factory.macroWindow() == 3600
 
     # check feeds with (price, reserve) combos have been deployed
     assert feed_factory.isFeed(feed_one) is True

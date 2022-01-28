@@ -17,7 +17,6 @@ contract OverlayV1Deployer {
         factory = msg.sender;
     }
 
-    // TODO: test deployer
     function deploy(
         address ovl,
         address feed,
@@ -27,7 +26,7 @@ contract OverlayV1Deployer {
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.
         market_ = address(
-            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, params)
+            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, factory, params)
         );
     }
 }
