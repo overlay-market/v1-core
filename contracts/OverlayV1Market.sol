@@ -86,9 +86,9 @@ contract OverlayV1Market {
         // initialize update data
         // TODO: test
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
-        require(mid(data) > 0, "OVLV1:!data");
+        require(mid(data, 0, 0) > 0, "OVLV1:!data");
         timestampUpdateLast = data.timestamp;
-        priceUpdateLast = mid(data);
+        priceUpdateLast = mid(data, 0, 0);
 
         // set the gov params
         k = params.k;
@@ -207,7 +207,7 @@ contract OverlayV1Market {
 
         // refresh last update data
         timestampUpdateLast = data.timestamp;
-        priceUpdateLast = mid(data);
+        priceUpdateLast = mid(data, 0, 0);
 
         // return the latest data from feed
         return data;
@@ -227,8 +227,9 @@ contract OverlayV1Market {
         uint256 dpLowerLimit = INVERSE_EULER.powUp(pow);
         uint256 dpUpperLimit = EULER.powUp(pow);
 
-        // use the mid price to check price changes since last update
-        uint256 priceNow = mid(data);
+        // use the mid price without our own market impact considerations
+        // to check data feed price changes since last update
+        uint256 priceNow = mid(data, 0, 0);
         uint256 priceLast = priceUpdateLast;
         if (priceNow == 0) {
             // data is not valid if price is zero
@@ -355,8 +356,12 @@ contract OverlayV1Market {
 
     /// @dev gets the current mid price given oracle data
     // TODO: test
-    function mid(Oracle.Data memory data) public view returns (uint256 mid_) {
-        mid_ = (bid(data, 0) + ask(data, 0)) / 2;
+    function mid(
+        Oracle.Data memory data,
+        uint256 volumeBid,
+        uint256 volumeAsk
+    ) public view returns (uint256 mid_) {
+        mid_ = (bid(data, volumeBid) + ask(data, volumeAsk)) / 2;
     }
 
     /**
