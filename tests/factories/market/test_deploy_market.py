@@ -125,6 +125,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
@@ -132,7 +133,8 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
 
     # check can't deploy from rando account
     with reverts("OVLV1: !governor"):
@@ -168,6 +170,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
@@ -175,7 +178,8 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
 
     # check can't deploy from rando account
     with reverts("OVLV1: market already exists"):
@@ -207,6 +211,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
@@ -214,7 +219,8 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
 
     # check can't deploy with rando factory feed
     with reverts("OVLV1: feed factory not supported"):
@@ -244,6 +250,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
@@ -251,7 +258,8 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
 
     # check can't deploy with rando feed not in factory feed registry
     with reverts("OVLV1: feed does not exist"):
@@ -283,6 +291,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with k less than min
     expect_k = factory.MIN_K() - 1
@@ -292,7 +301,8 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: k out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -309,7 +319,8 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -336,6 +347,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with k greater than max
     expect_k = factory.MAX_K() + 1
@@ -345,7 +357,8 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: k out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -362,7 +375,8 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -390,6 +404,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with lmbda less than min
     expect_lmbda = factory.MIN_LMBDA() - 1
@@ -399,7 +414,8 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: lmbda out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -416,7 +432,8 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -444,6 +461,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with lmbda greater than max
     expect_lmbda = factory.MAX_LMBDA() + 1
@@ -453,7 +471,8 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: lmbda out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -470,7 +489,8 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -498,6 +518,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with delta less than min
     expect_delta = factory.MIN_DELTA() - 1
@@ -507,7 +528,8 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: delta out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -524,7 +546,8 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -552,6 +575,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with delta greater than max
     expect_delta = factory.MAX_DELTA() + 1
@@ -561,7 +585,8 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: delta out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -578,7 +603,8 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -610,6 +636,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with capPayoff less than min
     expect_cap_payoff = factory.MIN_CAP_PAYOFF() - 1
@@ -619,7 +646,8 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: capPayoff out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -636,7 +664,8 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -667,6 +696,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with capPayoff greater than max
     expect_cap_payoff = factory.MAX_CAP_PAYOFF() + 1
@@ -676,7 +706,8 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: capPayoff out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -693,7 +724,8 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -726,6 +758,7 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with capOi greater than max
     expect_cap_oi = factory.MAX_CAP_OI() + 1
@@ -735,7 +768,8 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: capOi out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -752,7 +786,8 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -784,6 +819,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with capLeverage less than min
     expect_cap_leverage = factory.MIN_CAP_LEVERAGE() - 1
@@ -793,7 +829,8 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: capLeverage out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -810,7 +847,8 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -841,6 +879,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with capLeverage greater than max
     expect_cap_leverage = factory.MAX_CAP_LEVERAGE() + 1
@@ -850,7 +889,8 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: capLeverage out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -867,7 +907,8 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -899,6 +940,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with circuitBreakerWindow less than min
     expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW() - 1
@@ -908,7 +950,8 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: circuitBreakerWindow out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -925,7 +968,8 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -956,6 +1000,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with circuitBreakerWindow greater than max
     expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW() + 1
@@ -965,7 +1010,8 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: circuitBreakerWindow out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -982,7 +1028,8 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1014,6 +1061,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with circuitBreakerWindow greater than max
     expect_circuit_breaker_mint_target = \
@@ -1024,7 +1072,8 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: circuitBreakerMintTarget out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1042,7 +1091,8 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1074,6 +1124,7 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with maintenanceMargin less than min
     expect_maintenance_margin = factory.MIN_MAINTENANCE_MARGIN() - 1
@@ -1083,7 +1134,8 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: maintenanceMargin out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1100,7 +1152,8 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1131,6 +1184,7 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with maintenanceMargin greater than max
     expect_maintenance_margin = factory.MAX_MAINTENANCE_MARGIN() + 1
@@ -1140,7 +1194,8 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: maintenanceMargin out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1157,7 +1212,8 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1189,6 +1245,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
     expect_maintenance_margin = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with maintenanceMarginBurnRate less than min
     expect_maintenance_margin_burn_rate = \
@@ -1199,7 +1256,8 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: maintenanceMarginBurnRate out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1217,7 +1275,8 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1248,6 +1307,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     expect_maintenance_margin = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with maintenanceMargin greater than max
     expect_maintenance_margin_burn_rate = \
@@ -1258,7 +1318,8 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: maintenanceMarginBurnRate out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1276,7 +1337,8 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1308,6 +1370,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
     expect_maintenance_margin = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with tradingFeeRate less than min
     expect_trading_fee_rate = factory.MIN_TRADING_FEE_RATE() - 1
@@ -1317,7 +1380,8 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: tradingFeeRate out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1334,7 +1398,8 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1365,6 +1430,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
     expect_maintenance_margin = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with tradingFeeRate greater than max
     expect_trading_fee_rate = factory.MAX_TRADING_FEE_RATE() + 1
@@ -1374,7 +1440,8 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: tradingFeeRate out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1391,7 +1458,8 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1423,6 +1491,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
     expect_maintenance_margin = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with minCollateral less than min
     expect_min_collateral = factory.MIN_MINIMUM_COLLATERAL() - 1
@@ -1432,7 +1501,8 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: minCollateral out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1449,7 +1519,8 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
@@ -1480,6 +1551,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
     expect_maintenance_margin = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
+    expect_price_drift_upper_limit = 1000000000000000000
 
     # check can't deploy with minCollateral greater than max
     expect_min_collateral = factory.MAX_MINIMUM_COLLATERAL() + 1
@@ -1489,7 +1561,8 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     with reverts("OVLV1: minCollateral out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
@@ -1506,7 +1579,8 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin,
                      expect_maintenance_margin_burn_rate,
-                     expect_trading_fee_rate, expect_min_collateral)
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
     _ = factory.deployMarket(
         expect_feed_factory,
         expect_feed,
