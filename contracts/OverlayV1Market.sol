@@ -146,12 +146,11 @@ contract OverlayV1Market {
             msg.sender,
             positionId_,
             Position.Info({
-                leverage: leverage,
+                oiShares: uint88(oi),
+                cost: uint88(collateral),
+                debt: uint88(oi - collateral),
                 isLong: isLong,
-                entryPrice: price,
-                oiShares: oi,
-                debt: oi - collateral,
-                cost: collateral
+                entryPrice: uint240(price)
             })
         );
         _totalPositions++;

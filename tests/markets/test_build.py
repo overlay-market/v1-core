@@ -78,7 +78,6 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
         else market.bid(data, volume)
 
     # expect values
-    expect_leverage = int(leverage * Decimal(1e18))
     expect_is_long = is_long
     expect_entry_price = price
     expect_oi_shares = int(oi * Decimal(1e18))
@@ -88,10 +87,9 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_leverage, actual_is_long, actual_entry_price, actual_oi_shares,
-     actual_debt, actual_cost) = actual_pos
+    (actual_oi_shares, actual_cost, actual_debt, actual_is_long,
+        actual_entry_price) = actual_pos
 
-    assert actual_leverage == expect_leverage
     assert actual_is_long == expect_is_long
     assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_shares) == approx(expect_oi_shares)
@@ -327,69 +325,6 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     assert int(actual) == approx(expect)
 
 
-def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
-
-    input_collateral = int(100 * Decimal(1e18))
-    input_is_long = True
-
-    # approve market for spending before build
-    ovl.approve(market, 2**256-1, {"from": alice})
-
-    # check build reverts when input leverage is less than one (ONE = 1e18)
-    input_leverage = int(Decimal(1e18) - 1)
-    with reverts("OVLV1:lev<min"):
-        _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
-
-    # check build succeeds when input leverage is equal to one
-    input_leverage = int(Decimal(1e18))
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
-
-    # check position info
-    expect_pos_key = get_position_key(alice.address, expect_pos_id)
-    actual_pos = market.positions(expect_pos_key)
-
-    expect_leverage = input_leverage
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
-
-
-def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
-
-    input_collateral = int(100 * Decimal(1e18))
-    input_is_long = True
-
-    # approve market for spending before build. Use the max just for here
-    ovl.approve(market, 2**256 - 1, {"from": alice})
-
-    # check build reverts when input leverage is less than one (ONE = 1e18)
-    input_leverage = market.capLeverage() + 1
-    with reverts("OVLV1:lev>max"):
-        _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
-
-    # check build succeeds when input leverage is equal to cap
-    input_leverage = market.capLeverage()
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
-
-    # check position info
-    expect_pos_key = get_position_key(alice.address, expect_pos_id)
-    actual_pos = market.positions(expect_pos_key)
-
-    expect_leverage = input_leverage
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
-
-
-# TODO: def test_build_reverts_when_slippage_greater_than_max:
-
-
 @given(
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -456,7 +391,7 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (_, _, _, actual_oi_shares, _, actual_cost) = actual_pos
+    (actual_oi_shares, actual_cost, _, _, _) = actual_pos
 
     assert int(actual_oi_shares) == approx(expect_oi_shares)
     assert int(actual_cost) == approx(expect_cost)

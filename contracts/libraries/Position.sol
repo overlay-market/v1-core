@@ -9,12 +9,11 @@ library Position {
     uint256 internal constant TWO = 2e18;
 
     struct Info {
-        uint256 leverage; // discrete initial leverage amount
+        uint88 oiShares; // shares of open interest
+        uint88 cost; // amount of collateral initially locked
+        uint88 debt; // debt
         bool isLong; // whether long or short
-        uint256 entryPrice; // price received at entry
-        uint256 oiShares; // shares of open interest
-        uint256 debt; // debt
-        uint256 cost; // amount of collateral initially locked
+        uint240 entryPrice; // price received at entry
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -125,7 +124,7 @@ library Position {
         uint256 totalOiShares
     ) private pure returns (uint256) {
         if (self.oiShares == 0 || totalOi == 0) return 0;
-        return self.oiShares.mulDown(totalOi).divUp(totalOiShares);
+        return uint256(self.oiShares).mulDown(totalOi).divUp(totalOiShares);
     }
 
     /// @dev Floors to zero, so won't properly compute if self is underwater
@@ -215,9 +214,9 @@ library Position {
         uint256 oiFrame = posInitialOi.mulUp(marginMaintenance).add(self.debt).divDown(posOi);
 
         if (self.isLong) {
-            liqPrice_ = self.entryPrice.mulUp(oiFrame);
+            liqPrice_ = uint256(self.entryPrice).mulUp(oiFrame);
         } else {
-            liqPrice_ = self.entryPrice.mulUp(TWO.sub(oiFrame));
+            liqPrice_ = uint256(self.entryPrice).mulUp(TWO.sub(oiFrame));
         }
     }
 }
