@@ -1,3 +1,6 @@
+from brownie import chain
+
+
 def test_ovl_fixture(ovl):
     assert ovl.decimals() == 18
     assert ovl.name() == "Overlay"
@@ -47,3 +50,7 @@ def test_market_fixture(market, feed, ovl, gov):
 
     # check no positions exist
     assert market.nextPositionId() == 0
+
+    # check timestamp update last is same as block when market was deployed
+    # NOTE: -3 in index since had two grantRole txs after in conftest.py
+    assert market.timestampUpdateLast() == chain[-3]["timestamp"]

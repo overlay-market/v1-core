@@ -37,6 +37,6 @@ interface IOverlayV1Market {
     // trading fee related quantities
     function tradingFeeRecipient() external view returns (address);
 
-    // funding related quantities
-    function timestampFundingLast() external view returns (uint256);
+    // update related quantities
+    function timestampUpdateLast() external view returns (uint256);
 }
