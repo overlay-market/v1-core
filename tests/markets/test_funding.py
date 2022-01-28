@@ -36,6 +36,36 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
     assert int(actual_oi_underweight) == approx(expect_oi_underweight)
 
 
+@given(
+    oi_overweight=strategy('decimal', min_value='0.001', max_value='800000',
+                           places=3),
+    dt=strategy('uint256', min_value='0', max_value='7776000'))
+def test_oi_after_funding_when_underweight_is_zero(market, oi_overweight, dt):
+    oi_overweight = oi_overweight * Decimal(1e18)
+    oi_underweight = 0
+
+    oi_imb = oi_overweight
+
+    timestamp_last = 1642797758
+    timestamp_now = timestamp_last + dt
+
+    # calculate expected oi values long and short
+    k = market.k() / Decimal(1e18)
+    oi_imb *= (1 - 2*k) ** (dt)
+
+    # overweight gets drawn down
+    expect_oi_overweight = int(oi_imb)
+    expect_oi_underweight = 0
+
+    # get actual oi values long and short
+    actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(
+        oi_overweight, oi_underweight, timestamp_last, timestamp_now)
+
+    # check expect oi values equal actual oi values after funding
+    assert int(actual_oi_overweight) == approx(expect_oi_overweight)
+    assert int(actual_oi_underweight) == approx(expect_oi_underweight)
+
+
 def test_oi_after_funding_when_longs_and_shorts_are_zero(market):
     oi_long = 0
     oi_short = 0
@@ -47,18 +77,3 @@ def test_oi_after_funding_when_longs_and_shorts_are_zero(market):
 
     assert actual_oi_overweight == 0
     assert actual_oi_underweight == 0
-
-
-# TODO:
-def test_oi_after_funding_when_longs_outweigh_shorts(market, feed, rando):
-    pass
-
-
-# TODO:
-def test_oi_after_funding_when_shorts_are_zero(market, feed, rando):
-    pass
-
-
-# TODO:
-def test_oi_after_funding_when_longs_are_zero(market, feed, rando):
-    pass
