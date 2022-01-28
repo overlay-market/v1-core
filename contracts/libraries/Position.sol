@@ -13,7 +13,7 @@ library Position {
         uint88 cost; // amount of collateral initially locked
         uint88 debt; // debt
         bool isLong; // whether long or short
-        uint240 entryPrice; // price received at entry
+        uint256 entryPrice; // price received at entry
     }
 
     /*///////////////////////////////////////////////////////////////
