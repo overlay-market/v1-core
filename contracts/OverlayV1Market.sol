@@ -109,13 +109,13 @@ contract OverlayV1Market {
 
         Oracle.Data memory data = update();
 
-        // calculate oi and fees. fees are added to collateral needed to
-        // transfer in to back a position
+        // calculate oi and fees. fees are added to collateral needed
+        // to back a position
         uint256 oi = collateral.mulUp(leverage);
         uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
 
-        // amount of collateral to transfer in + fees
+        // amount of collateral to transfer in (collateral backing + fees)
         uint256 collateralIn = collateral + tradingFee;
 
         // add new position's open interest to the side's aggregate oi value
@@ -131,7 +131,7 @@ contract OverlayV1Market {
         }
 
         // longs get the ask and shorts get the bid on build
-        // register the additional volume taking either the ask or bid
+        // register the additional volume on either the ask or bid
         // TODO: pack snapshotVolumes to get gas close to 200k
         // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
@@ -156,7 +156,7 @@ contract OverlayV1Market {
         );
         _totalPositions++;
 
-        // transfer in the OVL collateral needed to back the position
+        // transfer in the OVL collateral needed to back the position + fees
         ovl.transferFrom(msg.sender, address(this), collateralIn);
 
         // send trading fees to trading fee recipient
@@ -202,7 +202,7 @@ contract OverlayV1Market {
         return data;
     }
 
-    /// @dev current open interest after incurred funding payments transferred
+    /// @dev current open interest after funding payments transferred
     /// @dev from overweight oi side to underweight oi side
     function oiAfterFunding(
         uint256 oiOverweight,
@@ -217,7 +217,7 @@ contract OverlayV1Market {
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
-            // effectively user pays the protocol if one side has zero oi
+            // user pays the protocol thru burn if one side has zero oi
             oiOverweight = oiImbalanceNow;
         } else {
             // overweight pays underweight side if oi on both sides
@@ -234,7 +234,7 @@ contract OverlayV1Market {
 
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
-    /// @dev interest cap in event we've printed a lot in recent past
+    /// @dev interest cap in event market has printed a lot in recent past
     function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
         uint256 cap = capOi;
 
@@ -278,8 +278,8 @@ contract OverlayV1Market {
 
     /// @dev bound on open interest cap from circuit breaker
     /// @dev Three cases:
-    /// @dev 1. minted <= 1x target amount over circuitBreakerWindow: return capOi
-    /// @dev 2. minted 2x target amount over last circuitBreakerWindow: return 0
+    /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return capOi
+    /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
         int256 minted = snapshot.accumulator;
@@ -368,7 +368,7 @@ contract OverlayV1Market {
     /// TODO: without profit/loss if system in emergencyShutdown mode
 
     /// @dev governance adjustable risk parameter setters
-    /// @dev bounds checks to risk params imposed at factory level
+    /// @dev min/max bounds checks to risk params imposed at factory level
     /// TODO: checks that parameters are valid (e.g. mm given spread and capLeverage)
     function setK(uint256 _k) external onlyFactory {
         k = _k;
