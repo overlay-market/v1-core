@@ -8,9 +8,16 @@ library Position {
     using FixedPoint for uint256;
     uint256 internal constant TWO = 2e18;
 
+    // struct Info {
+    //     bool isLong;
+    //     uint112 oiShares;
+    //     uint88 cost;
+    //     uint88 debt;
+    //     uint256 entryPrice;
+    // }
     struct Info {
         bool isLong; // whether long or short
-        uint88 oiShares; // shares of open interest
+        uint112 oiShares; // shares of open interest
         uint88 cost; // amount of collateral initially locked
         uint88 debt; // debt
         uint256 entryPrice; // price received at entry
