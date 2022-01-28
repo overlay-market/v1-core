@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
-import "./SafeCast.sol";
 import "./FixedPoint.sol";
 
 library Position {
@@ -18,11 +17,11 @@ library Position {
     // }
 
     struct Info {
-        uint256 entryPrice; // price received at entry
-        uint128 oiShares; // shares of open interest
-        uint128 debt; // debt
-        uint96 cost; // amount of collateral initially locked
+        uint88 oiShares; // shares of open interest
+        uint88 cost; // amount of collateral initially locked
+        uint88 debt; // debt
         bool isLong; // whether long or short
+        uint240 entryPrice; // price received at entry
     }
 
     function initialOi(Info memory self) internal view returns (uint256) {
@@ -197,9 +196,10 @@ library Position {
         uint256 oiFrame = posInitialOi.mulUp(marginMaintenance).add(self.debt).divDown(posOi);
 
         if (self.isLong) {
-            liqPrice_ = self.entryPrice.mulUp(oiFrame);
+            // uint256 entryPrice = uint256(self.entryPrice);
+            liqPrice_ = uint256(self.entryPrice).mulUp(oiFrame);
         } else {
-            liqPrice_ = self.entryPrice.mulUp(TWO.sub(oiFrame));
+            liqPrice_ = uint256(self.entryPrice).mulUp(TWO.sub(oiFrame));
         }
     }
 }

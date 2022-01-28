@@ -8,7 +8,6 @@ import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
 import "./libraries/Roller.sol";
-import "./libraries/SafeCast.sol";
 import "./OverlayV1Token.sol";
 
 contract OverlayV1Market {
@@ -150,11 +149,11 @@ contract OverlayV1Market {
         // TODO: pack position.info to get gas close to 200k
         positions.push(
             Position.Info({
-                entryPrice: price,
-                oiShares: SafeCast.toUint128(oi),
-                debt: SafeCast.toUint128(oi - collateral),
-                cost: SafeCast.toUint96(collateral),
-                isLong: isLong
+                oiShares: uint88(oi),
+                debt: uint88(oi - collateral),
+                cost: uint88(collateral),
+                isLong: isLong,
+                entryPrice: uint240(price)
             })
         );
         positionId_ = positions.length - 1;

@@ -7,7 +7,7 @@ def test_initial_oi(position):
 
     # check initial oi is debt + cost
     expect = 10000000000000000000
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.initialOi(pos)
 
     assert expect == actual
@@ -26,7 +26,7 @@ def test_oi(position):
 
     # check oi is pro-rata shares of total oi
     expect = total_oi * oi / total_oi
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.oi(pos, total_oi, total_oi)
 
     assert expect == actual
@@ -54,8 +54,7 @@ def test_oi_when_total_oi_or_oi_shares_zero(position):
 
     # check oi is zero
     expect = 0
-    #  pos = (leverage, is_long, entry_price, oi_shares, debt, cost)
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.oi(pos, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -65,7 +64,7 @@ def test_oi_when_total_oi_or_oi_shares_zero(position):
     total_oi_shares = 5000000000000000000  # 5
 
     expect = 0
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.oi(pos, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -75,7 +74,7 @@ def test_oi_when_total_oi_or_oi_shares_zero(position):
     total_oi_shares = 0  # 0
 
     expect = 0
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.oi(pos, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -85,6 +84,6 @@ def test_oi_when_total_oi_or_oi_shares_zero(position):
     total_oi_shares = 5000000000000000000  # 5
 
     expect = 0
-    pos = (entry_price, oi, debt, cost, is_long)
+    pos = (oi, cost, debt, is_long, entry_price)
     actual = position.oi(pos, total_oi, total_oi_shares)
     assert expect == actual
