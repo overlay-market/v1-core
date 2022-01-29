@@ -214,7 +214,6 @@ contract OverlayV1Factory is AccessControlEnumerable {
                 params.minCollateral <= MAX_MINIMUM_COLLATERAL,
             "OVLV1: minCollateral out of bounds"
         );
-        // TODO: test
         require(
             params.priceDriftUpperLimit >= MIN_PRICE_DRIFT_UPPER_LIMIT &&
                 params.priceDriftUpperLimit <= MAX_PRICE_DRIFT_UPPER_LIMIT,
@@ -370,7 +369,6 @@ contract OverlayV1Factory is AccessControlEnumerable {
     }
 
     /// @dev upper limit to price drift setter
-    // TODO: test
     function setPriceDriftUpperLimit(address feed, uint256 priceDriftUpperLimit)
         external
         onlyGovernor

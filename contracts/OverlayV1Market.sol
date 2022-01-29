@@ -415,7 +415,7 @@ contract OverlayV1Market {
         return volume;
     }
 
-    /// TODO: emergencyWithdraw: allows withdrawal of original collateral
+    /// TODO: emergencyWithdraw(?): allows withdrawal of original collateral
     /// TODO: without profit/loss if system in emergencyShutdown mode
 
     /// @dev governance adjustable risk parameter setters

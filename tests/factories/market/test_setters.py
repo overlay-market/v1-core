@@ -795,3 +795,78 @@ def test_set_min_collateral_reverts_when_greater_than_max(factory, market,
 
     actual_min_collateral = market.minCollateral()
     assert actual_min_collateral == expect_min_collateral
+
+
+# priceDriftUpperLimit tests
+def test_set_price_drift_upper_limit(factory, market, gov):
+    feed = market.feed()
+    expect_price_drift_upper_limit = 700000000000000
+
+    # set priceDriftUpperLimit
+    tx = factory.setPriceDriftUpperLimit(feed, expect_price_drift_upper_limit,
+                                         {"from": gov})
+
+    # check priceDriftUpperLimit changed
+    actual_price_drift_upper_limit = market.priceDriftUpperLimit()
+    assert expect_price_drift_upper_limit == actual_price_drift_upper_limit
+
+    # check event emitted
+    assert 'PriceDriftUpperLimitUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "market": market,
+        "priceDriftUpperLimit": expect_price_drift_upper_limit
+    })
+    actual_event = tx.events['PriceDriftUpperLimitUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_price_drift_upper_limit_reverts_when_not_gov(factory, market,
+                                                          alice):
+    feed = market.feed()
+    expect_price_drift_upper_limit = 700000000000000
+
+    # check can't set priceDriftUpperLimit with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setPriceDriftUpperLimit(
+            feed, expect_price_drift_upper_limit, {"from": alice})
+
+
+def test_set_price_drift_upper_limit_reverts_when_less_than_min(factory,
+                                                                market, gov):
+    feed = market.feed()
+    expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT() - 1
+
+    # check can't set priceDriftUpperLimit less than min
+    with reverts("OVLV1: priceDriftUpperLimit out of bounds"):
+        _ = factory.setPriceDriftUpperLimit(
+            feed, expect_price_drift_upper_limit, {"from": gov})
+
+    # check can set priceDriftUpperLimit when equal to min
+    expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT()
+    factory.setPriceDriftUpperLimit(feed, expect_price_drift_upper_limit,
+                                    {"from": gov})
+
+    actual_price_drift_upper_limit = market.priceDriftUpperLimit()
+    assert actual_price_drift_upper_limit == expect_price_drift_upper_limit
+
+
+def test_set_price_drift_upper_limit_reverts_when_greater_than_max(factory,
+                                                                   market,
+                                                                   gov):
+    feed = market.feed()
+    expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT() + 1
+
+    # check can't set priceDriftUpperLimit greater than max
+    with reverts("OVLV1: priceDriftUpperLimit out of bounds"):
+        _ = factory.setPriceDriftUpperLimit(feed,
+                                            expect_price_drift_upper_limit,
+                                            {"from": gov})
+
+    # check can set priceDriftUpperLimit when equal to max
+    expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT()
+    factory.setPriceDriftUpperLimit(feed, expect_price_drift_upper_limit,
+                                    {"from": gov})
+
+    actual_price_drift_upper_limit = market.priceDriftUpperLimit()
+    assert actual_price_drift_upper_limit == expect_price_drift_upper_limit

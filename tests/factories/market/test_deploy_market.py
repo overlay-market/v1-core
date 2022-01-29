@@ -1587,3 +1587,124 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
         expect_params,
         {"from": gov}
     )
+
+
+# priceDriftUpperLimit tests
+def test_deploy_market_reverts_when_price_drift_less_than_min(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_window = 2592000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+
+    # check can't deploy with priceDriftUpperLimit less than min
+    expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT() - 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    with reverts("OVLV1: priceDriftUpperLimit out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with priceDriftUpperLimit equal to min
+    expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
+def test_deploy_market_reverts_when_price_drift_greater_than_max(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_window = 2592000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+
+    # check can't deploy with priceDriftUpperLimit greater than max
+    expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT() + 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    with reverts("OVLV1: priceDriftUpperLimit out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with priceDriftUpperLimit equal to max
+    expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin,
+                     expect_maintenance_margin_burn_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
