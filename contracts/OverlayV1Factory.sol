@@ -38,7 +38,8 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
-    // TODO: MIN/MAX_PRICE_DRIFT_UPPER_LIMIT + setters + bounds checks
+    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e14; // 0.01% per sec (1 bps/s)
+    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e17; // 10.00% per sec (1000 bps/s)
 
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);
@@ -76,6 +77,11 @@ contract OverlayV1Factory is AccessControlEnumerable {
         address indexed user,
         address indexed market,
         uint256 minCollateral
+    );
+    event PriceDriftUpperLimitUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 priceDriftUpperLimit
     );
 
     // ovl token
@@ -207,6 +213,12 @@ contract OverlayV1Factory is AccessControlEnumerable {
             params.minCollateral >= MIN_MINIMUM_COLLATERAL &&
                 params.minCollateral <= MAX_MINIMUM_COLLATERAL,
             "OVLV1: minCollateral out of bounds"
+        );
+        // TODO: test
+        require(
+            params.priceDriftUpperLimit >= MIN_PRICE_DRIFT_UPPER_LIMIT &&
+                params.priceDriftUpperLimit <= MAX_PRICE_DRIFT_UPPER_LIMIT,
+            "OVLV1: priceDriftUpperLimit out of bounds"
         );
     }
 
@@ -355,5 +367,21 @@ contract OverlayV1Factory is AccessControlEnumerable {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setMinCollateral(minCollateral);
         emit MinimumCollateralUpdated(msg.sender, address(market), minCollateral);
+    }
+
+    /// @dev upper limit to price drift setter
+    // TODO: test
+    function setPriceDriftUpperLimit(address feed, uint256 priceDriftUpperLimit)
+        external
+        onlyGovernor
+    {
+        require(
+            priceDriftUpperLimit >= MIN_PRICE_DRIFT_UPPER_LIMIT &&
+                priceDriftUpperLimit <= MAX_PRICE_DRIFT_UPPER_LIMIT,
+            "OVLV1: priceDriftUpperLimit out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setPriceDriftUpperLimit(priceDriftUpperLimit);
+        emit PriceDriftUpperLimitUpdated(msg.sender, address(market), priceDriftUpperLimit);
     }
 }

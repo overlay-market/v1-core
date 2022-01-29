@@ -471,4 +471,8 @@ contract OverlayV1Market {
     function setMinCollateral(uint256 _minCollateral) external onlyFactory {
         minCollateral = _minCollateral;
     }
+
+    function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
+        priceDriftUpperLimit = _priceDriftUpperLimit;
+    }
 }
