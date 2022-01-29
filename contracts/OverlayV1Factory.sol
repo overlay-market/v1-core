@@ -38,8 +38,8 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
-    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e14; // 0.01% per sec (1 bps/s)
-    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e17; // 10.00% per sec (1000 bps/s)
+    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.0001% per sec (0.01 bps/s)
+    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e16; // 1.00% per sec (100 bps/s)
 
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);
