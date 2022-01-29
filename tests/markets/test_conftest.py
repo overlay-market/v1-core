@@ -18,11 +18,12 @@ def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
     assert feed.marketQuoteToken() == dai
 
 
-def test_market_fixture(market, feed, ovl, gov):
+def test_market_fixture(market, feed, ovl, factory, gov):
+    # check addresses set properly
     assert market.ovl() == ovl
     assert market.feed() == feed
-    assert market.factory() == gov
-    assert market.tradingFeeRecipient() == gov
+    assert market.factory() == factory
+    assert market.tradingFeeRecipient() == factory
 
     # risk params
     assert market.k() == 1220000000000
