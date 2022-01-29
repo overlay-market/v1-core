@@ -130,7 +130,7 @@ def create_factory(gov, request, ovl, feed_factory, feed_three):
         maintenance_burn = 100000000000000000
         trade_fee = 750000000000000
         min_collateral = 100000000000000
-        price_drift_upper_limit = 1000000000000000000  # 1% per sec
+        price_drift_upper_limit = 10000000000000000  # 1% per sec
 
         params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,
