@@ -102,9 +102,9 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         // index in secondsAgos which we treat as current time when differencing
         // for mean calcs
         nowIndexes[0] = 1;
-        nowIndexes[1] = secondsAgos.length-1;
+        nowIndexes[1] = secondsAgos.length - 1;
         nowIndexes[2] = 3;
-        nowIndexes[3] = secondsAgos.length-1;
+        nowIndexes[3] = secondsAgos.length - 1;
 
         (
             int24[] memory arithmeticMeanTicksMarket,
@@ -154,7 +154,12 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
     /// @dev assumes nows elements are the current cumulative value from which we
     /// @dev want to calculate rolling average tick and liquidity values
-    function consult(address pool, uint32[] memory secondsAgos, uint32[] memory windows, uint256[] memory nowIndexes)
+    function consult(
+        address pool,
+        uint32[] memory secondsAgos,
+        uint32[] memory windows,
+        uint256[] memory nowIndexes
+    )
         public
         view
         returns (int24[] memory arithmeticMeanTicks_, uint128[] memory harmonicMeanLiquidities_)
@@ -173,7 +178,9 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             uint32 window = windows[i];
 
             int56 tickCumulativesDelta = tickCumulatives[nowIndex] - tickCumulatives[i];
-            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[nowIndex] - secondsPerLiquidityCumulativeX128s[i];
+            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[
+                nowIndex
+            ] - secondsPerLiquidityCumulativeX128s[i];
 
             int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(window)));
             // Always round to negative infinity
