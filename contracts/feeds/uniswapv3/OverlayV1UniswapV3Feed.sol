@@ -104,9 +104,13 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             uint32[] memory windowsOvlWeth,
             uint256[] memory nowIdxsOvlWeth
         ) = _inputsToConsultOvlWethPool(_microWindow, _macroWindow);
-        (int24[] memory arithmeticMeanTicksOvlWeth,) = consult(ovlWethPool, secondsAgosOvlWeth, windowsOvlWeth, nowIdxsOvlWeth);
+        (int24[] memory arithmeticMeanTicksOvlWeth, ) = consult(
+            ovlWethPool,
+            secondsAgosOvlWeth,
+            windowsOvlWeth,
+            nowIdxsOvlWeth
+        );
         int24 arithmeticMeanTickOvlWeth = arithmeticMeanTicksOvlWeth[0];
-
 
         // in terms of prices, will use for indexes
         //  0: priceOneMacroWindowAgo
@@ -153,10 +157,15 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     }
 
     /// @dev returns input params needed for call to marketPool consult
-    function _inputsToConsultMarketPool(
-        uint256 _microWindow,
-        uint256 _macroWindow
-    ) private pure returns (uint32[] memory, uint32[] memory, uint256[] memory) {
+    function _inputsToConsultMarketPool(uint256 _microWindow, uint256 _macroWindow)
+        private
+        pure
+        returns (
+            uint32[] memory,
+            uint32[] memory,
+            uint256[] memory
+        )
+    {
         uint32[] memory secondsAgos = new uint32[](4);
         uint32[] memory windows = new uint32[](3);
         uint256[] memory nowIdxs = new uint256[](3);
@@ -191,10 +200,15 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     }
 
     /// @dev returns input params needed for call to ovlWethPool consult
-    function _inputsToConsultOvlWethPool(
-        uint256 _microWindow,
-        uint256 _macroWindow
-    ) private pure returns (uint32[] memory, uint32[] memory, uint256[] memory) {
+    function _inputsToConsultOvlWethPool(uint256 _microWindow, uint256 _macroWindow)
+        private
+        pure
+        returns (
+            uint32[] memory,
+            uint32[] memory,
+            uint256[] memory
+        )
+    {
         uint32[] memory secondsAgos = new uint32[](2);
         uint32[] memory windows = new uint32[](1);
         uint256[] memory nowIdxs = new uint256[](1);
