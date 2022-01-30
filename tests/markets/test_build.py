@@ -173,7 +173,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # calculate expected rolling volume and window numbers when
     # adjusted for decay
     # NOTE: decayOverWindow() tested in test_rollers.py
-    _, micro_window, _, _, _, _, _, _, _, _ = feed.latest()
+    _, micro_window, _, _, _, _, _, _ = feed.latest()
     cap_oi = Decimal(market.capOi() / 1e18)
     input_volume = int((oi / cap_oi) * Decimal(1e18))
     input_window = micro_window

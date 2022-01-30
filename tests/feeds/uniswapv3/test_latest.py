@@ -15,10 +15,9 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
 
     # calculate the avg tick and liquidity values from pool.observe cumulatives
     # NOTE: consult() tested in test_integration.py
-    seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
-                    micro_window, 0]
-    windows = [macro_window, macro_window, micro_window, micro_window]
-    now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+    seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
+    windows = [macro_window, macro_window, micro_window]
+    now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
     market_avg_ticks, market_avg_liqs = quanto_feed.consult(
         pool_daiweth_30bps, seconds_agos, windows, now_idxs)
@@ -39,8 +38,8 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
         prices.append(price)
         reserves.append(reserve)
 
-    expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
-              prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+    expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
+              prices[0], reserves[2], has_reserve)
 
     assert expect == actual
 
@@ -58,10 +57,9 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
 
     # calculate the avg tick and liquidity values from pool.observe cumulatives
     # NOTE: consult() tested in test_integration.py
-    seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
-                    micro_window, 0]
-    windows = [macro_window, macro_window, micro_window, micro_window]
-    now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+    seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
+    windows = [macro_window, macro_window, micro_window]
+    now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
     market_avg_ticks, market_avg_liqs = inverse_feed.consult(
         pool_uniweth_30bps, seconds_agos, windows, now_idxs)
@@ -82,8 +80,8 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
         prices.append(price)
         reserves.append(reserve)
 
-    expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
-              prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+    expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
+              prices[0], reserves[2], has_reserve)
 
     assert expect == actual
 
@@ -105,10 +103,9 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         # calculate the avg tick and liquidity values from pool.observe
         # cumulatives. NOTE: consult() tested in test_integration.py
-        seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
-                        micro_window, 0]
-        windows = [macro_window, macro_window, micro_window, micro_window]
-        now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+        seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
+        windows = [macro_window, macro_window, micro_window]
+        now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
         market_avg_ticks, market_avg_liqs = quanto_feed.consult(
             pool_daiweth_30bps, seconds_agos, windows, now_idxs)
@@ -129,8 +126,8 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
             prices.append(price)
             reserves.append(reserve)
 
-        expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
-                  prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+        expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
+                  prices[0], reserves[2], has_reserve)
 
         assert expect == actual
 
@@ -151,10 +148,9 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
 
         # calculate the avg tick and liquidity values from pool.observe
         # cumulatives. NOTE: consult() tested in test_integration.py
-        seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
-                        micro_window, 0]
-        windows = [macro_window, macro_window, micro_window, micro_window]
-        now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+        seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
+        windows = [macro_window, macro_window, micro_window]
+        now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
         market_avg_ticks, market_avg_liqs = inverse_feed.consult(
             pool_uniweth_30bps, seconds_agos, windows, now_idxs)
@@ -175,7 +171,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
             prices.append(price)
             reserves.append(reserve)
 
-        expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
-                  prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+        expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
+                  prices[0], reserves[2], has_reserve)
 
         assert expect == actual

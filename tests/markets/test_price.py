@@ -9,7 +9,7 @@ def test_bid_adds_static_spread(market):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
 
@@ -30,7 +30,7 @@ def test_bid_adds_market_impact(market, volume):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)
@@ -49,7 +49,7 @@ def test_bid_reverts_when_slippage_greater_than_max(market):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)
@@ -75,7 +75,7 @@ def test_ask_adds_static_spread(market):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
 
@@ -96,7 +96,7 @@ def test_ask_adds_market_impact(market, volume):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)
@@ -115,7 +115,7 @@ def test_ask_reverts_when_impact_greater_than_max_slippage(market):
     # get the price data from call to update. update tests in test_update.py
     tx = market.update()
     data = tx.return_value
-    _, _, _, price_micro, price_macro, _, _, _, _, _ = data
+    _, _, _, price_micro, price_macro, _, _, _ = data
 
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)

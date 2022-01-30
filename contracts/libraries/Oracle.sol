@@ -11,14 +11,8 @@ library Oracle {
         uint256 macroWindow;
         uint256 priceOverMicroWindow; // p(now) averaged over micro
         uint256 priceOverMacroWindow; // p(now) averaged over macro
-        uint256 priceOverMicroWindowOneWindowAgo; // p(now - micro) avg over micro
-        uint256 priceOverMacroWindowOneWindowAgo; // p(now - macro) avg over macro
+        uint256 priceOneMacroWindowAgo; // p(now - macro) avg over macro
         uint256 reserveOverMicroWindow; // r(now) in ovl averaged over micro
-        uint256 reserveOverMacroWindow; // r(now) in ovl averaged over macro
         bool hasReserve; // whether oracle has manipulable reserve pool
     }
-
-    // TODO: reduce to what we need for gas purposes
-    // NEED: priceOverMicroWindow, priceOverMacroWindow, reserveOverMicroWindow,
-    // NEED: priceOverMacroWindowOneWindowAgo
 }

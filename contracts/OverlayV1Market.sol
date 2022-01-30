@@ -65,7 +65,6 @@ contract OverlayV1Market {
 
     // data from last call to update
     uint256 public timestampUpdateLast;
-    uint256 public priceUpdateLast;
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
@@ -88,8 +87,7 @@ contract OverlayV1Market {
         // TODO: test
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(mid(data, 0, 0) > 0, "OVLV1:!data");
-        timestampUpdateLast = data.timestamp;
-        priceUpdateLast = mid(data, 0, 0);
+        timestampUpdateLast = block.timestamp;
 
         // set the gov params
         k = params.k;
@@ -207,20 +205,19 @@ contract OverlayV1Market {
         require(dataIsValid(data), "OVLV1:!data");
 
         // refresh last update data
-        timestampUpdateLast = data.timestamp;
-        priceUpdateLast = mid(data, 0, 0);
+        timestampUpdateLast = block.timestamp;
 
         // return the latest data from feed
         return data;
     }
 
     /// @dev sanity check on data fetched from oracle in case of manipulation
-    /// @dev rough check of log price bounded by driftLimit * dt
-    /// @dev ASSUMES: extreme of a ~ 1 with log stable price feed
+    /// @dev rough check that log price bounded by +/- priceDriftUpperLimit * dt
+    /// @dev when comparing priceMacro(now) vs priceMacro(now - macroWindow)
     // TODO: test
     function dataIsValid(Oracle.Data memory data) public view returns (bool) {
-        // upper and lower limits are e**(+/- driftLimit * dt)
-        uint256 pow = priceDriftUpperLimit * (data.timestamp - timestampUpdateLast);
+        // upper and lower limits are e**(+/- priceDriftUpperLimit * dt)
+        uint256 pow = priceDriftUpperLimit * data.macroWindow;
         if (pow == 0 || pow >= MAX_NATURAL_EXPONENT) {
             // valid if dt = 0 or dt = infty
             return true;
@@ -228,17 +225,17 @@ contract OverlayV1Market {
         uint256 dpLowerLimit = INVERSE_EULER.powUp(pow);
         uint256 dpUpperLimit = EULER.powUp(pow);
 
-        // use the mid price without our own market impact considerations
-        // to check data feed price changes since last update
-        uint256 priceNow = mid(data, 0, 0);
-        uint256 priceLast = priceUpdateLast;
-        if (priceNow == 0) {
+        // compare current price over macro window vs price over macro window
+        // one macro window in the past
+        uint256 priceNow = data.priceOverMacroWindow;
+        uint256 priceLast = data.priceOneMacroWindowAgo;
+        if (priceLast == 0 || priceNow == 0) {
             // data is not valid if price is zero
             return false;
         }
 
-        // price is valid if within upper and lower limits given
-        // time elapsed since last update
+        // price is valid if within upper and lower limits on drift given
+        // time elapsed over one macro window
         uint256 dp = priceNow.divUp(priceLast);
         return (dp >= dpLowerLimit && dp <= dpUpperLimit);
     }
