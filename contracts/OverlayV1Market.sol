@@ -214,14 +214,9 @@ contract OverlayV1Market {
     /// @dev sanity check on data fetched from oracle in case of manipulation
     /// @dev rough check that log price bounded by +/- priceDriftUpperLimit * dt
     /// @dev when comparing priceMacro(now) vs priceMacro(now - macroWindow)
-    // TODO: test
     function dataIsValid(Oracle.Data memory data) public view returns (bool) {
         // upper and lower limits are e**(+/- priceDriftUpperLimit * dt)
         uint256 pow = priceDriftUpperLimit * data.macroWindow;
-        if (pow == 0 || pow >= MAX_NATURAL_EXPONENT) {
-            // valid if dt = 0 or dt = infty
-            return true;
-        }
         uint256 dpLowerLimit = INVERSE_EULER.powUp(pow);
         uint256 dpUpperLimit = EULER.powUp(pow);
 
@@ -353,7 +348,6 @@ contract OverlayV1Market {
     }
 
     /// @dev gets the current mid price given oracle data
-    // TODO: test
     function mid(
         Oracle.Data memory data,
         uint256 volumeBid,
@@ -470,6 +464,7 @@ contract OverlayV1Market {
     }
 
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
+        // TODO: check pow != 0 && pow <= MAX_NATURAL_EXPONENT; pow = drift * data.macroWindow
         priceDriftUpperLimit = _priceDriftUpperLimit;
     }
 }

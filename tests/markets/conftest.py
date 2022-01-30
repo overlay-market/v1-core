@@ -133,7 +133,7 @@ def create_market(gov, ovl):
     100000000000000000,  # maintenanceMarginBurnRate
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
-    100000000000000,  # priceDriftUpperLimit
+    25000000000000,  # priceDriftUpperLimit
 )])
 def market(gov, feed, factory, ovl, create_market, request):
     risk_params = request.param

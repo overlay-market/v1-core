@@ -38,7 +38,7 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert market.maintenanceMarginBurnRate() == 100000000000000000
     assert market.tradingFeeRate() == 750000000000000
     assert market.minCollateral() == 100000000000000
-    assert market.priceDriftUpperLimit() == 100000000000000
+    assert market.priceDriftUpperLimit() == 25000000000000
 
     # check market has minter and burner roles on ovl token
     assert ovl.hasRole(ovl.MINTER_ROLE(), market) is True
