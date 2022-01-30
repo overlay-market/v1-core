@@ -15,16 +15,20 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
 
     # calculate the avg tick and liquidity values from pool.observe cumulatives
     # NOTE: consult() tested in test_integration.py
-    seconds_agos = [macro_window, micro_window, 0]
+    seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
+                    micro_window, 0]
+    windows = [macro_window, macro_window, micro_window, micro_window]
+    now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+
     market_avg_ticks, market_avg_liqs = quanto_feed.consult(
-        pool_daiweth_30bps, seconds_agos)
+        pool_daiweth_30bps, seconds_agos, windows, now_idxs)
     ovlweth_avg_ticks, ovlweth_avg_liqs = quanto_feed.consult(
-        pool_uniweth_30bps, seconds_agos)
+        pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
     prices = []
     reserves = []
     has_reserve = True
-    for i in range(2):
+    for i in range(len(now_idxs)):
         # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
         price = quanto_feed.getQuoteAtTick(
             market_avg_ticks[i], market_base_amount,
@@ -35,8 +39,8 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
         prices.append(price)
         reserves.append(reserve)
 
-    expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-              reserves[1], reserves[0], has_reserve)
+    expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
+              prices[2], prices[0], reserves[1], reserves[0], has_reserve)
 
     assert expect == actual
 
@@ -54,16 +58,20 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
 
     # calculate the avg tick and liquidity values from pool.observe cumulatives
     # NOTE: consult() tested in test_integration.py
-    seconds_agos = [macro_window, micro_window, 0]
+    seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
+                    micro_window, 0]
+    windows = [macro_window, macro_window, micro_window, micro_window]
+    now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+
     market_avg_ticks, market_avg_liqs = inverse_feed.consult(
-        pool_uniweth_30bps, seconds_agos)
+        pool_uniweth_30bps, seconds_agos, windows, now_idxs)
     ovlweth_avg_ticks, ovlweth_avg_liqs = inverse_feed.consult(
-        pool_uniweth_30bps, seconds_agos)
+        pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
     prices = []
     reserves = []
     has_reserve = True
-    for i in range(2):
+    for i in range(len(now_idxs)):
         # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
         price = inverse_feed.getQuoteAtTick(
             market_avg_ticks[i], market_base_amount,
@@ -74,8 +82,8 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
         prices.append(price)
         reserves.append(reserve)
 
-    expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-              reserves[1], reserves[0], has_reserve)
+    expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
+              prices[2], prices[0], reserves[1], reserves[0], has_reserve)
 
     assert expect == actual
 
@@ -97,16 +105,20 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         # calculate the avg tick and liquidity values from pool.observe
         # cumulatives. NOTE: consult() tested in test_integration.py
-        seconds_agos = [macro_window, micro_window, 0]
+        seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
+                        micro_window, 0]
+        windows = [macro_window, macro_window, micro_window, micro_window]
+        now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+
         market_avg_ticks, market_avg_liqs = quanto_feed.consult(
-            pool_daiweth_30bps, seconds_agos)
+            pool_daiweth_30bps, seconds_agos, windows, now_idxs)
         ovlweth_avg_ticks, ovlweth_avg_liqs = quanto_feed.consult(
-            pool_uniweth_30bps, seconds_agos)
+            pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
         prices = []
         reserves = []
         has_reserve = True
-        for i in range(2):
+        for i in range(len(now_idxs)):
             # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
             price = quanto_feed.getQuoteAtTick(
                 market_avg_ticks[i], market_base_amount,
@@ -117,8 +129,9 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
             prices.append(price)
             reserves.append(reserve)
 
-        expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-                  reserves[1], reserves[0], has_reserve)
+        expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
+                  prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+
         assert expect == actual
 
 
@@ -138,16 +151,20 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
 
         # calculate the avg tick and liquidity values from pool.observe
         # cumulatives. NOTE: consult() tested in test_integration.py
-        seconds_agos = [macro_window, micro_window, 0]
+        seconds_agos = [2 * macro_window, macro_window, 2 * micro_window,
+                        micro_window, 0]
+        windows = [macro_window, macro_window, micro_window, micro_window]
+        now_idxs = [1, len(seconds_agos)-1, 3, len(seconds_agos)-1]
+
         market_avg_ticks, market_avg_liqs = inverse_feed.consult(
-            pool_uniweth_30bps, seconds_agos)
+            pool_uniweth_30bps, seconds_agos, windows, now_idxs)
         ovlweth_avg_ticks, ovlweth_avg_liqs = inverse_feed.consult(
-            pool_uniweth_30bps, seconds_agos)
+            pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
         prices = []
         reserves = []
         has_reserve = True
-        for i in range(2):
+        for i in range(len(now_idxs)):
             # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
             price = inverse_feed.getQuoteAtTick(
                 market_avg_ticks[i], market_base_amount,
@@ -158,6 +175,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
             prices.append(price)
             reserves.append(reserve)
 
-        expect = (timestamp, micro_window, macro_window, prices[1], prices[0],
-                  reserves[1], reserves[0], has_reserve)
+        expect = (timestamp, micro_window, macro_window, prices[3], prices[1],
+                  prices[2], prices[0], reserves[1], reserves[0], has_reserve)
+
         assert expect == actual

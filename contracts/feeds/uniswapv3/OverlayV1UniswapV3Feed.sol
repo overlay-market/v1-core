@@ -79,23 +79,45 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// for micro and macro window averaging intervals
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        uint32[] memory secondsAgos = new uint32[](3);
-        secondsAgos[0] = uint32(macroWindow);
-        secondsAgos[1] = uint32(microWindow);
-        secondsAgos[2] = 0;
+        uint256 _macroWindow = macroWindow;
+        uint256 _microWindow = microWindow;
+
+        uint32[] memory secondsAgos = new uint32[](5);
+        uint32[] memory windows = new uint32[](4);
+        uint256[] memory nowIndexes = new uint256[](4);
+
+        // number of seconds in past for which we want accumulator snapshot
+        secondsAgos[0] = uint32(_macroWindow * 2);
+        secondsAgos[1] = uint32(_macroWindow);
+        secondsAgos[2] = uint32(_microWindow * 2);
+        secondsAgos[3] = uint32(_microWindow);
+        secondsAgos[4] = 0;
+
+        // window lengths for each cumulative differencing
+        windows[0] = uint32(_macroWindow);
+        windows[1] = uint32(_macroWindow);
+        windows[2] = uint32(_microWindow);
+        windows[3] = uint32(_microWindow);
+
+        // index in secondsAgos which we treat as current time when differencing
+        // for mean calcs
+        nowIndexes[0] = 1;
+        nowIndexes[1] = secondsAgos.length-1;
+        nowIndexes[2] = 3;
+        nowIndexes[3] = secondsAgos.length-1;
 
         (
             int24[] memory arithmeticMeanTicksMarket,
             uint128[] memory harmonicMeanLiquiditiesMarket
-        ) = consult(marketPool, secondsAgos);
+        ) = consult(marketPool, secondsAgos, windows, nowIndexes);
         (
             int24[] memory arithmeticMeanTicksOvlWeth,
             uint128[] memory harmonicMeanLiquiditiesOvlWeth
-        ) = consult(ovlWethPool, secondsAgos);
+        ) = consult(ovlWethPool, secondsAgos, windows, nowIndexes);
 
-        uint256[] memory prices = new uint256[](2);
-        uint256[] memory reserves = new uint256[](2);
-        for (uint256 i = 0; i < 2; i++) {
+        uint256[] memory prices = new uint256[](nowIndexes.length);
+        uint256[] memory reserves = new uint256[](nowIndexes.length);
+        for (uint256 i = 0; i < nowIndexes.length; i++) {
             uint256 price = getQuoteAtTick(
                 arithmeticMeanTicksMarket[i],
                 marketBaseAmount,
@@ -117,10 +139,12 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
         return
             Oracle.Data({
                 timestamp: block.timestamp,
-                microWindow: microWindow,
-                macroWindow: macroWindow,
-                priceOverMicroWindow: prices[1],
-                priceOverMacroWindow: prices[0],
+                microWindow: _microWindow,
+                macroWindow: _macroWindow,
+                priceOverMicroWindow: prices[3], // secondsAgos = _microWindow
+                priceOverMacroWindow: prices[1], // secondsAgos = _macroWindow
+                priceOverMicroWindowOneWindowAgo: prices[2], // secondsAgos = _microWindow * 2
+                priceOverMacroWindowOneWindowAgo: prices[0], // secondsAgos = _macroWindow * 2
                 reserveOverMicroWindow: reserves[1],
                 reserveOverMacroWindow: reserves[0],
                 hasReserve: true
@@ -128,9 +152,9 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
     }
 
     /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
-    /// @dev assumes last element of secondsAgos is the current cumulative value from which we
+    /// @dev assumes nows elements are the current cumulative value from which we
     /// @dev want to calculate rolling average tick and liquidity values
-    function consult(address pool, uint32[] memory secondsAgos)
+    function consult(address pool, uint32[] memory secondsAgos, uint32[] memory windows, uint256[] memory nowIndexes)
         public
         view
         returns (int24[] memory arithmeticMeanTicks_, uint128[] memory harmonicMeanLiquidities_)
@@ -140,28 +164,27 @@ contract OverlayV1UniswapV3Feed is OverlayV1Feed {
             uint160[] memory secondsPerLiquidityCumulativeX128s
         ) = IUniswapV3Pool(pool).observe(secondsAgos);
 
-        arithmeticMeanTicks_ = new int24[](secondsAgos.length - 1);
-        harmonicMeanLiquidities_ = new uint128[](secondsAgos.length - 1);
+        arithmeticMeanTicks_ = new int24[](nowIndexes.length);
+        harmonicMeanLiquidities_ = new uint128[](nowIndexes.length);
 
-        for (uint256 i = 0; i < secondsAgos.length - 1; i++) {
+        for (uint256 i = 0; i < nowIndexes.length; i++) {
             uint32 secondsAgo = secondsAgos[i];
+            uint256 nowIndex = nowIndexes[i];
+            uint32 window = windows[i];
 
-            int56 tickCumulativesDelta = tickCumulatives[secondsAgos.length - 1] -
-                tickCumulatives[i];
-            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[
-                secondsAgos.length - 1
-            ] - secondsPerLiquidityCumulativeX128s[i];
+            int56 tickCumulativesDelta = tickCumulatives[nowIndex] - tickCumulatives[i];
+            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[nowIndex] - secondsPerLiquidityCumulativeX128s[i];
 
-            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(secondsAgo)));
+            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(window)));
             // Always round to negative infinity
-            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(int32(secondsAgo)) != 0))
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(int32(window)) != 0))
                 arithmeticMeanTick--;
 
             // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity
             // doesn't overflow uint128
-            uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
+            uint192 windowX160 = uint192(window) * type(uint160).max;
             uint128 harmonicMeanLiquidity = uint128(
-                secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
+                windowX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
             );
 
             arithmeticMeanTicks_[i] = arithmeticMeanTick;

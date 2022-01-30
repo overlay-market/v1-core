@@ -27,6 +27,8 @@ contract OverlayV1FeedMock is OverlayV1Feed {
                 macroWindow: macroWindow,
                 priceOverMicroWindow: price,
                 priceOverMacroWindow: price,
+                priceOverMicroWindowOneWindowAgo: price,
+                priceOverMacroWindowOneWindowAgo: price,
                 reserveOverMicroWindow: reserve,
                 reserveOverMacroWindow: reserve,
                 hasReserve: true
