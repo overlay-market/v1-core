@@ -43,6 +43,7 @@ contract OverlayV1Market {
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
+    uint256 public priceDriftUpperLimit; // upper limit for feed price changes
 
     // trading fee related quantities
     address public tradingFeeRecipient;
@@ -62,7 +63,7 @@ contract OverlayV1Market {
     mapping(bytes32 => Position.Info) public positions;
     uint256 private _totalPositions;
 
-    // last call to update
+    // data from last call to update
     uint256 public timestampUpdateLast;
 
     // factory modifier for governance sensitive functions
@@ -74,12 +75,18 @@ contract OverlayV1Market {
     constructor(
         address _ovl,
         address _feed,
+        address _factory,
         Risk.Params memory params
     ) {
         ovl = OverlayV1Token(_ovl);
         feed = _feed;
-        factory = msg.sender;
-        tradingFeeRecipient = msg.sender;
+        factory = _factory;
+        tradingFeeRecipient = _factory; // TODO: disburse trading fees in factory
+
+        // initialize update data
+        // TODO: test
+        Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+        require(mid(data, 0, 0) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
 
         // set the gov params
@@ -95,6 +102,7 @@ contract OverlayV1Market {
         maintenanceMarginBurnRate = params.maintenanceMarginBurnRate;
         tradingFeeRate = params.tradingFeeRate;
         minCollateral = params.minCollateral;
+        priceDriftUpperLimit = params.priceDriftUpperLimit;
     }
 
     /// @dev builds a new position
@@ -192,14 +200,39 @@ contract OverlayV1Market {
         oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
 
         // fetch new oracle data from feed
-        // TODO: apply sanity checks in case of data manipulation:
-        // TODO: simple rough check would be |log(price)| bounded by
-        // TODO: confidenceConstant * dt; (assumes a ~ 1, mu ~ 0)
+        // applies sanity check in case of data manipulation
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+        require(dataIsValid(data), "OVLV1:!data");
 
-        // refresh last update timestamp
+        // refresh last update data
         timestampUpdateLast = block.timestamp;
+
+        // return the latest data from feed
         return data;
+    }
+
+    /// @dev sanity check on data fetched from oracle in case of manipulation
+    /// @dev rough check that log price bounded by +/- priceDriftUpperLimit * dt
+    /// @dev when comparing priceMacro(now) vs priceMacro(now - macroWindow)
+    function dataIsValid(Oracle.Data memory data) public view returns (bool) {
+        // upper and lower limits are e**(+/- priceDriftUpperLimit * dt)
+        uint256 pow = priceDriftUpperLimit * data.macroWindow;
+        uint256 dpLowerLimit = INVERSE_EULER.powUp(pow);
+        uint256 dpUpperLimit = EULER.powUp(pow);
+
+        // compare current price over macro window vs price over macro window
+        // one macro window in the past
+        uint256 priceNow = data.priceOverMacroWindow;
+        uint256 priceLast = data.priceOneMacroWindowAgo;
+        if (priceLast == 0 || priceNow == 0) {
+            // data is not valid if price is zero
+            return false;
+        }
+
+        // price is valid if within upper and lower limits on drift given
+        // time elapsed over one macro window
+        uint256 dp = priceNow.divUp(priceLast);
+        return (dp >= dpLowerLimit && dp <= dpUpperLimit);
     }
 
     /// @dev current open interest after funding payments transferred
@@ -314,6 +347,15 @@ contract OverlayV1Market {
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
 
+    /// @dev gets the current mid price given oracle data
+    function mid(
+        Oracle.Data memory data,
+        uint256 volumeBid,
+        uint256 volumeAsk
+    ) public view returns (uint256 mid_) {
+        mid_ = (bid(data, volumeBid) + ask(data, volumeAsk)) / 2;
+    }
+
     /**
       @dev Rolling volume adjustments on bid side to be used for market impact.
       @dev Volume values are normalized with respect to oi cap.
@@ -364,7 +406,7 @@ contract OverlayV1Market {
         return volume;
     }
 
-    /// TODO: emergencyWithdraw: allows withdrawal of original collateral
+    /// TODO: emergencyWithdraw(?): allows withdrawal of original collateral
     /// TODO: without profit/loss if system in emergencyShutdown mode
 
     /// @dev governance adjustable risk parameter setters
@@ -419,5 +461,10 @@ contract OverlayV1Market {
 
     function setMinCollateral(uint256 _minCollateral) external onlyFactory {
         minCollateral = _minCollateral;
+    }
+
+    function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
+        // TODO: check pow != 0 && pow <= MAX_NATURAL_EXPONENT; pow = drift * data.macroWindow
+        priceDriftUpperLimit = _priceDriftUpperLimit;
     }
 }

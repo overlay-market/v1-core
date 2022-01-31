@@ -130,10 +130,12 @@ def create_factory(gov, request, ovl, feed_factory, feed_three):
         maintenance_burn = 100000000000000000
         trade_fee = 750000000000000
         min_collateral = 100000000000000
+        price_drift_upper_limit = 100000000000000  # 0.01% per sec
 
         params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,
-                  maintenance, maintenance_burn, trade_fee, min_collateral)
+                  maintenance, maintenance_burn, trade_fee, min_collateral,
+                  price_drift_upper_limit)
         _ = factory.deployMarket(feeds, feed, params, {"from": gov})
 
         return factory
@@ -150,3 +152,9 @@ def factory(create_factory):
 def market(factory, feed_three):
     market_addr = factory.getMarket(feed_three)
     yield interface.IOverlayV1Market(market_addr)
+
+
+@pytest.fixture(scope="module")
+def deployer(factory):
+    deployer_addr = factory.deployer()
+    yield interface.IOverlayV1Deployer(deployer_addr)

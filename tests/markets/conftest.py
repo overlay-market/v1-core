@@ -24,6 +24,11 @@ def rando(accounts):
     yield accounts[3]
 
 
+@pytest.fixture(scope="module")
+def factory(accounts):
+    yield accounts[4]
+
+
 @pytest.fixture(scope="module", params=[8000000])
 def create_token(gov, alice, bob, request):
     sup = request.param
@@ -105,8 +110,9 @@ def feed(create_feed):
 
 @pytest.fixture(scope="module")
 def create_market(gov, ovl):
-    def create_market(feed, risk_params, governance=gov, ovl=ovl):
-        market = governance.deploy(OverlayV1Market, ovl, feed, risk_params)
+    def create_market(feed, factory, risk_params, governance=gov, ovl=ovl):
+        market = governance.deploy(OverlayV1Market, ovl, feed, factory,
+                                   risk_params)
         ovl.grantRole(ovl.MINTER_ROLE(), market, {"from": governance})
         ovl.grantRole(ovl.BURNER_ROLE(), market, {"from": governance})
         return market
@@ -127,8 +133,9 @@ def create_market(gov, ovl):
     100000000000000000,  # maintenanceMarginBurnRate
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
+    25000000000000,  # priceDriftUpperLimit
 )])
-def market(gov, feed, ovl, create_market, request):
+def market(gov, feed, factory, ovl, create_market, request):
     risk_params = request.param
-    yield create_market(feed=feed, risk_params=risk_params,
+    yield create_market(feed=feed, factory=factory, risk_params=risk_params,
                         governance=gov, ovl=ovl)

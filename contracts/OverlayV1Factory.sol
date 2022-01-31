@@ -7,7 +7,7 @@ import "./interfaces/IOverlayV1FeedFactory.sol";
 import "./libraries/Risk.sol";
 
 import "./OverlayV1Token.sol";
-import "./OverlayV1Market.sol";
+import "./OverlayV1Deployer.sol";
 
 contract OverlayV1Factory is AccessControlEnumerable {
     bytes32 public constant ADMIN_ROLE = 0x00;
@@ -38,6 +38,8 @@ contract OverlayV1Factory is AccessControlEnumerable {
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
+    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.0001% per sec (0.01 bps/s)
+    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e16; // 1.00% per sec (100 bps/s)
 
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);
@@ -76,9 +78,17 @@ contract OverlayV1Factory is AccessControlEnumerable {
         address indexed market,
         uint256 minCollateral
     );
+    event PriceDriftUpperLimitUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 priceDriftUpperLimit
+    );
 
     // ovl token
     OverlayV1Token public immutable ovl;
+
+    // market deployer
+    OverlayV1Deployer public immutable deployer;
 
     // registry of supported feed factories
     mapping(address => bool) public isFeedFactory;
@@ -103,7 +113,11 @@ contract OverlayV1Factory is AccessControlEnumerable {
         _setupRole(ADMIN_ROLE, msg.sender);
         _setupRole(GOVERNOR_ROLE, msg.sender);
 
+        // set ovl
         ovl = OverlayV1Token(_ovl);
+
+        // create a new deployer to use when deploying markets
+        deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
     }
 
     /// @dev adds a supported feed factory
@@ -121,17 +135,13 @@ contract OverlayV1Factory is AccessControlEnumerable {
         Risk.Params memory params
     ) external onlyGovernor returns (address market_) {
         // check feed and feed factory are available for a new market
-        _checkFeedBeforeDeployMarket(feedFactory, feed);
+        _checkFeed(feedFactory, feed);
 
         // check risk parameters are within bounds
-        _checkRiskParamsBeforeDeployMarket(params);
+        _checkRiskParams(params);
 
-        // Use the CREATE2 opcode to deploy a new Market contract.
-        // Will revert if market which accepts feed in its constructor has already
-        // been deployed since salt would be the same and can't deploy with it twice.
-        market_ = address(
-            new OverlayV1Market{salt: keccak256(abi.encode(feed))}(address(ovl), feed, params)
-        );
+        // deploy the new market
+        market_ = deployer.deploy(address(ovl), feed, params);
 
         // grant market mint and burn priveleges on ovl
         ovl.grantRole(ovl.MINTER_ROLE(), market_);
@@ -145,14 +155,14 @@ contract OverlayV1Factory is AccessControlEnumerable {
     }
 
     /// @notice checks market doesn't exist on feed and feed is from a supported factory
-    function _checkFeedBeforeDeployMarket(address feedFactory, address feed) private {
+    function _checkFeed(address feedFactory, address feed) private {
         require(getMarket[feed] == address(0), "OVLV1: market already exists");
         require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
         require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
     }
 
     /// @notice checks risk params are within acceptable bounds
-    function _checkRiskParamsBeforeDeployMarket(Risk.Params memory params) private {
+    function _checkRiskParams(Risk.Params memory params) private {
         require(params.k >= MIN_K && params.k <= MAX_K, "OVLV1: k out of bounds");
         require(
             params.lmbda >= MIN_LMBDA && params.lmbda <= MAX_LMBDA,
@@ -204,7 +214,15 @@ contract OverlayV1Factory is AccessControlEnumerable {
                 params.minCollateral <= MAX_MINIMUM_COLLATERAL,
             "OVLV1: minCollateral out of bounds"
         );
+        require(
+            params.priceDriftUpperLimit >= MIN_PRICE_DRIFT_UPPER_LIMIT &&
+                params.priceDriftUpperLimit <= MAX_PRICE_DRIFT_UPPER_LIMIT,
+            "OVLV1: priceDriftUpperLimit out of bounds"
+        );
     }
+
+    // TODO: function disburse(): should send any trading fees
+    // in factory contract to a trading fee repository
 
     /// below are per-market risk parameter setters,
     /// adjustable by governance
@@ -348,5 +366,20 @@ contract OverlayV1Factory is AccessControlEnumerable {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setMinCollateral(minCollateral);
         emit MinimumCollateralUpdated(msg.sender, address(market), minCollateral);
+    }
+
+    /// @dev upper limit to price drift setter
+    function setPriceDriftUpperLimit(address feed, uint256 priceDriftUpperLimit)
+        external
+        onlyGovernor
+    {
+        require(
+            priceDriftUpperLimit >= MIN_PRICE_DRIFT_UPPER_LIMIT &&
+                priceDriftUpperLimit <= MAX_PRICE_DRIFT_UPPER_LIMIT,
+            "OVLV1: priceDriftUpperLimit out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setPriceDriftUpperLimit(priceDriftUpperLimit);
+        emit PriceDriftUpperLimitUpdated(msg.sender, address(market), priceDriftUpperLimit);
     }
 }

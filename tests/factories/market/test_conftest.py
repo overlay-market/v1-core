@@ -1,6 +1,11 @@
-def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov, market):
-    # check params set properly
+def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov,
+                         market, deployer):
+    # check ovl immutable set
     assert factory.ovl() == ovl
+
+    # check deployer contract deployed on factory deploy
+    assert factory.deployer() != "0x0000000000000000000000000000000000000000"
+    assert deployer.factory() == factory
 
     # check appropriate factory roles given to contract deployer
     assert factory.hasRole(factory.ADMIN_ROLE(), gov) is True
@@ -19,8 +24,8 @@ def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov, market):
 
 def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
     # check params set properly
-    feed_factory.microWindow() == 600
-    feed_factory.macroWindow() == 3600
+    assert feed_factory.microWindow() == 600
+    assert feed_factory.macroWindow() == 3600
 
     # check feeds with (price, reserve) combos have been deployed
     assert feed_factory.isFeed(feed_one) is True
@@ -47,5 +52,6 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.maintenanceMarginBurnRate() == 100000000000000000
     assert market.tradingFeeRate() == 750000000000000
     assert market.minCollateral() == 100000000000000
+    assert market.priceDriftUpperLimit() == 100000000000000
 
     assert market.tradingFeeRecipient() == factory

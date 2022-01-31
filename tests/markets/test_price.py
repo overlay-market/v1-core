@@ -135,3 +135,22 @@ def test_ask_reverts_when_impact_greater_than_max_slippage(market):
     volume = Decimal(max_volume) * Decimal(1 - tol)
     input_volume = volume * Decimal(1e18)
     _ = market.ask(data, input_volume)
+
+
+def test_mid(market):
+    # test mid is the mid between bid and ask prices
+    volume_bid = Decimal(0.01) * Decimal(1e18)
+    volume_ask = Decimal(0.015) * Decimal(1e18)
+
+    # NOTE: ask() and bid() are tested above
+    tx = market.update()
+    data = tx.return_value
+
+    bid = market.bid(data, volume_bid)
+    ask = market.ask(data, volume_ask)
+
+    # check expect equals actual for mid
+    expect_mid = int((bid + ask) / 2)
+    actual_mid = market.mid(data, volume_bid, volume_ask)
+
+    assert int(actual_mid) == approx(expect_mid)
