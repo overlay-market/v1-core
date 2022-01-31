@@ -29,11 +29,12 @@ library Roller {
 
         if (dt >= snapWindow || snapWindow == 0) {
             // if one window has passed, prior value has decayed to zero
-            return Snapshot({
-                timestamp: uint32(timestamp),
-                window: uint32(window),
-                accumulator: int192(value)
-            });
+            return
+                Snapshot({
+                    timestamp: uint32(timestamp),
+                    window: uint32(window),
+                    accumulator: int192(value)
+                });
         }
 
         // otherwise, calculate fraction of value remaining given linear decay.
@@ -46,11 +47,8 @@ library Roller {
         if (accumulatorNow == 0) {
             // if accumulator now is zero, windowNow is simply window
             // to avoid 0/0 case below
-            return Snapshot({
-                timestamp: uint32(timestamp),
-                window: uint32(window),
-                accumulator: 0
-            });
+            return
+                Snapshot({timestamp: uint32(timestamp), window: uint32(window), accumulator: 0});
         }
 
         // recalculate windowNow_ for future decay as a value weighted average time
@@ -64,10 +62,11 @@ library Roller {
         uint256 w1 = uint256(snapAccumulator >= 0 ? snapAccumulator : -snapAccumulator);
         uint256 w2 = uint256(value >= 0 ? value : -value);
         uint256 windowNow = (w1 * (snapWindow - dt) + w2 * window) / (w1 + w2);
-        return Snapshot({
-            timestamp: uint32(timestamp),
-            window: uint32(windowNow),
-            accumulator: int192(accumulatorNow)
-        });
+        return
+            Snapshot({
+                timestamp: uint32(timestamp),
+                window: uint32(windowNow),
+                accumulator: int192(accumulatorNow)
+            });
     }
 }
