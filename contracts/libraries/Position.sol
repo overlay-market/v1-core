@@ -9,9 +9,10 @@ library Position {
     uint256 internal constant TWO = 2e18;
 
     struct Info {
-        uint88 oi; // initial open interest
-        uint88 debt; // debt
+        uint120 oi; // initial open interest
+        uint120 debt; // debt
         bool isLong; // whether long or short
+        bool liquidated; // whether has been liquidated
         uint256 entryPrice; // price received at entry
     }
 
@@ -208,7 +209,8 @@ library Position {
         uint256 marginMaintenance
     ) private pure returns (bool can_) {
         uint256 oiInitial = _oiInitial(self);
-        if (oiInitial == 0) {
+
+        if (self.liquidated) {
             // already been liquidated
             return false;
         }
@@ -228,8 +230,11 @@ library Position {
         uint256 posOiInitial = _oiInitial(self);
         uint256 debt = _debt(self);
 
-        // TODO: decide what to return when posOi = 0 to avoid
-        // div by zero error
+        // TODO: test
+        if (self.liquidated) {
+            // return 0 if already liquidated
+            return 0;
+        }
 
         uint256 oiFrame = posOiInitial.mulUp(marginMaintenance).add(debt).divDown(posOiCurrent);
 

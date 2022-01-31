@@ -79,6 +79,7 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
 
     # expect values
     expect_is_long = is_long
+    expect_liquidated = False
     expect_entry_price = price
     expect_oi_initial = int(oi * Decimal(1e18))
     expect_debt = int(debt * Decimal(1e18))
@@ -86,10 +87,11 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_oi_initial, actual_debt, actual_is_long,
+    (actual_oi_initial, actual_debt, actual_is_long, actual_liquidated,
      actual_entry_price) = actual_pos
 
     assert actual_is_long == expect_is_long
+    assert actual_liquidated == expect_liquidated
     assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)

@@ -154,9 +154,10 @@ contract OverlayV1Market {
             msg.sender,
             positionId_,
             Position.Info({
-                oi: uint88(oi),
-                debt: uint88(oi - collateral),
+                oi: uint120(oi),
+                debt: uint120(oi - collateral),
                 isLong: isLong,
+                liquidated: false,
                 entryPrice: price
             })
         );
