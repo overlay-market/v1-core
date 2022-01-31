@@ -57,7 +57,7 @@ library Position {
     //////////////////////////////////////////////////////////////*/
 
     // TODO: functions to compute more properties:
-    // TODO: e.g. collateralInitial, leverageInitial, ....
+    // TODO: e.g. collateralInitial, leverageInitial, cost, ....
 
     /// @notice Computes the open interest of a position
     function oiCurrent(

@@ -313,7 +313,7 @@ contract OverlayV1Market {
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
-        int256 minted = snapshot.accumulator;
+        int256 minted = int256(snapshot.cumulative());
         uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
         if (minted <= int256(_circuitBreakerMintTarget)) {
             return capOi;
@@ -376,7 +376,7 @@ contract OverlayV1Market {
         snapshotVolumeBid = snapshot;
 
         // return the volume
-        uint256 volume = uint256(snapshot.accumulator);
+        uint256 volume = uint256(snapshot.cumulative());
         return volume;
     }
 
@@ -401,7 +401,7 @@ contract OverlayV1Market {
         snapshotVolumeAsk = snapshot;
 
         // return the volume
-        uint256 volume = uint256(snapshot.accumulator);
+        uint256 volume = uint256(snapshot.cumulative());
         return volume;
     }
 
