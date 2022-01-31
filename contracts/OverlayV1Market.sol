@@ -154,12 +154,10 @@ contract OverlayV1Market {
             msg.sender,
             positionId_,
             Position.Info({
-                leverage: leverage,
+                oi: uint88(oi),
+                debt: uint88(oi - collateral),
                 isLong: isLong,
-                entryPrice: price,
-                oiShares: oi,
-                debt: oi - collateral,
-                cost: collateral
+                entryPrice: price
             })
         );
         _totalPositions++;
@@ -316,14 +314,15 @@ contract OverlayV1Market {
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
         int256 minted = snapshot.accumulator;
-        if (minted <= int256(circuitBreakerMintTarget)) {
+        uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
+        if (minted <= int256(_circuitBreakerMintTarget)) {
             return capOi;
-        } else if (minted >= 2 * int256(circuitBreakerMintTarget)) {
+        } else if (minted >= 2 * int256(_circuitBreakerMintTarget)) {
             return 0;
         }
 
         // case 3 (circuit breaker adjustment downward)
-        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(circuitBreakerMintTarget));
+        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(_circuitBreakerMintTarget));
         return capOi.mulDown(adjustment);
     }
 
