@@ -181,28 +181,32 @@ contract OverlayV1Market {
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
-        // calculate adjustments to oi due to funding
-        bool isLongOverweight = oiLong > oiShort;
-        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
-        (oiOverweight, oiUnderweight) = oiAfterFunding(
-            oiOverweight,
-            oiUnderweight,
-            timestampUpdateLast,
-            block.timestamp
-        );
+        // apply funding if at least one block has passed
+        // TODO: test timeElapsed case
+        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
+        if (timeElapsed > 0) {
+            // calculate adjustments to oi due to funding
+            bool isLongOverweight = oiLong > oiShort;
+            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+            (oiOverweight, oiUnderweight) = oiAfterFunding(
+                oiOverweight,
+                oiUnderweight,
+                timeElapsed
+            );
 
-        // pay funding
-        oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-        oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+            // pay funding
+            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+
+            // refresh last update data
+            timestampUpdateLast = block.timestamp;
+        }
 
         // fetch new oracle data from feed
         // applies sanity check in case of data manipulation
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVLV1:!data");
-
-        // refresh last update data
-        timestampUpdateLast = block.timestamp;
 
         // return the latest data from feed
         return data;
@@ -237,13 +241,12 @@ contract OverlayV1Market {
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timestampLast,
-        uint256 timestampNow
+        uint256 timeElapsed
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiOverweight + oiUnderweight;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE - 2 * k).powUp(ONE * (timestampNow - timestampLast));
+        uint256 drawdownFactor = (ONE - 2 * k).powUp(ONE * timeElapsed);
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {

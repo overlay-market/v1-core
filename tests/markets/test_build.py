@@ -199,7 +199,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     actual_timestamp, actual_window, actual_volume = actual
 
     assert actual_timestamp == expect_timestamp
-    assert int(actual_window) == approx(expect_window)
+    assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
     assert int(actual_volume) == approx(expect_volume)
 
 

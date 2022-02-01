@@ -18,9 +18,6 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
     oi = oi_long + oi_short
     oi_imb = oi_long - oi_short if oi_long >= oi_short else oi_short - oi_long
 
-    timestamp_last = 1642797758
-    timestamp_now = timestamp_last + dt
-
     # calculate expected oi values long and short
     k = market.k() / Decimal(1e18)
     oi_imb *= (1 - 2*k) ** (dt)
@@ -29,7 +26,7 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
 
     # get actual oi values long and short
     actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(
-        oi_overweight, oi_underweight, timestamp_last, timestamp_now)
+        oi_overweight, oi_underweight, dt)
 
     # check expect oi values equal actual oi values after funding
     assert int(actual_oi_overweight) == approx(expect_oi_overweight)
@@ -43,11 +40,7 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
 def test_oi_after_funding_when_underweight_is_zero(market, oi_overweight, dt):
     oi_overweight = oi_overweight * Decimal(1e18)
     oi_underweight = 0
-
     oi_imb = oi_overweight
-
-    timestamp_last = 1642797758
-    timestamp_now = timestamp_last + dt
 
     # calculate expected oi values long and short
     k = market.k() / Decimal(1e18)
@@ -59,7 +52,7 @@ def test_oi_after_funding_when_underweight_is_zero(market, oi_overweight, dt):
 
     # get actual oi values long and short
     actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(
-        oi_overweight, oi_underweight, timestamp_last, timestamp_now)
+        oi_overweight, oi_underweight, dt)
 
     # check expect oi values equal actual oi values after funding
     assert int(actual_oi_overweight) == approx(expect_oi_overweight)
@@ -69,11 +62,10 @@ def test_oi_after_funding_when_underweight_is_zero(market, oi_overweight, dt):
 def test_oi_after_funding_when_longs_and_shorts_are_zero(market):
     oi_long = 0
     oi_short = 0
-    timestamp_last = 1643247197
-    timestamp_now = 1643247797
+    dt = 600
 
     actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(
-        oi_long, oi_short, timestamp_last, timestamp_now)
+        oi_long, oi_short, dt)
 
     assert actual_oi_overweight == 0
     assert actual_oi_underweight == 0

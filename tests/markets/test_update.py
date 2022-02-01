@@ -47,14 +47,15 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, oi_long, oi_short):
     # call update
     tx = market.update()
     timestamp_now = chain[tx.block_number]['timestamp']
+    time_elapsed = timestamp_now - timestamp_last
 
     # NOTE: oiAfterFunding() tests in test_funding.py
     if (expect_oi_long > expect_oi_short):
         expect_oi_long, expect_oi_short = market.oiAfterFunding(
-            expect_oi_long, expect_oi_short, timestamp_last, timestamp_now)
+            expect_oi_long, expect_oi_short, time_elapsed)
     else:
         expect_oi_short, expect_oi_long = market.oiAfterFunding(
-            expect_oi_short, expect_oi_long, timestamp_last, timestamp_now)
+            expect_oi_short, expect_oi_long, time_elapsed)
 
     actual_oi_long = market.oiLong()
     actual_oi_short = market.oiShort()
