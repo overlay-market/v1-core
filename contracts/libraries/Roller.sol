@@ -48,8 +48,7 @@ library Roller {
         if (accumulatorNow == 0) {
             // if accumulator now is zero, windowNow is simply window
             // to avoid 0/0 case below
-            return
-                Snapshot({timestamp: timestamp32, window: uint32(window), accumulator: 0});
+            return Snapshot({timestamp: timestamp32, window: uint32(window), accumulator: 0});
         }
 
         // recalculate windowNow_ for future decay as a value weighted average time
