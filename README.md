@@ -54,12 +54,11 @@ The market contract tracks the current open interest for all outstanding positio
 ```
 library Position {
   struct Info {
-      uint256 leverage; // discrete initial leverage amount
+      uint120 oi; // initial open interest
+      uint120 debt; // debt
       bool isLong; // whether long or short
+      bool liquidated; // whether has been liquidated
       uint256 entryPrice; // price received at entry
-      uint256 oiShares; // shares of total open interest attributed to this position on long/short side, depending on isLong value
-      uint256 debt; // total debt associated with this position
-      uint256 cost; // total amount of collateral initially locked; effectively, cost to enter position
   }
 }
 ```
@@ -85,16 +84,16 @@ View data returned by `latest()` is formatted as specified by `Oracle.Data`:
 
 ```
 library Oracle {
-    struct Data {
-        uint256 timestamp;
-        uint256 microWindow;
-        uint256 macroWindow;
-        uint256 priceOverMicroWindow;
-        uint256 priceOverMacroWindow;
-        uint256 reserveOverMicroWindow; // in ovl
-        uint256 reserveOverMacroWindow; // in ovl
-        bool hasReserve; // whether oracle has manipulable reserve pool
-    }
+  struct Data {
+      uint256 timestamp;
+      uint256 microWindow;
+      uint256 macroWindow;
+      uint256 priceOverMicroWindow; // p(now) averaged over micro
+      uint256 priceOverMacroWindow; // p(now) averaged over macro
+      uint256 priceOneMacroWindowAgo; // p(now - macro) avg over macro
+      uint256 reserveOverMicroWindow; // r(now) in ovl averaged over micro
+      bool hasReserve; // whether oracle has manipulable reserve pool
+  }
 }
 ```
 from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data` data is consumed by each deployment of `OverlayV1Market.sol` for traders to take positions on the market of interest.
@@ -113,13 +112,6 @@ The process to add a new market is as follows:
 
 1. Deploy a feed contract for the data stream we wish to offer a market on. Developers inherit from [`OverlayV1Feed.sol`](./contracts/fees/OverlayV1Feed.sol) to implement a feed contract for the specific type of oracle provider they wish to support if it hasn't already been implemented (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools). The feed contract ingests the data stream directly from the oracle provider and formats the data in a form consumable by the market
 
-2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. Traders interact directly with this market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
+2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
-3. Grant the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. This will be accomplished through a market deployer contract (not yet implemented), which is granted admin privileges on the OVL token by governance.
-
-
-## Edge Cases
-
-Edge cases need to be thought through:
-
-- Do we make `OverlayV1Market.sol::feed` an immutable storage variable? If so (as it currently is), would mean we need to deploy a new market every time we'd like to upgrade a feed. If not, governance can deploy an upgraded feed and point the market's `feed` variable to that new address, but there are potential issues here around interfering with live trading we need to think through.
+3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OVL token prior to any markets being deployed, otherwise `deployMarket()` will revert.
