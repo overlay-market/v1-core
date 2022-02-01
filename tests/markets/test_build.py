@@ -439,3 +439,6 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     actual_pos_id = market.nextPositionId()
 
     assert expect_pos_id == actual_pos_id
+
+
+# TODO: multiple builds in a row

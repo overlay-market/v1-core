@@ -140,7 +140,6 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume on either the ask or bid
-        // TODO: pack snapshotVolumes to get gas close to 200k
         // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
@@ -148,13 +147,12 @@ contract OverlayV1Market {
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
-        // TODO: pack position.info to get gas close to 200k
         positionId_ = _totalPositions;
         positions.set(
             msg.sender,
             positionId_,
             Position.Info({
-                oi: uint120(oi),
+                oi: uint120(oi), // won't overflow as capOi max is 8e24
                 debt: uint120(oi - collateral),
                 isLong: isLong,
                 liquidated: false,
