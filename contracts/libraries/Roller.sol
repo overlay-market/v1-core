@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "./Cast.sol";
+
 library Roller {
+    using Cast for uint256;
+    using Cast for int256;
+
     struct Snapshot {
         uint32 timestamp; // time last snapshot was taken
         uint32 window; // window (length of time) over which will decay
         int192 accumulator; // accumulator value which will decay to zero over window
     }
 
-    // TODO: test
+    /// @dev returns the stored accumulator value as an int256
     function cumulative(Snapshot memory self) internal view returns (int256) {
         return int256(self.accumulator);
     }
@@ -21,20 +26,20 @@ library Roller {
         uint256 window,
         int256 value
     ) internal view returns (Snapshot memory) {
-        // TODO: overflow checks with int192 accumulator given use for snapshotMint
-        uint32 timestamp32 = uint32(timestamp % 2**32); // mod to fit in 32 bits
+        uint32 timestamp32 = uint32(timestamp % 2**32); // mod to fit in uint32
 
+        // int/uint256 values to use in calculations
         uint256 dt = uint256(timestamp32 - self.timestamp);
         uint256 snapWindow = uint256(self.window);
-        int256 snapAccumulator = int256(self.accumulator);
+        int256 snapAccumulator = cumulative(self);
 
         if (dt >= snapWindow || snapWindow == 0) {
             // if one window has passed, prior value has decayed to zero
             return
                 Snapshot({
                     timestamp: timestamp32,
-                    window: uint32(window),
-                    accumulator: int192(value)
+                    window: window.toUint32Bounded(),
+                    accumulator: value.toInt192Bounded()
                 });
         }
 
@@ -56,19 +61,14 @@ library Roller {
         // vwat = (|accumulatorLastWithDecay| * (windowLast - dt) + |value| * window) /
         //        (|accumulatorLastWithDecay| + |value|)
         // TODO: Use SignedMath in next open zeppelin release 4.5.0
-
-        // uint32(windowNow) won't overflow since
-        // max(windowNow) = max(snapWindow - dt, window)
-        // where snapWindow, window fit in uint32 and dt <= snapWindow from above
-        // TODO: check for overflow with accumulator and int192 cast down
         uint256 w1 = uint256(snapAccumulator >= 0 ? snapAccumulator : -snapAccumulator);
         uint256 w2 = uint256(value >= 0 ? value : -value);
         uint256 windowNow = (w1 * (snapWindow - dt) + w2 * window) / (w1 + w2);
         return
             Snapshot({
                 timestamp: timestamp32,
-                window: uint32(windowNow),
-                accumulator: int192(accumulatorNow)
+                window: windowNow.toUint32Bounded(),
+                accumulator: accumulatorNow.toInt192Bounded()
             });
     }
 }

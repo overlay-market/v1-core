@@ -182,7 +182,6 @@ contract OverlayV1Market {
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
         // apply funding if at least one block has passed
-        // TODO: test timeElapsed case
         uint256 timeElapsed = block.timestamp - timestampUpdateLast;
         if (timeElapsed > 0) {
             // calculate adjustments to oi due to funding
