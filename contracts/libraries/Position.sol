@@ -43,12 +43,12 @@ library Position {
                         POSITION GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Computes the position's initial open interest
+    /// @notice Computes the position's initial open interest cast to uint256
     function _oiInitial(Info memory self) private pure returns (uint256) {
         return uint256(self.oi);
     }
 
-    /// @notice Computes the position's debt
+    /// @notice Computes the position's debt cast to uint256
     function _debt(Info memory self) private pure returns (uint256) {
         return uint256(self.debt);
     }
@@ -61,12 +61,16 @@ library Position {
     // TODO: e.g. collateralInitial, leverageInitial, cost, ....
 
     /// @notice Computes the open interest of a position
+    /// @dev returns zero when oiShares = totalOi = totalOiShares = 0 to avoid
+    /// @dev div by zero errors
     function oiCurrent(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares
-    ) internal view returns (uint256) {
-        return _oiCurrent(self, totalOi, totalOiShares);
+    ) internal pure returns (uint256) {
+        uint256 initialOi = _oiInitial(self);
+        if (initialOi == 0 || totalOi == 0) return 0;
+        return initialOi.mulDown(totalOi).divUp(totalOiShares);
     }
 
     /// @notice Computes the value of a position
@@ -76,75 +80,8 @@ library Position {
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
-    ) internal view returns (uint256) {
-        return _value(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Whether position is underwater
-    /// @dev is true when position value <= 0
-    function isUnderwater(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) internal view returns (bool) {
-        return _isUnderwater(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Computes the notional of a position
-    /// @dev Floors to _self.debt if value <= 0
-    function notional(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) internal view returns (uint256) {
-        return _notional(self, totalOi, totalOiShares, currentPrice);
-    }
-
-    /// @notice Whether a position can be liquidated
-    /// @dev is true when value < maintenance margin
-    function isLiquidatable(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice,
-        uint256 marginMaintenance
-    ) internal view returns (bool) {
-        return _isLiquidatable(self, totalOi, totalOiShares, currentPrice, marginMaintenance);
-    }
-
-    /// @notice Computes the liquidation price of a position
-    /// @dev price when value < maintenance margin
-    function liquidationPrice(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 marginMaintenance
-    ) internal view returns (uint256) {
-        return _liquidationPrice(self, totalOi, totalOiShares, marginMaintenance);
-    }
-
-    /// @dev returns zero when oiShares = totalOi = totalOiShares = 0 to avoid
-    /// div by zero errors
-    function _oiCurrent(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares
-    ) private pure returns (uint256) {
-        uint256 initialOi = _oiInitial(self);
-        if (initialOi == 0 || totalOi == 0) return 0;
-        return initialOi.mulDown(totalOi).divUp(totalOiShares);
-    }
-
-    /// @dev Floors to zero, so won't properly compute if self is underwater
-    function _value(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) private pure returns (uint256 val_) {
-        uint256 currentOi = _oiCurrent(self, totalOi, totalOiShares);
+    ) internal pure returns (uint256 val_) {
+        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
         uint256 debt = _debt(self);
         uint256 entryPrice = self.entryPrice;
         if (self.isLong) {
@@ -160,33 +97,15 @@ library Position {
         }
     }
 
-    /// @dev is true when position value < 0
-    function _isUnderwater(
+    /// @notice Computes the notional of a position
+    /// @dev Floors to _self.debt if value <= 0
+    function notional(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
-    ) private pure returns (bool isUnder_) {
-        uint256 currentOi = _oiCurrent(self, totalOi, totalOiShares);
-        uint256 debt = _debt(self);
-        uint256 entryPrice = self.entryPrice;
-        if (self.isLong) {
-            uint256 priceFrame = currentPrice.divDown(entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) < debt;
-        } else {
-            uint256 priceFrame = currentPrice.divUp(entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) + debt > currentOi.mulDown(TWO);
-        }
-    }
-
-    /// @dev Floors to zero, so won't properly compute if _self is underwater
-    function _notional(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) private pure returns (uint256 notional_) {
-        uint256 currentOi = _oiCurrent(self, totalOi, totalOiShares);
+    ) internal pure returns (uint256 notional_) {
+        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
         uint256 entryPrice = self.entryPrice;
         if (self.isLong) {
             // oi * priceFrame
@@ -200,39 +119,61 @@ library Position {
         }
     }
 
-    /// @dev is true when open margin < maintenance margin
-    function _isLiquidatable(
+    /// @notice Whether position is underwater
+    /// @dev is true when position value <= 0
+    function isUnderwater(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares,
+        uint256 currentPrice
+    ) internal pure returns (bool isUnder_) {
+        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
+        uint256 debt = _debt(self);
+        uint256 entryPrice = self.entryPrice;
+        if (self.isLong) {
+            uint256 priceFrame = currentPrice.divDown(entryPrice);
+            isUnder_ = currentOi.mulDown(priceFrame) < debt;
+        } else {
+            uint256 priceFrame = currentPrice.divUp(entryPrice);
+            isUnder_ = currentOi.mulDown(priceFrame) + debt > currentOi.mulDown(TWO);
+        }
+    }
+
+    /// @notice Whether a position can be liquidated
+    /// @dev is true when value < maintenance margin
+    function isLiquidatable(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice,
         uint256 marginMaintenance
-    ) private pure returns (bool can_) {
+    ) internal pure returns (bool can_) {
         uint256 oiInitial = _oiInitial(self);
 
-        if (self.liquidated) {
+        if (self.liquidated || oiInitial == 0) {
             // already been liquidated
             return false;
         }
 
-        uint256 val = _value(self, totalOi, totalOiShares, currentPrice);
+        uint256 val = value(self, totalOi, totalOiShares, currentPrice);
         uint256 maintenanceMargin = oiInitial.mulUp(marginMaintenance);
         can_ = val < maintenanceMargin;
     }
 
-    function _liquidationPrice(
+    /// @notice Computes the liquidation price of a position
+    /// @dev price when value = maintenance margin
+    function liquidationPrice(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 marginMaintenance
-    ) private pure returns (uint256 liqPrice_) {
-        uint256 posOiCurrent = _oiCurrent(self, totalOi, totalOiShares);
+    ) internal pure returns (uint256 liqPrice_) {
+        uint256 posOiCurrent = oiCurrent(self, totalOi, totalOiShares);
         uint256 posOiInitial = _oiInitial(self);
         uint256 debt = _debt(self);
 
-        // TODO: test
-        if (self.liquidated) {
-            // return 0 if already liquidated
+        if (self.liquidated || posOiInitial == 0 || posOiCurrent == 0) {
+            // return 0 if already liquidated or no oi left in position
             return 0;
         }
 
