@@ -9,7 +9,7 @@ library Position {
     uint256 internal constant TWO = 2e18;
 
     struct Info {
-        uint120 oi; // initial open interest
+        uint120 oiShares; // initial open interest
         uint120 debt; // debt
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated
@@ -45,7 +45,7 @@ library Position {
 
     /// @notice Computes the position's initial open interest cast to uint256
     function _oiInitial(Info memory self) private pure returns (uint256) {
-        return uint256(self.oi);
+        return uint256(self.oiShares);
     }
 
     /// @notice Computes the position's debt cast to uint256
@@ -56,13 +56,13 @@ library Position {
     /// @notice Computes the position's cost cast to uint256
     /// WARNING: be careful modifying oi and debt on unwind
     function cost(Info memory self) internal pure returns (uint256) {
-        return uint256(self.oi - self.debt);
+        return uint256(self.oiShares - self.debt);
     }
 
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or has zero oi
     function exists(Info memory self) internal pure returns (bool exists_) {
-        return (!self.liquidated && self.oi > 0);
+        return (!self.liquidated && self.oiShares > 0);
     }
 
     /*///////////////////////////////////////////////////////////////

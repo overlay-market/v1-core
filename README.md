@@ -54,7 +54,7 @@ The market contract tracks the current open interest for all outstanding positio
 ```
 library Position {
   struct Info {
-      uint120 oi; // initial open interest
+      uint120 oiShares; // initial open interest
       uint120 debt; // debt
       bool isLong; // whether long or short
       bool liquidated; // whether has been liquidated
