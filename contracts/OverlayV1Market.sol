@@ -115,13 +115,19 @@ contract OverlayV1Market {
         require(leverage <= capLeverage, "OVLV1:lev>max");
         require(collateral >= minCollateral, "OVLV1:collateral<min");
 
+        // call to update before any effects
         Oracle.Data memory data = update();
 
         // calculate oi and fees. fees are added to collateral needed
         // to back a position
         uint256 oi = collateral.mulUp(leverage);
-        uint256 capOiAdjusted = capOiWithAdjustments(data);
         uint256 tradingFee = oi.mulUp(tradingFeeRate);
+
+        // calculate current oi cap adjusted circuit breaker *then* adjust
+        // for front run and back run bounds (order matters)
+        // TODO: test
+        uint256 capOiAdjusted = capOiAdjustedForCircuitBreaker(capOi);
+        capOiAdjusted = capOiAdjustedForBounds(data, capOiAdjusted);
 
         // amount of collateral to transfer in (collateral backing + fees)
         uint256 collateralIn = collateral + tradingFee;
@@ -169,12 +175,21 @@ contract OverlayV1Market {
     }
 
     /// @dev unwinds shares of an existing position
+    /// @dev shares are fraction of the position user wishes to unwind
+    // TODO: test
     function unwind(uint256 positionId, uint256 shares) external {
+        require(shares <= ONE, "OVLV1:shares>max");
+
+        Position.Info memory pos = positions.get(msg.sender, positionId);
+        require(pos.exists(), "OVLV1:!position");
+
+        // call to update before any effects
         Oracle.Data memory data = update();
     }
 
     /// @dev liquidates a liquidatable position
     function liquidate(uint256 positionId) external {
+        // call to update before any effects
         Oracle.Data memory data = update();
     }
 
@@ -264,48 +279,17 @@ contract OverlayV1Market {
         return _totalPositions;
     }
 
-    /// @dev current open interest cap with adjustments to prevent
-    /// @dev front-running trade, back-running trade, and to lower open
+    /// @dev current open interest cap with adjustments to lower open
     /// @dev interest cap in event market has printed a lot in recent past
-    function capOiWithAdjustments(Oracle.Data memory data) public view returns (uint256) {
-        uint256 cap = capOi;
-
-        // Adjust cap downward if exceeds bounds from front run attack
-        cap = Math.min(cap, capOiFrontRunBound(data));
-
-        // Adjust cap downward if exceeds bounds from back run attack
-        cap = Math.min(cap, capOiBackRunBound(data));
-
+    // TODO: test
+    function capOiAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
         // last snapshot taken
         Roller.Snapshot memory snapshot = snapshotMinted;
         snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, 0);
-        cap = Math.min(cap, capOiCircuitBreaker(snapshot));
-
+        cap = Math.min(cap, circuitBreaker(snapshot, cap));
         return cap;
-    }
-
-    /// @dev bound on open interest cap to mitigate front-running attack
-    /// @dev bound = lmbda * reserveInOvl / 2
-    function capOiFrontRunBound(Oracle.Data memory data) public view returns (uint256) {
-        if (!data.hasReserve) {
-            return capOi;
-        }
-        return lmbda.mulDown(data.reserveOverMicroWindow).divDown(2 * ONE);
-    }
-
-    /// @dev bound on open interest cap to mitigate back-running attack
-    /// @dev bound = macroWindow * reserveInOvl * 2 * delta
-    function capOiBackRunBound(Oracle.Data memory data) public view returns (uint256) {
-        if (!data.hasReserve) {
-            return capOi;
-        }
-
-        // TODO: macroWindow should be in blocks in current spec. What to do here to be
-        // futureproof vs having an average block time constant (BAD)
-        uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
-        return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
     /// @dev bound on open interest cap from circuit breaker
@@ -313,18 +297,51 @@ contract OverlayV1Market {
     /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return capOi
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
-    function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
+    // TODO: test
+    function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap) public view returns (uint256) {
         int256 minted = int256(snapshot.cumulative());
         uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
         if (minted <= int256(_circuitBreakerMintTarget)) {
-            return capOi;
+            return cap;
         } else if (minted >= 2 * int256(_circuitBreakerMintTarget)) {
             return 0;
         }
 
         // case 3 (circuit breaker adjustment downward)
         uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(_circuitBreakerMintTarget));
-        return capOi.mulDown(adjustment);
+        return cap.mulDown(adjustment);
+    }
+
+    /// @dev current open interest cap with adjustments to prevent
+    /// @dev front-running trade, back-running trade, and to lower open
+    /// @dev interest cap in event market has printed a lot in recent past
+    // TODO: test
+    function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap) public view returns (uint256) {
+        if (data.hasReserve) {
+            // Adjust cap downward if exceeds bounds from front run attack
+            cap = Math.min(cap, frontRunBound(data));
+
+            // Adjust cap downward if exceeds bounds from back run attack
+            cap = Math.min(cap, backRunBound(data));
+        }
+        return cap;
+    }
+
+    /// @dev bound on open interest cap to mitigate front-running attack
+    /// @dev bound = lmbda * reserveInOvl / 2
+    // TODO: test
+    function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
+        return lmbda.mulDown(data.reserveOverMicroWindow).divDown(2 * ONE);
+    }
+
+    /// @dev bound on open interest cap to mitigate back-running attack
+    /// @dev bound = macroWindow * reserveInOvl * 2 * delta
+    // TODO: test
+    function backRunBound(Oracle.Data memory data) public view returns (uint256) {
+        // TODO: macroWindow should be in blocks in current spec. What to do here to be
+        // futureproof vs having an average block time constant (BAD)
+        uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
+        return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
     /// @dev gets bid price given oracle data and recent volume for market impact

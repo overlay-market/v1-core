@@ -40,7 +40,7 @@ library Position {
     }
 
     /*///////////////////////////////////////////////////////////////
-                        POSITION GETTER FUNCTIONS
+                    POSITION GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Computes the position's initial open interest cast to uint256
@@ -53,12 +53,18 @@ library Position {
         return uint256(self.debt);
     }
 
+    /// @notice Whether the position exists
+    /// @dev Is false if position has been liquidated or has zero oi
+    // TODO: test
+    function exists(Info memory self) internal pure returns (bool exists_) {
+        // TODO: do we want to check entry price as well? maybe not
+        // TODO: since data valid check will prevent entryPrice from ever being zero
+        return (!self.liquidated && self.oi > 0);
+    }
+
     /*///////////////////////////////////////////////////////////////
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-
-    // TODO: functions to compute more properties:
-    // TODO: e.g. collateralInitial, leverageInitial, cost, ....
 
     /// @notice Computes the open interest of a position
     /// @dev returns zero when oiShares = totalOi = totalOiShares = 0 to avoid
@@ -71,6 +77,20 @@ library Position {
         uint256 initialOi = _oiInitial(self);
         if (initialOi == 0 || totalOi == 0) return 0;
         return initialOi.mulDown(totalOi).divUp(totalOiShares);
+    }
+
+    /// @notice Computes the collateral backing a position
+    /// @dev returns zero when oi <= debt to avoid overflow errors
+    // TODO: test
+    function collateralCurrent(
+        Info memory self,
+        uint256 totalOi,
+        uint256 totalOiShares
+    ) internal pure returns (uint256) {
+        uint256 posOiCurrent = oiCurrent(self, totalOi, totalOiShares);
+        uint256 posDebt = _debt(self);
+        if (posDebt >= posOiCurrent) return 0;
+        return posOiCurrent - posDebt;
     }
 
     /// @notice Computes the value of a position
