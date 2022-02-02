@@ -158,7 +158,7 @@ contract OverlayV1Market {
             msg.sender,
             positionId_,
             Position.Info({
-                oi: uint120(oi), // won't overflow as capOi max is 8e24
+                oiShares: uint120(oi), // won't overflow as capOi max is 8e24
                 debt: uint120(oi - collateral),
                 isLong: isLong,
                 liquidated: false,
@@ -174,17 +174,83 @@ contract OverlayV1Market {
         ovl.transfer(tradingFeeRecipient, tradingFee);
     }
 
-    /// @dev unwinds shares of an existing position
-    /// @dev shares are fraction of the position user wishes to unwind
+    /// @dev unwinds fraction of an existing position
     // TODO: test
-    function unwind(uint256 positionId, uint256 shares) external {
-        require(shares <= ONE, "OVLV1:shares>max");
+    function unwind(uint256 positionId, uint256 fraction) external {
+        require(fraction > 0, "OVLV1:fraction<min");
+        require(fraction <= ONE, "OVLV1:fraction>max");
 
         Position.Info memory pos = positions.get(msg.sender, positionId);
         require(pos.exists(), "OVLV1:!position");
 
         // call to update before any effects
         Oracle.Data memory data = update();
+
+        // cache for gas savings
+        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
+        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
+
+        // calculate oi to unwind
+        // NOTE: oi vs oiShares will be different due to funding
+        uint256 oi = pos.oiCurrent(oiTotalOnSide, oiTotalSharesOnSide).mulDown(fraction);
+
+        // calculate the current price received on unwind
+        uint256 price;
+        {
+            // calculate current oi cap only adjusted for bounds
+            // (circuit breaker should only limits new builds so traders aren't
+            // stuck in a position)
+            uint256 capOiAdjusted = capOiAdjustedForBounds(data, capOi);
+
+            // longs get the bid and shorts get the ask on unwind
+            // register the additional volume on either the ask or bid
+            // TODO: add maxSlippage input param to bid(), ask()
+            uint256 volume = pos.isLong
+                ? _registerVolumeBid(data, oi, capOiAdjusted)
+                : _registerVolumeAsk(data, oi, capOiAdjusted);
+            price = pos.isLong ? bid(data, volume) : ask(data, volume);
+        }
+
+        // calculate the value and cost of the position for pnl determinations
+        // and amount to transfer
+        uint256 value = pos.value(oiTotalOnSide, oiTotalSharesOnSide, price).mulDown(fraction);
+        uint256 cost = pos.cost().mulDown(fraction);
+
+        // calculate the trading fee as % on notional
+        uint256 tradingFee;
+        {
+            uint256 notional = pos.notional(oiTotalOnSide, oiTotalSharesOnSide, price).mulDown(fraction);
+            uint256 tradingFee = notional.mulUp(tradingFeeRate);
+            tradingFee = Math.min(tradingFee, value); // if value < tradingFee
+        }
+
+        // subtract unwound open interest from the side's aggregate oi value
+        // and decrease number of oi shares issued
+        if (pos.isLong) {
+            oiLong -= oi;
+            oiLongShares -= uint256(pos.oiShares).mulDown(fraction);
+        } else {
+            oiShort -= oi;
+            oiShortShares -= uint256(pos.oiShares).mulDown(fraction);
+        }
+
+        // store the updated position info data
+        pos.oiShares -= uint120(uint256(pos.oiShares).mulDown(fraction));
+        pos.debt -= uint120(uint256(pos.debt).mulDown(fraction));
+        positions.set(msg.sender, positionId, pos);
+
+        // mint or burn the pnl for the position
+        if (value >= cost) {
+            ovl.mint(address(this), value - cost);
+        } else {
+            ovl.burn(cost - value);
+        }
+
+        // transfer out the unwound position value less fees to trader
+        ovl.transfer(msg.sender, value - tradingFee);
+
+        // send trading fees to trading fee recipient
+        ovl.transfer(tradingFeeRecipient, tradingFee);
     }
 
     /// @dev liquidates a liquidatable position
