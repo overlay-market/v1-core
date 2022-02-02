@@ -248,6 +248,44 @@ def test_liquidation_price(position):
     assert expect == actual
 
 
-# TODO: once decide what to return when oi = 0
-# def test_liquidation_price_when_oi_zero(position):
-#    pass
+def test_liquidation_price_when_oi_zero(position):
+    entry_price = 100000000000000000000  # 100
+    debt = 8000000000000000000  # 8
+    maintenance = 100000000000000000  # 10%
+    liquidated = False
+    is_long = True
+
+    # check liqPrice is zero when posOiInitial is zero
+    oi = 0
+    total_oi = 100
+    pos = (oi, debt, is_long, liquidated, entry_price)
+
+    expect = 0
+    actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)
+    assert expect == actual
+
+    # check liqPrice is zero when posOiCurrent is zero
+    oi = 100
+    total_oi = 0
+    pos = (oi, debt, is_long, liquidated, entry_price)
+
+    expect = 0
+    actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)
+    assert expect == actual
+
+
+def test_liquidation_price_when_liquidated_is_true(position):
+    entry_price = 100000000000000000000  # 100
+    debt = 8000000000000000000  # 8
+    maintenance = 100000000000000000  # 10%
+    liquidated = True
+    is_long = True
+
+    # check liqPrice is zero when posOiInitial is zero
+    oi = 100
+    total_oi = 100
+    pos = (oi, debt, is_long, liquidated, entry_price)
+
+    expect = 0
+    actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)
+    assert expect == actual

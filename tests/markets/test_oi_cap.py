@@ -13,20 +13,8 @@ def test_cap_oi_front_run_bound(market, feed):
 
     # check front run bound is lmbda * reserveOverMicro / 2 when has reserve
     expect = int(lmbda * Decimal(reserve_micro) / Decimal(2))
-    actual = market.capOiFrontRunBound(data)
+    actual = market.frontRunBound(data)
     assert int(actual) == approx(expect)
-
-
-def test_cap_oi_front_run_bound_when_no_reserve(market, feed):
-    cap_oi = market.capOi()
-    data = (1642797758, 600, 3600, 2729583770051358617413,
-            2739701430255362520176, 2729583770051358617413,
-            1909229154186640322863637, False)  # has_reserve = False
-
-    # check front run bound is cap_oi when no reserve
-    expect = cap_oi
-    actual = market.capOiFrontRunBound(data)
-    assert actual == expect
 
 
 def test_cap_oi_back_run_bound(market, feed):
@@ -41,19 +29,36 @@ def test_cap_oi_back_run_bound(market, feed):
     # check front run bound is lmbda * reserveOverMicro / 2 when has reserve
     window = Decimal(macro_window) / Decimal(average_block_time)
     expect = int(Decimal(2) * delta * Decimal(reserve_micro) * window)
-    actual = market.capOiBackRunBound(data)
+    actual = market.backRunBound(data)
     assert int(actual) == approx(expect)
 
 
-def test_cap_oi_back_run_bound_when_no_reserve(market):
+def test_cap_oi_adjusted_for_bounds(market, feed):
+    # Test cap oi adjustments is min of all bounds and circuit breaker
+    cap_oi = market.capOi()
+    data = feed.latest()
+
+    # calculate cap oi bounds:
+    # 1. front run bound; 2. back run bound
+    cap_oi_front_run_bound = market.frontRunBound(data)
+    cap_oi_back_run_bound = market.backRunBound(data)
+
+    # expect is the min of all cap quantities
+    expect = min(cap_oi, cap_oi_front_run_bound, cap_oi_back_run_bound)
+    actual = market.capOiAdjustedForBounds(data, cap_oi)
+    assert actual == expect
+
+
+def test_cap_oi_adjusted_for_bounds_when_no_reserve(market, feed):
+    # Test cap oi adjustments is min of all bounds and circuit breaker
     cap_oi = market.capOi()
     data = (1642797758, 600, 3600, 2729583770051358617413,
             2739701430255362520176, 2729583770051358617413,
             1909229154186640322863637, False)  # has_reserve = False
 
-    # check back run bound is cap_oi when no reserve
+    # check cap adjusted for bounds is cap_oi when no reserve
     expect = cap_oi
-    actual = market.capOiBackRunBound(data)
+    actual = market.capOiAdjustedForBounds(data, cap_oi)
     assert actual == expect
 
 
@@ -73,7 +78,7 @@ def test_cap_oi_circuit_breaker(market, minted):
 
     # check breaker bound returns capOi
     expect = int(cap_oi * (2 - minted / target))
-    actual = market.capOiCircuitBreaker(snapshot)
+    actual = market.circuitBreaker(snapshot, cap_oi)
     assert int(actual) == approx(expect)
 
 
@@ -82,6 +87,8 @@ def test_cap_oi_circuit_breaker(market, minted):
     minted=strategy('decimal', min_value='-133340', max_value='66670',
                     places=1))
 def test_cap_oi_circuit_breaker_when_minted_less_than_target(market, minted):
+    cap_oi = market.capOi()
+
     # assemble Roller.snapshot struct
     timestamp = 1643247197
     window = 2592000
@@ -89,8 +96,8 @@ def test_cap_oi_circuit_breaker_when_minted_less_than_target(market, minted):
     snapshot = (timestamp, window, minted)
 
     # check breaker bound returns capOi
-    expect = market.capOi()
-    actual = market.capOiCircuitBreaker(snapshot)
+    expect = cap_oi
+    actual = market.circuitBreaker(snapshot, cap_oi)
     assert actual == expect
 
 
@@ -100,6 +107,7 @@ def test_cap_oi_circuit_breaker_when_minted_less_than_target(market, minted):
                     places=1))
 def test_cap_oi_circuit_breaker_when_minted_greater_than_2x_target(market,
                                                                    minted):
+    cap_oi = market.capOi()
 
     # assemble Roller.snapshot struct
     timestamp = 1643247197
@@ -109,24 +117,19 @@ def test_cap_oi_circuit_breaker_when_minted_greater_than_2x_target(market,
 
     # check breaker bound returns capOi
     expect = 0
-    actual = market.capOiCircuitBreaker(snapshot)
+    actual = market.circuitBreaker(snapshot, cap_oi)
     assert actual == expect
 
 
-def test_cap_oi_with_adjustments(market, feed):
+def test_cap_oi_adjusted_for_circuit_breaker(market, feed):
     # Test cap oi adjustments is min of all bounds and circuit breaker
     cap_oi = market.capOi()
-    data = feed.latest()
     snapshot = market.snapshotMinted()
 
-    # calculate all cap oi bounds:
-    # 1. front run bound; 2. back run bound; 3. circuit breaker
-    cap_oi_front_run_bound = market.capOiFrontRunBound(data)
-    cap_oi_back_run_bound = market.capOiBackRunBound(data)
-    cap_oi_circuit_breaker = market.capOiCircuitBreaker(snapshot)
+    # calculate cap oi adjusted for circuit breaker
+    cap_oi_circuit_breaker = market.circuitBreaker(snapshot, cap_oi)
 
     # expect is the min of all cap quantities
-    expect = min(cap_oi, cap_oi_front_run_bound, cap_oi_back_run_bound,
-                 cap_oi_circuit_breaker)
-    actual = market.capOiWithAdjustments(data)
+    expect = min(cap_oi, cap_oi_circuit_breaker)
+    actual = market.capOiAdjustedForCircuitBreaker(cap_oi)
     assert actual == expect
