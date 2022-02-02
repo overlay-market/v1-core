@@ -4,6 +4,7 @@ from brownie import chain, reverts, web3
 from brownie.test import given, strategy
 from decimal import Decimal
 from hexbytes import HexBytes
+from random import randint
 
 
 # NOTE: Tests passing with isolation fixture
@@ -78,25 +79,23 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
         else market.bid(data, volume)
 
     # expect values
-    expect_leverage = int(leverage * Decimal(1e18))
     expect_is_long = is_long
+    expect_liquidated = False
     expect_entry_price = price
-    expect_oi_shares = int(oi * Decimal(1e18))
+    expect_oi_initial = int(oi * Decimal(1e18))
     expect_debt = int(debt * Decimal(1e18))
-    expect_cost = int(collateral * Decimal(1e18))
 
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_leverage, actual_is_long, actual_entry_price, actual_oi_shares,
-     actual_debt, actual_cost) = actual_pos
+    (actual_oi_initial, actual_debt, actual_is_long, actual_liquidated,
+     actual_entry_price) = actual_pos
 
-    assert actual_leverage == expect_leverage
     assert actual_is_long == expect_is_long
+    assert actual_liquidated == expect_liquidated
     assert int(actual_entry_price) == approx(expect_entry_price)
-    assert int(actual_oi_shares) == approx(expect_oi_shares)
+    assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)
-    assert int(actual_cost) == approx(expect_cost)
 
 
 @given(
@@ -201,7 +200,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     actual_timestamp, actual_window, actual_volume = actual
 
     assert actual_timestamp == expect_timestamp
-    assert int(actual_window) == approx(expect_window)
+    assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
     assert int(actual_volume) == approx(expect_volume)
 
 
@@ -348,13 +347,10 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      {"from": alice})
 
-    # check position info
-    expect_pos_key = get_position_key(alice.address, expect_pos_id)
-    actual_pos = market.positions(expect_pos_key)
+    expect_pos_id += 1
+    actual_pos_id = market.nextPositionId()
 
-    expect_leverage = input_leverage
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
+    assert expect_pos_id == actual_pos_id
 
 
 def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
@@ -378,14 +374,10 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      {"from": alice})
 
-    # check position info
-    expect_pos_key = get_position_key(alice.address, expect_pos_id)
-    actual_pos = market.positions(expect_pos_key)
+    expect_pos_id += 1
+    actual_pos_id = market.nextPositionId()
 
-    expect_leverage = input_leverage
-    (actual_leverage, _, _, _, _, _) = actual_pos
-    assert actual_leverage == expect_leverage
-
+    assert expect_pos_id == actual_pos_id
 
 # TODO: def test_build_reverts_when_slippage_greater_than_max:
 
@@ -444,19 +436,140 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      {"from": alice})
 
+    expect_pos_id += 1
+    actual_pos_id = market.nextPositionId()
+
+    assert expect_pos_id == actual_pos_id
+
+
+def test_multiple_build_creates_multiple_positions(market, factory, ovl,
+                                                   alice, bob):
+    # loop through 5 times
+    n = 10
+    total_oi_long = Decimal(10000)
+    total_oi_short = Decimal(7500)
+
+    # set k to zero to avoid funding calcs
+    market.setK(0, {"from": factory})
+
+    # alice goes long and bob goes short n times
+    input_total_oi_long = total_oi_long * Decimal(1e18)
+    input_total_oi_short = total_oi_short * Decimal(1e18)
+
+    # get position key/id related info
+    expect_pos_id = market.nextPositionId()
+
     # calculate expected pos info data
-    leverage = 1
-    oi = int(Decimal(input_collateral * leverage) / Decimal(1e18))
-    collateral = int(Decimal(input_collateral) / Decimal(1e18))
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    leverage_cap = Decimal(market.capLeverage() / 1e18)
 
-    # expect values
-    expect_oi_shares = int(oi * Decimal(1e18))
-    expect_cost = int(collateral * Decimal(1e18))
+    # approve collateral amount: collateral + trade fee
+    approve_collateral_alice = int((input_total_oi_long *
+                                    (1 + trading_fee_rate)))
+    approve_collateral_bob = int((input_total_oi_short *
+                                  (1 + trading_fee_rate)))
 
-    # check position info
-    expect_pos_key = get_position_key(alice.address, expect_pos_id)
-    actual_pos = market.positions(expect_pos_key)
-    (_, _, _, actual_oi_shares, _, actual_cost) = actual_pos
+    # approve market for spending then build
+    ovl.approve(market, approve_collateral_alice, {"from": alice})
+    ovl.approve(market, approve_collateral_bob, {"from": bob})
 
-    assert int(actual_oi_shares) == approx(expect_oi_shares)
-    assert int(actual_cost) == approx(expect_cost)
+    # per trade oi values
+    oi_alice = total_oi_long / Decimal(n)
+    oi_bob = total_oi_short / Decimal(n)
+    is_long_alice = True
+    is_long_bob = False
+
+    for i in range(n):
+        chain.mine(timedelta=60)
+
+        # choose a random leverage
+        leverage_alice = randint(1, leverage_cap)
+        leverage_bob = randint(1, leverage_cap)
+
+        # calculate collateral amounts
+        collateral_alice, _, debt_alice, _ = calculate_position_info(
+            oi_alice, leverage_alice, trading_fee_rate)
+        collateral_bob, _, debt_bob, _ = calculate_position_info(
+            oi_bob, leverage_bob, trading_fee_rate)
+
+        input_collateral_alice = int(collateral_alice * Decimal(1e18))
+        input_collateral_bob = int(collateral_bob * Decimal(1e18))
+        input_leverage_alice = int(leverage_alice * Decimal(1e18))
+        input_leverage_bob = int(leverage_bob * Decimal(1e18))
+
+        # cache current aggregate long oi for comparison later
+        expect_oi_long = market.oiLong()
+
+        # build position for alice
+        tx_alice = market.build(input_collateral_alice, input_leverage_alice,
+                                is_long_alice, {"from": alice})
+
+        actual_pos_id_alice = tx_alice.return_value
+        expect_pos_id_alice = expect_pos_id
+
+        assert actual_pos_id_alice == expect_pos_id_alice
+
+        # check position info for alice for everything
+        # except price to avoid impact calcs
+        expect_oi_alice = int(oi_alice * Decimal(1e18))
+        expect_debt_alice = int(debt_alice * Decimal(1e18))
+        expect_is_long_alice = is_long_alice
+        expect_liquidated_alice = False
+
+        actual_pos_alice = market.positions(
+            get_position_key(alice.address, expect_pos_id_alice))
+        (actual_oi_alice, actual_debt_alice, actual_is_long_alice,
+         actual_liquidated_alice, _) = actual_pos_alice
+
+        assert actual_is_long_alice == expect_is_long_alice
+        assert actual_liquidated_alice == expect_liquidated_alice
+        assert int(actual_oi_alice) == approx(expect_oi_alice)
+        assert int(actual_debt_alice) == approx(expect_debt_alice)
+
+        # check oi added to long side by alice
+        expect_oi_long += expect_oi_alice
+        actual_oi_long = market.oiLong()
+
+        assert int(actual_oi_long) == approx(expect_oi_long)
+
+        # check next position id incremented
+        assert market.nextPositionId() == expect_pos_id + 1
+        expect_pos_id += 1
+
+        # cache current aggregate short oi for comparison later
+        expect_oi_short = market.oiShort()
+
+        # build position for bob
+        tx_bob = market.build(input_collateral_bob, input_leverage_bob,
+                              is_long_bob, {"from": bob})
+
+        actual_pos_id_bob = tx_bob.return_value
+        expect_pos_id_bob = expect_pos_id
+        assert actual_pos_id_bob == expect_pos_id_bob
+
+        # check position info for bob for everything
+        # except price to avoid impact calcs
+        expect_oi_bob = int(oi_bob * Decimal(1e18))
+        expect_debt_bob = int(debt_bob * Decimal(1e18))
+        expect_is_long_bob = is_long_bob
+        expect_liquidated_bob = False
+
+        actual_pos_bob = market.positions(
+            get_position_key(bob.address, expect_pos_id_bob))
+        (actual_oi_bob, actual_debt_bob, actual_is_long_bob,
+         actual_liquidated_bob, _) = actual_pos_bob
+
+        assert actual_is_long_bob == expect_is_long_bob
+        assert actual_liquidated_bob is expect_liquidated_bob
+        assert int(actual_oi_bob) == approx(expect_oi_bob)
+        assert int(actual_debt_bob) == approx(expect_debt_bob)
+
+        # check oi added to short side by bob
+        expect_oi_short += expect_oi_bob
+        actual_oi_short = market.oiShort()
+
+        assert int(actual_oi_short) == approx(expect_oi_short)
+
+        # check next position id incremented
+        assert market.nextPositionId() == expect_pos_id + 1
+        expect_pos_id += 1

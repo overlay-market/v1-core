@@ -22,16 +22,12 @@ contract PositionMock {
         positions.set(owner, id, pos);
     }
 
-    function initialOi(Position.Info memory pos) external view returns (uint256) {
-        return pos.initialOi();
-    }
-
-    function oi(
+    function oiCurrent(
         Position.Info memory pos,
         uint256 totalOi,
         uint256 totalOiShares
     ) external view returns (uint256) {
-        return pos.oi(totalOi, totalOiShares);
+        return pos.oiCurrent(totalOi, totalOiShares);
     }
 
     function value(

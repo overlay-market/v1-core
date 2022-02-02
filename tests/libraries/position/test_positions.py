@@ -14,14 +14,13 @@ def test_positions_setter(position, alice):
     owner = alice
     id = 0
 
-    leverage = 5000000000000000000  # 5x
     is_long = True
+    liquidated = False
     entry_price = 100000000000000000000  # 100
     oi = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
-    cost = 2000000000000000000  # 2
 
-    pos = (leverage, is_long, entry_price, oi, debt, cost)
+    pos = (oi, debt, is_long, liquidated, entry_price)
     position.set(owner, id, pos)
 
     # pos key
@@ -38,14 +37,13 @@ def test_positions_getter(position, bob):
     id = 1
 
     # add the position first
-    leverage = 5000000000000000000  # 5x
     is_long = True
+    liquidated = False
     entry_price = 100000000000000000000  # 100
     oi = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
-    cost = 2000000000000000000  # 2
 
-    pos = (leverage, is_long, entry_price, oi, debt, cost)
+    pos = (oi, debt, is_long, liquidated, entry_price)
     position.set(owner, id, pos)
 
     # check retrieved position is expected

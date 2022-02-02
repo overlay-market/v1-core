@@ -5,13 +5,13 @@ from decimal import Decimal
 
 
 @given(
-    accumulator_last=strategy('decimal', min_value='-10.000',
-                              max_value='10.000', places=3),
-    window_last=strategy('uint256', min_value='100', max_value='1000'),
-    value=strategy('decimal', min_value='-10.000', max_value='10.000',
-                   places=3),
-    window=strategy('uint256', min_value='100', max_value='1000'),
-    dt=strategy('uint256', min_value='0', max_value='100'))
+    accumulator_last=strategy('decimal', min_value='-10000000.000',
+                              max_value='10000000.000', places=3),
+    window_last=strategy('uint256', min_value='10000', max_value='7776000'),
+    value=strategy('decimal', min_value='-10000000.000',
+                   max_value='10000000.000', places=3),
+    window=strategy('uint256', min_value='10000', max_value='7776000'),
+    dt=strategy('uint256', min_value='0', max_value='10000'))
 def test_transform(roller, accumulator_last, window_last, value, window, dt):
     """
     Tests (success) for transform when

@@ -18,7 +18,8 @@ def test_update_fetches_from_feed(market, feed, rando):
                      places=3),
     oi_short=strategy('decimal', min_value='0.001', max_value='800000',
                       places=3))
-def test_update_pays_funding(market, feed, ovl, alice, bob, oi_long, oi_short):
+def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
+                             oi_long, oi_short):
     oi_long = oi_long * Decimal(1e18)
     oi_short = oi_short * Decimal(1e18)
 
@@ -45,16 +46,17 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, oi_long, oi_short):
     chain.mine(timedelta=600)
 
     # call update
-    tx = market.update()
+    tx = market.update({"from": rando})
     timestamp_now = chain[tx.block_number]['timestamp']
+    time_elapsed = timestamp_now - timestamp_last
 
     # NOTE: oiAfterFunding() tests in test_funding.py
     if (expect_oi_long > expect_oi_short):
         expect_oi_long, expect_oi_short = market.oiAfterFunding(
-            expect_oi_long, expect_oi_short, timestamp_last, timestamp_now)
+            expect_oi_long, expect_oi_short, time_elapsed)
     else:
         expect_oi_short, expect_oi_long = market.oiAfterFunding(
-            expect_oi_short, expect_oi_long, timestamp_last, timestamp_now)
+            expect_oi_short, expect_oi_long, time_elapsed)
 
     actual_oi_long = market.oiLong()
     actual_oi_short = market.oiShort()
@@ -64,7 +66,7 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, oi_long, oi_short):
     assert expect_oi_short == actual_oi_short
 
 
-def test_update_sets_last_timestamp(market, feed, rando):
+def test_update_sets_last_timestamp(market, rando):
     # prior is timestamp is timestamp when deployed in conftest.py
     prior = market.timestampUpdateLast()
 
@@ -72,7 +74,7 @@ def test_update_sets_last_timestamp(market, feed, rando):
     chain.mine(timedelta=60)
 
     # call update
-    tx = market.update()
+    tx = market.update({"from": rando})
 
     # check timestamp updated to last block timestamp
     actual = market.timestampUpdateLast()

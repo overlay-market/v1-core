@@ -140,7 +140,6 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume on either the ask or bid
-        // TODO: pack snapshotVolumes to get gas close to 200k
         // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
@@ -148,18 +147,16 @@ contract OverlayV1Market {
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
-        // TODO: pack position.info to get gas close to 200k
         positionId_ = _totalPositions;
         positions.set(
             msg.sender,
             positionId_,
             Position.Info({
-                leverage: leverage,
+                oi: uint120(oi), // won't overflow as capOi max is 8e24
+                debt: uint120(oi - collateral),
                 isLong: isLong,
-                entryPrice: price,
-                oiShares: oi,
-                debt: oi - collateral,
-                cost: collateral
+                liquidated: false,
+                entryPrice: price
             })
         );
         _totalPositions++;
@@ -184,28 +181,31 @@ contract OverlayV1Market {
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
-        // calculate adjustments to oi due to funding
-        bool isLongOverweight = oiLong > oiShort;
-        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
-        (oiOverweight, oiUnderweight) = oiAfterFunding(
-            oiOverweight,
-            oiUnderweight,
-            timestampUpdateLast,
-            block.timestamp
-        );
+        // apply funding if at least one block has passed
+        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
+        if (timeElapsed > 0) {
+            // calculate adjustments to oi due to funding
+            bool isLongOverweight = oiLong > oiShort;
+            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+            (oiOverweight, oiUnderweight) = oiAfterFunding(
+                oiOverweight,
+                oiUnderweight,
+                timeElapsed
+            );
 
-        // pay funding
-        oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-        oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+            // pay funding
+            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+
+            // refresh last update data
+            timestampUpdateLast = block.timestamp;
+        }
 
         // fetch new oracle data from feed
         // applies sanity check in case of data manipulation
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVLV1:!data");
-
-        // refresh last update data
-        timestampUpdateLast = block.timestamp;
 
         // return the latest data from feed
         return data;
@@ -240,13 +240,12 @@ contract OverlayV1Market {
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timestampLast,
-        uint256 timestampNow
+        uint256 timeElapsed
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiOverweight + oiUnderweight;
 
         // draw down the imbalance by factor of (1-2k)^(t)
-        uint256 drawdownFactor = (ONE - 2 * k).powUp(ONE * (timestampNow - timestampLast));
+        uint256 drawdownFactor = (ONE - 2 * k).powUp(ONE * timeElapsed);
         uint256 oiImbalanceNow = drawdownFactor.mulUp(oiOverweight - oiUnderweight);
 
         if (oiUnderweight == 0) {
@@ -315,15 +314,16 @@ contract OverlayV1Market {
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     function capOiCircuitBreaker(Roller.Snapshot memory snapshot) public view returns (uint256) {
-        int256 minted = snapshot.accumulator;
-        if (minted <= int256(circuitBreakerMintTarget)) {
+        int256 minted = int256(snapshot.cumulative());
+        uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
+        if (minted <= int256(_circuitBreakerMintTarget)) {
             return capOi;
-        } else if (minted >= 2 * int256(circuitBreakerMintTarget)) {
+        } else if (minted >= 2 * int256(_circuitBreakerMintTarget)) {
             return 0;
         }
 
         // case 3 (circuit breaker adjustment downward)
-        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(circuitBreakerMintTarget));
+        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(_circuitBreakerMintTarget));
         return capOi.mulDown(adjustment);
     }
 
@@ -377,7 +377,7 @@ contract OverlayV1Market {
         snapshotVolumeBid = snapshot;
 
         // return the volume
-        uint256 volume = uint256(snapshot.accumulator);
+        uint256 volume = uint256(snapshot.cumulative());
         return volume;
     }
 
@@ -402,7 +402,7 @@ contract OverlayV1Market {
         snapshotVolumeAsk = snapshot;
 
         // return the volume
-        uint256 volume = uint256(snapshot.accumulator);
+        uint256 volume = uint256(snapshot.cumulative());
         return volume;
     }
 
