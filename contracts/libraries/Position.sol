@@ -53,12 +53,15 @@ library Position {
         return uint256(self.debt);
     }
 
+    /// @notice Computes the position's cost cast to uint256
+    /// WARNING: be careful modifying oi and debt on unwind
+    function cost(Info memory self) internal pure returns (uint256) {
+        return uint256(self.oi - self.debt);
+    }
+
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or has zero oi
-    // TODO: test
     function exists(Info memory self) internal pure returns (bool exists_) {
-        // TODO: do we want to check entry price as well? maybe not
-        // TODO: since data valid check will prevent entryPrice from ever being zero
         return (!self.liquidated && self.oi > 0);
     }
 
@@ -74,23 +77,9 @@ library Position {
         uint256 totalOi,
         uint256 totalOiShares
     ) internal pure returns (uint256) {
-        uint256 initialOi = _oiInitial(self);
-        if (initialOi == 0 || totalOi == 0) return 0;
-        return initialOi.mulDown(totalOi).divUp(totalOiShares);
-    }
-
-    /// @notice Computes the collateral backing a position
-    /// @dev returns zero when oi <= debt to avoid overflow errors
-    // TODO: test
-    function collateralCurrent(
-        Info memory self,
-        uint256 totalOi,
-        uint256 totalOiShares
-    ) internal pure returns (uint256) {
-        uint256 posOiCurrent = oiCurrent(self, totalOi, totalOiShares);
-        uint256 posDebt = _debt(self);
-        if (posDebt >= posOiCurrent) return 0;
-        return posOiCurrent - posDebt;
+        uint256 posOiInitial = _oiInitial(self);
+        if (posOiInitial == 0 || totalOi == 0) return 0;
+        return posOiInitial.mulDown(totalOi).divUp(totalOiShares);
     }
 
     /// @notice Computes the value of a position
@@ -101,41 +90,41 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal pure returns (uint256 val_) {
-        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
-        uint256 debt = _debt(self);
+        uint256 posCurrentOi = oiCurrent(self, totalOi, totalOiShares);
+        uint256 posDebt = _debt(self);
         uint256 entryPrice = self.entryPrice;
         if (self.isLong) {
             // oi * priceFrame - debt
             uint256 priceFrame = currentPrice.divDown(entryPrice);
-            val_ = currentOi.mulDown(priceFrame);
-            val_ -= Math.min(val_, debt); // floor to 0
+            val_ = posCurrentOi.mulDown(priceFrame);
+            val_ -= Math.min(val_, posDebt); // floor to 0
         } else {
             // oi * (2 - priceFrame) - debt
             uint256 priceFrame = currentPrice.divUp(entryPrice);
-            val_ = currentOi.mulDown(TWO);
-            val_ -= Math.min(val_, debt + currentOi.mulDown(priceFrame)); // floor to 0
+            val_ = posCurrentOi.mulDown(TWO);
+            val_ -= Math.min(val_, posDebt + posCurrentOi.mulDown(priceFrame)); // floor to 0
         }
     }
 
     /// @notice Computes the notional of a position
-    /// @dev Floors to _self.debt if value <= 0
+    /// @dev Floors to debt if value <= 0
     function notional(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal pure returns (uint256 notional_) {
-        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
+        uint256 posCurrentOi = oiCurrent(self, totalOi, totalOiShares);
         uint256 entryPrice = self.entryPrice;
         if (self.isLong) {
             // oi * priceFrame
             uint256 priceFrame = currentPrice.divDown(entryPrice);
-            notional_ = currentOi.mulDown(priceFrame);
+            notional_ = posCurrentOi.mulDown(priceFrame);
         } else {
             // oi * (2 - priceFrame)
             uint256 priceFrame = currentPrice.divUp(entryPrice);
-            notional_ = currentOi.mulDown(TWO);
-            notional_ -= Math.min(notional_, currentOi.mulDown(priceFrame)); // floor to 0
+            notional_ = posCurrentOi.mulDown(TWO);
+            notional_ -= Math.min(notional_, posCurrentOi.mulDown(priceFrame)); // floor to 0
         }
     }
 
@@ -147,15 +136,15 @@ library Position {
         uint256 totalOiShares,
         uint256 currentPrice
     ) internal pure returns (bool isUnder_) {
-        uint256 currentOi = oiCurrent(self, totalOi, totalOiShares);
-        uint256 debt = _debt(self);
+        uint256 posCurrentOi = oiCurrent(self, totalOi, totalOiShares);
+        uint256 posDebt = _debt(self);
         uint256 entryPrice = self.entryPrice;
         if (self.isLong) {
             uint256 priceFrame = currentPrice.divDown(entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) < debt;
+            isUnder_ = posCurrentOi.mulDown(priceFrame) < posDebt;
         } else {
             uint256 priceFrame = currentPrice.divUp(entryPrice);
-            isUnder_ = currentOi.mulDown(priceFrame) + debt > currentOi.mulDown(TWO);
+            isUnder_ = posCurrentOi.mulDown(priceFrame) + posDebt > posCurrentOi.mulDown(TWO);
         }
     }
 
@@ -168,15 +157,15 @@ library Position {
         uint256 currentPrice,
         uint256 marginMaintenance
     ) internal pure returns (bool can_) {
-        uint256 oiInitial = _oiInitial(self);
+        uint256 posOiInitial = _oiInitial(self);
 
-        if (self.liquidated || oiInitial == 0) {
+        if (self.liquidated || posOiInitial == 0) {
             // already been liquidated
             return false;
         }
 
         uint256 val = value(self, totalOi, totalOiShares, currentPrice);
-        uint256 maintenanceMargin = oiInitial.mulUp(marginMaintenance);
+        uint256 maintenanceMargin = posOiInitial.mulUp(marginMaintenance);
         can_ = val < maintenanceMargin;
     }
 
@@ -190,14 +179,14 @@ library Position {
     ) internal pure returns (uint256 liqPrice_) {
         uint256 posOiCurrent = oiCurrent(self, totalOi, totalOiShares);
         uint256 posOiInitial = _oiInitial(self);
-        uint256 debt = _debt(self);
+        uint256 posDebt = _debt(self);
 
         if (self.liquidated || posOiInitial == 0 || posOiCurrent == 0) {
             // return 0 if already liquidated or no oi left in position
             return 0;
         }
 
-        uint256 oiFrame = posOiInitial.mulUp(marginMaintenance).add(debt).divDown(posOiCurrent);
+        uint256 oiFrame = posOiInitial.mulUp(marginMaintenance).add(posDebt).divDown(posOiCurrent);
 
         if (self.isLong) {
             liqPrice_ = self.entryPrice.mulUp(oiFrame);

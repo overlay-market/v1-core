@@ -22,6 +22,14 @@ contract PositionMock {
         positions.set(owner, id, pos);
     }
 
+    function cost(Position.Info memory pos) external view returns (uint256) {
+        return pos.cost();
+    }
+
+    function exists(Position.Info memory pos) external view returns (bool) {
+        return pos.exists();
+    }
+
     function oiCurrent(
         Position.Info memory pos,
         uint256 totalOi,
