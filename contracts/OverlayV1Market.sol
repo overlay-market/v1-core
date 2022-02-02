@@ -298,7 +298,11 @@ contract OverlayV1Market {
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
     // TODO: test
-    function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap) public view returns (uint256) {
+    function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
+        public
+        view
+        returns (uint256)
+    {
         int256 minted = int256(snapshot.cumulative());
         uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
         if (minted <= int256(_circuitBreakerMintTarget)) {
@@ -316,7 +320,11 @@ contract OverlayV1Market {
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event market has printed a lot in recent past
     // TODO: test
-    function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap) public view returns (uint256) {
+    function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
+        public
+        view
+        returns (uint256)
+    {
         if (data.hasReserve) {
             // Adjust cap downward if exceeds bounds from front run attack
             cap = Math.min(cap, frontRunBound(data));
