@@ -1,7 +1,3 @@
-from brownie.test import given, strategy
-from decimal import Decimal
-
-
 def test_notional(position):
     entry_price = 100000000000000000000  # 100
     current_price = 150000000000000000000  # 150
@@ -60,10 +56,9 @@ def test_notional_when_fraction_less_than_one(position):
     assert expect == actual
 
 
-@given(payoff=strategy('decimal', min_value='5', max_value='100', places=3))
-def test_notional_when_payoff_greater_than_cap(position, payoff):
+def test_notional_when_payoff_greater_than_cap(position):
     entry_price = 100000000000000000000  # 100
-    current_price = int(Decimal(entry_price) * (Decimal(1) + payoff))
+    current_price = 800000000000000000000  # 800
     oi = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
     liquidated = False
