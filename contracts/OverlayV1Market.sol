@@ -143,10 +143,10 @@ contract OverlayV1Market {
 
         // longs get the ask and shorts get the bid on build
         // register the additional volume on either the ask or bid
-        // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = isLong
             ? _registerVolumeAsk(data, oi, capOiAdjusted)
             : _registerVolumeBid(data, oi, capOiAdjusted);
+        // TODO: add maxSlippage input param to bid(), ask()
         uint256 price = isLong ? ask(data, volume) : bid(data, volume);
 
         // store the position info data
@@ -191,7 +191,6 @@ contract OverlayV1Market {
         // register the additional volume on either the ask or bid
         // current oi cap only adjusted for bounds (no circuit breaker so traders
         // don't get stuck in a position)
-        // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = pos.isLong
             ? _registerVolumeBid(
                 data,
@@ -203,6 +202,7 @@ contract OverlayV1Market {
                 pos.oiCurrent(fraction, totalOi, totalOiShares),
                 capOiAdjustedForBounds(data, capOi)
             );
+        // TODO: add maxSlippage input param to bid(), ask()
         uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
 
         // calculate the value and cost of the position for pnl determinations

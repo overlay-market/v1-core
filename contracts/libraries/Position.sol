@@ -179,14 +179,15 @@ library Position {
         uint256 capPayoff,
         uint256 marginMaintenance
     ) internal pure returns (bool can_) {
-        uint256 posOiInitial = oiInitial(self, ONE);
+        uint256 fraction = ONE;
+        uint256 posOiInitial = oiInitial(self, fraction);
 
         if (self.liquidated || posOiInitial == 0) {
             // already been liquidated
             return false;
         }
 
-        uint256 val = value(self, ONE, totalOi, totalOiShares, currentPrice, capPayoff);
+        uint256 val = value(self, fraction, totalOi, totalOiShares, currentPrice, capPayoff);
         uint256 maintenanceMargin = posOiInitial.mulUp(marginMaintenance);
         can_ = val < maintenanceMargin;
     }
@@ -199,9 +200,10 @@ library Position {
         uint256 totalOiShares,
         uint256 marginMaintenance
     ) internal pure returns (uint256 liqPrice_) {
-        uint256 posOiCurrent = oiCurrent(self, ONE, totalOi, totalOiShares);
-        uint256 posOiInitial = oiInitial(self, ONE);
-        uint256 posDebt = debtCurrent(self, ONE);
+        uint256 fraction = ONE;
+        uint256 posOiCurrent = oiCurrent(self, fraction, totalOi, totalOiShares);
+        uint256 posOiInitial = oiInitial(self, fraction);
+        uint256 posDebt = debtCurrent(self, fraction);
 
         if (self.liquidated || posOiInitial == 0 || posOiCurrent == 0) {
             // return 0 if already liquidated or no oi left in position

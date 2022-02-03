@@ -5,12 +5,15 @@ def test_value(position):
     debt = 2000000000000000000  # 2
     liquidated = False
 
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
     # check value is oi - debt + oi * (current_price/entry_price - 1)
     # when long
     is_long = True
     expect = 13000000000000000000
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
     # check value is oi - debt - oi * (current_price/entry_price - 1)
@@ -18,7 +21,7 @@ def test_value(position):
     is_long = False
     expect = 3000000000000000000
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
 
@@ -28,12 +31,15 @@ def test_value_when_underwater(position):
     debt = 8000000000000000000  # 8
     liquidated = False
 
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
     # check value returns zero when long is underwater
     is_long = True
     current_price = 75000000000000000000  # 75
     expect = 0
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
     # check value returns zero when short is underwater
@@ -41,7 +47,7 @@ def test_value_when_underwater(position):
     current_price = 125000000000000000000  # 125
     expect = 0
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
 
@@ -52,18 +58,21 @@ def test_value_when_oi_zero(position):
     debt = 2000000000000000000  # 2
     liquidated = False
 
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
     # check value returns zero when oi is zero and is long
     is_long = True
     expect = 0
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
     # check value returns zero when oi is zero and is short
     is_long = False
     expect = 0
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.value(pos, oi, oi, current_price)
+    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
 
@@ -74,12 +83,16 @@ def test_notional(position):
     debt = 2000000000000000000  # 2
     liquidated = False
 
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
     # check notional is oi + oi * (current_price/entry_price - 1)
     # when long
     is_long = True
     expect = 15000000000000000000
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.notional(pos, oi, oi, current_price)
+    actual = position.notional(pos, fraction, oi, oi, current_price,
+                               cap_payoff)
     assert expect == actual
 
     # check value is oi - oi * (current_price/entry_price - 1)
@@ -87,7 +100,8 @@ def test_notional(position):
     is_long = False
     expect = 5000000000000000000
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.notional(pos, oi, oi, current_price)
+    actual = position.notional(pos, fraction, oi, oi, current_price,
+                               cap_payoff)
     assert expect == actual
 
 
@@ -97,12 +111,16 @@ def test_notional_when_underwater(position):
     debt = 8000000000000000000  # 8
     liquidated = False
 
-    # check notional returns zero when short is underwater
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
+    # check notional returns the debt (floors to debt) when short is underwater
     is_long = False
     current_price = 225000000000000000000  # 225
-    expect = 0
+    expect = debt
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.notional(pos, oi, oi, current_price)
+    actual = position.notional(pos, fraction, oi, oi, current_price,
+                               cap_payoff)
     assert expect == actual
 
 
@@ -113,16 +131,21 @@ def test_notional_when_oi_zero(position):
     debt = 2000000000000000000  # 2
     liquidated = False
 
-    # check notional returns zero when oi is zero and is long
+    fraction = 1000000000000000000  # 1
+    cap_payoff = 5000000000000000000  # 5
+
+    # check notional returns debt when oi is zero and is long
     is_long = True
-    expect = 0
+    expect = debt
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.notional(pos, oi, oi, current_price)
+    actual = position.notional(pos, fraction, oi, oi, current_price,
+                               cap_payoff)
     assert expect == actual
 
-    # check notional returns zero when oi is zero and is short
+    # check notional returns the debt when oi is zero and is short
     is_long = False
-    expect = 0
+    expect = debt
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.notional(pos, oi, oi, current_price)
+    actual = position.notional(pos, fraction, oi, oi, current_price,
+                               cap_payoff)
     assert expect == actual
