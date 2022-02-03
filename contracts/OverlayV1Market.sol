@@ -501,7 +501,7 @@ contract OverlayV1Market {
     }
 
     /// @dev Rolling mint accumulator to be used for circuit breaker
-    function _registerMint(int256 value) private returns (uint256) {
+    function _registerMint(int256 value) private returns (int256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotMinted;
 
@@ -513,7 +513,7 @@ contract OverlayV1Market {
         snapshotMinted = snapshot;
 
         // return the cumulative mint amount
-        uint256 minted = uint256(snapshot.cumulative());
+        int256 minted = snapshot.cumulative();
         return minted;
     }
 
