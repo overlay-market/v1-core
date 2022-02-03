@@ -187,30 +187,27 @@ contract OverlayV1Market {
         uint256 totalOi = pos.isLong ? oiLong : oiShort;
         uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
 
-        // calculate current oi cap only adjusted for bounds
-        // no circuit breaker so traders can get out of a position whenever
-        uint256 capOiAdjusted = capOiAdjustedForBounds(data, capOi);
-
         // longs get the bid and shorts get the ask on unwind
         // register the additional volume on either the ask or bid
+        // current oi cap only adjusted for bounds (no circuit breaker so traders
+        // don't get stuck in a position)
         // TODO: add maxSlippage input param to bid(), ask()
         uint256 volume = pos.isLong
             ? _registerVolumeBid(
                 data,
                 pos.oiCurrent(fraction, totalOi, totalOiShares),
-                capOiAdjusted
+                capOiAdjustedForBounds(data, capOi)
             )
             : _registerVolumeAsk(
                 data,
                 pos.oiCurrent(fraction, totalOi, totalOiShares),
-                capOiAdjusted
+                capOiAdjustedForBounds(data, capOi)
             );
         uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        // TODO: capPayoff in position library ...
-        uint256 value = pos.value(fraction, totalOi, totalOiShares, price);
+        uint256 value = pos.value(fraction, totalOi, totalOiShares, price, capPayoff);
         uint256 cost = pos.cost(fraction);
 
         // register the amount to be minted/burned
@@ -223,6 +220,7 @@ contract OverlayV1Market {
             totalOi,
             totalOiShares,
             price,
+            capPayoff,
             tradingFeeRate
         );
         tradingFee = Math.min(tradingFee, value); // if value < tradingFee

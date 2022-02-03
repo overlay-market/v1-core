@@ -44,18 +44,10 @@ contract PositionMock {
         uint256 fraction,
         uint256 totalOi,
         uint256 totalOiShares,
-        uint256 currentPrice
+        uint256 currentPrice,
+        uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.value(fraction, totalOi, totalOiShares, currentPrice);
-    }
-
-    function isUnderwater(
-        Position.Info memory pos,
-        uint256 totalOi,
-        uint256 totalOiShares,
-        uint256 currentPrice
-    ) external view returns (bool) {
-        return pos.isUnderwater(totalOi, totalOiShares, currentPrice);
+        return pos.value(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
     }
 
     function notional(
@@ -63,9 +55,10 @@ contract PositionMock {
         uint256 fraction,
         uint256 totalOi,
         uint256 totalOiShares,
-        uint256 currentPrice
+        uint256 currentPrice,
+        uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.notional(fraction, totalOi, totalOiShares, currentPrice);
+        return pos.notional(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
     }
 
     function isLiquidatable(
@@ -73,9 +66,11 @@ contract PositionMock {
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice,
+        uint256 capPayoff,
         uint256 marginMaintenance
     ) external view returns (bool) {
-        return pos.isLiquidatable(totalOi, totalOiShares, currentPrice, marginMaintenance);
+        return
+            pos.isLiquidatable(totalOi, totalOiShares, currentPrice, capPayoff, marginMaintenance);
     }
 
     function liquidationPrice(
