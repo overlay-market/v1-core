@@ -444,7 +444,7 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                                    alice, bob):
-    # loop through 5 times
+    # loop through 10 times
     n = 10
     total_oi_long = Decimal(10000)
     total_oi_short = Decimal(7500)
