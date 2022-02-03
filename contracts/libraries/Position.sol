@@ -88,7 +88,7 @@ library Position {
         uint256 totalOi,
         uint256 totalOiShares
     ) internal pure returns (uint256) {
-        uint256 posOiShares = _oiShares(self);
+        uint256 posOiShares = oiSharesCurrent(self, fraction);
         if (posOiShares == 0 || totalOi == 0) return 0;
         return posOiShares.mulDown(totalOi).divUp(totalOiShares);
     }
@@ -96,7 +96,9 @@ library Position {
     /// @notice Computes the position's cost cast to uint256
     /// WARNING: be careful modifying oi and debt on unwind
     function cost(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        return uint256(self.oiShares - self.debt).mulDown(fraction);
+        uint256 posOiShares = oiSharesCurrent(self, fraction);
+        uint256 posDebt = debtCurrent(self, fraction);
+        return posOiShares - posDebt;
     }
 
     /// @notice Computes the value of a position
@@ -145,7 +147,7 @@ library Position {
     ) internal pure returns (uint256 notional_) {
         uint256 posValue = value(self, fraction, totalOi, totalOiShares, currentPrice, capPayoff);
         uint256 posDebt = debtCurrent(self, fraction);
-        return posValue + posDebt;
+        notional_ = posValue + posDebt;
     }
 
     // TODO: test
