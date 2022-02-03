@@ -4,11 +4,12 @@ def test_cost(position):
     is_long = True
     liquidated = False
     entry_price = 100000000000000000000  # 100
+    fraction = 1000000000000000000  # 1
 
     # check cost = oi - debt
     expect = oi - debt  # 8
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.cost(pos)
+    actual = position.cost(pos, fraction)
     assert expect == actual
 
 
