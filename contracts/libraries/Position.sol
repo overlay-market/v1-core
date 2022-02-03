@@ -136,7 +136,6 @@ library Position {
 
     /// @notice Computes the notional of a position
     /// @dev Floors to debt if value <= 0
-    // TODO: test w fraction, capPayoff
     function notional(
         Info memory self,
         uint256 fraction,
@@ -150,7 +149,6 @@ library Position {
         notional_ = posValue + posDebt;
     }
 
-    // TODO: test
     function tradingFee(
         Info memory self,
         uint256 fraction,

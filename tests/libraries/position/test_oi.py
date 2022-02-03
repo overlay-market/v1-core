@@ -12,10 +12,30 @@ def test_oi_current(position):
     total_oi_shares = 15000000000000000000  # 15
 
     # check oi is pro-rata shares of total oi
-    expect = total_oi * oi_shares / total_oi_shares
+    expect = int((total_oi * oi_shares / total_oi_shares) * (fraction / 1e18))
     pos = (oi_shares, debt, is_long, liquidated, entry_price)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
 
+    assert expect == actual
+
+
+def test_oi_current_when_fraction_less_than_one(position):
+    # NOTE: oi_initial = oi_shares
+    is_long = True
+    liquidated = False
+    entry_price = 100000000000000000000  # 100
+    oi_shares = 10000000000000000000  # 10
+    debt = 2000000000000000000  # 2
+    fraction = 250000000000000000  # 0.25
+
+    # lost 3 from total oi due to funding
+    total_oi = 12000000000000000000  # 12
+    total_oi_shares = 15000000000000000000  # 15
+
+    # check oi is pro-rata shares of total oi
+    expect = int((total_oi * oi_shares / total_oi_shares) * (fraction / 1e18))
+    pos = (oi_shares, debt, is_long, liquidated, entry_price)
+    actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
 
