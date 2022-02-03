@@ -22,29 +22,31 @@ contract PositionMock {
         positions.set(owner, id, pos);
     }
 
-    function cost(Position.Info memory pos) external view returns (uint256) {
-        return pos.cost();
-    }
-
     function exists(Position.Info memory pos) external view returns (bool) {
         return pos.exists();
     }
 
+    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+        return pos.cost(fraction);
+    }
+
     function oiCurrent(
         Position.Info memory pos,
+        uint256 fraction,
         uint256 totalOi,
         uint256 totalOiShares
     ) external view returns (uint256) {
-        return pos.oiCurrent(totalOi, totalOiShares);
+        return pos.oiCurrent(fraction, totalOi, totalOiShares);
     }
 
     function value(
         Position.Info memory pos,
+        uint256 fraction,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
     ) external view returns (uint256) {
-        return pos.value(totalOi, totalOiShares, currentPrice);
+        return pos.value(fraction, totalOi, totalOiShares, currentPrice);
     }
 
     function isUnderwater(
@@ -58,11 +60,12 @@ contract PositionMock {
 
     function notional(
         Position.Info memory pos,
+        uint256 fraction,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice
     ) external view returns (uint256) {
-        return pos.notional(totalOi, totalOiShares, currentPrice);
+        return pos.notional(fraction, totalOi, totalOiShares, currentPrice);
     }
 
     function isLiquidatable(

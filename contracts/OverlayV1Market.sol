@@ -129,9 +129,6 @@ contract OverlayV1Market {
         uint256 capOiAdjusted = capOiAdjustedForCircuitBreaker(capOi);
         capOiAdjusted = capOiAdjustedForBounds(data, capOiAdjusted);
 
-        // amount of collateral to transfer in (collateral backing + fees)
-        uint256 collateralIn = collateral + tradingFee;
-
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
         if (isLong) {
@@ -168,7 +165,7 @@ contract OverlayV1Market {
         _totalPositions++;
 
         // transfer in the OVL collateral needed to back the position + fees
-        ovl.transferFrom(msg.sender, address(this), collateralIn);
+        ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
         // send trading fees to trading fee recipient
         ovl.transfer(tradingFeeRecipient, tradingFee);
@@ -187,56 +184,62 @@ contract OverlayV1Market {
         Oracle.Data memory data = update();
 
         // cache for gas savings
-        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
-        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 totalOi = pos.isLong ? oiLong : oiShort;
+        uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
 
-        // calculate oi to unwind
-        // NOTE: oi vs oiShares will be different due to funding
-        uint256 oi = pos.oiCurrent(oiTotalOnSide, oiTotalSharesOnSide).mulDown(fraction);
+        // calculate current oi cap only adjusted for bounds
+        // no circuit breaker so traders can get out of a position whenever
+        uint256 capOiAdjusted = capOiAdjustedForBounds(data, capOi);
 
-        // calculate the current price received on unwind
-        uint256 price;
-        {
-            // calculate current oi cap only adjusted for bounds
-            // (circuit breaker should only limits new builds so traders aren't
-            // stuck in a position)
-            uint256 capOiAdjusted = capOiAdjustedForBounds(data, capOi);
-
-            // longs get the bid and shorts get the ask on unwind
-            // register the additional volume on either the ask or bid
-            // TODO: add maxSlippage input param to bid(), ask()
-            uint256 volume = pos.isLong
-                ? _registerVolumeBid(data, oi, capOiAdjusted)
-                : _registerVolumeAsk(data, oi, capOiAdjusted);
-            price = pos.isLong ? bid(data, volume) : ask(data, volume);
-        }
+        // longs get the bid and shorts get the ask on unwind
+        // register the additional volume on either the ask or bid
+        // TODO: add maxSlippage input param to bid(), ask()
+        uint256 volume = pos.isLong
+            ? _registerVolumeBid(
+                data,
+                pos.oiCurrent(fraction, totalOi, totalOiShares),
+                capOiAdjusted
+            )
+            : _registerVolumeAsk(
+                data,
+                pos.oiCurrent(fraction, totalOi, totalOiShares),
+                capOiAdjusted
+            );
+        uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(oiTotalOnSide, oiTotalSharesOnSide, price).mulDown(fraction);
-        uint256 cost = pos.cost().mulDown(fraction);
+        // TODO: capPayoff in position library ...
+        uint256 value = pos.value(fraction, totalOi, totalOiShares, price);
+        uint256 cost = pos.cost(fraction);
+
+        // register the amount to be minted/burned
+        // capPayoff prevents overflow reverts with int256 cast
+        _registerMint(int256(value) - int256(cost));
 
         // calculate the trading fee as % on notional
-        uint256 tradingFee;
-        {
-            uint256 notional = pos.notional(oiTotalOnSide, oiTotalSharesOnSide, price).mulDown(fraction);
-            uint256 tradingFee = notional.mulUp(tradingFeeRate);
-            tradingFee = Math.min(tradingFee, value); // if value < tradingFee
-        }
+        uint256 tradingFee = pos.tradingFee(
+            fraction,
+            totalOi,
+            totalOiShares,
+            price,
+            tradingFeeRate
+        );
+        tradingFee = Math.min(tradingFee, value); // if value < tradingFee
 
         // subtract unwound open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
         if (pos.isLong) {
-            oiLong -= oi;
-            oiLongShares -= uint256(pos.oiShares).mulDown(fraction);
+            oiLong -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiLongShares -= pos.oiSharesCurrent(fraction);
         } else {
-            oiShort -= oi;
-            oiShortShares -= uint256(pos.oiShares).mulDown(fraction);
+            oiShort -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiShortShares -= pos.oiSharesCurrent(fraction);
         }
 
         // store the updated position info data
-        pos.oiShares -= uint120(uint256(pos.oiShares).mulDown(fraction));
-        pos.debt -= uint120(uint256(pos.debt).mulDown(fraction));
+        pos.oiShares -= uint120(pos.oiSharesCurrent(fraction));
+        pos.debt -= uint120(pos.debtCurrent(fraction));
         positions.set(msg.sender, positionId, pos);
 
         // mint or burn the pnl for the position
@@ -495,6 +498,23 @@ contract OverlayV1Market {
         // return the volume
         uint256 volume = uint256(snapshot.cumulative());
         return volume;
+    }
+
+    /// @dev Rolling mint accumulator to be used for circuit breaker
+    function _registerMint(int256 value) private returns (uint256) {
+        // save gas with snapshot in memory
+        Roller.Snapshot memory snapshot = snapshotMinted;
+
+        // calculates the decay in the rolling amount minted since last snapshot
+        // and determines new window to decay over
+        snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, value);
+
+        // store the transformed snapshot
+        snapshotMinted = snapshot;
+
+        // return the cumulative mint amount
+        uint256 minted = uint256(snapshot.cumulative());
+        return minted;
     }
 
     /// TODO: emergencyWithdraw(?): allows withdrawal of original collateral
