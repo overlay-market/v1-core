@@ -26,6 +26,7 @@ contract OverlayV1Market {
     uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
     uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
+    // immutables
     OverlayV1Token public immutable ovl; // ovl token
     address public immutable feed; // oracle feed
     address public immutable factory; // factory that deployed this market
@@ -71,6 +72,32 @@ contract OverlayV1Market {
         require(msg.sender == factory, "OVLV1: !factory");
         _;
     }
+
+    // events for core functions
+    event Build(
+        address indexed sender, // address that initiated build
+        uint256 positionId, // id of built position
+        uint256 oi, // oi of position at build
+        uint256 debt, // debt of position at build
+        bool isLong, // whether is long or short
+        uint256 price // entry price
+    );
+    // TODO: include oi, debt unwound/liquidated in the events below while avoiding
+    // TODO: stack too deep errors
+    event Unwind(
+        address indexed sender, // address that initiated unwind
+        uint256 positionId, // id of unwound position
+        uint256 fraction, // fraction of position unwound
+        int256 mint, // total amount minted/burned (+/-) at unwind
+        uint256 price // exit price
+    );
+    event Liquidate(
+        address indexed sender, // address that initiated liquidate
+        address indexed owner, // address that owned the liquidated position
+        uint256 positionId, // id of the liquidated position
+        int256 mint, // total amount burned (-) at liquidate
+        uint256 price // liquidation price
+    );
 
     constructor(
         address _ovl,
@@ -164,6 +191,9 @@ contract OverlayV1Market {
         );
         _totalPositions++;
 
+        // emit build event
+        emit Build(msg.sender, positionId_, oi, oi - collateral, isLong, price);
+
         // transfer in the OVL collateral needed to back the position + fees
         ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
@@ -239,6 +269,9 @@ contract OverlayV1Market {
         pos.oiShares -= uint120(pos.oiSharesCurrent(fraction));
         pos.debt -= uint120(pos.debtCurrent(fraction));
         positions.set(msg.sender, positionId, pos);
+
+        // emit unwind event
+        emit Unwind(msg.sender, positionId, fraction, int256(value) - int256(cost), price);
 
         // mint or burn the pnl for the position
         if (value >= cost) {

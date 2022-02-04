@@ -63,25 +63,26 @@ library Position {
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // TODO: test
+    /// @notice Computes the current shares of open interest position holds
+    /// @notice on pos.isLong side of the market
     function oiSharesCurrent(Info memory self, uint256 fraction) internal pure returns (uint256) {
         return _oiShares(self).mulDown(fraction);
     }
 
-    // TODO: test
+    /// @notice Computes the current debt position holds
     function debtCurrent(Info memory self, uint256 fraction) internal pure returns (uint256) {
         return _debt(self).mulDown(fraction);
     }
 
-    // TODO: test
+    /// @notice Computes the initial open interest the position had when built
     function oiInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
         return _oiShares(self).mulDown(fraction);
     }
 
-    /// @notice Computes the open interest of a position
+    /// @notice Computes the current open interest of a position accounting for
+    /// @notice potential funding payments between long/short sides
     /// @dev returns zero when oiShares = totalOi = totalOiShares = 0 to avoid
     /// @dev div by zero errors
-    // TODO: test w fraction
     function oiCurrent(
         Info memory self,
         uint256 fraction,
@@ -103,7 +104,6 @@ library Position {
 
     /// @notice Computes the value of a position
     /// @dev Floors to zero, so won't properly compute if self is underwater
-    // TODO: test w fraction, capPayoff
     function value(
         Info memory self,
         uint256 fraction,
@@ -149,6 +149,7 @@ library Position {
         notional_ = posValue + posDebt;
     }
 
+    /// @notice Computes the trading fees to be imposed on a position for build/unwind
     function tradingFee(
         Info memory self,
         uint256 fraction,
