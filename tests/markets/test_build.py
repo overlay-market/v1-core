@@ -1,10 +1,11 @@
 import pytest
 from pytest import approx
-from brownie import chain, reverts, web3
+from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from hexbytes import HexBytes
 from random import randint
+
+from .utils import calculate_position_info, get_position_key
 
 
 # NOTE: Tests passing with isolation fixture
@@ -12,27 +13,6 @@ from random import randint
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
-
-
-def calculate_position_info(oi: Decimal,
-                            leverage: Decimal,
-                            trading_fee_rate: Decimal) -> (Decimal, Decimal,
-                                                           Decimal, Decimal):
-    """
-    Returns position attributes in decimal format (int / 1e18)
-    """
-    collateral = oi / leverage
-    trade_fee = oi * trading_fee_rate
-    debt = oi - collateral
-    return collateral, oi, debt, trade_fee
-
-
-def get_position_key(owner: str, id: int) -> HexBytes:
-    """
-    Returns the position key to retrieve an individual position
-    from positions mapping
-    """
-    return web3.solidityKeccak(['address', 'uint256'], [owner, id])
 
 
 @given(
@@ -73,8 +53,8 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
-    cap_oi = Decimal(market.capOi() / 1e18)
-    volume = int((oi / cap_oi) * Decimal(1e18))
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
+    volume = int((oi / cap_oi) * Decimal(1e18))  # TODO: circuit breaker adj
     price = market.ask(data, volume) if is_long \
         else market.bid(data, volume)
 
@@ -96,6 +76,15 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)
+
+    # check build event
+    assert "Build" in tx.events
+    assert tx.events["Build"]["sender"] == alice.address
+    assert tx.events["Build"]["positionId"] == actual_pos_id
+    assert tx.events["Build"]["oi"] == actual_oi_initial
+    assert tx.events["Build"]["debt"] == actual_debt
+    assert tx.events["Build"]["isLong"] == actual_is_long
+    assert tx.events["Build"]["price"] == actual_entry_price
 
 
 @given(
@@ -172,8 +161,9 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # calculate expected rolling volume and window numbers when
     # adjusted for decay
     # NOTE: decayOverWindow() tested in test_rollers.py
-    _, micro_window, _, _, _, _, _, _ = feed.latest()
-    cap_oi = Decimal(market.capOi() / 1e18)
+    data = feed.latest()
+    _, micro_window, _, _, _, _, _, _ = data
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
     input_volume = int((oi / cap_oi) * Decimal(1e18))
     input_window = micro_window
     input_timestamp = chain[tx.block_number]['timestamp']
