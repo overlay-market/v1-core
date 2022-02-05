@@ -26,7 +26,7 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         address _uniV3Factory,
         uint256 _microWindow,
         uint256 _macroWindow,
-        uint16 _observationCardinalityMinimum,
+        uint16 observationCardinalityMinimum,
         uint256 _averageBlockTime
     ) OverlayV1FeedFactory(_microWindow, _macroWindow) {
         ovl = _ovl;

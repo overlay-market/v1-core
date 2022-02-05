@@ -4,11 +4,22 @@ from brownie import Contract, OverlayV1UniswapV3Feed, reverts
 
 @pytest.fixture
 def usdc():
+    '''
+    Returns the USDC token contract instance.
+
+    https://etherscan.io/address/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48
+    '''
     yield Contract.from_explorer("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
 
 
 @pytest.fixture
 def pool_daiusdc_5bps():
+    '''
+    Returns the DAI token contract instance used to simulate OVL for testing
+    purposes.
+
+    https://etherscan.io/address/0x6c6Bc977E13Df9b0de53b251522280BB72383700
+    '''
     yield Contract.from_explorer("0x6c6Bc977E13Df9b0de53b251522280BB72383700")
 
 
