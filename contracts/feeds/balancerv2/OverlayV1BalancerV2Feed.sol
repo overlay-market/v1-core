@@ -2,16 +2,11 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../libraries/balancerv2/BalancerV2Tokens.sol";
+import "../OverlayV1Feed.sol";
 import "./IBalancerV2Vault.sol";
 
-// // forks of uniswap libraries for solidity^0.8.10
-// import "../../libraries/uniswap/v3-core/FullMath.sol";
-// import "../../libraries/uniswap/v3-core/TickMath.sol";
-
-import "../OverlayV1Feed.sol";
-
 contract OverlayV1BalancerV2Feed is OverlayV1Feed {
-
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
@@ -28,30 +23,27 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
+    // BalancerV2Token.Info memory balancerV2TokenInfo
     constructor(
         address _marketPool,
         address _ovlWethPool,
         address _ovl,
-        address _balancerV2Vault,
         address _marketBaseToken,
         address _marketQuoteToken,
-        bytes32 _balancerV2MarketPoolId,
-        bytes32 _balancerV2OvlWethPoolId,
         uint128 _marketBaseAmount,
+        BalancerV2Tokens.Info memory balancerV2Tokens,
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
-
-        VAULT = _balancerV2Vault;
-
-        IBalancerV2Vault vault = IBalancerV2Vault(_balancerV2Vault);
-        (IERC20[] memory marketTokens, , ) = getPoolTokensData(_balancerV2MarketPoolId);
+        VAULT = balancerV2Tokens.vault;
+        // Check if gas cost is reduced by storing vault in memory
+        IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
+        (IERC20[] memory marketTokens, , ) = getPoolTokensData(balancerV2Tokens.marketPoolId);
 
         // TODO: verify token ordering
         // need WETH in market pool to make reserve conversion from ETH => OVL
         address _marketToken0 = address(marketTokens[0]);
         address _marketToken1 = address(marketTokens[1]);
-
 
         require(_marketToken0 == WETH || _marketToken1 == WETH, "OVLV1Feed: marketToken != WETH");
         marketToken0 = _marketToken0;
@@ -69,9 +61,9 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
 
-        (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(_balancerV2OvlWethPoolId);
+        (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
         // TODO: verify token ordering
-        // // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
+        // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = address(marketTokens[0]);
         address _ovlWethToken1 = address(marketTokens[1]);
 
@@ -100,14 +92,13 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
             uint256 lastChangeBlock
         )
     {
-      IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
-      (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2MarketPoolId);
-      return(tokens, balances, lastChangeBlock);
+        IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
+        (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2MarketPoolId);
+        return (tokens, balances, lastChangeBlock);
     }
 
-
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-      // TODO - put just enough code in to get this compiling
+        // TODO - put just enough code in to get this compiling
         // cache micro and macro windows for gas savings
         uint256 _microWindow = microWindow;
         uint256 _macroWindow = macroWindow;
@@ -181,4 +172,3 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         return (secondsAgos, windows, nowIdxs);
     }
 }
-

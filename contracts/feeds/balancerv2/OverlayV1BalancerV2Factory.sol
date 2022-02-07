@@ -3,10 +3,12 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1BalancerV2Feed.sol";
 
 contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
+    using BalancerV2Tokens for BalancerV2Tokens.Info;
     address public immutable ovlWethPool;
     address public immutable ovl;
 
@@ -39,15 +41,15 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
         address marketPool,
         address marketBaseToken,
         address marketQuoteToken,
-        address balancerV2Vault,
         uint128 marketBaseAmount,
-        bytes32 balancerV2MarketPoolId,
-        bytes32 balancerV2OvlWethPoolId
+        BalancerV2Tokens.Info memory balancerV2Tokens
     ) external returns (address feed_) {
         require(
             getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] == address(0),
             "OVLV1: feed already exists"
         );
+
+        // BalancerV2Tokens.Info memory balancerV2Tokens = BalancerV2Tokens({balancerV2Vault: balancerV2Vault, balancerV2MarketPoolId: balancerV2MarketPoolId, balancerV2OvlWethPoolId: balancerV2OvlWethPoolId});
 
         // Use the CREATE2 opcode to deploy a new Feed contract.
         // Will revert if feed which accepts (marketPool, marketBaseToken, marketQuoteToken,
@@ -62,12 +64,10 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
                 marketPool,
                 ovlWethPool,
                 ovl,
-                balancerV2Vault,
                 marketBaseToken,
                 marketQuoteToken,
-                balancerV2MarketPoolId,
-                balancerV2OvlWethPoolId,
                 marketBaseAmount,
+                balancerV2Tokens,
                 microWindow,
                 macroWindow
             )
@@ -80,4 +80,3 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
         emit FeedDeployed(msg.sender, feed_);
     }
 }
-

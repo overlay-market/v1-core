@@ -18,7 +18,6 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IBalancerV2Vault {
-
     /**
      * @dev Returns a Pool's registered tokens, the total balance for each, and the latest block when *any* of
      * the tokens' `balances` changed.
