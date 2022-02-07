@@ -381,7 +381,6 @@ contract OverlayV1Market {
 
     /// @dev current open interest cap with adjustments to lower open
     /// @dev interest cap in event market has printed a lot in recent past
-    // TODO: test
     function capOiAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
