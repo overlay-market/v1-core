@@ -41,7 +41,8 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
         address marketQuoteToken,
         address balancerV2Vault,
         uint128 marketBaseAmount,
-        bytes32 balancerV2MarketPoolId
+        bytes32 balancerV2MarketPoolId,
+        bytes32 balancerV2OvlWethPoolId
     ) external returns (address feed_) {
         require(
             getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] == address(0),
@@ -65,6 +66,7 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
                 marketBaseToken,
                 marketQuoteToken,
                 balancerV2MarketPoolId,
+                balancerV2OvlWethPoolId,
                 marketBaseAmount,
                 microWindow,
                 macroWindow
