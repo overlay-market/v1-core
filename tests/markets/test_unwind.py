@@ -19,7 +19,8 @@ def isolation(fn_isolation):
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'))
-def test_unwind_updates_position(market, feed, alice, ovl, fraction, is_long):
+def test_unwind_updates_position(market, factory, feed, alice, ovl,
+                                 fraction, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -50,36 +51,34 @@ def test_unwind_updates_position(market, feed, alice, ovl, fraction, is_long):
      expect_entry_price) = market.positions(pos_key)
 
     # calculate current oi, debt values of position
-    oi_shares = expect_oi_shares/1e18
-    oi_total = (market.oiLong()/1e18) if is_long else (market.oiShort()/1e18)
-    oi_total_shares = (market.oiLongShares()/1e18) if is_long \
-        else (market.oiShortShares()/1e18)
-    oi_current = Decimal((oi_shares / oi_total_shares) * oi_total)
+    expect_total_oi = market.oiLong() if is_long else market.oiShort()
+    expect_total_oi_shares = market.oiLongShares() if is_long \
+        else market.oiShortShares()
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
 
     # input values for unwind
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
-    # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
-
     # calculate expected exit price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
-    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
-    volume = int((oi_current * fraction / cap_oi) * Decimal(1e18))
+    oi = fraction * expect_oi_current
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi()))
+    volume = int(oi * Decimal(1e18) / cap_oi)
+
     price = market.bid(data, volume) if is_long \
         else market.ask(data, volume)
 
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+
     # calculate expected values
+    expect_exit_price = price
+    expect_oi_diff = fraction * (expect_oi_current - Decimal(expect_oi_shares))
     expect_oi_shares = int(expect_oi_shares * (1 - fraction))
     expect_debt = int(expect_debt * (1 - fraction))
-    expect_price = price
-    expect_pnl_mag = Decimal(fraction) * oi_current * \
-        Decimal(expect_price/expect_entry_price - 1) * Decimal(1e18)
-    expect_oi_diff = Decimal(oi_current - oi_initial) * Decimal(1e18)
-    expect_mint = int(expect_oi_diff + expect_pnl_mag) if is_long \
-        else int(expect_oi_diff - expect_pnl_mag)
 
     # check expected pos attributes match actual after unwind
     (actual_oi_shares, actual_debt, actual_is_long, actual_liquidated,
@@ -96,9 +95,17 @@ def test_unwind_updates_position(market, feed, alice, ovl, fraction, is_long):
     assert tx.events["Unwind"]["sender"] == alice.address
     assert tx.events["Unwind"]["positionId"] == pos_id
     assert tx.events["Unwind"]["fraction"] == input_fraction
-    assert int(tx.events["Unwind"]["price"]) == approx(expect_price, rel=1e-4)
 
-    # TODO: figure out why rel=1e-2 needed here. Large error
+    actual_exit_price = int(tx.events["Unwind"]["price"])
+    assert actual_exit_price == approx(expect_exit_price, rel=1e-4)
+
+    expect_pnl_mag = oi * \
+        (Decimal(actual_exit_price) / Decimal(actual_entry_price) - 1)
+    expect_mint = int(expect_oi_diff + expect_pnl_mag) if is_long \
+        else int(expect_oi_diff - expect_pnl_mag)
+
+    # TODO: figure out why rel=1e-2 needed here
+    # TODO: Large error, why? Python or solidity side? rounding in fixed point?
     assert int(tx.events["Unwind"]["mint"]) == approx(expect_mint, rel=1e-2)
 
 
