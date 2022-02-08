@@ -128,6 +128,45 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     assert int(actual_oi_shares) == approx(expect_oi_shares)
 
 
+def test_build_updates_market(market, ovl, alice):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    is_long = True
+
+    # cache prior timestamp update last value
+    prior_timestamp_update_last = market.timestampUpdateLast()
+
+    # mine the chain forward for some time difference with build
+    chain.mine(timedelta=600)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+
+    # get the expected timestamp and check equal to actual
+    expect_timestamp_update_last = chain[tx.block_number]['timestamp']
+    actual_timestamp_update_last = market.timestampUpdateLast()
+
+    assert actual_timestamp_update_last == expect_timestamp_update_last
+    assert actual_timestamp_update_last != prior_timestamp_update_last
+
+
 @given(
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
@@ -147,8 +186,10 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
-    # priors actual values
-    _ = market.update({"from": alice})  # update funding prior
+    # update funding prior
+    _ = market.update({"from": alice})
+
+    # priors actual values. longs get the ask, shorts get the bid on build
     snapshot_volume = market.snapshotVolumeAsk() if is_long else \
         market.snapshotVolumeBid()
     last_timestamp, last_window, last_volume = snapshot_volume

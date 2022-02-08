@@ -19,7 +19,7 @@ def isolation(fn_isolation):
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'))
-def test_unwind_updates_position(market, factory, feed, alice, rando, ovl,
+def test_unwind_updates_position(market, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
@@ -128,7 +128,7 @@ def test_unwind_updates_position(market, factory, feed, alice, rando, ovl,
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'))
-def test_unwind_removes_oi(market, factory, feed, alice, rando, ovl,
+def test_unwind_removes_oi(market, feed, alice, rando, ovl,
                            fraction, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
@@ -199,12 +199,244 @@ def test_unwind_removes_oi(market, factory, feed, alice, rando, ovl,
                                                  rel=1e-4)
 
 
-def test_unwind_registers_volume(market):
-    pass
+def test_unwind_updates_market(market, alice, ovl):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    fraction = Decimal(1.0)
+    is_long = True
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # cache prior timestamp update last value
+    prior_timestamp_update_last = market.timestampUpdateLast()
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval
+    chain.mine(timedelta=600)
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+
+    # get the expected timestamp and check equal to actual
+    expect_timestamp_update_last = chain[tx.block_number]['timestamp']
+    actual_timestamp_update_last = market.timestampUpdateLast()
+
+    assert actual_timestamp_update_last == expect_timestamp_update_last
+    assert actual_timestamp_update_last != prior_timestamp_update_last
 
 
-def test_unwind_registers_mint(market):
-    pass
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    is_long=strategy('bool'))
+def test_unwind_registers_volume(market, feed, alice, rando, ovl,
+                                 fraction, is_long):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    _ = market.update({"from": rando})
+
+    # priors actual values. longs get the bid, shorts get the ask on build
+    snapshot_volume = market.snapshotVolumeBid() if is_long \
+        else market.snapshotVolumeAsk()
+    last_timestamp, last_window, last_volume = snapshot_volume
+
+    last_total_oi = market.oiLong() if is_long \
+        else market.oiShort()
+    last_total_oi_shares = market.oiLongShares() if is_long \
+        else market.oiShortShares()
+    last_pos_oi = (last_total_oi * expect_oi_shares) / last_total_oi_shares
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+
+    # calculate expected rolling volume and window numbers when
+    # adjusted for decay
+    # NOTE: decayOverWindow() tested in test_rollers.py
+    data = feed.latest()
+    _, micro_window, _, _, _, _, _, _ = data
+
+    oi = fraction * Decimal(last_pos_oi)
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi()))
+
+    input_volume = int((oi / cap_oi) * Decimal(1e18))
+    input_window = micro_window
+    input_timestamp = chain[tx.block_number]['timestamp']
+
+    # expect accumulator now to be calculated as
+    # accumulatorLast * (1 - dt/windowLast) + value
+    dt = input_timestamp - last_timestamp
+    last_volume_decayed = last_volume * (1 - dt/last_window) \
+        if last_window != 0 and dt >= last_window else 0
+    expect_volume = int(last_volume_decayed + input_volume)
+
+    # expect window now to be calculated as weighted average
+    # of remaining time left in last window and total time in new window
+    # weights are accumulator values for the respective time window
+    numerator = int((last_window - dt) * last_volume_decayed
+                    + input_window * input_volume)
+    expect_window = int(numerator / expect_volume)
+    expect_timestamp = input_timestamp
+
+    # compare with actual rolling volume, timestamp last, window last values
+    actual = market.snapshotVolumeBid() if is_long else \
+        market.snapshotVolumeAsk()
+    actual_timestamp, actual_window, actual_volume = actual
+
+    assert actual_timestamp == expect_timestamp
+    assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
+    assert int(actual_volume) == approx(expect_volume, rel=1e-4)
+
+
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    is_long=strategy('bool'))
+def test_unwind_registers_mint(market, feed, alice, rando, ovl,
+                               fraction, is_long):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    _ = market.update({"from": rando})
+
+    # priors actual values for snapshot of minted roller
+    snapshot_minted = market.snapshotMinted()
+    last_timestamp, last_window, last_minted = snapshot_minted
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    actual_mint = tx.events["Unwind"]["mint"]
+
+    # calculate expected rolling minted and window numbers when
+    # adjusted for decay
+    # NOTE: decayOverWindow() tested in test_rollers.py
+    input_minted = int(actual_mint)
+    input_window = int(market.circuitBreakerWindow())
+    input_timestamp = chain[tx.block_number]['timestamp']
+
+    # expect accumulator now to be calculated as
+    # accumulatorLast * (1 - dt/windowLast) + value
+    dt = input_timestamp - last_timestamp
+    last_minted_decayed = last_minted * (1 - dt/last_window) \
+        if last_window != 0 and dt >= last_window else 0
+    expect_minted = int(last_minted_decayed + input_minted)
+
+    # expect window now to be calculated as weighted average
+    # of remaining time left in last window and total time in new window
+    # weights are accumulator values for the respective time window
+    numerator = int((last_window - dt) * abs(last_minted_decayed)
+                    + input_window * abs(input_minted))
+    expect_window = int(numerator /
+                        (abs(last_minted_decayed) + abs(input_minted)))
+    expect_timestamp = input_timestamp
+
+    # compare with actual rolling minted, timestamp last, window last values
+    actual = market.snapshotMinted()
+    actual_timestamp, actual_window, actual_minted = actual
+
+    assert actual_timestamp == expect_timestamp
+    assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
+    assert int(actual_minted) == approx(expect_minted, rel=1e-4)
 
 
 # TODO: w mock feed

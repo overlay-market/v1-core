@@ -396,7 +396,6 @@ contract OverlayV1Market {
     /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return capOi
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
     /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
-    // TODO: test
     function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
         public
         view
@@ -418,7 +417,6 @@ contract OverlayV1Market {
     /// @dev current open interest cap with adjustments to prevent
     /// @dev front-running trade, back-running trade, and to lower open
     /// @dev interest cap in event market has printed a lot in recent past
-    // TODO: test
     function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
         public
         view
@@ -436,14 +434,12 @@ contract OverlayV1Market {
 
     /// @dev bound on open interest cap to mitigate front-running attack
     /// @dev bound = lmbda * reserveInOvl / 2
-    // TODO: test
     function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
         return lmbda.mulDown(data.reserveOverMicroWindow).divDown(2 * ONE);
     }
 
     /// @dev bound on open interest cap to mitigate back-running attack
     /// @dev bound = macroWindow * reserveInOvl * 2 * delta
-    // TODO: test
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         // TODO: macroWindow should be in blocks in current spec. What to do here to be
         // futureproof vs having an average block time constant (BAD)
