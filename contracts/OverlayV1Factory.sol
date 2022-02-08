@@ -9,10 +9,7 @@ import "./libraries/Risk.sol";
 import "./OverlayV1Token.sol";
 import "./OverlayV1Deployer.sol";
 
-contract OverlayV1Factory is AccessControlEnumerable {
-    bytes32 public constant ADMIN_ROLE = 0x00;
-    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR");
-
+contract OverlayV1Factory {
     // risk param bounds
     uint256 public constant MIN_K = 4e8; // ~ 0.1 bps / 8 hr
     uint256 public constant MAX_K = 4e12; // ~ 1000 bps / 8 hr
@@ -105,14 +102,11 @@ contract OverlayV1Factory is AccessControlEnumerable {
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
-        require(hasRole(GOVERNOR_ROLE, msg.sender), "OVLV1: !governor");
+        require(ovl.hasRole(ovl.GOVERNOR_ROLE(), msg.sender), "OVLV1: !governor");
         _;
     }
 
     constructor(address _ovl) {
-        _setupRole(ADMIN_ROLE, msg.sender);
-        _setupRole(GOVERNOR_ROLE, msg.sender);
-
         // set ovl
         ovl = OverlayV1Token(_ovl);
 
