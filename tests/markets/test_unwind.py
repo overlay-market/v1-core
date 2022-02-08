@@ -66,10 +66,6 @@ def test_unwind_updates_position(market, factory, feed, alice, rando, ovl,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
-    # input values for unwind
-    input_pos_id = pos_id
-    input_fraction = int(fraction * Decimal(1e18))
-
     # calculate expected exit price
     # NOTE: ask(), bid() tested in test_price.py
     unwound_oi = fraction * expect_oi_current
@@ -87,6 +83,10 @@ def test_unwind_updates_position(market, factory, feed, alice, rando, ovl,
     unwound_value = unwound_collateral + unwound_pnl if is_long \
         else unwound_collateral - unwound_pnl
     unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
 
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
@@ -174,13 +174,13 @@ def test_unwind_removes_oi(market, factory, feed, alice, rando, ovl,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
-    # input values for unwind
-    input_pos_id = pos_id
-    input_fraction = int(fraction * Decimal(1e18))
-
     # calculate expected oi, debt removed
     unwound_oi = int(fraction * expect_oi_current)
     unwound_oi_shares = int(fraction * Decimal(expect_oi_shares))
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
 
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
@@ -197,6 +197,37 @@ def test_unwind_removes_oi(market, factory, feed, alice, rando, ovl,
     assert int(actual_total_oi) == approx(expect_total_oi, rel=1e-4)
     assert int(actual_total_oi_shares) == approx(expect_total_oi_shares,
                                                  rel=1e-4)
+
+
+def test_unwind_registers_volume(market):
+    pass
+
+
+def test_unwind_registers_mint(market):
+    pass
+
+
+# TODO: w mock feed
+def test_unwind_mints_when_profitable(market):
+    pass
+
+
+# TODO: w mock feed
+def test_unwind_burns_when_not_profitable(market):
+    pass
+
+
+def test_unwind_executes_transfers(market):
+    pass
+
+
+def test_unwind_transfers_value_to_trader(market):
+    pass
+
+
+# TODO: also test for trading fee edge case of tradingFee > value
+def test_unwind_transfers_trading_fees(market):
+    pass
 
 
 def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
