@@ -114,6 +114,9 @@ def create_factory(gov, request, ovl, feed_factory, feed_three):
         # grant market factory token admin role
         tok.grantRole(tok.ADMIN_ROLE(), factory, {"from": gov})
 
+        # grant gov the governor role on token to access factory methods
+        tok.grantRole(tok.GOVERNOR_ROLE(), gov, {"from": gov})
+
         # add the feed factory
         factory.addFeedFactory(feeds, {"from": gov})
 
