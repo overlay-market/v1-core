@@ -19,7 +19,7 @@ def isolation(fn_isolation):
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'))
-def test_unwind_updates_position(market, factory, feed, alice, ovl,
+def test_unwind_updates_position(market, factory, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
@@ -50,6 +50,15 @@ def test_unwind_updates_position(market, factory, feed, alice, ovl,
     (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price) = market.positions(pos_key)
 
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    tx = market.update({"from": rando})
+    data = tx.return_value
+
     # calculate current oi, debt values of position
     expect_total_oi = market.oiLong() if is_long else market.oiShort()
     expect_total_oi_shares = market.oiLongShares() if is_long \
@@ -63,20 +72,30 @@ def test_unwind_updates_position(market, factory, feed, alice, ovl,
 
     # calculate expected exit price
     # NOTE: ask(), bid() tested in test_price.py
-    data = feed.latest()
-    oi = fraction * expect_oi_current
+    unwound_oi = fraction * expect_oi_current
+    unwound_debt = fraction * Decimal(expect_debt)
     cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi()))
-    volume = int(oi * Decimal(1e18) / cap_oi)
-
+    volume = int(unwound_oi * Decimal(1e18) / cap_oi)
     price = market.bid(data, volume) if is_long \
         else market.ask(data, volume)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_collateral = unwound_oi - unwound_debt
+    unwound_pnl = unwound_oi * (Decimal(price) / Decimal(expect_entry_price)
+                                - 1)
+    unwound_value = unwound_collateral + unwound_pnl if is_long \
+        else unwound_collateral - unwound_pnl
+    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
 
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
 
     # calculate expected values
     expect_exit_price = price
-    expect_oi_diff = fraction * (expect_oi_current - Decimal(expect_oi_shares))
+    expect_mint = int(unwound_value - unwound_cost)
+
+    # adjust oi shares, debt position expected attributes downward for unwind
     expect_oi_shares = int(expect_oi_shares * (1 - fraction))
     expect_debt = int(expect_debt * (1 - fraction))
 
@@ -97,16 +116,87 @@ def test_unwind_updates_position(market, factory, feed, alice, ovl,
     assert tx.events["Unwind"]["fraction"] == input_fraction
 
     actual_exit_price = int(tx.events["Unwind"]["price"])
-    assert actual_exit_price == approx(expect_exit_price, rel=1e-4)
+    assert actual_exit_price == approx(expect_exit_price, rel=1e-3)
 
-    expect_pnl_mag = oi * \
-        (Decimal(actual_exit_price) / Decimal(actual_entry_price) - 1)
-    expect_mint = int(expect_oi_diff + expect_pnl_mag) if is_long \
-        else int(expect_oi_diff - expect_pnl_mag)
-
-    # TODO: figure out why rel=1e-2 needed here
+    # TODO: figure out why rel=1e-3 needed here
     # TODO: Large error, why? Python or solidity side? rounding in fixed point?
-    assert int(tx.events["Unwind"]["mint"]) == approx(expect_mint, rel=1e-2)
+    actual_mint = int(tx.events["Unwind"]["mint"])
+    assert actual_mint == approx(expect_mint, rel=1e-3)
+
+
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    is_long=strategy('bool'))
+def test_unwind_removes_oi(market, factory, feed, alice, rando, ovl,
+                           fraction, is_long):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    _ = market.update({"from": rando})
+
+    # calculate current oi, debt values of position
+    expect_total_oi = market.oiLong() if is_long else market.oiShort()
+    expect_total_oi_shares = market.oiLongShares() if is_long \
+        else market.oiShortShares()
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # calculate expected oi, debt removed
+    unwound_oi = int(fraction * expect_oi_current)
+    unwound_oi_shares = int(fraction * Decimal(expect_oi_shares))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+
+    # adjust total oi and total oi shares downward for unwind
+    expect_total_oi -= unwound_oi
+    expect_total_oi_shares -= unwound_oi_shares
+
+    # check expected total oi and oi shares on side match actual
+    actual_total_oi = market.oiLong() if is_long else market.oiShort()
+    actual_total_oi_shares = market.oiLongShares() \
+        if is_long else market.oiShortShares()
+
+    assert int(actual_total_oi) == approx(expect_total_oi, rel=1e-4)
+    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares,
+                                                 rel=1e-4)
 
 
 def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
