@@ -443,8 +443,8 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'))
-def test_unwind_executes_pnl_mint_or_burn(market, feed, alice, rando, ovl,
-                                          fraction, is_long):
+def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
+                                   fraction, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -508,6 +508,12 @@ def test_unwind_executes_pnl_mint_or_burn(market, feed, alice, rando, ovl,
         else unwound_collateral - unwound_pnl
     unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
 
+    unwound_notional = unwound_value + unwound_debt
+    unwound_trading_fee = unwound_notional * \
+        (Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    if unwound_trading_fee > unwound_value:
+        unwound_trading_fee = unwound_value
+
     # input values for unwind
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
@@ -525,26 +531,45 @@ def test_unwind_executes_pnl_mint_or_burn(market, feed, alice, rando, ovl,
     # if expect_mint > 0, should have a mint with Transfer event
     # If expect_mint < 0, should have a burn with Transfer event
     minted = expect_mint > 0
-    expect_from = "0x0000000000000000000000000000000000000000" if minted \
+    expect_mint_from = "0x0000000000000000000000000000000000000000" if minted \
         else market.address
-    expect_to = market.address if minted \
+    expect_mint_to = market.address if minted \
         else "0x0000000000000000000000000000000000000000"
-    expect_value = abs(expect_mint)
+    expect_mint_mag = abs(expect_mint)
 
-    # check actual amount minted or burned is in line with expected
-    assert tx.events["Transfer"][0]["from"] == expect_from
-    assert tx.events["Transfer"][0]["to"] == expect_to
-    assert int(tx.events["Transfer"][0]["value"]) == approx(expect_value,
+    # value less fees expected
+    expect_value_out = int(unwound_value - unwound_trading_fee)
+
+    # trading fee expected
+    expect_trade_fee = int(unwound_trading_fee)
+
+    # check Transfer events for:
+    # 1. mint or burn of pnl; 2. value less trade fees out; 3. trade fees out
+    assert 'Transfer' in tx.events
+    assert len(tx.events['Transfer']) == 3
+
+    # check actual amount minted or burned is in line with expected (1)
+    assert tx.events["Transfer"][0]["from"] == expect_mint_from
+    assert tx.events["Transfer"][0]["to"] == expect_mint_to
+    assert int(tx.events["Transfer"][0]["value"]) == approx(expect_mint_mag,
                                                             rel=1e-2)
 
-    # check unwind event has same value for pnl as transfer event
+    # check unwind event has same value for pnl as transfer event (1)
     actual_transfer_mint = tx.events["Transfer"][0]["value"] if minted \
         else -tx.events["Transfer"][0]["value"]
     assert tx.events["Unwind"]["mint"] == actual_transfer_mint
 
+    # check value less fees in event (2)
+    assert tx.events['Transfer'][1]['from'] == market.address
+    assert tx.events['Transfer'][1]['to'] == alice.address
+    assert int(tx.events['Transfer'][1]['value']) == \
+        approx(expect_value_out, rel=1e-4)
 
-def test_unwind_executes_transfers(market):
-    pass
+    # check value less trade fees out (3)
+    assert tx.events['Transfer'][2]['from'] == market.address
+    assert tx.events['Transfer'][2]['to'] == market.tradingFeeRecipient()
+    assert int(tx.events['Transfer'][2]['value']) == approx(expect_trade_fee,
+                                                            rel=1e-4)
 
 
 def test_unwind_transfers_value_to_trader(market):
