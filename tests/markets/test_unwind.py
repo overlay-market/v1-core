@@ -572,12 +572,165 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
                                                             rel=1e-4)
 
 
-def test_unwind_transfers_value_to_trader(market):
-    pass
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    is_long=strategy('bool'))
+def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
+                                          fraction, is_long):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    tx = market.update({"from": rando})
+
+    # priors actual values
+    expect_balance_alice = ovl.balanceOf(alice)
+    expect_balance_market = ovl.balanceOf(market)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_debt = fraction * Decimal(expect_debt)
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    actual_mint = tx.events["Unwind"]["mint"]
+    expect_balance_market += actual_mint
+
+    # calculate expected values
+    expect_value = int(unwound_cost + actual_mint)
+    expect_notional = int(expect_value + unwound_debt)
+    expect_trade_fee = int(Decimal(expect_notional)
+                           * Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    if expect_trade_fee > expect_value:
+        expect_trade_fee = expect_value
+
+    expect_value_out = expect_value - expect_trade_fee
+
+    expect_balance_alice += expect_value_out
+    expect_balance_market -= expect_value
+
+    actual_balance_alice = ovl.balanceOf(alice)
+    actual_balance_market = ovl.balanceOf(market)
+
+    assert int(actual_balance_alice) == approx(expect_balance_alice)
+    assert int(actual_balance_market) == approx(expect_balance_market)
 
 
-def test_unwind_transfers_trading_fees(market):
-    pass
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    is_long=strategy('bool'))
+def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
+                                       fraction, is_long):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    tx = market.update({"from": rando})
+
+    # priors actual values
+    recipient = market.tradingFeeRecipient()
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(market)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_debt = fraction * Decimal(expect_debt)
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # unwind fraction of shares
+    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    actual_mint = tx.events["Unwind"]["mint"]
+    expect_balance_market += actual_mint
+
+    # calculate expected values
+    expect_value = int(unwound_cost + actual_mint)
+    expect_notional = int(expect_value + unwound_debt)
+    expect_trade_fee = int(Decimal(expect_notional)
+                           * Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    if expect_trade_fee > expect_value:
+        expect_trade_fee = expect_value
+
+    expect_balance_recipient += expect_trade_fee
+    expect_balance_market -= expect_value
+
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(market)
+
+    assert int(actual_balance_recipient) == approx(expect_balance_recipient)
+    assert int(actual_balance_market) == approx(expect_balance_market)
 
 
 # TODO: w mock feed
