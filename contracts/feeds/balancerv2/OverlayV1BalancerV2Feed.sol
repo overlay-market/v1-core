@@ -10,18 +10,19 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
-    address public immutable marketPool;
-    address public immutable ovlWethPool;
-    address public immutable ovl;
+    // address public immutable marketPool;
+    // address public immutable ovlWethPool;
+    // address public immutable ovl;
 
     address public immutable marketToken0;
     address public immutable marketToken1;
-    address public immutable ovlWethToken0;
-    address public immutable ovlWethToken1;
 
-    address public immutable marketBaseToken;
-    address public immutable marketQuoteToken;
-    uint128 public immutable marketBaseAmount;
+    // address public immutable ovlWethToken0;
+    // address public immutable ovlWethToken1;
+
+    // address public immutable marketBaseToken;
+    // address public immutable marketQuoteToken;
+    // uint128 public immutable marketBaseAmount;
 
     // BalancerV2Token.Info memory balancerV2TokenInfo
     constructor(
@@ -49,41 +50,41 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
 
-        require(
-            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1Feed: marketToken != marketBaseToken"
-        );
-        require(
-            _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-            "OVLV1Feed: marketToken != marketQuoteToken"
-        );
-        marketBaseToken = _marketBaseToken;
-        marketQuoteToken = _marketQuoteToken;
-        marketBaseAmount = _marketBaseAmount;
-
-        (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
-        // TODO: verify token ordering
-        // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
-        address _ovlWethToken0 = address(marketTokens[0]);
-        address _ovlWethToken1 = address(marketTokens[1]);
-
-        require(
-            _ovlWethToken0 == WETH || _ovlWethToken1 == WETH,
-            "OVLV1Feed: ovlWethToken != WETH"
-        );
-        require(
-            _ovlWethToken0 == _ovl || _ovlWethToken1 == _ovl,
-            "OVLV1Feed: ovlWethToken != OVL"
-        );
-        ovlWethToken0 = _ovlWethToken0;
-        ovlWethToken1 = _ovlWethToken1;
-
-        marketPool = _marketPool;
-        ovlWethPool = _ovlWethPool;
-        ovl = _ovl;
+        // require(
+        //     _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
+        //     "OVLV1Feed: marketToken != marketBaseToken"
+        // );
+        // require(
+        //     _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
+        //     "OVLV1Feed: marketToken != marketQuoteToken"
+        // );
+        // marketBaseToken = _marketBaseToken;
+        // marketQuoteToken = _marketQuoteToken;
+        // marketBaseAmount = _marketBaseAmount;
+        //
+        // (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
+        // // TODO: verify token ordering
+        // // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
+        // address _ovlWethToken0 = address(marketTokens[0]);
+        // address _ovlWethToken1 = address(marketTokens[1]);
+        //
+        // require(
+        //     _ovlWethToken0 == WETH || _ovlWethToken1 == WETH,
+        //     "OVLV1Feed: ovlWethToken != WETH"
+        // );
+        // require(
+        //     _ovlWethToken0 == _ovl || _ovlWethToken1 == _ovl,
+        //     "OVLV1Feed: ovlWethToken != OVL"
+        // );
+        // ovlWethToken0 = _ovlWethToken0;
+        // ovlWethToken1 = _ovlWethToken1;
+        //
+        // marketPool = _marketPool;
+        // ovlWethPool = _ovlWethPool;
+        // ovl = _ovl;
     }
 
-    function getPoolTokensData(bytes32 balancerV2MarketPoolId)
+    function getPoolTokensData(bytes32 balancerV2PoolId)
         public
         view
         returns (
@@ -93,7 +94,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         )
     {
         IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
-        (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2MarketPoolId);
+        (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2PoolId);
         return (tokens, balances, lastChangeBlock);
     }
 
