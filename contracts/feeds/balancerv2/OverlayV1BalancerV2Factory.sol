@@ -49,8 +49,6 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
             "OVLV1: feed already exists"
         );
 
-        // BalancerV2Tokens.Info memory balancerV2Tokens = BalancerV2Tokens({balancerV2Vault: balancerV2Vault, balancerV2MarketPoolId: balancerV2MarketPoolId, balancerV2OvlWethPoolId: balancerV2OvlWethPoolId});
-
         // Use the CREATE2 opcode to deploy a new Feed contract.
         // Will revert if feed which accepts (marketPool, marketBaseToken, marketQuoteToken,
         // marketBaseAmount) in its constructor has already been deployed since salt would be the
