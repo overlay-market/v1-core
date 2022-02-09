@@ -22,7 +22,9 @@ def rando(accounts):
     yield accounts[3]
 
 
-@pytest.fixture(scope="module", params=[(600, 3600, 1e18, 2e18)])
+@pytest.fixture(scope="module", params=[
+    (600, 3600, 1000000000000000000, 20000000000000000000)
+])
 def create_feed(gov, request):
     micro, macro, p, r = request.param
 
