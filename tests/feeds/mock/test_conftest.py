@@ -11,6 +11,6 @@ def test_feed_constructor(feed):
     expect_price = feed.price()
     assert actual_price == expect_price
 
-    actual_reserve = 20000000000000000000
+    actual_reserve = 2000000000000000000000000
     expect_reserve = feed.reserve()
     assert actual_reserve == expect_reserve

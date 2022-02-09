@@ -202,7 +202,6 @@ contract OverlayV1Market {
     }
 
     /// @dev unwinds fraction of an existing position
-    // TODO: test
     function unwind(uint256 positionId, uint256 fraction) external {
         require(fraction > 0, "OVLV1:fraction<min");
         require(fraction <= ONE, "OVLV1:fraction>max");

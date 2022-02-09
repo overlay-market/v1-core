@@ -111,7 +111,7 @@ def feed(create_feed):
 
 # Mock feed to easily change price/reserve for testing of various conditions
 @pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 20000000000000000000)
+    (600, 3600, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_mock_feed(gov, request):
     micro, macro, price, reserve = request.param

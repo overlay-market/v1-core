@@ -116,21 +116,20 @@ library Position {
         uint256 posDebt = debtCurrent(self, fraction);
         uint256 entryPrice = self.entryPrice;
 
-        // min(ratioPrice - 1, capPayoff)
-        uint256 ratioPrice = currentPrice.divUp(entryPrice);
-        ratioPrice = Math.min(ratioPrice, ONE + capPayoff);
         if (self.isLong) {
             // oi - debt + oi * min(ratioPrice - 1, capPayoff)
             // = oi - debt + oi * [min(ratioPrice, 1 + capPayoff) - 1]
             // = oi * min(ratioPrice, 1 + capPayoff) - debt
-            val_ = posOi.mulUp(ratioPrice);
+            val_ = posOi.mulUp(currentPrice).divDown(entryPrice);
+            val_ = Math.min(val_, posOi.mulUp(ONE + capPayoff));
             val_ -= Math.min(val_, posDebt); // floor to 0
         } else {
-            // oi - debt - oi * min(ratioPrice - 1, capPayoff)
-            // = oi - debt - oi * [min(ratioPrice, 1 + capPayoff) - 1]
-            // = 2 * oi - [ debt + oi * min(ratioPrice, 1+capPayoff) ]
-            val_ = posOi.mulUp(2 * ONE);
-            val_ -= Math.min(val_, posDebt + posOi.mulDown(ratioPrice)); // floor to 0
+            // NOTE: capPayoff >= 1, so no need to include w short
+            // oi - debt - oi * (ratioPrice - 1)
+            // = 2 * oi - [ debt + oi * ratioPrice ]
+            val_ = posOi.mulDown(2 * ONE);
+            // floor to 0
+            val_ -= Math.min(val_, posDebt + posOi.mulUp(currentPrice).divDown(entryPrice));
         }
     }
 

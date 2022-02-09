@@ -24,7 +24,7 @@ def test_mock_feed_fixture(mock_feed):
     assert mock_feed.microWindow() == 600
     assert mock_feed.macroWindow() == 3600
     assert mock_feed.price() == 1000000000000000000
-    assert mock_feed.reserve() == 20000000000000000000
+    assert mock_feed.reserve() == 2000000000000000000000000
 
 
 def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):

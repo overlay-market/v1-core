@@ -23,7 +23,7 @@ def rando(accounts):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 20000000000000000000)
+    (600, 3600, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_feed(gov, request):
     micro, macro, p, r = request.param
