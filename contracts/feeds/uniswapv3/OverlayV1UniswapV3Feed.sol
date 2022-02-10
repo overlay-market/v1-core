@@ -7,9 +7,10 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "../../libraries/uniswap/v3-core/FullMath.sol";
 import "../../libraries/uniswap/v3-core/TickMath.sol";
 
+import "../../interfaces/feeds/uniswapv3/IOverlayV1UniswapV3Feed.sol";
 import "../OverlayV1Feed.sol";
 
-contract OverlayV1UniswapV3Feed is OverlayV1Feed {
+contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
 

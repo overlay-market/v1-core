@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-interface IOverlayV1UniswapV3Feed {
+import "../IOverlayV1Feed.sol";
+
+interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
     function marketPool() external view returns (address);
 
     function ovlWethPool() external view returns (address);

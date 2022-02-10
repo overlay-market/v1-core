@@ -2,9 +2,9 @@
 pragma solidity 0.8.10;
 
 import "./interfaces/IOverlayV1Deployer.sol";
-import "./interfaces/IOverlayV1FeedFactory.sol";
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Token.sol";
+import "./interfaces/feeds/IOverlayV1FeedFactory.sol";
 
 import "./libraries/Risk.sol";
 

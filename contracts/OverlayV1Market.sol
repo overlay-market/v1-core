@@ -3,9 +3,9 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "./interfaces/IOverlayV1Feed.sol";
 import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
+import "./interfaces/feeds/IOverlayV1Feed.sol";
 
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
