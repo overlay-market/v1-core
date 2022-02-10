@@ -122,7 +122,7 @@ def test_cap_oi_circuit_breaker_when_minted_greater_than_2x_target(market,
 
 
 def test_cap_oi_adjusted_for_circuit_breaker(market, feed):
-    # Test cap oi adjustments is min of all bounds and circuit breaker
+    # Test cap oi circuit adjustment is min cap oi and circuit breaker
     cap_oi = market.capOi()
     snapshot = market.snapshotMinted()
 

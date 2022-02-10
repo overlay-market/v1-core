@@ -1,10 +1,11 @@
 import pytest
 from pytest import approx
-from brownie import chain, reverts, web3
+from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from hexbytes import HexBytes
 from random import randint
+
+from .utils import calculate_position_info, get_position_key
 
 
 # NOTE: Tests passing with isolation fixture
@@ -12,27 +13,6 @@ from random import randint
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
-
-
-def calculate_position_info(oi: Decimal,
-                            leverage: Decimal,
-                            trading_fee_rate: Decimal) -> (Decimal, Decimal,
-                                                           Decimal, Decimal):
-    """
-    Returns position attributes in decimal format (int / 1e18)
-    """
-    collateral = oi / leverage
-    trade_fee = oi * trading_fee_rate
-    debt = oi - collateral
-    return collateral, oi, debt, trade_fee
-
-
-def get_position_key(owner: str, id: int) -> HexBytes:
-    """
-    Returns the position key to retrieve an individual position
-    from positions mapping
-    """
-    return web3.solidityKeccak(['address', 'uint256'], [owner, id])
 
 
 @given(
@@ -73,8 +53,8 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
-    cap_oi = Decimal(market.capOi() / 1e18)
-    volume = int((oi / cap_oi) * Decimal(1e18))
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
+    volume = int((oi / cap_oi) * Decimal(1e18))  # TODO: circuit breaker adj
     price = market.ask(data, volume) if is_long \
         else market.bid(data, volume)
 
@@ -96,6 +76,15 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     assert int(actual_entry_price) == approx(expect_entry_price)
     assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)
+
+    # check build event
+    assert "Build" in tx.events
+    assert tx.events["Build"]["sender"] == alice.address
+    assert tx.events["Build"]["positionId"] == actual_pos_id
+    assert tx.events["Build"]["oi"] == actual_oi_initial
+    assert tx.events["Build"]["debt"] == actual_debt
+    assert tx.events["Build"]["isLong"] == actual_is_long
+    assert tx.events["Build"]["price"] == actual_entry_price
 
 
 @given(
@@ -139,6 +128,45 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     assert int(actual_oi_shares) == approx(expect_oi_shares)
 
 
+def test_build_updates_market(market, ovl, alice):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    is_long = True
+
+    # cache prior timestamp update last value
+    prior_timestamp_update_last = market.timestampUpdateLast()
+
+    # mine the chain forward for some time difference with build
+    chain.mine(timedelta=600)
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      {"from": alice})
+
+    # get the expected timestamp and check equal to actual
+    expect_timestamp_update_last = chain[tx.block_number]['timestamp']
+    actual_timestamp_update_last = market.timestampUpdateLast()
+
+    assert actual_timestamp_update_last == expect_timestamp_update_last
+    assert actual_timestamp_update_last != prior_timestamp_update_last
+
+
 @given(
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
@@ -158,8 +186,10 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
-    # priors actual values
-    _ = market.update({"from": alice})  # update funding prior
+    # update funding prior
+    _ = market.update({"from": alice})
+
+    # priors actual values. longs get the ask, shorts get the bid on build
     snapshot_volume = market.snapshotVolumeAsk() if is_long else \
         market.snapshotVolumeBid()
     last_timestamp, last_window, last_volume = snapshot_volume
@@ -172,8 +202,9 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # calculate expected rolling volume and window numbers when
     # adjusted for decay
     # NOTE: decayOverWindow() tested in test_rollers.py
-    _, micro_window, _, _, _, _, _, _ = feed.latest()
-    cap_oi = Decimal(market.capOi() / 1e18)
+    data = feed.latest()
+    _, micro_window, _, _, _, _, _, _ = data
+    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
     input_volume = int((oi / cap_oi) * Decimal(1e18))
     input_window = micro_window
     input_timestamp = chain[tx.block_number]['timestamp']
@@ -444,7 +475,7 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                                    alice, bob):
-    # loop through 5 times
+    # loop through 10 times
     n = 10
     total_oi_long = Decimal(10000)
     total_oi_short = Decimal(7500)

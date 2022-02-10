@@ -1,6 +1,7 @@
 import pytest
 from brownie import (
-    Contract, OverlayV1Token, OverlayV1Market, OverlayV1UniswapV3Feed
+    Contract, OverlayV1Token, OverlayV1Market,
+    OverlayV1UniswapV3Feed, OverlayV1FeedMock
 )
 
 
@@ -106,6 +107,48 @@ def create_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
 @pytest.fixture(scope="module")
 def feed(create_feed):
     yield create_feed()
+
+
+# Mock feed to easily change price/reserve for testing of various conditions
+@pytest.fixture(scope="module", params=[
+    (600, 3600, 1000000000000000000, 2000000000000000000000000)
+])
+def create_mock_feed(gov, request):
+    micro, macro, price, reserve = request.param
+
+    def create_mock_feed(micro_window=micro, macro_window=macro, price=price,
+                         reserve=reserve):
+        mock_feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
+                               price, reserve)
+        return mock_feed
+
+    yield create_mock_feed
+
+
+@pytest.fixture(scope="module")
+def mock_feed(create_mock_feed):
+    yield create_mock_feed()
+
+
+@pytest.fixture(scope="module", params=[(
+    1220000000000,  # k
+    1000000000000000000,  # lmbda
+    2500000000000000,  # delta
+    5000000000000000000,  # capPayoff
+    800000000000000000000000,  # capOi
+    5000000000000000000,  # capLeverage
+    2592000,  # circuitBreakerWindow
+    66670000000000000000000,  # circuitBreakerMintTarget
+    100000000000000000,  # maintenanceMargin
+    100000000000000000,  # maintenanceMarginBurnRate
+    750000000000000,  # tradingFeeRate
+    100000000000000,  # minCollateral
+    25000000000000,  # priceDriftUpperLimit
+)])
+def mock_market(gov, mock_feed, factory, ovl, create_market, request):
+    risk_params = request.param
+    yield create_market(feed=mock_feed, factory=factory,
+                        risk_params=risk_params, governance=gov, ovl=ovl)
 
 
 @pytest.fixture(scope="module")

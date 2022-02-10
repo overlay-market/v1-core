@@ -5,8 +5,8 @@ import "../libraries/Oracle.sol";
 import "../feeds/OverlayV1Feed.sol";
 
 contract OverlayV1FeedMock is OverlayV1Feed {
-    uint256 public immutable price;
-    uint256 public immutable reserve;
+    uint256 public price;
+    uint256 public reserve;
 
     constructor(
         uint256 _microWindow,
@@ -31,5 +31,15 @@ contract OverlayV1FeedMock is OverlayV1Feed {
                 reserveOverMicroWindow: reserve,
                 hasReserve: true
             });
+    }
+
+    /// @dev sets price of mock to a new value
+    function setPrice(uint256 _price) external {
+        price = _price;
+    }
+
+    /// @dev sets reserve of mock to a new value
+    function setReserve(uint256 _reserve) external {
+        reserve = _reserve;
     }
 }
