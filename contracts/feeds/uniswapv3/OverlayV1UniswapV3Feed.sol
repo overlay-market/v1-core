@@ -305,7 +305,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         }
     }
 
-    /// @dev returns the virtual balance of WETH in the pool in OVL terms
+    /// @dev virtual balance of WETH in the pool in OVL terms
     function getReserveInOvl(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
@@ -319,7 +319,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         reserveInOvl_ = FullMath.mulDiv(reserveInWeth, uint256(ONE), amountOfWethPerOvl);
     }
 
-    /// @dev returns the virtual balance of WETH in the pool
+    /// @dev virtual balance of WETH in the pool
     function getReserveInWeth(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
         public
         view

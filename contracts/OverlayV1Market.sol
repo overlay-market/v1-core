@@ -416,8 +416,7 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev current open interest cap with adjustments to prevent
-    /// @dev front-running trade, back-running trade, and to lower open
-    /// @dev interest cap in event market has printed a lot in recent past
+    /// @dev front-running trade and back-running trade
     function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
         public
         view
@@ -448,27 +447,29 @@ contract OverlayV1Market is IOverlayV1Market {
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
-    /// @dev gets bid price given oracle data and recent volume for market impact
+    /// @dev bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
         bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
+        // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
     }
 
-    /// @dev gets ask price given oracle data and recent volume for market impact
+    /// @dev ask price given oracle data and recent volume
     function ask(Oracle.Data memory data, uint256 volume) public view returns (uint256 ask_) {
         ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
+        // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
 
-    /// @dev gets the current mid price given oracle data
+    /// @dev mid price given oracle data and recent volume
     function mid(
         Oracle.Data memory data,
         uint256 volumeBid,
