@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "../interfaces/feeds/IOverlayV1Feed.sol";
 import "../libraries/Oracle.sol";
 
-abstract contract OverlayV1Feed {
+abstract contract OverlayV1Feed is IOverlayV1Feed {
     using Oracle for Oracle.Data;
 
     uint256 public immutable microWindow;

@@ -3,10 +3,12 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "../../interfaces/feeds/uniswapv3/IOverlayV1UniswapV3FeedFactory.sol";
+
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1UniswapV3Feed.sol";
 
-contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
+contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1FeedFactory {
     address public immutable ovlWethPool;
     address public immutable ovl;
 
@@ -24,6 +26,8 @@ contract OverlayV1UniswapV3Factory is OverlayV1FeedFactory {
         ovl = _ovl;
     }
 
+    /// @dev deploys a new feed contract
+    /// @return feed_ address of the new feed
     function deployFeed(
         address marketPool,
         address marketBaseToken,

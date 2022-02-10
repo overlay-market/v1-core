@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "./interfaces/IOverlayV1FeedFactory.sol";
+import "./interfaces/IOverlayV1Deployer.sol";
+import "./interfaces/IOverlayV1Factory.sol";
+import "./interfaces/IOverlayV1Token.sol";
+import "./interfaces/feeds/IOverlayV1FeedFactory.sol";
+
 import "./libraries/Risk.sol";
 
-import "./OverlayV1Token.sol";
 import "./OverlayV1Deployer.sol";
 
-contract OverlayV1Factory {
+contract OverlayV1Factory is IOverlayV1Factory {
     // risk param bounds
     uint256 public constant MIN_K = 4e8; // ~ 0.1 bps / 8 hr
     uint256 public constant MAX_K = 4e12; // ~ 1000 bps / 8 hr
@@ -80,10 +83,10 @@ contract OverlayV1Factory {
     );
 
     // ovl token
-    OverlayV1Token public immutable ovl;
+    IOverlayV1Token public immutable ovl;
 
     // market deployer
-    OverlayV1Deployer public immutable deployer;
+    IOverlayV1Deployer public immutable deployer;
 
     // registry of supported feed factories
     mapping(address => bool) public isFeedFactory;
@@ -106,7 +109,7 @@ contract OverlayV1Factory {
 
     constructor(address _ovl) {
         // set ovl
-        ovl = OverlayV1Token(_ovl);
+        ovl = IOverlayV1Token(_ovl);
 
         // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();

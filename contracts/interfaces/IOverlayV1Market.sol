@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "../libraries/Oracle.sol";
+import "../libraries/Roller.sol";
+
+import "./IOverlayV1Token.sol";
+
 interface IOverlayV1Market {
     // immutables
-    function ovl() external view returns (address);
+    function ovl() external view returns (IOverlayV1Token);
 
     function feed() external view returns (address);
 
@@ -39,8 +44,145 @@ interface IOverlayV1Market {
     // trading fee related quantities
     function tradingFeeRecipient() external view returns (address);
 
+    // oi related quantities
+    function oiLong() external view returns (uint256);
+
+    function oiShort() external view returns (uint256);
+
+    function oiLongShares() external view returns (uint256);
+
+    function oiShortShares() external view returns (uint256);
+
+    // rollers
+    function snapshotVolumeBid()
+        external
+        view
+        returns (
+            uint32 timestamp_,
+            uint32 window_,
+            int192 accumulator_
+        );
+
+    function snapshotVolumeAsk()
+        external
+        view
+        returns (
+            uint32 timestamp_,
+            uint32 window_,
+            int192 accumulator_
+        );
+
+    function snapshotMinted()
+        external
+        view
+        returns (
+            uint32 timestamp_,
+            uint32 window_,
+            int192 accumulator_
+        );
+
+    // positions
+    function positions(bytes32 key)
+        external
+        view
+        returns (
+            uint120 oiShares_,
+            uint120 debt_,
+            bool isLong_,
+            bool liquidated_,
+            uint256 entryPrice_
+        );
+
     // update related quantities
     function timestampUpdateLast() external view returns (uint256);
 
-    function priceUpdateLast() external view returns (uint256);
+    // position altering functions
+    function build(
+        uint256 collateral,
+        uint256 leverage,
+        bool isLong
+    ) external returns (uint256 positionId_);
+
+    function unwind(uint256 positionId, uint256 fraction) external;
+
+    function liquidate(uint256 positionId) external;
+
+    // updates market
+    function update() external returns (Oracle.Data memory);
+
+    // sanity check on data fetched from oracle in case of manipulation
+    function dataIsValid(Oracle.Data memory) external view returns (bool);
+
+    // current open interest after funding payments transferred
+    function oiAfterFunding(
+        uint256 oiOverweight,
+        uint256 oiUnderweight,
+        uint256 timeElapsed
+    ) external view returns (uint256 oiOverweight_, uint256 oiUnderweight_);
+
+    // next position id
+    function nextPositionId() external view returns (uint256);
+
+    // current open interest cap with adjustments for circuit breaker if market has
+    // printed a lot in recent past
+    function capOiAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
+
+    // bound on open interest cap from circuit breaker
+    function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
+        external
+        view
+        returns (uint256);
+
+    // current open interest cap with adjustments to prevent front-running
+    // trade and back-running trade
+    function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
+        external
+        view
+        returns (uint256);
+
+    // bound on open interest cap to mitigate front-running attack
+    function frontRunBound(Oracle.Data memory data) external view returns (uint256);
+
+    // bound on open interest cap to mitigate back-running attack
+    function backRunBound(Oracle.Data memory data) external view returns (uint256);
+
+    // bid price given oracle data and recent volume
+    function bid(Oracle.Data memory data, uint256 volume) external view returns (uint256 bid_);
+
+    // ask price given oracle data and recent volume
+    function ask(Oracle.Data memory data, uint256 volume) external view returns (uint256 ask_);
+
+    // mid price given oracle data and recent volume
+    function mid(
+        Oracle.Data memory data,
+        uint256 volumeBid,
+        uint256 volumeAsk
+    ) external view returns (uint256 mid_);
+
+    // risk parameter setters
+    function setK(uint256 _k) external;
+
+    function setLmbda(uint256 _lmbda) external;
+
+    function setDelta(uint256 _delta) external;
+
+    function setCapPayoff(uint256 _capPayoff) external;
+
+    function setCapOi(uint256 _capOi) external;
+
+    function setCapLeverage(uint256 _capLeverage) external;
+
+    function setCircuitBreakerWindow(uint256 _circuitBreakerWindow) external;
+
+    function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external;
+
+    function setMaintenanceMargin(uint256 _maintenanceMargin) external;
+
+    function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external;
+
+    function setTradingFeeRate(uint256 _tradingFeeRate) external;
+
+    function setMinCollateral(uint256 _minCollateral) external;
+
+    function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external;
 }

@@ -3,15 +3,17 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "./interfaces/IOverlayV1Feed.sol";
+import "./interfaces/IOverlayV1Market.sol";
+import "./interfaces/IOverlayV1Token.sol";
+import "./interfaces/feeds/IOverlayV1Feed.sol";
+
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
 import "./libraries/Risk.sol";
 import "./libraries/Roller.sol";
-import "./OverlayV1Token.sol";
 
-contract OverlayV1Market {
+contract OverlayV1Market is IOverlayV1Market {
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
     using Position for mapping(bytes32 => Position.Info);
@@ -27,7 +29,7 @@ contract OverlayV1Market {
     uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
     // immutables
-    OverlayV1Token public immutable ovl; // ovl token
+    IOverlayV1Token public immutable ovl; // ovl token
     address public immutable feed; // oracle feed
     address public immutable factory; // factory that deployed this market
 
@@ -56,12 +58,12 @@ contract OverlayV1Market {
     uint256 public oiShortShares;
 
     // rollers
-    Roller.Snapshot public snapshotVolumeBid; // snapshot of recent volume on bid
-    Roller.Snapshot public snapshotVolumeAsk; // snapshot of recent volume on ask
-    Roller.Snapshot public snapshotMinted; // snapshot of recent PnL minted/burned
+    Roller.Snapshot public override snapshotVolumeBid; // snapshot of recent volume on bid
+    Roller.Snapshot public override snapshotVolumeAsk; // snapshot of recent volume on ask
+    Roller.Snapshot public override snapshotMinted; // snapshot of recent PnL minted/burned
 
     // positions
-    mapping(bytes32 => Position.Info) public positions;
+    mapping(bytes32 => Position.Info) public override positions;
     uint256 private _totalPositions;
 
     // data from last call to update
@@ -105,7 +107,7 @@ contract OverlayV1Market {
         address _factory,
         Risk.Params memory params
     ) {
-        ovl = OverlayV1Token(_ovl);
+        ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
         tradingFeeRecipient = _factory; // TODO: disburse trading fees in factory
@@ -414,8 +416,7 @@ contract OverlayV1Market {
     }
 
     /// @dev current open interest cap with adjustments to prevent
-    /// @dev front-running trade, back-running trade, and to lower open
-    /// @dev interest cap in event market has printed a lot in recent past
+    /// @dev front-running trade and back-running trade
     function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
         public
         view
@@ -446,27 +447,29 @@ contract OverlayV1Market {
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
-    /// @dev gets bid price given oracle data and recent volume for market impact
+    /// @dev bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
         bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
+        // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
     }
 
-    /// @dev gets ask price given oracle data and recent volume for market impact
+    /// @dev ask price given oracle data and recent volume
     function ask(Oracle.Data memory data, uint256 volume) public view returns (uint256 ask_) {
         ask_ = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
 
+        // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
 
-    /// @dev gets the current mid price given oracle data
+    /// @dev mid price given oracle data and recent volume
     function mid(
         Oracle.Data memory data,
         uint256 volumeBid,
