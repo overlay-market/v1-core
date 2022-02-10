@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "./interfaces/IOverlayV1Deployer.sol";
 import "./libraries/Risk.sol";
 import "./OverlayV1Market.sol";
 
-contract OverlayV1Deployer {
+contract OverlayV1Deployer is IOverlayV1Deployer {
     address public immutable factory; // factory that has gov permissions
 
     // factory modifier for governance sensitive functions
