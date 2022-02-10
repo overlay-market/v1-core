@@ -20,11 +20,10 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     // address public immutable ovlWethToken0;
     // address public immutable ovlWethToken1;
 
-    // address public immutable marketBaseToken;
-    // address public immutable marketQuoteToken;
-    // uint128 public immutable marketBaseAmount;
+    address public immutable marketBaseToken;
+    address public immutable marketQuoteToken;
+    uint128 public immutable marketBaseAmount;
 
-    // BalancerV2Token.Info memory balancerV2TokenInfo
     constructor(
         address _marketPool,
         address _ovlWethPool,
@@ -50,24 +49,24 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
 
-        // require(
-        //     _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-        //     "OVLV1Feed: marketToken != marketBaseToken"
-        // );
-        // require(
-        //     _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-        //     "OVLV1Feed: marketToken != marketQuoteToken"
-        // );
-        // marketBaseToken = _marketBaseToken;
-        // marketQuoteToken = _marketQuoteToken;
-        // marketBaseAmount = _marketBaseAmount;
-        //
-        // (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
-        // // TODO: verify token ordering
-        // // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
-        // address _ovlWethToken0 = address(marketTokens[0]);
-        // address _ovlWethToken1 = address(marketTokens[1]);
-        //
+        require(
+            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
+            "OVLV1Feed: marketToken != marketBaseToken"
+        );
+        require(
+            _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
+            "OVLV1Feed: marketToken != marketQuoteToken"
+        );
+        marketBaseToken = _marketBaseToken;
+        marketQuoteToken = _marketQuoteToken;
+        marketBaseAmount = _marketBaseAmount;
+
+        (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
+        // TODO: verify token ordering
+        // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
+        address _ovlWethToken0 = address(marketTokens[0]);
+        address _ovlWethToken1 = address(marketTokens[1]);
+
         // require(
         //     _ovlWethToken0 == WETH || _ovlWethToken1 == WETH,
         //     "OVLV1Feed: ovlWethToken != WETH"
