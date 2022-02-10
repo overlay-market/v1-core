@@ -2,9 +2,10 @@
 pragma solidity 0.8.10;
 
 import "./interfaces/IOverlayV1FeedFactory.sol";
+import "./interfaces/IOverlayV1Token.sol";
+
 import "./libraries/Risk.sol";
 
-import "./OverlayV1Token.sol";
 import "./OverlayV1Deployer.sol";
 
 contract OverlayV1Factory {
@@ -80,7 +81,7 @@ contract OverlayV1Factory {
     );
 
     // ovl token
-    OverlayV1Token public immutable ovl;
+    IOverlayV1Token public immutable ovl;
 
     // market deployer
     OverlayV1Deployer public immutable deployer;
@@ -106,7 +107,7 @@ contract OverlayV1Factory {
 
     constructor(address _ovl) {
         // set ovl
-        ovl = OverlayV1Token(_ovl);
+        ovl = IOverlayV1Token(_ovl);
 
         // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
