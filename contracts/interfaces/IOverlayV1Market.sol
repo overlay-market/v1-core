@@ -97,7 +97,11 @@ interface IOverlayV1Market {
     function timestampUpdateLast() external view returns (uint256);
 
     // position altering functions
-    function build(uint256 collateral, uint256 leverage, bool isLong) external returns (uint256 positionId_);
+    function build(
+        uint256 collateral,
+        uint256 leverage,
+        bool isLong
+    ) external returns (uint256 positionId_);
 
     function unwind(uint256 positionId, uint256 fraction) external;
 
