@@ -14,7 +14,6 @@
 
 pragma solidity 0.8.10;
 import "./LogExpMath.sol";
-import "../utils/Errors.sol";
 
 library FixedPoint {
     uint256 internal constant ONE = 1e18; // 18 decimal places
@@ -25,31 +24,23 @@ library FixedPoint {
 
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         // Fixed Point addition is the same as regular checked addition
-
         uint256 c = a + b;
-        _require(c >= a, Errors.ADD_OVERFLOW);
         return c;
     }
 
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         // Fixed Point addition is the same as regular checked addition
-
-        _require(b <= a, Errors.SUB_OVERFLOW);
         uint256 c = a - b;
         return c;
     }
 
     function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 product = a * b;
-        _require(a == 0 || product / a == b, Errors.MUL_OVERFLOW);
-
         return product / ONE;
     }
 
     function mulUp(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 product = a * b;
-        _require(a == 0 || product / a == b, Errors.MUL_OVERFLOW);
-
         if (product == 0) {
             return 0;
         } else {
@@ -58,39 +49,29 @@ library FixedPoint {
             // To avoid intermediate overflow in the addition, we distribute the division and get:
             // divUp(x, y) := (x - 1) / y + 1
             // Note that this requires x != 0, which we already tested for.
-
             return ((product - 1) / ONE) + 1;
         }
     }
 
     function divDown(uint256 a, uint256 b) internal pure returns (uint256) {
-        _require(b != 0, Errors.ZERO_DIVISION);
-
         if (a == 0) {
             return 0;
         } else {
             uint256 aInflated = a * ONE;
-            _require(aInflated / a == ONE, Errors.DIV_INTERNAL); // mul overflow
-
             return aInflated / b;
         }
     }
 
     function divUp(uint256 a, uint256 b) internal pure returns (uint256) {
-        _require(b != 0, Errors.ZERO_DIVISION);
-
         if (a == 0) {
             return 0;
         } else {
             uint256 aInflated = a * ONE;
-            _require(aInflated / a == ONE, Errors.DIV_INTERNAL); // mul overflow
-
             // The traditional divUp formula is:
             // divUp(x, y) := (x + y - 1) / y
             // To avoid intermediate overflow in the addition, we distribute the division and get:
             // divUp(x, y) := (x - 1) / y + 1
             // Note that this requires x != 0, which we already tested for.
-
             return ((aInflated - 1) / b) + 1;
         }
     }
