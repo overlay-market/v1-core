@@ -100,10 +100,15 @@ interface IOverlayV1Market {
     function build(
         uint256 collateral,
         uint256 leverage,
-        bool isLong
+        bool isLong,
+        uint256 priceLimit
     ) external returns (uint256 positionId_);
 
-    function unwind(uint256 positionId, uint256 fraction) external;
+    function unwind(
+        uint256 positionId,
+        uint256 fraction,
+        uint256 priceLimit
+    ) external;
 
     function liquidate(uint256 positionId) external;
 

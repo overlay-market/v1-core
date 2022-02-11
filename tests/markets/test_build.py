@@ -34,13 +34,17 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
 
     # check position id
     actual_pos_id = tx.return_value
@@ -102,6 +106,10 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -114,7 +122,7 @@ def test_build_adds_oi(market, ovl, alice, oi, leverage, is_long):
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     # calculate expected oi info data
     expect_oi += int(oi * Decimal(1e18))
@@ -150,6 +158,10 @@ def test_build_updates_market(market, ovl, alice):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -157,7 +169,7 @@ def test_build_updates_market(market, ovl, alice):
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
 
     # get the expected timestamp and check equal to actual
     expect_timestamp_update_last = chain[tx.block_number]['timestamp']
@@ -183,6 +195,10 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -197,7 +213,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
 
     # calculate expected rolling volume and window numbers when
     # adjusted for decay
@@ -251,6 +267,10 @@ def test_build_executes_transfers(market, ovl, alice, oi, leverage,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     # amount of collateral that will be transferred in
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
@@ -258,7 +278,7 @@ def test_build_executes_transfers(market, ovl, alice, oi, leverage,
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
 
     # expected values
     expect_collateral_in = approve_collateral
@@ -297,6 +317,10 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     # amount of collateral that will be transferred in
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
@@ -308,7 +332,7 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     # calculate expected collateral info data
     expect_collateral_in = int((collateral + trade_fee) * Decimal(1e18))
@@ -338,6 +362,10 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     # amount of collateral that will be transferred in
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
@@ -349,7 +377,7 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     expect += int(trade_fee * Decimal(1e18))
     actual = ovl.balanceOf(recipient)
@@ -364,6 +392,10 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
     input_collateral = int(100 * Decimal(1e18))
     input_is_long = True
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if input_is_long else 0
+
     # approve market for spending before build
     ovl.approve(market, 2**256-1, {"from": alice})
 
@@ -371,12 +403,12 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
     input_leverage = int(Decimal(1e18) - 1)
     with reverts("OVLV1:lev<min"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
+                         input_price_limit, {"from": alice})
 
     # check build succeeds when input leverage is equal to one
     input_leverage = int(Decimal(1e18))
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     expect_pos_id += 1
     actual_pos_id = market.nextPositionId()
@@ -391,6 +423,10 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     input_collateral = int(100 * Decimal(1e18))
     input_is_long = True
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if input_is_long else 0
+
     # approve market for spending before build. Use the max just for here
     ovl.approve(market, 2**256 - 1, {"from": alice})
 
@@ -398,12 +434,12 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     input_leverage = market.capLeverage() + 1
     with reverts("OVLV1:lev>max"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
+                         input_price_limit, {"from": alice})
 
     # check build succeeds when input leverage is equal to cap
     input_leverage = market.capLeverage()
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     expect_pos_id += 1
     actual_pos_id = market.nextPositionId()
@@ -425,18 +461,22 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
     input_is_long = is_long
     input_collateral = market.minCollateral() - 1
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve market for spending then build. use max
     ovl.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts for min_collat > collat
     with reverts("OVLV1:collateral<min"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
+                         input_price_limit, {"from": alice})
 
     # check build succeeds for min_collat <= collat
     input_collateral = market.minCollateral()
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     expect_pos_id += 1
     actual_pos_id = market.nextPositionId()
@@ -453,6 +493,10 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     input_leverage = int(1e18)
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve market for spending before build. use max
     ovl.approve(market, 2**256 - 1, {"from": alice})
 
@@ -460,12 +504,12 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     input_collateral = market.capOi() + 1
     with reverts("OVLV1:oi>cap"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
-                         {"from": alice})
+                         input_price_limit, {"from": alice})
 
     # check build succeeds when oi is equal to cap
     input_collateral = market.capOi()
     _ = market.build(input_collateral, input_leverage, input_is_long,
-                     {"from": alice})
+                     input_price_limit, {"from": alice})
 
     expect_pos_id += 1
     actual_pos_id = market.nextPositionId()
@@ -528,12 +572,18 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         input_leverage_alice = int(leverage_alice * Decimal(1e18))
         input_leverage_bob = int(leverage_bob * Decimal(1e18))
 
+        # NOTE: slippage tests in test_slippage.py
+        # NOTE: setting to min/max here, so never reverts with slippage>max
+        input_price_limit_alice = 2**256-1 if is_long_alice else 0
+        input_price_limit_bob = 2**256-1 if is_long_bob else 0
+
         # cache current aggregate long oi for comparison later
         expect_oi_long = market.oiLong()
 
         # build position for alice
         tx_alice = market.build(input_collateral_alice, input_leverage_alice,
-                                is_long_alice, {"from": alice})
+                                is_long_alice, input_price_limit_alice,
+                                {"from": alice})
 
         actual_pos_id_alice = tx_alice.return_value
         expect_pos_id_alice = expect_pos_id
@@ -572,7 +622,8 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         # build position for bob
         tx_bob = market.build(input_collateral_bob, input_leverage_bob,
-                              is_long_bob, {"from": bob})
+                              is_long_bob, input_price_limit_bob,
+                              {"from": bob})
 
         actual_pos_id_bob = tx_bob.return_value
         expect_pos_id_bob = expect_pos_id
