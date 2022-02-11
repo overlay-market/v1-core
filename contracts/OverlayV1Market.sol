@@ -324,7 +324,10 @@ contract OverlayV1Market is IOverlayV1Market {
         // TODO: rename maintenanceMargin storage var => maintenanceMarginFraction
         // TODO: to avoid confusion w actual maintenance margin
         // TODO: rename isLiquidatable => liquidatable
-        require(pos.isLiquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMargin), "OVLV1:!liquidatable");
+        require(
+            pos.isLiquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMargin),
+            "OVLV1:!liquidatable"
+        );
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
