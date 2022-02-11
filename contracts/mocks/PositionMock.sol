@@ -123,18 +123,24 @@ contract PositionMock {
         uint256 totalOiShares,
         uint256 currentPrice,
         uint256 capPayoff,
-        uint256 marginMaintenance
+        uint256 maintenanceMarginFraction
     ) external view returns (bool) {
         return
-            pos.isLiquidatable(totalOi, totalOiShares, currentPrice, capPayoff, marginMaintenance);
+            pos.isLiquidatable(
+                totalOi,
+                totalOiShares,
+                currentPrice,
+                capPayoff,
+                maintenanceMarginFraction
+            );
     }
 
     function liquidationPrice(
         Position.Info memory pos,
         uint256 totalOi,
         uint256 totalOiShares,
-        uint256 marginMaintenance
+        uint256 maintenanceMarginFraction
     ) external view returns (uint256) {
-        return pos.liquidationPrice(totalOi, totalOiShares, marginMaintenance);
+        return pos.liquidationPrice(totalOi, totalOiShares, maintenanceMarginFraction);
     }
 }

@@ -31,7 +31,7 @@ interface IOverlayV1Market {
 
     function circuitBreakerMintTarget() external view returns (uint256);
 
-    function maintenanceMargin() external view returns (uint256);
+    function maintenanceMarginFraction() external view returns (uint256);
 
     function maintenanceMarginBurnRate() external view returns (uint256);
 
@@ -181,7 +181,7 @@ interface IOverlayV1Market {
 
     function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external;
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin) external;
+    function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction) external;
 
     function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external;
 

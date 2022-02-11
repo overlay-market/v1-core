@@ -11,7 +11,7 @@ library Risk {
         uint256 capLeverage; // initial leverage cap
         uint256 circuitBreakerWindow; // trailing window for circuit breaker
         uint256 circuitBreakerMintTarget; // target worst case inflation rate over trailing window
-        uint256 maintenanceMargin; // maintenance margin (mm) constant
+        uint256 maintenanceMarginFraction; // maintenance margin (mm) constant
         uint256 maintenanceMarginBurnRate; // burn rate for mm constant
         uint256 tradingFeeRate; // trading fee charged on build/unwind
         // TODO: uint256 liquidationFeeRate;

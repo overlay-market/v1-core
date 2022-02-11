@@ -28,8 +28,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_CIRCUIT_BREAKER_WINDOW = 15552000; // 180 days
     uint256 public constant MIN_CIRCUIT_BREAKER_MINT_TARGET = 0; // 0 OVL
     uint256 public constant MAX_CIRCUIT_BREAKER_MINT_TARGET = 8e24; // 8,000,000 OVL
-    uint256 public constant MIN_MAINTENANCE_MARGIN = 1e16; // 1%
-    uint256 public constant MAX_MAINTENANCE_MARGIN = 2e17; // 20%
+    uint256 public constant MIN_MAINTENANCE_MARGIN_FRACTION = 1e16; // 1%
+    uint256 public constant MAX_MAINTENANCE_MARGIN_FRACTION = 2e17; // 20%
     uint256 public constant MIN_MAINTENANCE_MARGIN_BURN_RATE = 1e16; // 1%
     uint256 public constant MAX_MAINTENANCE_MARGIN_BURN_RATE = 5e17; // 50%
     uint256 public constant MIN_TRADING_FEE_RATE = 1e14; // 0.01% (1 bps)
@@ -56,10 +56,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
         address indexed market,
         uint256 circuitBreakerMintTarget
     );
-    event MaintenanceMarginUpdated(
+    event MaintenanceMarginFractionUpdated(
         address indexed user,
         address indexed market,
-        uint256 maintenanceMargin
+        uint256 maintenanceMarginFraction
     );
     event MaintenanceMarginBurnRateUpdated(
         address indexed user,
@@ -190,9 +190,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
             "OVLV1: circuitBreakerMintTarget out of bounds"
         );
         require(
-            params.maintenanceMargin >= MIN_MAINTENANCE_MARGIN &&
-                params.maintenanceMargin <= MAX_MAINTENANCE_MARGIN,
-            "OVLV1: maintenanceMargin out of bounds"
+            params.maintenanceMarginFraction >= MIN_MAINTENANCE_MARGIN_FRACTION &&
+                params.maintenanceMarginFraction <= MAX_MAINTENANCE_MARGIN_FRACTION,
+            "OVLV1: maintenanceMarginFraction out of bounds"
         );
         require(
             params.maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE &&
@@ -310,16 +310,23 @@ contract OverlayV1Factory is IOverlayV1Factory {
         );
     }
 
-    /// @dev maintenance margin setter
-    function setMaintenanceMargin(address feed, uint256 maintenanceMargin) external onlyGovernor {
+    /// @dev maintenance margin fraction setter
+    function setMaintenanceMarginFraction(address feed, uint256 maintenanceMarginFraction)
+        external
+        onlyGovernor
+    {
         require(
-            maintenanceMargin >= MIN_MAINTENANCE_MARGIN &&
-                maintenanceMargin <= MAX_MAINTENANCE_MARGIN,
-            "OVLV1: maintenanceMargin out of bounds"
+            maintenanceMarginFraction >= MIN_MAINTENANCE_MARGIN_FRACTION &&
+                maintenanceMarginFraction <= MAX_MAINTENANCE_MARGIN_FRACTION,
+            "OVLV1: maintenanceMarginFraction out of bounds"
         );
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
-        market.setMaintenanceMargin(maintenanceMargin);
-        emit MaintenanceMarginUpdated(msg.sender, address(market), maintenanceMargin);
+        market.setMaintenanceMarginFraction(maintenanceMarginFraction);
+        emit MaintenanceMarginFractionUpdated(
+            msg.sender,
+            address(market),
+            maintenanceMarginFraction
+        );
     }
 
     /// @dev burn % of maintenance margin on liquidation setter

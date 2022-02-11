@@ -40,9 +40,9 @@ interface IOverlayV1Factory {
 
     function MAX_CIRCUIT_BREAKER_MINT_TARGET() external view returns (uint256);
 
-    function MIN_MAINTENANCE_MARGIN() external view returns (uint256);
+    function MIN_MAINTENANCE_MARGIN_FRACTION() external view returns (uint256);
 
-    function MAX_MAINTENANCE_MARGIN() external view returns (uint256);
+    function MAX_MAINTENANCE_MARGIN_FRACTION() external view returns (uint256);
 
     function MIN_MAINTENANCE_MARGIN_BURN_RATE() external view returns (uint256);
 
@@ -101,7 +101,8 @@ interface IOverlayV1Factory {
 
     function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget) external;
 
-    function setMaintenanceMargin(address feed, uint256 maintenanceMargin) external;
+    function setMaintenanceMarginFraction(address feed, uint256 maintenanceMarginFraction)
+        external;
 
     function setMaintenanceMarginBurnRate(address feed, uint256 maintenanceMarginBurnRate)
         external;

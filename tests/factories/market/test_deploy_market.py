@@ -27,7 +27,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -37,7 +37,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -86,7 +86,8 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.capPayoff() == expect_cap_payoff
     assert market_contract.capOi() == expect_cap_oi
     assert market_contract.capLeverage() == expect_cap_leverage
-    assert market_contract.maintenanceMargin() == expect_maintenance_margin
+    assert market_contract.maintenanceMarginFraction() \
+        == expect_maintenance_margin_fraction
     assert market_contract.maintenanceMarginBurnRate() \
         == expect_maintenance_margin_burn_rate
     assert market_contract.tradingFeeRate() == expect_trading_fee_rate
@@ -118,7 +119,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -128,7 +129,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -163,7 +164,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -173,7 +174,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -204,7 +205,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -214,7 +215,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -243,7 +244,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -253,7 +254,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -284,7 +285,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -296,7 +297,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -314,7 +315,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -340,7 +341,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -352,7 +353,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -370,7 +371,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -397,7 +398,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -409,7 +410,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -427,7 +428,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -454,7 +455,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -466,7 +467,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -484,7 +485,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -511,7 +512,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -523,7 +524,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -541,7 +542,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -568,7 +569,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -580,7 +581,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -598,7 +599,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -629,7 +630,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -641,7 +642,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -659,7 +660,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -689,7 +690,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -701,7 +702,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -719,7 +720,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -751,7 +752,7 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -763,7 +764,7 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -781,7 +782,7 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -812,7 +813,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
     expect_cap_payoff = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -824,7 +825,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -842,7 +843,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -872,7 +873,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     expect_cap_payoff = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -884,7 +885,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -902,7 +903,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -933,7 +934,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -945,7 +946,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -963,7 +964,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -993,7 +994,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -1005,7 +1006,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1023,7 +1024,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1054,7 +1055,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -1067,7 +1068,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1086,7 +1087,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1123,17 +1124,18 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
 
-    # check can't deploy with maintenanceMargin less than min
-    expect_maintenance_margin = factory.MIN_MAINTENANCE_MARGIN() - 1
+    # check can't deploy with maintenanceMarginFraction less than min
+    expect_maintenance_margin_fraction = \
+        factory.MIN_MAINTENANCE_MARGIN_FRACTION() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
-    with reverts("OVLV1: maintenanceMargin out of bounds"):
+    with reverts("OVLV1: maintenanceMarginFraction out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -1141,13 +1143,14 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
             {"from": gov}
         )
 
-    # check deploys with maintenanceMargin equal to min
-    expect_maintenance_margin = factory.MIN_MAINTENANCE_MARGIN()
+    # check deploys with maintenanceMarginFraction equal to min
+    expect_maintenance_margin_fraction = \
+        factory.MIN_MAINTENANCE_MARGIN_FRACTION()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1183,17 +1186,18 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
 
-    # check can't deploy with maintenanceMargin greater than max
-    expect_maintenance_margin = factory.MAX_MAINTENANCE_MARGIN() + 1
+    # check can't deploy with maintenanceMarginFraction greater than max
+    expect_maintenance_margin_fraction = \
+        factory.MAX_MAINTENANCE_MARGIN_FRACTION() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
-    with reverts("OVLV1: maintenanceMargin out of bounds"):
+    with reverts("OVLV1: maintenanceMarginFraction out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -1201,13 +1205,14 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
             {"from": gov}
         )
 
-    # check deploys with maintenanceMargin equal to max
-    expect_maintenance_margin = factory.MAX_MAINTENANCE_MARGIN()
+    # check deploys with maintenanceMarginFraction equal to max
+    expect_maintenance_margin_fraction = \
+        factory.MAX_MAINTENANCE_MARGIN_FRACTION()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1239,7 +1244,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1251,7 +1256,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1270,7 +1275,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1301,7 +1306,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1313,7 +1318,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1332,7 +1337,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1364,7 +1369,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1375,7 +1380,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1393,7 +1398,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1424,7 +1429,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1435,7 +1440,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1453,7 +1458,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1485,7 +1490,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1496,7 +1501,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1514,7 +1519,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1545,7 +1550,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_price_drift_upper_limit = 100000000000000
@@ -1556,7 +1561,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1574,7 +1579,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1606,7 +1611,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -1617,7 +1622,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1635,7 +1640,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1666,7 +1671,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin = 100000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
@@ -1677,7 +1682,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
@@ -1695,7 +1700,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin,
+                     expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)

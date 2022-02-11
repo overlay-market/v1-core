@@ -42,7 +42,7 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public capLeverage; // initial leverage cap
     uint256 public circuitBreakerWindow; // trailing window for circuit breaker
     uint256 public circuitBreakerMintTarget; // target mint rate for circuit breaker
-    uint256 public maintenanceMargin; // maintenance margin (mm) constant
+    uint256 public maintenanceMarginFraction; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
@@ -125,7 +125,7 @@ contract OverlayV1Market is IOverlayV1Market {
         capLeverage = params.capLeverage;
         circuitBreakerWindow = params.circuitBreakerWindow;
         circuitBreakerMintTarget = params.circuitBreakerMintTarget;
-        maintenanceMargin = params.maintenanceMargin;
+        maintenanceMarginFraction = params.maintenanceMarginFraction;
         maintenanceMarginBurnRate = params.maintenanceMarginBurnRate;
         tradingFeeRate = params.tradingFeeRate;
         minCollateral = params.minCollateral;
@@ -321,11 +321,15 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
 
         // check position is liquidatable
-        // TODO: rename maintenanceMargin storage var => maintenanceMarginFraction
-        // TODO: to avoid confusion w actual maintenance margin
         // TODO: rename isLiquidatable => liquidatable
         require(
-            pos.isLiquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMargin),
+            pos.isLiquidatable(
+                totalOi,
+                totalOiShares,
+                price,
+                _capPayoff,
+                maintenanceMarginFraction
+            ),
             "OVLV1:!liquidatable"
         );
 
@@ -664,8 +668,11 @@ contract OverlayV1Market is IOverlayV1Market {
         circuitBreakerMintTarget = _circuitBreakerMintTarget;
     }
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
-        maintenanceMargin = _maintenanceMargin;
+    function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction)
+        external
+        onlyFactory
+    {
+        maintenanceMarginFraction = _maintenanceMarginFraction;
     }
 
     function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate)
