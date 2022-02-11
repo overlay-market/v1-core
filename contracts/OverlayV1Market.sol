@@ -48,8 +48,8 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public minCollateral; // minimum ovl collateral to open position
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
 
-    // trading fee related quantities
-    address public tradingFeeRecipient;
+    // fee related quantities
+    address public feeRecipient;
 
     // oi related quantities
     uint256 public oiLong;
@@ -108,7 +108,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
-        tradingFeeRecipient = _factory; // TODO: disburse trading fees in factory
+        feeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
         // TODO: test
@@ -200,7 +200,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(tradingFeeRecipient, tradingFee);
+        ovl.transfer(feeRecipient, tradingFee);
     }
 
     /// @dev unwinds fraction of an existing position
@@ -292,7 +292,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(tradingFeeRecipient, tradingFee);
+        ovl.transfer(feeRecipient, tradingFee);
     }
 
     /// @dev liquidates a liquidatable position
@@ -375,8 +375,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - liquidationFee);
 
         // send liquidation fees to trading fee recipient
-        // TODO: rename tradingFeeRecipient to feeRecipient
-        ovl.transfer(tradingFeeRecipient, liquidationFee);
+        ovl.transfer(feeRecipient, liquidationFee);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed

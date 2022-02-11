@@ -32,7 +32,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert mock_market.ovl() == ovl
     assert mock_market.feed() == mock_feed
     assert mock_market.factory() == factory
-    assert mock_market.tradingFeeRecipient() == factory
+    assert mock_market.feeRecipient() == factory
 
     # risk params
     assert mock_market.k() == 1220000000000
@@ -72,7 +72,7 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert market.ovl() == ovl
     assert market.feed() == feed
     assert market.factory() == factory
-    assert market.tradingFeeRecipient() == factory
+    assert market.feeRecipient() == factory
 
     # risk params
     assert market.k() == 1220000000000

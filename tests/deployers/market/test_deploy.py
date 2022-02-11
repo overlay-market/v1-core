@@ -11,7 +11,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     cap_leverage = 5000000000000000000
     circuit_breaker_window = 2592000
     circuit_breaker_mint_target = 66670000000000000000000
-    maintenance_margin = 100000000000000000
+    maintenance_margin_fraction = 100000000000000000
     maintenance_margin_burn_rate = 100000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
@@ -19,7 +19,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
 
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin, maintenance_margin_burn_rate,
+              maintenance_margin_fraction, maintenance_margin_burn_rate,
               trading_fee_rate, min_collateral, price_drift_upper_limit)
 
     # deploy the market
@@ -31,7 +31,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     assert market.ovl() == ovl
     assert market.feed() == feed
     assert market.factory() == factory
-    assert market.tradingFeeRecipient() == factory
+    assert market.feeRecipient() == factory
 
     # check market deployed correctly with risk params
     assert market.k() == k
@@ -42,7 +42,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     assert market.capLeverage() == cap_leverage
     assert market.circuitBreakerWindow() == circuit_breaker_window
     assert market.circuitBreakerMintTarget() == circuit_breaker_mint_target
-    assert market.maintenanceMargin() == maintenance_margin
+    assert market.maintenanceMarginFraction() == maintenance_margin_fraction
     assert market.maintenanceMarginBurnRate() == maintenance_margin_burn_rate
     assert market.tradingFeeRate() == trading_fee_rate
     assert market.minCollateral() == min_collateral
@@ -59,7 +59,7 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     cap_leverage = 5000000000000000000
     circuit_breaker_window = 2592000
     circuit_breaker_mint_target = 66670000000000000000000
-    maintenance_margin = 100000000000000000
+    maintenance_margin_fraction = 100000000000000000
     maintenance_margin_burn_rate = 100000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
@@ -67,7 +67,7 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
 
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin, maintenance_margin_burn_rate,
+              maintenance_margin_fraction, maintenance_margin_burn_rate,
               trading_fee_rate, min_collateral, price_drift_upper_limit)
 
     # check attempting to deploy

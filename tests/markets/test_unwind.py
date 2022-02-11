@@ -617,7 +617,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 
     # check value less trade fees out (3)
     assert tx.events['Transfer'][2]['from'] == market.address
-    assert tx.events['Transfer'][2]['to'] == market.tradingFeeRecipient()
+    assert tx.events['Transfer'][2]['to'] == market.feeRecipient()
     assert int(tx.events['Transfer'][2]['value']) == approx(expect_trade_fee,
                                                             rel=1e-4)
 
@@ -760,7 +760,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     tx = market.update({"from": rando})
 
     # priors actual values
-    recipient = market.tradingFeeRecipient()
+    recipient = market.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(market)
 
@@ -1064,7 +1064,7 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     _ = mock_market.update({"from": rando})
 
     # priors actual values
-    recipient = mock_market.tradingFeeRecipient()
+    recipient = mock_market.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(mock_market)
     expect_balance_alice = ovl.balanceOf(alice)
@@ -1185,7 +1185,7 @@ def test_unwind_floors_value_to_zero_when_underwater(mock_market,
     _ = mock_market.update({"from": rando})
 
     # priors actual values
-    recipient = mock_market.tradingFeeRecipient()
+    recipient = mock_market.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(mock_market)
     expect_balance_alice = ovl.balanceOf(alice)

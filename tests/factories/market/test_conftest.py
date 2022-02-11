@@ -53,4 +53,4 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.minCollateral() == 100000000000000
     assert market.priceDriftUpperLimit() == 100000000000000
 
-    assert market.tradingFeeRecipient() == factory
+    assert market.feeRecipient() == factory
