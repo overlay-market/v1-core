@@ -117,7 +117,7 @@ contract PositionMock {
             );
     }
 
-    function isLiquidatable(
+    function liquidatable(
         Position.Info memory pos,
         uint256 totalOi,
         uint256 totalOiShares,
@@ -126,7 +126,7 @@ contract PositionMock {
         uint256 maintenanceMarginFraction
     ) external view returns (bool) {
         return
-            pos.isLiquidatable(
+            pos.liquidatable(
                 totalOi,
                 totalOiShares,
                 currentPrice,

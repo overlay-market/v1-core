@@ -321,9 +321,8 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
 
         // check position is liquidatable
-        // TODO: rename isLiquidatable => liquidatable
         require(
-            pos.isLiquidatable(
+            pos.liquidatable(
                 totalOi,
                 totalOiShares,
                 price,

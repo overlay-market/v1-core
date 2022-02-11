@@ -171,7 +171,7 @@ library Position {
 
     /// @notice Whether a position can be liquidated
     /// @dev is true when value < maintenance margin
-    function isLiquidatable(
+    function liquidatable(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
