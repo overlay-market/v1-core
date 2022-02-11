@@ -361,9 +361,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @dev liquidation fee % setter
-    function setLiquidationFeeRate(address feed, uint256 liquidationFeeRate) external onlyGovernor {
+    function setLiquidationFeeRate(address feed, uint256 liquidationFeeRate)
+        external
+        onlyGovernor
+    {
         require(
-            liquidationFeeRate >= MIN_LIQUIDATION_FEE_RATE && liquidationFeeRate <= MAX_LIQUIDATION_FEE_RATE,
+            liquidationFeeRate >= MIN_LIQUIDATION_FEE_RATE &&
+                liquidationFeeRate <= MAX_LIQUIDATION_FEE_RATE,
             "OVLV1: liquidationFeeRate out of bounds"
         );
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
