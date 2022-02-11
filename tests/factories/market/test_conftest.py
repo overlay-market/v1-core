@@ -49,6 +49,7 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.circuitBreakerMintTarget() == 66670000000000000000000
     assert market.maintenanceMarginFraction() == 100000000000000000
     assert market.maintenanceMarginBurnRate() == 100000000000000000
+    assert market.liquidationFeeRate() == 10000000000000000
     assert market.tradingFeeRate() == 750000000000000
     assert market.minCollateral() == 100000000000000
     assert market.priceDriftUpperLimit() == 100000000000000

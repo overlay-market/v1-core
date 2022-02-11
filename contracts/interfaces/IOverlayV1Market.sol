@@ -35,6 +35,8 @@ interface IOverlayV1Market {
 
     function maintenanceMarginBurnRate() external view returns (uint256);
 
+    function liquidationFeeRate() external view returns (uint256);
+
     function tradingFeeRate() external view returns (uint256);
 
     function minCollateral() external view returns (uint256);
@@ -184,6 +186,8 @@ interface IOverlayV1Market {
     function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction) external;
 
     function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external;
+
+    function setLiquidationFeeRate(uint256 _liquidationFeeRate) external;
 
     function setTradingFeeRate(uint256 _tradingFeeRate) external;
 

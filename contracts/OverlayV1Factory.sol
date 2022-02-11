@@ -32,6 +32,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_MAINTENANCE_MARGIN_FRACTION = 2e17; // 20%
     uint256 public constant MIN_MAINTENANCE_MARGIN_BURN_RATE = 1e16; // 1%
     uint256 public constant MAX_MAINTENANCE_MARGIN_BURN_RATE = 5e17; // 50%
+    uint256 public constant MIN_LIQUIDATION_FEE_RATE = 1e15; // 0.10% (10 bps)
+    uint256 public constant MAX_LIQUIDATION_FEE_RATE = 1e17; // 10.00% (1000 bps)
     uint256 public constant MIN_TRADING_FEE_RATE = 1e14; // 0.01% (1 bps)
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
@@ -65,6 +67,11 @@ contract OverlayV1Factory is IOverlayV1Factory {
         address indexed user,
         address indexed market,
         uint256 maintenanceMarginBurnRate
+    );
+    event LiquidationFeeRateUpdated(
+        address indexed user,
+        address indexed market,
+        uint256 liquidationFeeRate
     );
     event TradingFeeRateUpdated(
         address indexed user,
@@ -198,6 +205,11 @@ contract OverlayV1Factory is IOverlayV1Factory {
             params.maintenanceMarginBurnRate >= MIN_MAINTENANCE_MARGIN_BURN_RATE &&
                 params.maintenanceMarginBurnRate <= MAX_MAINTENANCE_MARGIN_BURN_RATE,
             "OVLV1: maintenanceMarginBurnRate out of bounds"
+        );
+        require(
+            params.liquidationFeeRate >= MIN_LIQUIDATION_FEE_RATE &&
+                params.liquidationFeeRate <= MAX_LIQUIDATION_FEE_RATE,
+            "OVLV1: liquidationFeeRate out of bounds"
         );
         require(
             params.tradingFeeRate >= MIN_TRADING_FEE_RATE &&
@@ -346,6 +358,17 @@ contract OverlayV1Factory is IOverlayV1Factory {
             address(market),
             maintenanceMarginBurnRate
         );
+    }
+
+    /// @dev liquidation fee % setter
+    function setLiquidationFeeRate(address feed, uint256 liquidationFeeRate) external onlyGovernor {
+        require(
+            liquidationFeeRate >= MIN_LIQUIDATION_FEE_RATE && liquidationFeeRate <= MAX_LIQUIDATION_FEE_RATE,
+            "OVLV1: liquidationFeeRate out of bounds"
+        );
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.setLiquidationFeeRate(liquidationFeeRate);
+        emit LiquidationFeeRateUpdated(msg.sender, address(market), liquidationFeeRate);
     }
 
     /// @dev trading fee % setter

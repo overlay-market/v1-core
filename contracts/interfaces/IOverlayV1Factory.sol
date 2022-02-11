@@ -48,6 +48,10 @@ interface IOverlayV1Factory {
 
     function MAX_MAINTENANCE_MARGIN_BURN_RATE() external view returns (uint256);
 
+    function MIN_LIQUIDATION_FEE_RATE() external view returns (uint256);
+
+    function MAX_LIQUIDATION_FEE_RATE() external view returns (uint256);
+
     function MIN_TRADING_FEE_RATE() external view returns (uint256);
 
     function MAX_TRADING_FEE_RATE() external view returns (uint256);
@@ -106,6 +110,8 @@ interface IOverlayV1Factory {
 
     function setMaintenanceMarginBurnRate(address feed, uint256 maintenanceMarginBurnRate)
         external;
+
+    function setLiquidationFeeRate(address feed, uint256 liquidationFeeRate) external;
 
     function setTradingFeeRate(address feed, uint256 tradingFeeRate) external;
 

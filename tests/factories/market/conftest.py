@@ -131,14 +131,15 @@ def create_factory(gov, request, ovl, feed_factory, feed_three):
         circuit_breaker_mint_target = 66670000000000000000000  # 10% per year
         maintenance = 100000000000000000
         maintenance_burn = 100000000000000000
+        liquidation_fee = 10000000000000000  # 1.00% (100 bps)
         trade_fee = 750000000000000
         min_collateral = 100000000000000
         price_drift_upper_limit = 100000000000000  # 0.01% per sec
 
         params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,
-                  maintenance, maintenance_burn, trade_fee, min_collateral,
-                  price_drift_upper_limit)
+                  maintenance, maintenance_burn, liquidation_fee, trade_fee,
+                  min_collateral, price_drift_upper_limit)
         _ = factory.deployMarket(feeds, feed, params, {"from": gov})
 
         return factory

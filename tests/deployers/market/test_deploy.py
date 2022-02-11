@@ -13,6 +13,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     circuit_breaker_mint_target = 66670000000000000000000
     maintenance_margin_fraction = 100000000000000000
     maintenance_margin_burn_rate = 100000000000000000
+    liquidation_fee_rate = 10000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 1000000000000000000
@@ -20,7 +21,8 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
-              trading_fee_rate, min_collateral, price_drift_upper_limit)
+              liquidation_fee_rate, trading_fee_rate, min_collateral,
+              price_drift_upper_limit)
 
     # deploy the market
     tx = deployer.deploy(ovl, feed, params, {"from": factory})
@@ -44,6 +46,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     assert market.circuitBreakerMintTarget() == circuit_breaker_mint_target
     assert market.maintenanceMarginFraction() == maintenance_margin_fraction
     assert market.maintenanceMarginBurnRate() == maintenance_margin_burn_rate
+    assert market.liquidationFeeRate() == liquidation_fee_rate
     assert market.tradingFeeRate() == trading_fee_rate
     assert market.minCollateral() == min_collateral
     assert market.priceDriftUpperLimit() == price_drift_upper_limit
@@ -61,6 +64,7 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     circuit_breaker_mint_target = 66670000000000000000000
     maintenance_margin_fraction = 100000000000000000
     maintenance_margin_burn_rate = 100000000000000000
+    liquidation_fee_rate = 10000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 1000000000000000000
@@ -68,7 +72,8 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
-              trading_fee_rate, min_collateral, price_drift_upper_limit)
+              liquidation_fee_rate, trading_fee_rate, min_collateral,
+              price_drift_upper_limit)
 
     # check attempting to deploy
     with reverts("OVLV1: !factory"):

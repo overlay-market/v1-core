@@ -44,6 +44,7 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public circuitBreakerMintTarget; // target mint rate for circuit breaker
     uint256 public maintenanceMarginFraction; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
+    uint256 public liquidationFeeRate; // liquidation fee charged on liquidate
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
@@ -127,6 +128,7 @@ contract OverlayV1Market is IOverlayV1Market {
         circuitBreakerMintTarget = params.circuitBreakerMintTarget;
         maintenanceMarginFraction = params.maintenanceMarginFraction;
         maintenanceMarginBurnRate = params.maintenanceMarginBurnRate;
+        liquidationFeeRate = params.liquidationFeeRate;
         tradingFeeRate = params.tradingFeeRate;
         minCollateral = params.minCollateral;
         priceDriftUpperLimit = params.priceDriftUpperLimit;
@@ -260,7 +262,6 @@ contract OverlayV1Market is IOverlayV1Market {
             capPayoff,
             tradingFeeRate
         );
-        // TODO: move this min to position lib
         tradingFee = Math.min(tradingFee, value); // if value < tradingFee
 
         // subtract unwound open interest from the side's aggregate oi value
@@ -338,9 +339,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // register the amount to be burned
         _registerMint(int256(value) - int256(cost));
 
-        // TODO: calculate the liquidation fee as % on remaining value
-        // TODO: liquidationFee = pos.liquidationFee()
-        uint256 liquidationFee = 0;
+        // calculate the liquidation fee as % on remaining value
+        uint256 liquidationFee = value.mulUp(liquidationFeeRate);
 
         // subtract liquidated open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
@@ -672,6 +672,10 @@ contract OverlayV1Market is IOverlayV1Market {
         onlyFactory
     {
         maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
+    }
+
+    function setLiquidationFeeRate(uint256 _liquidationFeeRate) external onlyFactory {
+        liquidationFeeRate = _liquidationFeeRate;
     }
 
     function setTradingFeeRate(uint256 _tradingFeeRate) external onlyFactory {

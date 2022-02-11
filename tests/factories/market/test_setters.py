@@ -2,6 +2,8 @@ from brownie import reverts
 from collections import OrderedDict
 
 
+# TODO: liquidationFeeRate tests
+
 # k tests
 def test_set_k(factory, market, gov):
     feed = market.feed()

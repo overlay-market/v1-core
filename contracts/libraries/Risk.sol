@@ -13,8 +13,8 @@ library Risk {
         uint256 circuitBreakerMintTarget; // target worst case inflation rate over trailing window
         uint256 maintenanceMarginFraction; // maintenance margin (mm) constant
         uint256 maintenanceMarginBurnRate; // burn rate for mm constant
+        uint256 liquidationFeeRate; // liquidation fee charged on liquidate
         uint256 tradingFeeRate; // trading fee charged on build/unwind
-        // TODO: uint256 liquidationFeeRate;
         uint256 minCollateral; // minimum ovl collateral to open position
         uint256 priceDriftUpperLimit; // upper limit for feed price changes since last update
     }
