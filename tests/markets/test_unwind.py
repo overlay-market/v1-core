@@ -35,6 +35,10 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -42,7 +46,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -84,8 +88,13 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
 
     # adjust oi shares, debt position expected attributes downward for unwind
     expect_oi_shares = int(expect_oi_shares * (1 - fraction))
@@ -145,6 +154,10 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -152,7 +165,7 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -183,8 +196,13 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
 
     # adjust total oi and total oi shares downward for unwind
     expect_total_oi -= unwound_oi
@@ -217,6 +235,10 @@ def test_unwind_updates_market(market, alice, ovl):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -224,7 +246,7 @@ def test_unwind_updates_market(market, alice, ovl):
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -243,8 +265,13 @@ def test_unwind_updates_market(market, alice, ovl):
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
 
     # get the expected timestamp and check equal to actual
     expect_timestamp_update_last = chain[tx.block_number]['timestamp']
@@ -274,6 +301,10 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -281,7 +312,7 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -312,8 +343,13 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
 
     # calculate expected rolling volume and window numbers when
     # adjusted for decay
@@ -373,6 +409,10 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -380,7 +420,7 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -404,8 +444,13 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
     actual_mint = tx.events["Unwind"]["mint"]
 
     # calculate expected rolling minted and window numbers when
@@ -460,6 +505,10 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -467,7 +516,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -494,8 +543,13 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
 
     # get expected exit price
     price = tx.events["Unwind"]["price"]
@@ -588,6 +642,10 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -595,7 +653,7 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -624,8 +682,13 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
     actual_mint = tx.events["Unwind"]["mint"]
     expect_balance_market += actual_mint
 
@@ -669,6 +732,10 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -676,7 +743,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -706,8 +773,13 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                       {"from": alice})
     actual_mint = tx.events["Unwind"]["mint"]
     expect_balance_market += actual_mint
 
@@ -754,6 +826,10 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -761,7 +837,7 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
     # NOTE: build() tests in test_build.py
     ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
-                           {"from": alice})
+                           input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -801,8 +877,13 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
     expect_exit_price = tx.events["Unwind"]['price']
 
     unwound_pnl = unwound_oi * \
@@ -848,6 +929,10 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed, factory,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -855,7 +940,7 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed, factory,
     # NOTE: build() tests in test_build.py
     ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
-                           {"from": alice})
+                           input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -895,8 +980,13 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed, factory,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
     expect_exit_price = tx.events["Unwind"]['price']
 
     unwound_pnl = unwound_oi * \
@@ -946,6 +1036,10 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -953,7 +1047,7 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # NOTE: build() tests in test_build.py
     ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
-                           {"from": alice})
+                           input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -998,8 +1092,13 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
 
     # get exit price
     expect_exit_price = tx.events["Unwind"]['price']
@@ -1058,6 +1157,10 @@ def test_unwind_floors_value_to_zero_when_underwater(mock_market,
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -1065,7 +1168,7 @@ def test_unwind_floors_value_to_zero_when_underwater(mock_market,
     # NOTE: build() tests in test_build.py
     ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
-                           {"from": alice})
+                           input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
     # get position info
@@ -1100,8 +1203,13 @@ def test_unwind_floors_value_to_zero_when_underwater(mock_market,
     input_pos_id = pos_id
     input_fraction = int(fraction * Decimal(1e18))
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
     # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, {"from": alice})
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
 
     # adjust market balance for burned amount
     # check entire cost amount is burned
@@ -1149,6 +1257,10 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -1156,13 +1268,18 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
 
     # check unwind reverts when fraction is zero
     input_fraction = 0
     with reverts("OVLV1:fraction<min"):
-        market.unwind(pos_id, input_fraction, {"from": alice})
+        market.unwind(pos_id, input_fraction, input_price_limit,
+                      {"from": alice})
 
 
 def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
@@ -1181,6 +1298,10 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -1188,17 +1309,22 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
 
     # check unwind reverts when fraction is 1 more than 1e18
     input_fraction = 1000000000000000001
     with reverts("OVLV1:fraction>max"):
-        market.unwind(pos_id, input_fraction, {"from": alice})
+        market.unwind(pos_id, input_fraction, input_price_limit,
+                      {"from": alice})
 
     # check unwind succeeds when fraction is 1e18
     input_fraction = 1000000000000000000
-    market.unwind(pos_id, input_fraction, {"from": alice})
+    market.unwind(pos_id, input_fraction, input_price_limit, {"from": alice})
 
 
 def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
@@ -1217,6 +1343,10 @@ def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
 
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
     # approve collateral amount: collateral + trade fee
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
@@ -1224,16 +1354,20 @@ def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
     # NOTE: build() tests in test_build.py
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
-                      {"from": alice})
+                      input_price_limit, {"from": alice})
     pos_id = tx.return_value
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
 
     # check unwind reverts when bob attempts
     input_fraction = 1000000000000000000
     with reverts("OVLV1:!position"):
-        market.unwind(pos_id, input_fraction, {"from": bob})
+        market.unwind(pos_id, input_fraction, input_price_limit, {"from": bob})
 
     # check unwind succeeds when alice attempts
-    market.unwind(pos_id, input_fraction, {"from": alice})
+    market.unwind(pos_id, input_fraction, input_price_limit, {"from": alice})
 
 
 def test_unwind_reverts_when_position_not_exists(market, alice, ovl):
@@ -1242,7 +1376,7 @@ def test_unwind_reverts_when_position_not_exists(market, alice, ovl):
     # check unwind reverts when position does not exist
     input_fraction = 1000000000000000000
     with reverts("OVLV1:!position"):
-        market.unwind(pos_id, input_fraction, {"from": alice})
+        market.unwind(pos_id, input_fraction, 0, {"from": alice})
 
 
 def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
@@ -1298,14 +1432,21 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         input_leverage_alice = int(leverage_alice * Decimal(1e18))
         input_leverage_bob = int(leverage_bob * Decimal(1e18))
 
+        # NOTE: slippage tests in test_slippage.py
+        # NOTE: setting to min/max here, so never reverts with slippage>max
+        input_price_limit_alice = 2**256-1 if is_long_alice else 0
+        input_price_limit_bob = 2**256-1 if is_long_bob else 0
+
         # build position for alice
         tx_alice = market.build(input_collateral_alice, input_leverage_alice,
-                                is_long_alice, {"from": alice})
+                                is_long_alice, input_price_limit_alice,
+                                {"from": alice})
         pos_id_alice = tx_alice.return_value
 
         # build position for bob
         tx_bob = market.build(input_collateral_bob, input_leverage_bob,
-                              is_long_bob, {"from": bob})
+                              is_long_bob, input_price_limit_bob,
+                              {"from": bob})
         pos_id_bob = tx_bob.return_value
 
         actual_pos_ids.append(pos_id_alice)  # alice ids are even
@@ -1323,8 +1464,12 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         trader = alice if is_alice else bob
 
         # choose a random fraction of pos to unwind
-        input_fraction = 508809194583874886  # randint(1, 1e18)
+        input_fraction = randint(1, 1e18)
         fraction = Decimal(input_fraction) / Decimal(1e18)
+
+        # NOTE: slippage tests in test_slippage.py
+        # NOTE: setting to min/max here, so never reverts with slippage>max
+        input_price_limit_trader = 0 if is_alice else 2**256-1
 
         # cache current aggregate oi and oi shares for comparison later
         total_oi = market.oiLong() if is_alice else market.oiShort()
@@ -1338,7 +1483,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
          expect_liquidated, expect_entry_price) = expect_pos
 
         # unwind fraction of position for trader
-        tx_alice = market.unwind(id, input_fraction, {"from": trader})
+        _ = market.unwind(id, input_fraction, input_price_limit_trader,
+                          {"from": trader})
 
         # get updated actual position attributes
         actual_pos = market.positions(pos_key)

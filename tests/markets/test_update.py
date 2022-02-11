@@ -34,8 +34,8 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
 
     # build long and short positions for oi
     # NOTE: build() tests in test_build.py
-    _ = market.build(oi_long, 1e18, True, {"from": alice})
-    _ = market.build(oi_short, 1e18, False, {"from": bob})
+    _ = market.build(oi_long, 1e18, True, 2**256-1, {"from": alice})
+    _ = market.build(oi_short, 1e18, False, 0, {"from": bob})
 
     # get values prior to mine chain
     expect_oi_long = market.oiLong()
