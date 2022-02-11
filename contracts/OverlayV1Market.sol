@@ -84,8 +84,6 @@ contract OverlayV1Market is IOverlayV1Market {
         bool isLong, // whether is long or short
         uint256 price // entry price
     );
-    // TODO: include oi, debt unwound/liquidated in the events below while avoiding
-    // TODO: stack too deep errors
     event Unwind(
         address indexed sender, // address that initiated unwind
         uint256 positionId, // id of unwound position
@@ -214,6 +212,7 @@ contract OverlayV1Market is IOverlayV1Market {
         require(fraction > 0, "OVLV1:fraction<min");
         require(fraction <= ONE, "OVLV1:fraction>max");
 
+        // check position exists
         Position.Info memory pos = positions.get(msg.sender, positionId);
         require(pos.exists(), "OVLV1:!position");
 
@@ -261,6 +260,7 @@ contract OverlayV1Market is IOverlayV1Market {
             capPayoff,
             tradingFeeRate
         );
+        // TODO: move this min to position lib
         tradingFee = Math.min(tradingFee, value); // if value < tradingFee
 
         // subtract unwound open interest from the side's aggregate oi value
@@ -296,9 +296,80 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(uint256 positionId) external {
+    function liquidate(address owner, uint256 positionId) external {
+        // check position exists
+        Position.Info memory pos = positions.get(owner, positionId);
+        require(pos.exists(), "OVLV1:!position");
+
         // call to update before any effects
         Oracle.Data memory data = update();
+
+        // cache for gas savings
+        uint256 totalOi = pos.isLong ? oiLong : oiShort;
+        uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 _capPayoff = capPayoff;
+
+        // entire position should be liquidated
+        uint256 fraction = ONE;
+
+        // longs get the bid and shorts get the ask on liquidate
+        // NOTE: liquidated position's oi should *not* add additional volume to roller
+        // NOTE: since market impact intended to mitigate front-running (not relevant here)
+        uint256 volume = pos.isLong
+            ? _registerVolumeBid(data, 0, capOi)
+            : _registerVolumeAsk(data, 0, capOi);
+        uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
+
+        // check position is liquidatable
+        // TODO: rename maintenanceMargin storage var => maintenanceMarginFraction
+        // TODO: to avoid confusion w actual maintenance margin
+        // TODO: rename isLiquidatable => liquidatable
+        require(pos.isLiquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMargin), "OVLV1:!liquidatable");
+
+        // calculate the value and cost of the position for pnl determinations
+        // and amount to transfer
+        uint256 value = pos.value(fraction, totalOi, totalOiShares, price, _capPayoff);
+        uint256 cost = pos.cost(fraction);
+
+        // value is the remaining position margin. reduce value further by
+        // the mm burn rate, as insurance for cases when not liquidated in time
+        value -= value.mulUp(maintenanceMarginBurnRate);
+
+        // register the amount to be burned
+        _registerMint(int256(value) - int256(cost));
+
+        // TODO: calculate the liquidation fee as % on remaining value
+        // TODO: liquidationFee = pos.liquidationFee()
+        uint256 liquidationFee = 0;
+
+        // subtract liquidated open interest from the side's aggregate oi value
+        // and decrease number of oi shares issued
+        if (pos.isLong) {
+            oiLong -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiLongShares -= pos.oiSharesCurrent(fraction);
+        } else {
+            oiShort -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiShortShares -= pos.oiSharesCurrent(fraction);
+        }
+
+        // store the updated position info data. mark as liquidated
+        pos.oiShares = 0;
+        pos.debt = 0;
+        pos.liquidated = true;
+        positions.set(owner, positionId, pos);
+
+        // emit liquidate event
+        emit Liquidate(msg.sender, owner, positionId, int256(value) - int256(cost), price);
+
+        // burn the pnl for the position
+        ovl.burn(cost - value);
+
+        // transfer out the remaining position value less fees to liquidator for reward
+        ovl.transfer(msg.sender, value - liquidationFee);
+
+        // send liquidation fees to trading fee recipient
+        // TODO: rename tradingFeeRecipient to feeRecipient
+        ovl.transfer(tradingFeeRecipient, liquidationFee);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed

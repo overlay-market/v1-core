@@ -110,7 +110,7 @@ interface IOverlayV1Market {
         uint256 priceLimit
     ) external;
 
-    function liquidate(uint256 positionId) external;
+    function liquidate(address owner, uint256 positionId) external;
 
     // updates market
     function update() external returns (Oracle.Data memory);
