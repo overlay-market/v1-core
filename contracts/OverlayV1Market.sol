@@ -155,9 +155,18 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate current oi cap adjusted circuit breaker *then* adjust
         // for front run and back run bounds (order matters)
-        // TODO: test
+        // TODO: test for ordering
         uint256 capOiAdjusted = capOiAdjustedForCircuitBreaker(capOi);
         capOiAdjusted = capOiAdjustedForBounds(data, capOiAdjusted);
+
+        // longs get the ask and shorts get the bid on build
+        // register the additional volume on either the ask or bid
+        uint256 volume = isLong
+            ? _registerVolumeAsk(data, oi, capOiAdjusted)
+            : _registerVolumeBid(data, oi, capOiAdjusted);
+        uint256 price = isLong ? ask(data, volume) : bid(data, volume);
+        // check price hasn't changed more than max slippage specified by trader
+        require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
         // add new position's open interest to the side's aggregate oi value
         // and increase number of oi shares issued
@@ -170,15 +179,6 @@ contract OverlayV1Market is IOverlayV1Market {
             oiShortShares += oi;
             require(oiShort <= capOiAdjusted, "OVLV1:oi>cap");
         }
-
-        // longs get the ask and shorts get the bid on build
-        // register the additional volume on either the ask or bid
-        uint256 volume = isLong
-            ? _registerVolumeAsk(data, oi, capOiAdjusted)
-            : _registerVolumeBid(data, oi, capOiAdjusted);
-        uint256 price = isLong ? ask(data, volume) : bid(data, volume);
-        // check price hasn't changed more than max slippage specified by trader
-        require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
         // store the position info data
         positionId_ = _totalPositions;
