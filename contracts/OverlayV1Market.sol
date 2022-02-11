@@ -322,13 +322,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // check position is liquidatable
         require(
-            pos.liquidatable(
-                totalOi,
-                totalOiShares,
-                price,
-                _capPayoff,
-                maintenanceMarginFraction
-            ),
+            pos.liquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMarginFraction),
             "OVLV1:!liquidatable"
         );
 
