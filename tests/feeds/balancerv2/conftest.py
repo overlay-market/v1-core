@@ -156,20 +156,3 @@ def balv2_tokens(vault, ovl_weth_pool_id, bal_weth_pool_id):
     https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
     '''
     yield (vault, ovl_weth_pool_id, bal_weth_pool_id)
-
-
-#  @pytest.fixture(scope="module")
-#  def balv2_tokens(vault, bal_weth_pool_id, dai_usdc_pool_id):
-#      '''
-#      Returns the BalancerV2Tokens struct field variables passed into the feed
-#      function of the OverlayV1BalancerV2Feed contract.
-#
-#      Outputs:
-#        [(vault, ovl_weth_pool_id, bal_weth_pool_id)]
-#          vault            [str]     Balancer V2 Vault mainnet contract address
-#          ovl_weth_pool_id [bytes32] BAL/WETH pool id representing ovlTokens
-#          bal_weth_pool_id [bytes32] DAI/WETH pool id representing marketTokens
-#
-#      https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
-#      '''
-#      yield (vault, ovl_weth_pool_id, bal_weth_pool_id)
