@@ -1,5 +1,5 @@
 import pytest
-from brownie import Contract, convert
+from brownie import Contract, convert, OverlayV1BalancerV2Feed
 
 
 @pytest.fixture(scope="module")
@@ -177,3 +177,39 @@ def balv2_tokens(balweth_poolid):
         '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
         'bytes32')
     yield (vault, ovlweth_poolid, balweth_poolid)
+
+
+@pytest.fixture(scope="module")
+def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
+    '''
+    Successfully deploys the OverlayV1BalancerV2Feed contract for a DAI/WETH
+    market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
+
+    Inputs:
+      gov              [Account]:  Governor role account deploys the
+                                   OverlayV1BalancerV2Feed contract
+      dai              [Contract]: DAI token contract instance
+      weth             [Contract]: WETH token contract instance
+      balancer         [Contract]: BAL token contract instance representing the
+                                   OVL token
+      balv2_tokens     [tuple]:    BalancerV2Tokens struct field variables
+      pool_daiweth     [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                   instance for the DAI/WETH pool
+      pool_balweth    [Contract]:  BAL/WETH Balancer V2 WeightedPool2Tokens
+                                   contract instance representing the OVL/WETH
+                                   token pair
+    '''
+    market_pool = pool_daiweth
+    ovlweth_pool = pool_balweth
+    ovl = balancer
+    market_base_token = weth
+    market_quote_token = dai
+
+    market_base_amount = 1 * 10 ** weth.decimals()
+    micro_window = 600
+    macro_window = 3600
+
+    yield gov.deploy(OverlayV1BalancerV2Feed, market_pool, ovlweth_pool, ovl,
+                      market_base_token, market_quote_token,
+                      market_base_amount, balv2_tokens, micro_window,
+                      macro_window)

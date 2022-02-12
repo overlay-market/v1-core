@@ -1,5 +1,5 @@
 import pytest
-from brownie import Contract, OverlayV1BalancerV2Feed, reverts
+from brownie import Contract, reverts, OverlayV1BalancerV2Feed
 
 
 @pytest.fixture
@@ -31,42 +31,6 @@ def pool_usdcbal():
     https://app.balancer.fi/#/pool/0x9c08c7a7a89cfd671c79eacdc6f07c1996277ed5000200000000000000000025  # noqa: E501
     '''
     yield Contract.from_explorer("0x9c08C7a7a89cfD671c79eacdc6F07c1996277eD5")
-
-
-@pytest.fixture
-def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
-    '''
-    Successfully deploys the OverlayV1BalancerV2Feed contract for a DAI/WETH
-    market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
-
-    Inputs:
-      gov              [Account]:  Governor role account deploys the
-                                   OverlayV1BalancerV2Feed contract
-      dai              [Contract]: DAI token contract instance
-      weth             [Contract]: WETH token contract instance
-      balancer         [Contract]: BAL token contract instance representing the
-                                   OVL token
-      balv2_tokens     [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth     [Contract]: Balancer V2 WeightedPool2Tokens contract
-                                   instance for the DAI/WETH pool
-      pool_balweth    [Contract]:  BAL/WETH Balancer V2 WeightedPool2Tokens
-                                   contract instance representing the OVL/WETH
-                                   token pair
-    '''
-    market_pool = pool_daiweth
-    ovlweth_pool = pool_balweth
-    ovl = balancer
-    market_base_token = weth
-    market_quote_token = dai
-
-    market_base_amount = 1 * 10 ** weth.decimals()
-    micro_window = 600
-    macro_window = 3600
-
-    return gov.deploy(OverlayV1BalancerV2Feed, market_pool, ovlweth_pool, ovl,
-                      market_base_token, market_quote_token,
-                      market_base_amount, balv2_tokens, micro_window,
-                      macro_window)
 
 
 def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, par, usdc,
