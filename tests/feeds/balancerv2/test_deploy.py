@@ -33,6 +33,104 @@ def pool_usdcbal():
     yield Contract.from_explorer("0x9c08C7a7a89cfD671c79eacdc6F07c1996277eD5")
 
 
+def test_deploy_feed_reverts_on_market_pool_id_mismatch(gov, balancer, dai,
+                                                        weth, balv2_tokens,
+                                                        pool_daiweth,
+                                                        pool_balweth):
+    '''
+    Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
+    when the market pool address does not yield the same pool id provided by
+    the BalancerV2Tokens struct marketPoolId passed into the constructor of the
+    OverlayV1BalancerV2Feed contract.
+
+    To generate the expected failure, the marketPoolId field in the
+    BalancerV2Tokens struct is set to a pool id that is not the pool id
+    associated with the market pool WeightedPool2Tokens contract.
+
+    Inputs:
+      gov          [Account]:  Governor role account deploys the
+                                  OverlayV1BalancerV2Feed contract
+      balancer     [Contract]: BAL token contract instance representing the OVL
+                               token
+      weth         [Contract]: WETH token contract instance
+      dai          [Contract]: DAI token contract instance
+      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the OVL/WETH
+                               token pair
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the market token
+                               pair
+    '''
+    market_pool = pool_daiweth
+    ovlweth_pool = pool_balweth
+    ovl = balancer
+    market_base_token = weth
+    market_quote_token = dai
+    
+    market_base_amount = 1 * 10 ** weth.decimals()
+    micro_window = 600
+    macro_window = 3600
+
+    # Set the BalancerV2Tokens marketPoolId field to the BAL/WETH instead of 
+    # DAI/WETH to trigger the expected failure.
+    balv2_tokens = (balv2_tokens[0], balv2_tokens[1], balv2_tokens[1])
+
+    with reverts("OVLV1Feed: marketPoolId mismatch"):
+        gov.deploy(OverlayV1BalancerV2Feed, market_pool, ovlweth_pool, ovl,
+                          market_base_token, market_quote_token,
+                          market_base_amount, balv2_tokens, micro_window,
+                          macro_window)
+
+
+def test_deploy_feed_reverts_on_ovlweth_pool_id_mismatch(gov, balancer, weth,
+                                                        dai, balv2_tokens,
+                                                        pool_daiweth,
+                                                        pool_balweth):
+    '''
+    Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
+    when the ovlweth pool address does not yield the same pool id provided by
+    the BalancerV2Tokens struct ovlWethPoolId passed into the constructor of
+    the OverlayV1BalancerV2Feed contract.
+
+    To generate the expected failure, the ovlWethPoolId field in the
+    BalancerV2Tokens struct is set to a pool id that is not the pool id
+    associated with the ovlWeth pool WeightedPool2Tokens contract.
+
+    Inputs:
+      gov          [Account]:  Governor role account deploys the
+                                  OverlayV1BalancerV2Feed contract
+      balancer     [Contract]: BAL token contract instance representing the OVL
+                               token
+      weth         [Contract]: WETH token contract instance
+      dai          [Contract]: DAI token contract instance
+      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the OVL/WETH
+                               token pair
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the market token
+                               pair
+    '''
+    market_pool = pool_daiweth
+    ovlweth_pool = pool_balweth
+    ovl = balancer
+    market_base_token = weth
+    market_quote_token = dai
+    
+    market_base_amount = 1 * 10 ** weth.decimals()
+    micro_window = 600
+    macro_window = 3600
+
+    # Set the BalancerV2Tokens ovlWethPoolId field to the DAI/WETH instead of 
+    # BAL/WETH to trigger the expected failure.
+    balv2_tokens = (balv2_tokens[0], balv2_tokens[2], balv2_tokens[2])
+
+    with reverts("OVLV1Feed: ovlWethPoolId mismatch"):
+        gov.deploy(OverlayV1BalancerV2Feed, market_pool, ovlweth_pool, ovl,
+                          market_base_token, market_quote_token,
+                          market_base_amount, balv2_tokens, micro_window,
+                          macro_window)
+
+
 def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, par, usdc,
                                                       pool_parusdc,
                                                       pool_balweth,
@@ -107,7 +205,7 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth, rando,
       balancer     [Contract]: BAL token contract instance representing the OVL
                                token
       balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth [Contract]: PAR/USDC Balancer V2 WeightedPool2Tokens
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
                                contract instance representing the market token
                                pair
       pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
@@ -149,7 +247,7 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, rando, dai,
       balancer     [Contract]: BAL token contract instance representing the OVL
                                token
       balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth [Contract]: PAR/USDC Balancer V2 WeightedPool2Tokens
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
                                contract instance representing the market token
                                pair
       pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
@@ -192,7 +290,7 @@ def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai, par,
       par          [Contract]: PAR token contract instance representing the OVL
                                token
       balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth [Contract]: PAR/USDC Balancer V2 WeightedPool2Tokens
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
                                contract instance representing the market token
                                pair
       pool_parusdc [Contract]: PAR/USDC Balancer V2 WeightedPool2Tokens
@@ -239,9 +337,9 @@ def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
       dai              [Contract]: DAI token contract instance
       balv2_tokens     [tuple]:    BalancerV2Tokens struct field variables
       balweth_poolid [bytes32]:  DAI/WETH Balancer V2 pool id
-      pool_daiweth     [Contract]: PAR/USDC Balancer V2 WeightedPool2Tokens
-                                   contract instance representing the market
-                                   token pair
+      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the market token
+                               pair
       pool_balweth    [Contract]:  BAL/WETH Balancer V2 WeightedPool2Tokens
                                    contract instance representing the OVL/WETH
                                    token pair

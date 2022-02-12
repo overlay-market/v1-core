@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../OverlayV1Feed.sol";
 import "./IBalancerV2Vault.sol";
@@ -10,15 +11,15 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
-    address public immutable marketPool;
-    address public immutable ovlWethPool;
-    address public immutable ovl;
+    // address public immutable marketPool;
+    // address public immutable ovlWethPool;
+    // address public immutable ovl;
 
     address public immutable marketToken0;
     address public immutable marketToken1;
 
-    address public immutable ovlWethToken0;
-    address public immutable ovlWethToken1;
+    // address public immutable ovlWethToken0;
+    // address public immutable ovlWethToken1;
 
     address public immutable marketBaseToken;
     address public immutable marketQuoteToken;
@@ -35,10 +36,21 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
+
         VAULT = balancerV2Tokens.vault;
         // Check if gas cost is reduced by storing vault in memory
         IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
         (IERC20[] memory marketTokens, , ) = getPoolTokensData(balancerV2Tokens.marketPoolId);
+
+        require(
+          getPoolId(_marketPool) == balancerV2Tokens.marketPoolId,
+          "OVLV1Feed: marketPoolId mismatch"
+        );
+
+        require(
+          getPoolId(_ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
+          "OVLV1Feed: ovlWethPoolId mismatch"
+        );
 
         // TODO: verify token ordering
         // need WETH in market pool to make reserve conversion from ETH => OVL
@@ -57,6 +69,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
             _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
             "OVLV1Feed: marketToken != marketQuoteToken"
         );
+
         marketBaseToken = _marketBaseToken;
         marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
@@ -75,12 +88,12 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
             _ovlWethToken0 == _ovl || _ovlWethToken1 == _ovl,
             "OVLV1Feed: ovlWethToken != OVL"
         );
-        ovlWethToken0 = _ovlWethToken0;
-        ovlWethToken1 = _ovlWethToken1;
-
-        marketPool = _marketPool;
-        ovlWethPool = _ovlWethPool;
-        ovl = _ovl;
+        // ovlWethToken0 = _ovlWethToken0;
+        // ovlWethToken1 = _ovlWethToken1;
+        //
+        // marketPool = _marketPool;
+        // ovlWethPool = _ovlWethPool;
+        // ovl = _ovl;
     }
 
     function getPoolTokensData(bytes32 balancerV2PoolId)
@@ -95,6 +108,10 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
         (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2PoolId);
         return (tokens, balances, lastChangeBlock);
+    }
+
+    function getPoolId(address pool) public view returns (bytes32) {
+      return IBalancerV2Pool(pool).getPoolId();
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
