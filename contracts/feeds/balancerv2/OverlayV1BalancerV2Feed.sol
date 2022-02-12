@@ -62,7 +62,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketBaseAmount = _marketBaseAmount;
 
         (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
-        // TODO: verify token ordering
+
         // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = address(ovlWethTokens[0]);
         address _ovlWethToken1 = address(ovlWethTokens[1]);

@@ -37,6 +37,12 @@ def bob(accounts):
 
 @pytest.fixture(scope="module")
 def rando(accounts):
+    '''
+    Inputs:
+      accounts [Accounts]: List of brownie provided eth account addresses
+    Outputs:
+      [Account]: Brownie provided eth account address for a random account
+    '''
     yield accounts[3]
 
 
@@ -92,7 +98,7 @@ def pool_balweth():
     '''
     Outputs:
       [Contract]: Balancer V2 WeightedPool2Tokens contract instance for the
-                  BAL/WETH pool, used as an example OVL/WETH pool
+                  BAL/WETH pool, used as an example OVL/WETH pair.
 
     https://etherscan.io/address/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56
     https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
@@ -101,35 +107,25 @@ def pool_balweth():
 
 
 @pytest.fixture(scope="module")
-def vault():
+def pool_parusdc():
     '''
+
     Outputs:
-      [Contract]: BalancerV2Vault contract address as a string to be used as
-                  the vault field in the BalancerV2Tokens struct. This struct
-                  is an input argument to the OverlayV1BalancerV2Feed
-                  constructor
+      [Contract] Balancer V2 WeightedPool2Tokens contract instance for the
+                 PAR/USDC pool
 
-    https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+
+    https://etherscan.io/address/0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b
+    https://app.balancer.fi/#/pool/0x5d6e3d7632d6719e04ca162be652164bec1eaa6b000200000000000000000048  # noqa: E501
     '''
-    yield Contract.from_explorer('0xBA12222222228d8Ba445958a75a0704d566BF2C8')
+    yield Contract.from_explorer("0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b")
 
 
 @pytest.fixture(scope="module")
-def ovl_weth_pool_id():
+def balweth_poolid():
     '''
     Output:
-      [bytes32]: BAL/WETH Balancer V2 pool id
-    '''
-    yield convert.to_bytes(
-        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
-        'bytes32')
-
-
-@pytest.fixture(scope="module")
-def bal_weth_pool_id():
-    '''
-    Output:
-      [bytes32]: DAI/WETH Balancer V2 pool id
+      [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool contract pool id
     '''
     yield convert.to_bytes(
         '0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a',
@@ -137,22 +133,47 @@ def bal_weth_pool_id():
 
 
 @pytest.fixture(scope="module")
-def dai_usdc_pool_id():
+def parusdc_poolid():
     '''
+    This pool is used for testing the require statements in the
+    OverlayV1BalancerV2Feed contract constructor function.
+
     Output:
-      [bytes32]: DAI/USDC Balancer V2 pool id
+      [bytes32]: PAR/USDC Balancer V2 OracleWeightedPool contract pool id
     '''
     yield convert.to_bytes(
-        '0x06df3b2bbb68adc8b0e302443692037ed9f91b42000000000000000000000063',
+        '0x5d6e3d7632d6719e04ca162be652164bec1eaa6b000200000000000000000048',
         'bytes32')
 
 
 @pytest.fixture(scope="module")
-def balv2_tokens(vault, ovl_weth_pool_id, bal_weth_pool_id):
+def balv2_tokens(balweth_poolid):
     '''
-    Returns the BalancerV2Vault contract address as a string to be used as the
-    vault field in the BalancerV2Tokens struct. This struct is an input
-    argument to the OverlayV1BalancerV2Feed constructor.
-    https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+    Returns the BalancerV2Tokens struct fields for a DAI/WETH market token pair
+    using the BAL/WETH token pair to simulate the OVL/WETH token pair for
+    testing. The BalancerV2Tokens struct is an input argument to the
+    constructor of the OverlayV1BalancerV2Feed contract so that token addresses
+    can be retrieved from the BalancerV2 Vault contract.
+
+    Inputs:
+      balweth_poolid [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool
+                                contract pool id, representing the market token
+                                pair
+    Outputs:
+      (
+         [Contract]: BalancerV2Vault contract instance
+         [bytes32]:  BAL/WETH Balancer V2 OracleWeighted contract pool id,
+                     representing the OVL/WETH token pair
+         [bytes32]:  DAI/WETH Balancer V2 OracleWeightedPool contract pool id,
+                     representing the market token pair
+      )
     '''
-    yield (vault, ovl_weth_pool_id, bal_weth_pool_id)
+    # BalancerV2Vault contract address is BalancerV2Tokens.vault
+    # https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+    vault = Contract.from_explorer(
+            '0xBA12222222228d8Ba445958a75a0704d566BF2C8')
+
+    ovlweth_poolid = convert.to_bytes(
+        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
+        'bytes32')
+    yield (vault, ovlweth_poolid, balweth_poolid)
