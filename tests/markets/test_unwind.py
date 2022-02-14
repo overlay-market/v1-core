@@ -808,7 +808,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     is_long=strategy('bool'),
     price_multiplier=strategy('decimal', min_value='1.100', max_value='5.000',
                               places=3))
-def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
+def test_unwind_mints_when_profitable(mock_market, mock_feed,
                                       alice, rando,
                                       ovl, fraction, is_long,
                                       price_multiplier):
@@ -914,7 +914,7 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
     is_long=strategy('bool'),
     price_multiplier=strategy('decimal', min_value='1.100', max_value='5.000',
                               places=3))
-def test_unwind_burns_when_not_profitable(mock_market, mock_feed, factory,
+def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                                           alice, rando,
                                           ovl, fraction, is_long,
                                           price_multiplier):
@@ -1380,6 +1380,9 @@ def test_unwind_reverts_when_position_not_exists(market, alice, ovl):
     input_fraction = 1000000000000000000
     with reverts("OVLV1:!position"):
         market.unwind(pos_id, input_fraction, 0, {"from": alice})
+
+
+# TODO: test_unwind_reverts_when_position_liquidated():
 
 
 def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,

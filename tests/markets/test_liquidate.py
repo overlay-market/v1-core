@@ -54,10 +54,10 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price) = mock_market.positions(pos_key)
 
-    # mine the chain forward for some time difference with build and unwind
+    # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
-    # after unwind.
+    # after liquidate.
     # NOTE: update() tests in test_update.py
     chain.mine(timedelta=600)
     tx = mock_market.update({"from": rando})
@@ -94,8 +94,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # change price by factor so position becomes liquidatable
     # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) / (1 + spread); ask
-    # NOTE:                  = (liq_price / entry_price) * (1 + spread); bid
+    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
+    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
     price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
     if is_long:
         # longs get the bid on exit, which has e**(-delta) multiplied to it
@@ -167,3 +167,74 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     actual_mint = int(tx.events["Liquidate"]["mint"])
     assert actual_mint == approx(expect_mint, rel=1e-4)
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
+                              is_long):
+    pass
+
+
+def test_liquidate_updates_market(mock_market, alice, rando, ovl):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_not_registers_volume(mock_market, mock_feed, alice, rando,
+                                        ovl, is_long):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
+                                  is_long):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
+                                      ovl, is_long):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
+                                                 rando, ovl, is_long):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
+                                              rando, ovl, is_long):
+    pass
+
+
+@given(is_long=strategy('bool'))
+def test_liquidate_burns(mock_market, mock_feed, alice, rando, ovl, is_long):
+    pass
+
+
+def test_liquidate_floors_value_to_zero_when_underwater(mock_market, mock_feed,
+                                                        alice, rando, ovl,
+                                                        factory):
+    pass
+
+
+def test_liquidate_reverts_when_not_position_owner(mock_market, alice, bob,
+                                                   rando, ovl):
+    pass
+
+
+def test_liquidate_reverts_when_position_not_exists(mock_market, alice, rando,
+                                                    ovl):
+    pass
+
+
+def test_liquidate_reverts_when_already_liquidated(mock_market, alice, rando,
+                                                   ovl):
+    pass
+
+
+def test_liquidate_reverts_when_not_liquidatable(mock_market, alice, rando,
+                                                 ovl):
+    pass
