@@ -3,8 +3,6 @@ from brownie import chain, interface, reverts
 from collections import OrderedDict
 
 
-# TODO: liquidationFeeRate tests
-
 # NOTE: Use feed_one in successful create market test. Use feed_two for revert
 # tests. feed_three has already had a market deployed on it (market fixture)
 # Using isolation fixture given successfully deploy markets in some tests
@@ -52,7 +50,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
         expect_params,
         {"from": gov}
     )
-    # TODO: check returned address matches market
+    # check returned address matches market
     expect_market = tx.return_value
 
     # check market added to registry
@@ -1398,6 +1396,137 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     # check deploys with maintenanceMarginBurnRate equal to max
     expect_maintenance_margin_burn_rate = \
         factory.MAX_MAINTENANCE_MARGIN_BURN_RATE()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin_fraction,
+                     expect_maintenance_margin_burn_rate,
+                     expect_liquidation_fee_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
+# liquidationFeeRate tests
+def test_deploy_market_reverts_when_liquidation_fee_rate_less_than_min(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_window = 2592000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 100000000000000
+
+    # check can't deploy with liquidationFeeRate less than min
+    expect_liquidation_fee_rate = \
+        factory.MIN_LIQUIDATION_FEE_RATE() - 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin_fraction,
+                     expect_maintenance_margin_burn_rate,
+                     expect_liquidation_fee_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    with reverts("OVLV1: liquidationFeeRate out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with liquidationFeeRate equal to min
+    expect_liquidation_fee_rate = \
+        factory.MIN_LIQUIDATION_FEE_RATE()
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin_fraction,
+                     expect_maintenance_margin_burn_rate,
+                     expect_liquidation_fee_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    _ = factory.deployMarket(
+        expect_feed_factory,
+        expect_feed,
+        expect_params,
+        {"from": gov}
+    )
+
+
+def test_deploy_market_reverts_when_liquidation_fee_rate_greater_than_max(
+    factory,
+    feed_factory,
+    feed_one,
+    feed_two,
+    gov
+):
+    expect_feed_factory = feed_factory
+    expect_feed = feed_two
+
+    # risk params
+    expect_k = 1220000000000
+    expect_lmbda = 1000000000000000000
+    expect_delta = 2500000000000000
+    expect_cap_oi = 800000000000000000000000
+    expect_cap_payoff = 5000000000000000000
+    expect_cap_leverage = 5000000000000000000
+    expect_circuit_breaker_window = 2592000
+    expect_circuit_breaker_mint_target = 66670000000000000000000
+    expect_maintenance_margin_fraction = 100000000000000000
+    expect_maintenance_margin_burn_rate = 100000000000000000
+    expect_trading_fee_rate = 750000000000000
+    expect_min_collateral = 100000000000000
+    expect_price_drift_upper_limit = 100000000000000
+
+    # check can't deploy with liquidationFeeRate greater than max
+    expect_liquidation_fee_rate = \
+        factory.MAX_LIQUIDATION_FEE_RATE() + 1
+    expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
+                     expect_cap_oi, expect_cap_leverage,
+                     expect_circuit_breaker_window,
+                     expect_circuit_breaker_mint_target,
+                     expect_maintenance_margin_fraction,
+                     expect_maintenance_margin_burn_rate,
+                     expect_liquidation_fee_rate,
+                     expect_trading_fee_rate, expect_min_collateral,
+                     expect_price_drift_upper_limit)
+    with reverts("OVLV1: liquidationFeeRate out of bounds"):
+        _ = factory.deployMarket(
+            expect_feed_factory,
+            expect_feed,
+            expect_params,
+            {"from": gov}
+        )
+
+    # check deploys with liquidationFeeRate equal to max
+    expect_liquidation_fee_rate = \
+        factory.MAX_LIQUIDATION_FEE_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_oi, expect_cap_leverage,
                      expect_circuit_breaker_window,

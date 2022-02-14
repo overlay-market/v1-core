@@ -2,8 +2,6 @@ from brownie import reverts
 from collections import OrderedDict
 
 
-# TODO: liquidationFeeRate tests
-
 # k tests
 def test_set_k(factory, market, gov):
     feed = market.feed()
@@ -661,6 +659,79 @@ def test_set_maintenance_margin_burn_reverts_when_greater_than_max(factory,
 
     actual_margin_burn = market.maintenanceMarginBurnRate()
     assert actual_margin_burn == expect_margin_burn
+
+
+# liquidationFeeRate tests
+def test_set_liquidation_fee_rate(factory, market, gov):
+    feed = market.feed()
+    expect_liquidation_fee_rate = 5000000000000000
+
+    # set liquidationFeeRate
+    tx = factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                       {"from": gov})
+
+    # check liquidationFeeRate changed
+    actual_liquidation_fee_rate = market.liquidationFeeRate()
+    assert expect_liquidation_fee_rate == actual_liquidation_fee_rate
+
+    # check event emitted
+    assert 'LiquidationFeeRateUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "market": market,
+        "liquidationFeeRate": expect_liquidation_fee_rate
+    })
+    actual_event = tx.events['LiquidationFeeRateUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_liquidation_fee_rate_reverts_when_not_gov(factory, market, alice):
+    feed = market.feed()
+    expect_liquidation_fee_rate = 5000000000000000
+
+    # check can't set liquidationFeeRate with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                          {"from": alice})
+
+
+def test_set_liquidation_fee_rate_reverts_when_less_than_min(factory, market,
+                                                             gov):
+    feed = market.feed()
+    expect_liquidation_fee_rate = factory.MIN_LIQUIDATION_FEE_RATE() - 1
+
+    # check can't set liquidationFeeRate less than min
+    with reverts("OVLV1: liquidationFeeRate out of bounds"):
+        _ = factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                          {"from": gov})
+
+    # check can set liquidationFeeRate when equal to min
+    expect_liquidation_fee_rate = factory.MIN_LIQUIDATION_FEE_RATE()
+    factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                  {"from": gov})
+
+    actual_liquidation_fee_rate = market.liquidationFeeRate()
+    assert actual_liquidation_fee_rate == expect_liquidation_fee_rate
+
+
+def test_set_liquidation_fee_rate_reverts_when_greater_than_max(factory,
+                                                                market,
+                                                                gov):
+    feed = market.feed()
+    expect_liquidation_fee_rate = factory.MAX_LIQUIDATION_FEE_RATE() + 1
+
+    # check can't set liquidationFeeRate greater than max
+    with reverts("OVLV1: liquidationFeeRate out of bounds"):
+        _ = factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                          {"from": gov})
+
+    # check can set liquidationFeeRate when equal to max
+    expect_liquidation_fee_rate = factory.MAX_LIQUIDATION_FEE_RATE()
+    factory.setLiquidationFeeRate(feed, expect_liquidation_fee_rate,
+                                  {"from": gov})
+
+    actual_liquidation_fee_rate = market.liquidationFeeRate()
+    assert actual_liquidation_fee_rate == expect_liquidation_fee_rate
 
 
 # tradingFeeRate tests
