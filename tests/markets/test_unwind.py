@@ -904,6 +904,9 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed, factory,
                                                             rel=1e-4)
 
 
+# TODO: test profits when greater than cap
+
+
 # NOTE: use mock market to change exit price to whatever
 @given(
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
