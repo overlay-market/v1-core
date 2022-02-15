@@ -3,6 +3,7 @@ from pytest import approx
 from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
+from math import exp
 from random import randint
 
 from .utils import calculate_position_info, get_position_key
@@ -1137,9 +1138,10 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 
 
 # test for when value is underwater and unwind
-def test_unwind_floors_value_to_zero_when_underwater(mock_market,
-                                                     mock_feed, alice,
-                                                     rando, ovl, factory):
+def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
+                                                              mock_feed, alice,
+                                                              rando, ovl,
+                                                              factory):
     # position build attributes
     oi_initial = Decimal(1000)
     leverage = Decimal(5.0)
@@ -1382,7 +1384,104 @@ def test_unwind_reverts_when_position_not_exists(market, alice, ovl):
         market.unwind(pos_id, input_fraction, 0, {"from": alice})
 
 
-# TODO: test_unwind_reverts_when_position_liquidated():
+def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
+                                                 alice, rando, ovl):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    is_long = True
+
+    # tolerance
+    tol = 1e-4
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = mock_market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and liquidate
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after liquidate.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    tx = mock_market.update({"from": rando})
+
+    # calculate current oi, debt values of position
+    expect_total_oi = mock_market.oiLong() if is_long \
+        else mock_market.oiShort()
+    expect_total_oi_shares = mock_market.oiLongShares() if is_long \
+        else mock_market.oiShortShares()
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate expected liquidation price
+    # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
+    # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+        / Decimal(1e18)
+    delta = Decimal(mock_market.delta()) / Decimal(1e18)
+    if is_long:
+        expect_liquidation_price = Decimal(expect_entry_price) * \
+            (maintenance_fraction * Decimal(expect_oi_shares)
+             + Decimal(expect_debt)) / expect_oi_current
+    else:
+        expect_liquidation_price = expect_entry_price * \
+            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
+             + Decimal(expect_debt)) / expect_oi_current)
+
+    # change price by factor so position becomes liquidatable
+    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
+    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
+    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
+    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    if is_long:
+        # longs get the bid on exit, which has e**(-delta) multiplied to it
+        # mock feed price should then be liq price * e**(delta) to account
+        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+    else:
+        # shorts get the ask on exit, which has e**(+delta) multiplied to it
+        # mock feed price should then be liq price * e**(-delta) to account
+        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+
+    price = Decimal(mock_feed.price()) * price_multiplier
+    mock_feed.setPrice(price)
+
+    # input values for liquidate
+    input_pos_id = pos_id
+
+    # liquidate the position
+    input_owner = alice.address
+    mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
+
+    # check attempting to unwind after liquidate reverts
+    input_fraction = 1000000000000000000
+    with reverts("OVLV1:!position"):
+        mock_market.unwind(input_pos_id, input_fraction, 0, {"from": alice})
 
 
 def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
