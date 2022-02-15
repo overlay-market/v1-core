@@ -905,9 +905,6 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
                                                             rel=1e-4)
 
 
-# TODO: test profits when greater than cap
-
-
 # NOTE: use mock market to change exit price to whatever
 @given(
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
@@ -1012,6 +1009,110 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     assert tx.events["Transfer"][0]['to'] \
         == "0x0000000000000000000000000000000000000000"
     assert int(tx.events["Transfer"][0]['value']) == approx(expect_burn,
+                                                            rel=1e-4)
+
+
+# NOTE: use mock market to change exit price to whatever
+# NOTE: min/max strategies assume capPayoff=5 from conftest.py
+@given(
+    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
+                      places=3),
+    price_multiplier=strategy('decimal', min_value='6.000', max_value='10.000',
+                              places=3))
+def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
+                                                   alice, rando,
+                                                   ovl, fraction,
+                                                   price_multiplier):
+    # position build attributes
+    oi_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    is_long = True
+
+    # calculate expected pos info data
+    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
+    pos_id = tx.return_value
+
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price) = mock_market.positions(pos_key)
+
+    # mine the chain forward for some time difference with build and unwind
+    # funding should occur within this interval.
+    # Use update() to update state to query values for checks vs expected
+    # after unwind.
+    # NOTE: update() tests in test_update.py
+    chain.mine(timedelta=600)
+    _ = mock_market.update({"from": rando})
+
+    # change price by factor
+    price = mock_feed.price() * price_multiplier
+    mock_feed.setPrice(price)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = mock_market.oiLong() if is_long \
+        else mock_market.oiShort()
+    expect_total_oi_shares = mock_market.oiLongShares() if is_long \
+        else mock_market.oiShortShares()
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_oi = fraction * expect_oi_current
+    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_debt = fraction * Decimal(expect_debt)
+    unwound_collateral = unwound_oi - unwound_debt
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
+    # unwind fraction of shares
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
+    expect_exit_price = tx.events["Unwind"]['price']
+
+    # impose payoff cap on pnl
+    cap_payoff = Decimal(mock_market.capPayoff()) / Decimal(1e18)
+    unwound_pnl = unwound_oi * \
+        min(Decimal(expect_exit_price) / Decimal(expect_entry_price) - 1,
+            cap_payoff)
+
+    # calculate expected values
+    expect_value = int(unwound_collateral + unwound_pnl)
+    expect_cost = int(unwound_cost)
+    expect_mint = expect_value - expect_cost
+
+    # check tx events have a mint to the mock market address
+    assert tx.events["Transfer"][0]['from'] \
+        == "0x0000000000000000000000000000000000000000"
+    assert tx.events["Transfer"][0]['to'] == mock_market.address
+    assert int(tx.events["Transfer"][0]['value']) == approx(expect_mint,
                                                             rel=1e-4)
 
 
@@ -1147,9 +1248,9 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
     leverage = Decimal(5.0)
     is_long = True
     fraction = Decimal(1.0)
-    price_multiplier = Decimal(0.700)  # close to underwater but not there yet
+    price_multiplier = Decimal(0.700)  # underwater
 
-    # exclude funding for testing edge case of fees > value
+    # exclude funding for testing edge case
     mock_market.setK(0, {"from": factory})
 
     # calculate expected pos info data
