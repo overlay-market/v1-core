@@ -78,7 +78,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     // events for core functions
     event Build(
-        address indexed sender, // address that initiated build
+        address indexed sender, // address that initiated build (owns position)
         uint256 positionId, // id of built position
         uint256 oi, // oi of position at build
         uint256 debt, // debt of position at build
@@ -86,7 +86,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 price // entry price
     );
     event Unwind(
-        address indexed sender, // address that initiated unwind
+        address indexed sender, // address that initiated unwind (owns position)
         uint256 positionId, // id of unwound position
         uint256 fraction, // fraction of position unwound
         int256 mint, // total amount minted/burned (+/-) at unwind
