@@ -641,7 +641,10 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev maintenance margin fraction (maintenanceMarginFraction)
     /// TODO: test for check
     function setDelta(uint256 _delta) external onlyFactory {
-        require(capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
+        require(
+            capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         delta = _delta;
     }
 
@@ -658,7 +661,10 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev maintenance margin fraction (maintenanceMarginFraction)
     /// TODO: test for check
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
-        require(_capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
+        require(
+            _capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         capLeverage = _capLeverage;
     }
 
@@ -678,7 +684,10 @@ contract OverlayV1Market is IOverlayV1Market {
         external
         onlyFactory
     {
-        require(capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
+        require(
+            capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         maintenanceMarginFraction = _maintenanceMarginFraction;
     }
 
@@ -706,7 +715,10 @@ contract OverlayV1Market is IOverlayV1Market {
     /// TODO: test for check
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
-        require(_priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT, "OVLV1: price drift exceeds max exp");
+        require(
+            _priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            "OVLV1: price drift exceeds max exp"
+        );
         priceDriftUpperLimit = _priceDriftUpperLimit;
     }
 }
