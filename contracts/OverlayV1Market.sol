@@ -636,7 +636,12 @@ contract OverlayV1Market is IOverlayV1Market {
         lmbda = _lmbda;
     }
 
+    /// @dev checks delta won't cause position to be immediately
+    /// @dev liquidatable given current leverage cap (capLeverage) and
+    /// @dev maintenance margin fraction (maintenanceMarginFraction)
+    /// TODO: test for check
     function setDelta(uint256 _delta) external onlyFactory {
+        require(capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
         delta = _delta;
     }
 
@@ -648,7 +653,12 @@ contract OverlayV1Market is IOverlayV1Market {
         capOi = _capOi;
     }
 
+    /// @dev checks capLeverage won't cause position to be immediately
+    /// @dev liquidatable given current spread (delta) and
+    /// @dev maintenance margin fraction (maintenanceMarginFraction)
+    /// TODO: test for check
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
+        require(_capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
         capLeverage = _capLeverage;
     }
 
@@ -660,10 +670,15 @@ contract OverlayV1Market is IOverlayV1Market {
         circuitBreakerMintTarget = _circuitBreakerMintTarget;
     }
 
+    /// @dev checks maintenanceMarginFraction won't cause position
+    /// @dev to be immediately liquidatable given current spread (delta)
+    /// @dev and leverage cap (capLeverage)
+    /// TODO: test for check
     function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction)
         external
         onlyFactory
     {
+        require(capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction), "OVLV1: max lev immediately liquidatable");
         maintenanceMarginFraction = _maintenanceMarginFraction;
     }
 
@@ -686,8 +701,12 @@ contract OverlayV1Market is IOverlayV1Market {
         minCollateral = _minCollateral;
     }
 
+    /// @dev checks priceDriftUpperLimit won't cause pow() call in dataIsValid
+    /// @dev to exceed max
+    /// TODO: test for check
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
-        // TODO: check pow != 0 && pow <= MAX_NATURAL_EXPONENT; pow = drift * data.macroWindow
+        Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+        require(_priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT, "OVLV1: price drift exceeds max exp");
         priceDriftUpperLimit = _priceDriftUpperLimit;
     }
 }

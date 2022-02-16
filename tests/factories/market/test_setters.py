@@ -1,5 +1,13 @@
+import pytest
 from brownie import reverts
 from collections import OrderedDict
+
+
+# NOTE: Use isolation fixture to avoid possible revert with max
+# NOTE: lev immediately liquidatable market check
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
 
 
 # k tests
@@ -362,6 +370,12 @@ def test_set_cap_leverage_reverts_when_greater_than_max(factory, market, gov):
     feed = market.feed()
     expect_cap_leverage = factory.MAX_CAP_LEVERAGE() + 1
 
+    # NOTE: set the maintenanceMarginFraction and delta to minimum values
+    # NOTE: to avoid revert on market setter check
+    factory.setDelta(feed, factory.MIN_DELTA(), {"from": gov})
+    factory.setMaintenanceMarginFraction(
+        feed, factory.MIN_MAINTENANCE_MARGIN_FRACTION(), {"from": gov})
+
     # check can't set capLeverage greater than max
     with reverts("OVLV1: capLeverage out of bounds"):
         _ = factory.setCapLeverage(feed, expect_cap_leverage, {"from": gov})
@@ -569,6 +583,11 @@ def test_set_maintenance_margin_reverts_when_greater_than_max(factory, market,
                                                               gov):
     feed = market.feed()
     expect_maintenance_margin = factory.MAX_MAINTENANCE_MARGIN_FRACTION() + 1
+
+    # NOTE: set the capLeverage and delta to minimum values
+    # NOTE: to avoid revert on market setter check
+    factory.setDelta(feed, factory.MIN_DELTA(), {"from": gov})
+    factory.setCapLeverage(feed, factory.MIN_CAP_LEVERAGE(), {"from": gov})
 
     # check can't set maintenanceMarginFraction greater than max
     with reverts("OVLV1: maintenanceMarginFraction out of bounds"):
