@@ -1,4 +1,4 @@
-def test_is_liquidatable(position):
+def test_liquidatable(position):
     entry_price = 100000000000000000000  # 100
     oi = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
@@ -14,8 +14,8 @@ def test_is_liquidatable(position):
     current_price = 90000000000000000000 * (1 - tol)  # 90 * (1-tol)
     expect = True
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns False when long is not liquidatable
@@ -23,8 +23,8 @@ def test_is_liquidatable(position):
     current_price = 90000000000000000000 * (1 + tol)  # 90 * (1+tol)
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns True when short is liquidatable
@@ -32,8 +32,8 @@ def test_is_liquidatable(position):
     current_price = 110000000000000000000 * (1 + tol)  # 110 * (1+tol)
     expect = True
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns False when short is not liquidatable
@@ -41,12 +41,12 @@ def test_is_liquidatable(position):
     current_price = 110000000000000000000 * (1 - tol)  # 110 * (1-tol)
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
 
-def test_is_liquidatable_when_oi_zero(position):
+def test_liquidatable_when_oi_zero(position):
     entry_price = 100000000000000000000  # 100
     current_price = 90000000000000000000  # 90
     oi = 0  # 0
@@ -59,20 +59,20 @@ def test_is_liquidatable_when_oi_zero(position):
     is_long = True
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns False when short oi is zero
     is_long = False
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
 
-def test_is_liquidatable_when_liquidated(position):
+def test_liquidatable_when_liquidated(position):
     entry_price = 100000000000000000000  # 100
     current_price = 90000000000000000000  # 90
     oi = 0  # 0
@@ -85,20 +85,20 @@ def test_is_liquidatable_when_liquidated(position):
     is_long = True
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns False when short oi is zero
     is_long = False
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
 
-def test_is_liquidatable_when_leverage_one(position):
+def test_liquidatable_when_leverage_one(position):
     entry_price = 100000000000000000000  # 100
     oi = 10000000000000000000  # 10
     debt = 0  # 0
@@ -113,8 +113,8 @@ def test_is_liquidatable_when_leverage_one(position):
     current_price = 10000000000000000000 * (1 + tol)  # 10 * (1+tol)
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns True when long price moves more than maintenance require
@@ -122,8 +122,8 @@ def test_is_liquidatable_when_leverage_one(position):
     current_price = 10000000000000000000 * (1 - tol)  # 10 * (1-tol)
     expect = True
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns False when short price moves less than maintenance require
@@ -131,8 +131,8 @@ def test_is_liquidatable_when_leverage_one(position):
     current_price = 190000000000000000000 * (1 - tol)  # 190 * (1-tol)
     expect = False
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
     # check returns True when short price moves more than maintenance require
@@ -140,8 +140,8 @@ def test_is_liquidatable_when_leverage_one(position):
     current_price = 190000000000000000000 * (1 + tol)  # 190 * (1+tol)
     expect = True
     pos = (oi, debt, is_long, liquidated, entry_price)
-    actual = position.isLiquidatable(pos, oi, oi, current_price, cap_payoff,
-                                     maintenance)
+    actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
+                                   maintenance)
     assert expect == actual
 
 

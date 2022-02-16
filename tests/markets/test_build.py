@@ -297,7 +297,7 @@ def test_build_executes_transfers(market, ovl, alice, oi, leverage,
 
     # check trade fee out event (2)
     assert tx.events['Transfer'][1]['from'] == market.address
-    assert tx.events['Transfer'][1]['to'] == market.tradingFeeRecipient()
+    assert tx.events['Transfer'][1]['to'] == market.feeRecipient()
     assert int(tx.events['Transfer'][1]['value']) == approx(expect_trade_fee)
 
 
@@ -371,7 +371,7 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # priors actual values
-    recipient = market.tradingFeeRecipient()
+    recipient = market.feeRecipient()
     expect = ovl.balanceOf(recipient)
 
     # approve market for spending then build

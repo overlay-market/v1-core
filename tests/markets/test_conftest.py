@@ -32,7 +32,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert mock_market.ovl() == ovl
     assert mock_market.feed() == mock_feed
     assert mock_market.factory() == factory
-    assert mock_market.tradingFeeRecipient() == factory
+    assert mock_market.feeRecipient() == factory
 
     # risk params
     assert mock_market.k() == 1220000000000
@@ -43,8 +43,9 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert mock_market.capLeverage() == 5000000000000000000
     assert mock_market.circuitBreakerWindow() == 2592000
     assert mock_market.circuitBreakerMintTarget() == 66670000000000000000000
-    assert mock_market.maintenanceMargin() == 100000000000000000
+    assert mock_market.maintenanceMarginFraction() == 100000000000000000
     assert mock_market.maintenanceMarginBurnRate() == 100000000000000000
+    assert mock_market.liquidationFeeRate() == 10000000000000000
     assert mock_market.tradingFeeRate() == 750000000000000
     assert mock_market.minCollateral() == 100000000000000
     assert mock_market.priceDriftUpperLimit() == 25000000000000
@@ -72,7 +73,7 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert market.ovl() == ovl
     assert market.feed() == feed
     assert market.factory() == factory
-    assert market.tradingFeeRecipient() == factory
+    assert market.feeRecipient() == factory
 
     # risk params
     assert market.k() == 1220000000000
@@ -83,8 +84,9 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert market.capLeverage() == 5000000000000000000
     assert market.circuitBreakerWindow() == 2592000
     assert market.circuitBreakerMintTarget() == 66670000000000000000000
-    assert market.maintenanceMargin() == 100000000000000000
+    assert market.maintenanceMarginFraction() == 100000000000000000
     assert market.maintenanceMarginBurnRate() == 100000000000000000
+    assert market.liquidationFeeRate() == 10000000000000000
     assert market.tradingFeeRate() == 750000000000000
     assert market.minCollateral() == 100000000000000
     assert market.priceDriftUpperLimit() == 25000000000000

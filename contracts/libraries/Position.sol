@@ -171,13 +171,13 @@ library Position {
 
     /// @notice Whether a position can be liquidated
     /// @dev is true when value < maintenance margin
-    function isLiquidatable(
+    function liquidatable(
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
         uint256 currentPrice,
         uint256 capPayoff,
-        uint256 marginMaintenance
+        uint256 maintenanceMarginFraction
     ) internal pure returns (bool can_) {
         uint256 fraction = ONE;
         uint256 posOiInitial = oiInitial(self, fraction);
@@ -188,7 +188,7 @@ library Position {
         }
 
         uint256 val = value(self, fraction, totalOi, totalOiShares, currentPrice, capPayoff);
-        uint256 maintenanceMargin = posOiInitial.mulUp(marginMaintenance);
+        uint256 maintenanceMargin = posOiInitial.mulUp(maintenanceMarginFraction);
         can_ = val < maintenanceMargin;
     }
 
@@ -198,7 +198,7 @@ library Position {
         Info memory self,
         uint256 totalOi,
         uint256 totalOiShares,
-        uint256 marginMaintenance
+        uint256 maintenanceMarginFraction
     ) internal pure returns (uint256 liqPrice_) {
         uint256 fraction = ONE;
         uint256 posOiCurrent = oiCurrent(self, fraction, totalOi, totalOiShares);
@@ -210,7 +210,9 @@ library Position {
             return 0;
         }
 
-        uint256 oiFrame = posOiInitial.mulUp(marginMaintenance).add(posDebt).divDown(posOiCurrent);
+        uint256 oiFrame = posOiInitial.mulUp(maintenanceMarginFraction).add(posDebt).divDown(
+            posOiCurrent
+        );
 
         if (self.isLong) {
             liqPrice_ = self.entryPrice.mulUp(oiFrame);

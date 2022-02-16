@@ -42,14 +42,15 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public capLeverage; // initial leverage cap
     uint256 public circuitBreakerWindow; // trailing window for circuit breaker
     uint256 public circuitBreakerMintTarget; // target mint rate for circuit breaker
-    uint256 public maintenanceMargin; // maintenance margin (mm) constant
+    uint256 public maintenanceMarginFraction; // maintenance margin (mm) constant
     uint256 public maintenanceMarginBurnRate; // burn rate for mm constant
+    uint256 public liquidationFeeRate; // liquidation fee charged on liquidate
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
 
-    // trading fee related quantities
-    address public tradingFeeRecipient;
+    // fee related quantities
+    address public feeRecipient;
 
     // oi related quantities
     uint256 public oiLong;
@@ -77,17 +78,15 @@ contract OverlayV1Market is IOverlayV1Market {
 
     // events for core functions
     event Build(
-        address indexed sender, // address that initiated build
+        address indexed sender, // address that initiated build (owns position)
         uint256 positionId, // id of built position
         uint256 oi, // oi of position at build
         uint256 debt, // debt of position at build
         bool isLong, // whether is long or short
         uint256 price // entry price
     );
-    // TODO: include oi, debt unwound/liquidated in the events below while avoiding
-    // TODO: stack too deep errors
     event Unwind(
-        address indexed sender, // address that initiated unwind
+        address indexed sender, // address that initiated unwind (owns position)
         uint256 positionId, // id of unwound position
         uint256 fraction, // fraction of position unwound
         int256 mint, // total amount minted/burned (+/-) at unwind
@@ -110,7 +109,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
-        tradingFeeRecipient = _factory; // TODO: disburse trading fees in factory
+        feeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
         // TODO: test
@@ -127,8 +126,9 @@ contract OverlayV1Market is IOverlayV1Market {
         capLeverage = params.capLeverage;
         circuitBreakerWindow = params.circuitBreakerWindow;
         circuitBreakerMintTarget = params.circuitBreakerMintTarget;
-        maintenanceMargin = params.maintenanceMargin;
+        maintenanceMarginFraction = params.maintenanceMarginFraction;
         maintenanceMarginBurnRate = params.maintenanceMarginBurnRate;
+        liquidationFeeRate = params.liquidationFeeRate;
         tradingFeeRate = params.tradingFeeRate;
         minCollateral = params.minCollateral;
         priceDriftUpperLimit = params.priceDriftUpperLimit;
@@ -202,7 +202,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(tradingFeeRecipient, tradingFee);
+        ovl.transfer(feeRecipient, tradingFee);
     }
 
     /// @dev unwinds fraction of an existing position
@@ -214,6 +214,7 @@ contract OverlayV1Market is IOverlayV1Market {
         require(fraction > 0, "OVLV1:fraction<min");
         require(fraction <= ONE, "OVLV1:fraction>max");
 
+        // check position exists
         Position.Info memory pos = positions.get(msg.sender, positionId);
         require(pos.exists(), "OVLV1:!position");
 
@@ -292,13 +293,82 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(tradingFeeRecipient, tradingFee);
+        ovl.transfer(feeRecipient, tradingFee);
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(uint256 positionId) external {
+    function liquidate(address owner, uint256 positionId) external {
+        // check position exists
+        Position.Info memory pos = positions.get(owner, positionId);
+        require(pos.exists(), "OVLV1:!position");
+
         // call to update before any effects
         Oracle.Data memory data = update();
+
+        // cache for gas savings
+        uint256 totalOi = pos.isLong ? oiLong : oiShort;
+        uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 _capPayoff = capPayoff;
+
+        // entire position should be liquidated
+        uint256 fraction = ONE;
+
+        // longs get the bid and shorts get the ask on liquidate
+        // NOTE: liquidated position's oi should *not* add additional volume to roller
+        // NOTE: since market impact intended to mitigate front-running (not relevant here)
+        uint256 volume = pos.isLong
+            ? _registerVolumeBid(data, 0, capOi)
+            : _registerVolumeAsk(data, 0, capOi);
+        uint256 price = pos.isLong ? bid(data, volume) : ask(data, volume);
+
+        // check position is liquidatable
+        require(
+            pos.liquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMarginFraction),
+            "OVLV1:!liquidatable"
+        );
+
+        // calculate the value and cost of the position for pnl determinations
+        // and amount to transfer
+        uint256 value = pos.value(fraction, totalOi, totalOiShares, price, _capPayoff);
+        uint256 cost = pos.cost(fraction);
+
+        // value is the remaining position margin. reduce value further by
+        // the mm burn rate, as insurance for cases when not liquidated in time
+        value -= value.mulUp(maintenanceMarginBurnRate);
+
+        // register the amount to be burned
+        _registerMint(int256(value) - int256(cost));
+
+        // calculate the liquidation fee as % on remaining value
+        uint256 liquidationFee = value.mulUp(liquidationFeeRate);
+
+        // subtract liquidated open interest from the side's aggregate oi value
+        // and decrease number of oi shares issued
+        if (pos.isLong) {
+            oiLong -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiLongShares -= pos.oiSharesCurrent(fraction);
+        } else {
+            oiShort -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiShortShares -= pos.oiSharesCurrent(fraction);
+        }
+
+        // store the updated position info data. mark as liquidated
+        pos.oiShares = 0;
+        pos.debt = 0;
+        pos.liquidated = true;
+        positions.set(owner, positionId, pos);
+
+        // emit liquidate event
+        emit Liquidate(msg.sender, owner, positionId, int256(value) - int256(cost), price);
+
+        // burn the pnl for the position
+        ovl.burn(cost - value);
+
+        // transfer out the remaining position value less fees to liquidator for reward
+        ovl.transfer(msg.sender, value - liquidationFee);
+
+        // send liquidation fees to trading fee recipient
+        ovl.transfer(feeRecipient, liquidationFee);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed
@@ -590,8 +660,11 @@ contract OverlayV1Market is IOverlayV1Market {
         circuitBreakerMintTarget = _circuitBreakerMintTarget;
     }
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin) external onlyFactory {
-        maintenanceMargin = _maintenanceMargin;
+    function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction)
+        external
+        onlyFactory
+    {
+        maintenanceMarginFraction = _maintenanceMarginFraction;
     }
 
     function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate)
@@ -599,6 +672,10 @@ contract OverlayV1Market is IOverlayV1Market {
         onlyFactory
     {
         maintenanceMarginBurnRate = _maintenanceMarginBurnRate;
+    }
+
+    function setLiquidationFeeRate(uint256 _liquidationFeeRate) external onlyFactory {
+        liquidationFeeRate = _liquidationFeeRate;
     }
 
     function setTradingFeeRate(uint256 _tradingFeeRate) external onlyFactory {

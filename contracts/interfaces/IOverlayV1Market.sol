@@ -31,9 +31,11 @@ interface IOverlayV1Market {
 
     function circuitBreakerMintTarget() external view returns (uint256);
 
-    function maintenanceMargin() external view returns (uint256);
+    function maintenanceMarginFraction() external view returns (uint256);
 
     function maintenanceMarginBurnRate() external view returns (uint256);
+
+    function liquidationFeeRate() external view returns (uint256);
 
     function tradingFeeRate() external view returns (uint256);
 
@@ -41,8 +43,8 @@ interface IOverlayV1Market {
 
     function priceDriftUpperLimit() external view returns (uint256);
 
-    // trading fee related quantities
-    function tradingFeeRecipient() external view returns (address);
+    // fee related quantities
+    function feeRecipient() external view returns (address);
 
     // oi related quantities
     function oiLong() external view returns (uint256);
@@ -110,7 +112,7 @@ interface IOverlayV1Market {
         uint256 priceLimit
     ) external;
 
-    function liquidate(uint256 positionId) external;
+    function liquidate(address owner, uint256 positionId) external;
 
     // updates market
     function update() external returns (Oracle.Data memory);
@@ -181,9 +183,11 @@ interface IOverlayV1Market {
 
     function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external;
 
-    function setMaintenanceMargin(uint256 _maintenanceMargin) external;
+    function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction) external;
 
     function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external;
+
+    function setLiquidationFeeRate(uint256 _liquidationFeeRate) external;
 
     function setTradingFeeRate(uint256 _tradingFeeRate) external;
 
