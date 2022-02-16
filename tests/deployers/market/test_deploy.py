@@ -16,7 +16,7 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     liquidation_fee_rate = 10000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
-    price_drift_upper_limit = 1000000000000000000
+    price_drift_upper_limit = 100000000000000
 
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
@@ -67,7 +67,7 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     liquidation_fee_rate = 10000000000000000
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
-    price_drift_upper_limit = 1000000000000000000
+    price_drift_upper_limit = 100000000000000
 
     params = (k, lmbda, delta, cap_payoff, cap_oi, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,

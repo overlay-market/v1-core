@@ -117,6 +117,17 @@ contract OverlayV1Market is IOverlayV1Market {
         require(mid(data, 0, 0) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
 
+        // check risk params valid
+        // TODO: test
+        require(
+            params.capLeverage <= ONE.divDown(2 * params.delta + params.maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
+        require(
+            params.priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            "OVLV1: price drift exceeds max exp"
+        );
+
         // set the gov params
         k = params.k;
         lmbda = params.lmbda;
