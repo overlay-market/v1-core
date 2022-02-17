@@ -638,7 +638,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev governance adjustable risk parameter setters
     /// @dev min/max bounds checks to risk params imposed at factory level
-    /// TODO: checks that parameters are valid (e.g. mm given spread and capLeverage)
     function setK(uint256 _k) external onlyFactory {
         k = _k;
     }
@@ -650,7 +649,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev checks delta won't cause position to be immediately
     /// @dev liquidatable given current leverage cap (capLeverage) and
     /// @dev maintenance margin fraction (maintenanceMarginFraction)
-    /// TODO: test for check
     function setDelta(uint256 _delta) external onlyFactory {
         require(
             capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction),
@@ -670,7 +668,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev checks capLeverage won't cause position to be immediately
     /// @dev liquidatable given current spread (delta) and
     /// @dev maintenance margin fraction (maintenanceMarginFraction)
-    /// TODO: test for check
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
         require(
             _capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction),
@@ -690,7 +687,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev checks maintenanceMarginFraction won't cause position
     /// @dev to be immediately liquidatable given current spread (delta)
     /// @dev and leverage cap (capLeverage)
-    /// TODO: test for check
     function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction)
         external
         onlyFactory
@@ -723,7 +719,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev checks priceDriftUpperLimit won't cause pow() call in dataIsValid
     /// @dev to exceed max
-    /// TODO: test for check
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(
