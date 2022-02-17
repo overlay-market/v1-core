@@ -32,20 +32,19 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
-
         VAULT = balancerV2Tokens.vault;
         // Check if gas cost is reduced by storing vault in memory
         IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
         (IERC20[] memory marketTokens, , ) = getPoolTokensData(balancerV2Tokens.marketPoolId);
 
         require(
-          getPoolId(balancerV2Pool.marketPool) == balancerV2Tokens.marketPoolId,
-          "OVLV1Feed: marketPoolId mismatch"
+            getPoolId(balancerV2Pool.marketPool) == balancerV2Tokens.marketPoolId,
+            "OVLV1Feed: marketPoolId mismatch"
         );
 
         require(
-          getPoolId(balancerV2Pool.ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
-          "OVLV1Feed: ovlWethPoolId mismatch"
+            getPoolId(balancerV2Pool.ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
+            "OVLV1Feed: ovlWethPoolId mismatch"
         );
 
         // TODO: verify token ordering
@@ -58,11 +57,13 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketToken1 = _marketToken1;
 
         require(
-            _marketToken0 == balancerV2Pool.marketBaseToken || _marketToken1 == balancerV2Pool.marketBaseToken,
+            _marketToken0 == balancerV2Pool.marketBaseToken ||
+                _marketToken1 == balancerV2Pool.marketBaseToken,
             "OVLV1Feed: marketToken != marketBaseToken"
         );
         require(
-            _marketToken0 == balancerV2Pool.marketQuoteToken || _marketToken1 == balancerV2Pool.marketQuoteToken,
+            _marketToken0 == balancerV2Pool.marketQuoteToken ||
+                _marketToken1 == balancerV2Pool.marketQuoteToken,
             "OVLV1Feed: marketToken != marketQuoteToken"
         );
 
@@ -107,7 +108,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     }
 
     function getPoolId(address pool) public view returns (bytes32) {
-      return IBalancerV2Pool(pool).getPoolId();
+        return IBalancerV2Pool(pool).getPoolId();
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {

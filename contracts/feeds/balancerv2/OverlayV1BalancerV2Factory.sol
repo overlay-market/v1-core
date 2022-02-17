@@ -52,12 +52,12 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
         );
 
         BalancerV2PoolInfo.Pool memory balancerV2Pool = BalancerV2PoolInfo.Pool(
-          marketPool,
-          ovlWethPool,
-          ovl,
-          marketBaseToken,
-          marketQuoteToken,
-          marketBaseAmount
+            marketPool,
+            ovlWethPool,
+            ovl,
+            marketBaseToken,
+            marketQuoteToken,
+            marketBaseAmount
         );
 
         // Use the CREATE2 opcode to deploy a new Feed contract.
@@ -69,12 +69,7 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
                 salt: keccak256(
                     abi.encode(marketPool, marketBaseToken, marketQuoteToken, marketBaseAmount)
                 )
-            }(
-                balancerV2Pool,
-                balancerV2Tokens,
-                microWindow,
-                macroWindow
-            )
+            }(balancerV2Pool, balancerV2Tokens, microWindow, macroWindow)
         );
 
         // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo

@@ -15,8 +15,6 @@
 pragma solidity 0.8.10;
 pragma experimental ABIEncoderV2;
 
-
 interface IBalancerV2Pool {
-  function getPoolId() external view returns (bytes32);
+    function getPoolId() external view returns (bytes32);
 }
-

@@ -11,4 +11,3 @@ library BalancerV2PoolInfo {
         uint128 marketBaseAmount;
     }
 }
-
