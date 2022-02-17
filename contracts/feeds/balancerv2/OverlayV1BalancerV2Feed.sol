@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
+import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
 import "../OverlayV1Feed.sol";
 import "./IBalancerV2Vault.sol";
 
@@ -11,27 +12,22 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
-    // address public immutable marketPool;
-    // address public immutable ovlWethPool;
-    // address public immutable ovl;
+    address public immutable marketPool;
+    address public immutable ovlWethPool;
+    address public immutable ovl;
 
     address public immutable marketToken0;
     address public immutable marketToken1;
 
-    // address public immutable ovlWethToken0;
-    // address public immutable ovlWethToken1;
+    address public immutable ovlWethToken0;
+    address public immutable ovlWethToken1;
 
     address public immutable marketBaseToken;
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
     constructor(
-        address _marketPool,
-        address _ovlWethPool,
-        address _ovl,
-        address _marketBaseToken,
-        address _marketQuoteToken,
-        uint128 _marketBaseAmount,
+        BalancerV2PoolInfo.Pool memory balancerV2Pool,
         BalancerV2Tokens.Info memory balancerV2Tokens,
         uint256 _microWindow,
         uint256 _macroWindow
@@ -43,12 +39,12 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         (IERC20[] memory marketTokens, , ) = getPoolTokensData(balancerV2Tokens.marketPoolId);
 
         require(
-          getPoolId(_marketPool) == balancerV2Tokens.marketPoolId,
+          getPoolId(balancerV2Pool.marketPool) == balancerV2Tokens.marketPoolId,
           "OVLV1Feed: marketPoolId mismatch"
         );
 
         require(
-          getPoolId(_ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
+          getPoolId(balancerV2Pool.ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
           "OVLV1Feed: ovlWethPoolId mismatch"
         );
 
@@ -62,17 +58,17 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketToken1 = _marketToken1;
 
         require(
-            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
+            _marketToken0 == balancerV2Pool.marketBaseToken || _marketToken1 == balancerV2Pool.marketBaseToken,
             "OVLV1Feed: marketToken != marketBaseToken"
         );
         require(
-            _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
+            _marketToken0 == balancerV2Pool.marketQuoteToken || _marketToken1 == balancerV2Pool.marketQuoteToken,
             "OVLV1Feed: marketToken != marketQuoteToken"
         );
 
-        marketBaseToken = _marketBaseToken;
-        marketQuoteToken = _marketQuoteToken;
-        marketBaseAmount = _marketBaseAmount;
+        marketBaseToken = balancerV2Pool.marketBaseToken;
+        marketQuoteToken = balancerV2Pool.marketQuoteToken;
+        marketBaseAmount = balancerV2Pool.marketBaseAmount;
 
         (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
 
@@ -85,15 +81,15 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
             "OVLV1Feed: ovlWethToken != WETH"
         );
         require(
-            _ovlWethToken0 == _ovl || _ovlWethToken1 == _ovl,
+            _ovlWethToken0 == balancerV2Pool.ovl || _ovlWethToken1 == balancerV2Pool.ovl,
             "OVLV1Feed: ovlWethToken != OVL"
         );
-        // ovlWethToken0 = _ovlWethToken0;
-        // ovlWethToken1 = _ovlWethToken1;
-        //
-        // marketPool = _marketPool;
-        // ovlWethPool = _ovlWethPool;
-        // ovl = _ovl;
+        ovlWethToken0 = _ovlWethToken0;
+        ovlWethToken1 = _ovlWethToken1;
+
+        marketPool = balancerV2Pool.marketPool;
+        ovlWethPool = balancerV2Pool.ovlWethPool;
+        ovl = balancerV2Pool.ovl;
     }
 
     function getPoolTokensData(bytes32 balancerV2PoolId)

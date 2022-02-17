@@ -204,12 +204,13 @@ def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
     ovl = balancer
     market_base_token = weth
     market_quote_token = dai
-
     market_base_amount = 1 * 10 ** weth.decimals()
+
+    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+                  market_quote_token,  market_base_amount)
+
     micro_window = 600
     macro_window = 3600
 
-    yield gov.deploy(OverlayV1BalancerV2Feed, market_pool, ovlweth_pool, ovl,
-                      market_base_token, market_quote_token,
-                      market_base_amount, balv2_tokens, micro_window,
-                      macro_window)
+    yield gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+                     micro_window, macro_window)

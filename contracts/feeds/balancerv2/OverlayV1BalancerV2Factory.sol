@@ -4,11 +4,13 @@ pragma solidity 0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
+import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1BalancerV2Feed.sol";
 
 contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
     using BalancerV2Tokens for BalancerV2Tokens.Info;
+    using BalancerV2PoolInfo for BalancerV2PoolInfo.Pool;
     address public immutable ovlWethPool;
     address public immutable ovl;
 
@@ -49,6 +51,15 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
             "OVLV1: feed already exists"
         );
 
+        BalancerV2PoolInfo.Pool memory balancerV2Pool = BalancerV2PoolInfo.Pool(
+          marketPool,
+          ovlWethPool,
+          ovl,
+          marketBaseToken,
+          marketQuoteToken,
+          marketBaseAmount
+        );
+
         // Use the CREATE2 opcode to deploy a new Feed contract.
         // Will revert if feed which accepts (marketPool, marketBaseToken, marketQuoteToken,
         // marketBaseAmount) in its constructor has already been deployed since salt would be the
@@ -59,12 +70,7 @@ contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
                     abi.encode(marketPool, marketBaseToken, marketQuoteToken, marketBaseAmount)
                 )
             }(
-                marketPool,
-                ovlWethPool,
-                ovl,
-                marketBaseToken,
-                marketQuoteToken,
-                marketBaseAmount,
+                balancerV2Pool,
                 balancerV2Tokens,
                 microWindow,
                 macroWindow
