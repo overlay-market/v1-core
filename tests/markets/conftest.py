@@ -1,6 +1,6 @@
 import pytest
 from brownie import (
-    Contract, OverlayV1Token, OverlayV1Market,
+    Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
     OverlayV1UniswapV3Feed, OverlayV1FeedMock
 )
 
@@ -26,7 +26,7 @@ def rando(accounts):
 
 
 @pytest.fixture(scope="module")
-def factory(accounts):
+def fee_recipient(accounts):
     yield accounts[4]
 
 
@@ -47,6 +47,22 @@ def create_token(gov, alice, bob, request):
 @pytest.fixture(scope="module")
 def ovl(create_token):
     yield create_token()
+
+
+@pytest.fixture(scope="module")
+def create_factory(gov, fee_recipient, request, ovl):
+    def create_factory(tok=ovl, recipient=fee_recipient):
+        # create the market factory
+        # NOTE: Doesn't do anything in these market tests
+        # NOTE: except return factory.feeRecipient()
+        factory = gov.deploy(OverlayV1Factory, tok, recipient)
+        return factory
+    yield create_factory
+
+
+@pytest.fixture(scope="module")
+def factory(create_factory):
+    yield create_factory()
 
 
 @pytest.fixture(scope="module")

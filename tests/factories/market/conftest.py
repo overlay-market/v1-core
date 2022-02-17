@@ -29,6 +29,11 @@ def rando(accounts):
     yield accounts[4]
 
 
+@pytest.fixture(scope="module")
+def fee_recipient(accounts):
+    yield accounts[5]
+
+
 @pytest.fixture(scope="module", params=[8000000])
 def create_token(gov, alice, bob, request):
     sup = request.param
@@ -105,11 +110,12 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, request, ovl, feed_factory, feed_three):
+def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
 
-    def create_factory(tok=ovl, feeds=feed_factory, feed=feed_three):
+    def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
+                       feed=feed_three):
         # create the market factory
-        factory = gov.deploy(OverlayV1Factory, tok)
+        factory = gov.deploy(OverlayV1Factory, tok, recipient)
 
         # grant market factory token admin role
         tok.grantRole(tok.ADMIN_ROLE(), factory, {"from": gov})

@@ -38,7 +38,6 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
     assert market.ovl() == ovl
     assert market.feed() == feed
     assert market.factory() == factory
-    assert market.feeRecipient() == factory
 
     # check market deployed correctly with risk params
     assert market.k() == k

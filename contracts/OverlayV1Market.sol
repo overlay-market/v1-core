@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1Feed.sol";
@@ -48,9 +49,6 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
-
-    // fee related quantities
-    address public feeRecipient;
 
     // oi related quantities
     uint256 public oiLong;
@@ -109,7 +107,6 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
-        feeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
@@ -211,7 +208,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(feeRecipient, tradingFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), tradingFee);
     }
 
     /// @dev unwinds fraction of an existing position
@@ -302,7 +299,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(feeRecipient, tradingFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), tradingFee);
     }
 
     /// @dev liquidates a liquidatable position
@@ -377,7 +374,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - liquidationFee);
 
         // send liquidation fees to trading fee recipient
-        ovl.transfer(feeRecipient, liquidationFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), liquidationFee);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed

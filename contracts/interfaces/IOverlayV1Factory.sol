@@ -69,6 +69,9 @@ interface IOverlayV1Factory {
 
     function deployer() external view returns (IOverlayV1Deployer);
 
+    // global parameter
+    function feeRecipient() external view returns (address);
+
     // registry of supported feed factories
     function isFeedFactory(address feedFactory) external view returns (bool);
 

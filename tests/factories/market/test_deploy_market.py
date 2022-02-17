@@ -97,9 +97,6 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.priceDriftUpperLimit() == \
         expect_price_drift_upper_limit
 
-    # check fee recipient is factory
-    assert market_contract.feeRecipient() == factory
-
     # check update last timestamp is last block's
     assert market_contract.timestampUpdateLast() \
         == chain[tx.block_number]['timestamp']
