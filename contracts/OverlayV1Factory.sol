@@ -236,7 +236,6 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @dev fee repository setter
-    // TODO: test
     function setFeeRecipient(address _feeRecipient) external onlyGovernor {
         require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;

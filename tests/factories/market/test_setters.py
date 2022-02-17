@@ -10,6 +10,43 @@ def isolation(fn_isolation):
     pass
 
 
+# fee recipient tests
+def test_set_fee_recipient(factory, gov, rando):
+    expect_fee_recipient = rando
+
+    # set fee recipient
+    tx = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
+
+    # check fee recipient changed
+    actual_fee_recipient = factory.feeRecipient()
+    assert expect_fee_recipient == actual_fee_recipient
+
+    # check event emitted
+    assert 'FeeRecipientUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "recipient": rando
+    })
+    actual_event = tx.events['FeeRecipientUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_fee_recipient_reverts_when_not_gov(factory, alice):
+    expect_fee_recipient = alice
+
+    # check can't set fee recipient with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": alice})
+
+
+def test_set_fee_recipient_reverts_when_zero_address(factory, gov):
+    expect_fee_recipient = "0x0000000000000000000000000000000000000000"
+
+    # check can't set fee recipient as zero address
+    with reverts("OVLV1: feeRecipient should not be zero address"):
+        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
+
+
 # k tests
 def test_set_k(factory, market, gov):
     feed = market.feed()
