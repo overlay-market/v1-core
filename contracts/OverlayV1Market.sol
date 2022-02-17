@@ -112,13 +112,11 @@ contract OverlayV1Market is IOverlayV1Market {
         feeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
-        // TODO: test
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(mid(data, 0, 0) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
 
         // check risk params valid
-        // TODO: test
         require(
             params.capLeverage <= ONE.divDown(2 * params.delta + params.maintenanceMarginFraction),
             "OVLV1: max lev immediately liquidatable"
