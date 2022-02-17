@@ -641,7 +641,7 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
 
 @given(is_long=strategy('bool'))
 def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
-                                      ovl, is_long):
+                                      factory, ovl, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -797,7 +797,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 
     # check value less trade fees out (3)
     assert tx.events['Transfer'][2]['from'] == mock_market.address
-    assert tx.events['Transfer'][2]['to'] == mock_market.feeRecipient()
+    assert tx.events['Transfer'][2]['to'] == factory.feeRecipient()
     assert int(tx.events['Transfer'][2]['value']) == approx(expect_liq_fee,
                                                             rel=1e-4)
 
@@ -930,7 +930,7 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
 
 @given(is_long=strategy('bool'))
 def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
-                                              rando, ovl, is_long):
+                                              factory, rando, ovl, is_long):
     # position build attributes
     oi_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1018,7 +1018,7 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     mock_feed.setPrice(price)
 
     # priors actual values
-    recipient = mock_market.feeRecipient()
+    recipient = factory.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(mock_market)
 
@@ -1125,7 +1125,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
     mock_feed.setPrice(price)
 
     # priors actual values
-    recipient = mock_market.feeRecipient()
+    recipient = factory.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(mock_market)
     expect_balance_rando = ovl.balanceOf(rando)

@@ -8,6 +8,11 @@ def test_ovl_fixture(ovl):
     assert ovl.totalSupply() == 8000000000000000000000000
 
 
+def test_factory_fixture(factory, ovl, fee_recipient):
+    assert factory.ovl() == ovl
+    assert factory.feeRecipient() == fee_recipient
+
+
 def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
                       uni):
     assert feed.marketPool() == pool_daiweth_30bps
@@ -32,7 +37,6 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert mock_market.ovl() == ovl
     assert mock_market.feed() == mock_feed
     assert mock_market.factory() == factory
-    assert mock_market.feeRecipient() == factory
 
     # risk params
     assert mock_market.k() == 1220000000000
@@ -73,7 +77,6 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert market.ovl() == ovl
     assert market.feed() == feed
     assert market.factory() == factory
-    assert market.feeRecipient() == factory
 
     # risk params
     assert market.k() == 1220000000000

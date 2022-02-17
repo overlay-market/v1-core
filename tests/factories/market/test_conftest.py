@@ -1,7 +1,10 @@
-def test_factory_fixture(factory, feed_factory, feed_three, ovl, gov,
-                         market, deployer):
+def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
+                         gov, market, deployer):
     # check ovl immutable set
     assert factory.ovl() == ovl
+
+    # check fee recipient set
+    assert factory.feeRecipient() == fee_recipient
 
     # check deployer contract deployed on factory deploy
     assert factory.deployer() != "0x0000000000000000000000000000000000000000"
@@ -53,5 +56,3 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.tradingFeeRate() == 750000000000000
     assert market.minCollateral() == 100000000000000
     assert market.priceDriftUpperLimit() == 100000000000000
-
-    assert market.feeRecipient() == factory

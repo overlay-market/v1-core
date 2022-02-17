@@ -95,6 +95,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // market deployer
     IOverlayV1Deployer public immutable deployer;
 
+    // fee related quantities
+    address public feeRecipient;
+
     // registry of supported feed factories
     mapping(address => bool) public isFeedFactory;
 
@@ -107,6 +110,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // events for factory functions
     event MarketDeployed(address indexed user, address market, address feed);
     event FeedFactoryAdded(address indexed user, address feedFactory);
+    event FeeRecipientUpdated(address indexed user, address recipient);
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
@@ -114,9 +118,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _;
     }
 
-    constructor(address _ovl) {
+    constructor(address _ovl, address _feeRecipient) {
         // set ovl
         ovl = IOverlayV1Token(_ovl);
+
+        // set the fee recipient
+        feeRecipient = _feeRecipient;
 
         // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
@@ -228,8 +235,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         );
     }
 
-    // TODO: function disburse(): should send any trading fees
-    // in factory contract to a trading fee repository
+    /// @dev fee repository setter
+    function setFeeRecipient(address _feeRecipient) external onlyGovernor {
+        require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
+        feeRecipient = _feeRecipient;
+        emit FeeRecipientUpdated(msg.sender, _feeRecipient);
+    }
 
     /// below are per-market risk parameter setters,
     /// adjustable by governance

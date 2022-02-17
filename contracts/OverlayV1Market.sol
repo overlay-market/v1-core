@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
+import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1Feed.sol";
@@ -48,9 +49,6 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public tradingFeeRate; // trading fee charged on build/unwind
     uint256 public minCollateral; // minimum ovl collateral to open position
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
-
-    // fee related quantities
-    address public feeRecipient;
 
     // oi related quantities
     uint256 public oiLong;
@@ -109,13 +107,21 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
-        feeRecipient = _factory; // TODO: disburse trading fees in factory
 
         // initialize update data
-        // TODO: test
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(mid(data, 0, 0) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
+
+        // check risk params valid
+        require(
+            params.capLeverage <= ONE.divDown(2 * params.delta + params.maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
+        require(
+            params.priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            "OVLV1: price drift exceeds max exp"
+        );
 
         // set the gov params
         k = params.k;
@@ -202,7 +208,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transferFrom(msg.sender, address(this), collateral + tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(feeRecipient, tradingFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), tradingFee);
     }
 
     /// @dev unwinds fraction of an existing position
@@ -293,7 +299,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - tradingFee);
 
         // send trading fees to trading fee recipient
-        ovl.transfer(feeRecipient, tradingFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), tradingFee);
     }
 
     /// @dev liquidates a liquidatable position
@@ -368,7 +374,7 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(msg.sender, value - liquidationFee);
 
         // send liquidation fees to trading fee recipient
-        ovl.transfer(feeRecipient, liquidationFee);
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), liquidationFee);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed
@@ -627,7 +633,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev governance adjustable risk parameter setters
     /// @dev min/max bounds checks to risk params imposed at factory level
-    /// TODO: checks that parameters are valid (e.g. mm given spread and capLeverage)
     function setK(uint256 _k) external onlyFactory {
         k = _k;
     }
@@ -636,7 +641,14 @@ contract OverlayV1Market is IOverlayV1Market {
         lmbda = _lmbda;
     }
 
+    /// @dev checks delta won't cause position to be immediately
+    /// @dev liquidatable given current leverage cap (capLeverage) and
+    /// @dev maintenance margin fraction (maintenanceMarginFraction)
     function setDelta(uint256 _delta) external onlyFactory {
+        require(
+            capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         delta = _delta;
     }
 
@@ -648,7 +660,14 @@ contract OverlayV1Market is IOverlayV1Market {
         capOi = _capOi;
     }
 
+    /// @dev checks capLeverage won't cause position to be immediately
+    /// @dev liquidatable given current spread (delta) and
+    /// @dev maintenance margin fraction (maintenanceMarginFraction)
     function setCapLeverage(uint256 _capLeverage) external onlyFactory {
+        require(
+            _capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         capLeverage = _capLeverage;
     }
 
@@ -660,10 +679,17 @@ contract OverlayV1Market is IOverlayV1Market {
         circuitBreakerMintTarget = _circuitBreakerMintTarget;
     }
 
+    /// @dev checks maintenanceMarginFraction won't cause position
+    /// @dev to be immediately liquidatable given current spread (delta)
+    /// @dev and leverage cap (capLeverage)
     function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction)
         external
         onlyFactory
     {
+        require(
+            capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction),
+            "OVLV1: max lev immediately liquidatable"
+        );
         maintenanceMarginFraction = _maintenanceMarginFraction;
     }
 
@@ -686,8 +712,14 @@ contract OverlayV1Market is IOverlayV1Market {
         minCollateral = _minCollateral;
     }
 
+    /// @dev checks priceDriftUpperLimit won't cause pow() call in dataIsValid
+    /// @dev to exceed max
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
-        // TODO: check pow != 0 && pow <= MAX_NATURAL_EXPONENT; pow = drift * data.macroWindow
+        Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+        require(
+            _priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            "OVLV1: price drift exceeds max exp"
+        );
         priceDriftUpperLimit = _priceDriftUpperLimit;
     }
 }

@@ -255,7 +255,7 @@ def test_build_registers_volume(market, feed, ovl, alice, oi, leverage,
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_executes_transfers(market, ovl, alice, oi, leverage,
+def test_build_executes_transfers(market, factory, ovl, alice, oi, leverage,
                                   is_long):
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
@@ -297,7 +297,7 @@ def test_build_executes_transfers(market, ovl, alice, oi, leverage,
 
     # check trade fee out event (2)
     assert tx.events['Transfer'][1]['from'] == market.address
-    assert tx.events['Transfer'][1]['to'] == market.feeRecipient()
+    assert tx.events['Transfer'][1]['to'] == factory.feeRecipient()
     assert int(tx.events['Transfer'][1]['value']) == approx(expect_trade_fee)
 
 
@@ -350,7 +350,7 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, oi,
     oi=strategy('decimal', min_value='0.001', max_value='800000', places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_transfers_trading_fees(market, ovl, alice, oi,
+def test_build_transfers_trading_fees(market, factory, ovl, alice, oi,
                                       leverage, is_long):
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
@@ -371,7 +371,7 @@ def test_build_transfers_trading_fees(market, ovl, alice, oi,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # priors actual values
-    recipient = market.feeRecipient()
+    recipient = factory.feeRecipient()
     expect = ovl.balanceOf(recipient)
 
     # approve market for spending then build

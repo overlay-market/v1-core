@@ -1,5 +1,50 @@
+import pytest
 from brownie import reverts
 from collections import OrderedDict
+
+
+# NOTE: Use isolation fixture to avoid possible revert with max
+# NOTE: lev immediately liquidatable market check
+@pytest.fixture(autouse=True)
+def isolation(fn_isolation):
+    pass
+
+
+# fee recipient tests
+def test_set_fee_recipient(factory, gov, rando):
+    expect_fee_recipient = rando
+
+    # set fee recipient
+    tx = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
+
+    # check fee recipient changed
+    actual_fee_recipient = factory.feeRecipient()
+    assert expect_fee_recipient == actual_fee_recipient
+
+    # check event emitted
+    assert 'FeeRecipientUpdated' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "recipient": rando
+    })
+    actual_event = tx.events['FeeRecipientUpdated']
+    assert actual_event == expect_event
+
+
+def test_set_fee_recipient_reverts_when_not_gov(factory, alice):
+    expect_fee_recipient = alice
+
+    # check can't set fee recipient with non gov account
+    with reverts("OVLV1: !governor"):
+        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": alice})
+
+
+def test_set_fee_recipient_reverts_when_zero_address(factory, gov):
+    expect_fee_recipient = "0x0000000000000000000000000000000000000000"
+
+    # check can't set fee recipient as zero address
+    with reverts("OVLV1: feeRecipient should not be zero address"):
+        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
 
 
 # k tests
@@ -362,6 +407,12 @@ def test_set_cap_leverage_reverts_when_greater_than_max(factory, market, gov):
     feed = market.feed()
     expect_cap_leverage = factory.MAX_CAP_LEVERAGE() + 1
 
+    # NOTE: set the maintenanceMarginFraction and delta to minimum values
+    # NOTE: to avoid revert on market setter check
+    factory.setDelta(feed, factory.MIN_DELTA(), {"from": gov})
+    factory.setMaintenanceMarginFraction(
+        feed, factory.MIN_MAINTENANCE_MARGIN_FRACTION(), {"from": gov})
+
     # check can't set capLeverage greater than max
     with reverts("OVLV1: capLeverage out of bounds"):
         _ = factory.setCapLeverage(feed, expect_cap_leverage, {"from": gov})
@@ -569,6 +620,11 @@ def test_set_maintenance_margin_reverts_when_greater_than_max(factory, market,
                                                               gov):
     feed = market.feed()
     expect_maintenance_margin = factory.MAX_MAINTENANCE_MARGIN_FRACTION() + 1
+
+    # NOTE: set the capLeverage and delta to minimum values
+    # NOTE: to avoid revert on market setter check
+    factory.setDelta(feed, factory.MIN_DELTA(), {"from": gov})
+    factory.setCapLeverage(feed, factory.MIN_CAP_LEVERAGE(), {"from": gov})
 
     # check can't set maintenanceMarginFraction greater than max
     with reverts("OVLV1: maintenanceMarginFraction out of bounds"):

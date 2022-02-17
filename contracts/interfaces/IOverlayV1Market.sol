@@ -43,9 +43,6 @@ interface IOverlayV1Market {
 
     function priceDriftUpperLimit() external view returns (uint256);
 
-    // fee related quantities
-    function feeRecipient() external view returns (address);
-
     // oi related quantities
     function oiLong() external view returns (uint256);
 

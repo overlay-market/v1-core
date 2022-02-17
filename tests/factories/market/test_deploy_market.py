@@ -97,9 +97,6 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.priceDriftUpperLimit() == \
         expect_price_drift_upper_limit
 
-    # check fee recipient is factory
-    assert market_contract.feeRecipient() == factory
-
     # check update last timestamp is last block's
     assert market_contract.timestampUpdateLast() \
         == chain[tx.block_number]['timestamp']
@@ -913,7 +910,10 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     expect_cap_payoff = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
-    expect_maintenance_margin_fraction = 100000000000000000
+    # NOTE: set maintenanceMarginFraction to min to avoid market
+    # NOTE: setter check revert
+    expect_maintenance_margin_fraction = \
+        factory.MIN_MAINTENANCE_MARGIN_FRACTION()
     expect_maintenance_margin_burn_rate = 100000000000000000
     expect_liquidation_fee_rate = 10000000000000000
     expect_trading_fee_rate = 750000000000000
@@ -1233,7 +1233,8 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_delta = 2500000000000000
     expect_cap_oi = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_leverage = 5000000000000000000
+    # NOTE: set cap leverage to min to avoid market setter check revert
+    expect_cap_leverage = factory.MIN_CAP_LEVERAGE()
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
     expect_maintenance_margin_burn_rate = 100000000000000000
