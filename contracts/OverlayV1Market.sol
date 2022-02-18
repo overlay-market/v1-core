@@ -512,9 +512,9 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev bound on notional cap from circuit breaker
     /// @dev Three cases:
-    /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return capOi
+    /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return cap
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
-    /// @dev 3. minted between 1x and 2x target amount: return capOi * (2 - minted/target)
+    /// @dev 3. minted between 1x and 2x target amount: return cap * (2 - minted/target)
     function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
         public
         view
