@@ -354,13 +354,13 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // value is the remaining position margin. reduce value further by
         // the mm burn rate, as insurance for cases when not liquidated in time
-        value -= value.mulUp(maintenanceMarginBurnRate);
+        value -= value.mulDown(maintenanceMarginBurnRate);
 
         // register the amount to be burned
         _registerMint(int256(value) - int256(cost));
 
         // calculate the liquidation fee as % on remaining value
-        uint256 liquidationFee = value.mulUp(liquidationFeeRate);
+        uint256 liquidationFee = value.mulDown(liquidationFeeRate);
 
         // subtract liquidated open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
@@ -453,43 +453,55 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev current open interest after funding payments transferred
     /// @dev from overweight oi side to underweight oi side
     function oiAfterFunding(
-        uint256 oiOverweight,
-        uint256 oiUnderweight,
+        uint256 oiOverweightBefore,
+        uint256 oiUnderweightBefore,
         uint256 timeElapsed
     ) public view returns (uint256, uint256) {
-        uint256 oiTotalBefore = oiOverweight + oiUnderweight;
-        uint256 oiImbalanceBefore = oiOverweight - oiUnderweight;
+        uint256 oiTotalBefore = oiOverweightBefore + oiUnderweightBefore;
+        uint256 oiImbalanceBefore = oiOverweightBefore - oiUnderweightBefore;
 
         // If no OI, no funding occurs. Handles div by zero case below
         // TODO: test
         if (oiTotalBefore == 0) {
-            return (oiOverweight, oiUnderweight);
+            return (oiOverweightBefore, oiUnderweightBefore);
         }
 
         // draw down the imbalance by factor of e**(-2*k*t)
-        // min to zero if pow exceeds MAX_NATURAL_EXPONENT
+        // but min to zero if pow exceeds MAX_NATURAL_EXPONENT
         // TODO: test
         uint256 pow = 2 * k * timeElapsed;
         uint256 oiImbalanceNow;
         if (pow <= MAX_NATURAL_EXPONENT) {
-            oiImbalanceNow = oiImbalanceBefore.mulUp(INVERSE_EULER.powUp(pow));
+            // oiImbalanceNow guaranteed <= oiImbalanceBefore
+            oiImbalanceNow = oiImbalanceBefore.mulDown(INVERSE_EULER.powDown(pow));
         }
 
         // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
-        // OI(t) = OI(0) * sqrt( 1 - [ (OI_imb(0)/OI(0))**2 - (OI_imb(t)/OI(0))**2 ] )
+        // OI(t) = OI(0) * sqrt( 1 - (OI_imb(0)/OI(0))**2 * (1 - e**(-4*k*t)) )
         // TODO: test
-        uint256 ratioImbBefore = oiImbalanceBefore.divUp(oiTotalBefore);
-        uint256 ratioImbNow = oiImbalanceNow.divUp(oiTotalBefore);
-        uint256 underRoot = ONE + ratioImbNow.powDown(2 * ONE);
-        // min to zero to be safe in case of rounding issues
-        underRoot -= Math.min(underRoot, ratioImbBefore.powDown(2 * ONE));
-        uint256 oiTotalNow = oiTotalBefore.mulUp(underRoot.powUp(ONE / 2));
+
+        // Guaranteed 0 <= underRoot <= 1
+        uint256 underRoot = ONE -
+            oiImbalanceBefore.divDown(oiTotalBefore).powDown(2 * ONE).mulDown(
+                ONE - INVERSE_EULER.powDown(2 * pow)
+            );
+
+        // oiTotalNow guaranteed <= oiTotalBefore (burn happens)
+        uint256 oiTotalNow = oiTotalBefore.mulDown(underRoot.powDown(ONE / 2));
 
         // overweight pays underweight
-        oiOverweight = (oiTotalNow + oiImbalanceNow) / 2;
-        oiUnderweight = (oiTotalNow - oiImbalanceNow) / 2;
-        return (oiOverweight, oiUnderweight);
+        // use oiOver * oiUnder = invariant for oiUnderNow to avoid any
+        // potential overflow reverts
+        // TODO: test
+        uint256 oiOverweightNow = (oiTotalNow + oiImbalanceNow) / 2;
+        uint256 oiUnderweightNow;
+        if (oiOverweightNow != 0) {
+            oiUnderweightNow = oiUnderweightBefore.mulUp(oiOverweightBefore).divUp(
+                oiOverweightNow
+            );
+        }
+        return (oiOverweightNow, oiUnderweightNow);
     }
 
     /// @return next position id
@@ -524,12 +536,12 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
         if (minted <= int256(_circuitBreakerMintTarget)) {
             return cap;
-        } else if (minted >= 2 * int256(_circuitBreakerMintTarget)) {
+        } else if (uint256(minted).divDown(_circuitBreakerMintTarget) >= 2 * ONE) {
             return 0;
         }
 
         // case 3 (circuit breaker adjustment downward)
-        uint256 adjustment = (2 * ONE).sub(uint256(minted).divDown(_circuitBreakerMintTarget));
+        uint256 adjustment = 2 * ONE - uint256(minted).divDown(_circuitBreakerMintTarget);
         return cap.mulDown(adjustment);
     }
 

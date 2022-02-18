@@ -102,15 +102,19 @@ library Position {
     ) internal pure returns (uint256) {
         uint256 posOiShares = oiSharesCurrent(self, fraction);
         if (posOiShares == 0 || totalOi == 0) return 0;
-        return posOiShares.mulDown(totalOi).divUp(totalOiShares);
+        return posOiShares.mulDown(totalOi).divDown(totalOiShares);
     }
 
     /// @notice Computes the position's cost cast to uint256
-    /// WARNING: be careful modifying oi and debt on unwind
+    /// WARNING: be careful modifying notional and debt on unwind
     function cost(Info memory self, uint256 fraction) internal pure returns (uint256) {
         uint256 posNotionalInitial = notionalInitial(self, fraction);
         uint256 posDebt = debtCurrent(self, fraction);
-        return posNotionalInitial - posDebt;
+
+        // should always be > 0 but use Math.min to be safe w reverts
+        uint256 posCost = posNotionalInitial;
+        posCost -= Math.min(posCost, posDebt);
+        return posCost;
     }
 
     /// @notice Computes the value of a position
@@ -138,9 +142,9 @@ library Position {
             // NOTE: capPayoff >= 1, so no need to include w short
             // oi * entryPrice - debt - oi * (currentPrice - entryPrice)
             // = 2 * oi * entryPrice - [ debt + oi * currentPrice ]
-            val_ = posOi.mulDown(2 * entryPrice);
+            val_ = posOi.mulUp(2 * entryPrice);
             // floor to 0
-            val_ -= Math.min(val_, posDebt + posOi.mulUp(currentPrice));
+            val_ -= Math.min(val_, posDebt + posOi.mulDown(currentPrice));
         }
     }
 
@@ -177,7 +181,7 @@ library Position {
             currentPrice,
             capPayoff
         );
-        tradingFee_ = posNotional.mulUp(tradingFeeRate);
+        tradingFee_ = posNotional.mulDown(tradingFeeRate);
     }
 
     /// @notice Whether a position can be liquidated
@@ -199,7 +203,7 @@ library Position {
         }
 
         uint256 val = value(self, fraction, totalOi, totalOiShares, currentPrice, capPayoff);
-        uint256 maintenanceMargin = posNotionalInitial.mulUp(maintenanceMarginFraction);
+        uint256 maintenanceMargin = posNotionalInitial.mulDown(maintenanceMarginFraction);
         can_ = val < maintenanceMargin;
     }
 
@@ -223,7 +227,7 @@ library Position {
 
         if (self.isLong) {
             // liqPrice = (debt + mm * notionalInitial) / oiCurrent
-            liqPrice_ = posNotionalInitial.mulUp(maintenanceMarginFraction).add(posDebt).divDown(
+            liqPrice_ = posNotionalInitial.mulDown(maintenanceMarginFraction).add(posDebt).divDown(
                 posOiCurrent
             );
         } else {
@@ -232,7 +236,7 @@ library Position {
             // floor to zero
             liqPrice_ -= Math.min(
                 liqPrice_,
-                posNotionalInitial.mulUp(maintenanceMarginFraction).add(posDebt).divDown(
+                posNotionalInitial.mulDown(maintenanceMarginFraction).add(posDebt).divDown(
                     posOiCurrent
                 )
             );
