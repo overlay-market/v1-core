@@ -20,8 +20,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_DELTA = 2e16; // 2% (200 bps)
     uint256 public constant MIN_CAP_PAYOFF = 1e18; // 1x
     uint256 public constant MAX_CAP_PAYOFF = 1e19; // 10x
-    uint256 public constant MIN_CAP_OI = 0; // 0 OVL
-    uint256 public constant MAX_CAP_OI = 8e24; // 8,000,000 OVL (initial supply)
+    uint256 public constant MIN_CAP_NOTIONAL = 0; // 0 OVL
+    uint256 public constant MAX_CAP_NOTIONAL = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_CAP_LEVERAGE = 1e18; // 1x
     uint256 public constant MAX_CAP_LEVERAGE = 2e19; // 20x
     uint256 public constant MIN_CIRCUIT_BREAKER_WINDOW = 86400; // 1 day
@@ -46,7 +46,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     event ImpactUpdated(address indexed user, address indexed market, uint256 lmbda);
     event SpreadUpdated(address indexed user, address indexed market, uint256 delta);
     event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
-    event OpenInterestCapUpdated(address indexed user, address indexed market, uint256 capOi);
+    event NotionalCapUpdated(address indexed user, address indexed market, uint256 capNotional);
     event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
     event CircuitBreakerWindowUpdated(
         address indexed user,
@@ -185,9 +185,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
             params.capPayoff >= MIN_CAP_PAYOFF && params.capPayoff <= MAX_CAP_PAYOFF,
             "OVLV1: capPayoff out of bounds"
         );
+        // TODO: test
         require(
-            params.capOi >= MIN_CAP_OI && params.capOi <= MAX_CAP_OI,
-            "OVLV1: capOi out of bounds"
+            params.capNotional >= MIN_CAP_NOTIONAL && params.capNotional <= MAX_CAP_NOTIONAL,
+            "OVLV1: capNotional out of bounds"
         );
         require(
             params.capLeverage >= MIN_CAP_LEVERAGE && params.capLeverage <= MAX_CAP_LEVERAGE,
@@ -280,12 +281,16 @@ contract OverlayV1Factory is IOverlayV1Factory {
         emit PayoffCapUpdated(msg.sender, address(market), capPayoff);
     }
 
-    /// @dev oi cap setter
-    function setCapOi(address feed, uint256 capOi) external onlyGovernor {
-        require(capOi >= MIN_CAP_OI && capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
+    /// @dev notional cap setter
+    // TODO: test
+    function setCapNotional(address feed, uint256 capNotional) external onlyGovernor {
+        require(
+            capNotional >= MIN_CAP_NOTIONAL && capNotional <= MAX_CAP_NOTIONAL,
+            "OVLV1: capNotional out of bounds"
+        );
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
-        market.setCapOi(capOi);
-        emit OpenInterestCapUpdated(msg.sender, address(market), capOi);
+        market.setCapNotional(capNotional);
+        emit NotionalCapUpdated(msg.sender, address(market), capNotional);
     }
 
     /// @dev initial leverage cap setter

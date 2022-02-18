@@ -86,7 +86,7 @@ contract PositionMock {
         return pos.value(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
     }
 
-    function notional(
+    function notionalCurrent(
         Position.Info memory pos,
         uint256 fraction,
         uint256 totalOi,
@@ -94,7 +94,7 @@ contract PositionMock {
         uint256 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.notional(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
+        return pos.notionalCurrent(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
     }
 
     function tradingFee(

@@ -24,9 +24,9 @@ interface IOverlayV1Factory {
 
     function MAX_CAP_PAYOFF() external view returns (uint256);
 
-    function MIN_CAP_OI() external view returns (uint256);
+    function MIN_CAP_NOTIONAL() external view returns (uint256);
 
-    function MAX_CAP_OI() external view returns (uint256);
+    function MAX_CAP_NOTIONAL() external view returns (uint256);
 
     function MIN_CAP_LEVERAGE() external view returns (uint256);
 
@@ -100,7 +100,7 @@ interface IOverlayV1Factory {
 
     function setCapPayoff(address feed, uint256 capPayoff) external;
 
-    function setCapOi(address feed, uint256 capOi) external;
+    function setCapNotional(address feed, uint256 capNotional) external;
 
     function setCapLeverage(address feed, uint256 capLeverage) external;
 

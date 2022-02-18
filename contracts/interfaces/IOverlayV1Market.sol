@@ -23,7 +23,7 @@ interface IOverlayV1Market {
 
     function capPayoff() external view returns (uint256);
 
-    function capOi() external view returns (uint256);
+    function capNotional() external view returns (uint256);
 
     function capLeverage() external view returns (uint256);
 
@@ -127,9 +127,9 @@ interface IOverlayV1Market {
     // next position id
     function nextPositionId() external view returns (uint256);
 
-    // current open interest cap with adjustments for circuit breaker if market has
+    // current notional cap with adjustments for circuit breaker if market has
     // printed a lot in recent past
-    function capOiAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
+    function capNotionalAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
 
     // bound on open interest cap from circuit breaker
     function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
@@ -137,9 +137,9 @@ interface IOverlayV1Market {
         view
         returns (uint256);
 
-    // current open interest cap with adjustments to prevent front-running
+    // current notional cap with adjustments to prevent front-running
     // trade and back-running trade
-    function capOiAdjustedForBounds(Oracle.Data memory data, uint256 cap)
+    function capNotionalAdjustedForBounds(Oracle.Data memory data, uint256 cap)
         external
         view
         returns (uint256);
@@ -149,6 +149,9 @@ interface IOverlayV1Market {
 
     // bound on open interest cap to mitigate back-running attack
     function backRunBound(Oracle.Data memory data) external view returns (uint256);
+
+    // transforms notional cap into cap on number of contracts (open interest)
+    function capOi(Oracle.Data memory data, uint256 capNotional) external view returns (uint256);
 
     // bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) external view returns (uint256 bid_);
@@ -172,7 +175,7 @@ interface IOverlayV1Market {
 
     function setCapPayoff(uint256 _capPayoff) external;
 
-    function setCapOi(uint256 _capOi) external;
+    function setCapNotional(uint256 _capNotional) external;
 
     function setCapLeverage(uint256 _capLeverage) external;
 
