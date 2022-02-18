@@ -185,7 +185,6 @@ contract OverlayV1Factory is IOverlayV1Factory {
             params.capPayoff >= MIN_CAP_PAYOFF && params.capPayoff <= MAX_CAP_PAYOFF,
             "OVLV1: capPayoff out of bounds"
         );
-        // TODO: test
         require(
             params.capNotional >= MIN_CAP_NOTIONAL && params.capNotional <= MAX_CAP_NOTIONAL,
             "OVLV1: capNotional out of bounds"
@@ -282,7 +281,6 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @dev notional cap setter
-    // TODO: test
     function setCapNotional(address feed, uint256 capNotional) external onlyGovernor {
         require(
             capNotional >= MIN_CAP_NOTIONAL && capNotional <= MAX_CAP_NOTIONAL,

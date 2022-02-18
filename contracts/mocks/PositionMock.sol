@@ -62,6 +62,14 @@ contract PositionMock {
         return pos.oiInitial(fraction);
     }
 
+    function notionalInitial(Position.Info memory pos, uint256 fraction)
+        external
+        view
+        returns (uint256)
+    {
+        return pos.notionalInitial(fraction);
+    }
+
     function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
         return pos.cost(fraction);
     }
