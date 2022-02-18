@@ -46,7 +46,7 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.lmbda() == 1000000000000000000
     assert market.delta() == 2500000000000000
     assert market.capPayoff() == 5000000000000000000
-    assert market.capOi() == 800000000000000000000000
+    assert market.capNotional() == 800000000000000000000000
     assert market.capLeverage() == 5000000000000000000
     assert market.circuitBreakerWindow() == 2592000
     assert market.circuitBreakerMintTarget() == 66670000000000000000000

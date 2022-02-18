@@ -303,56 +303,56 @@ def test_set_cap_payoff_reverts_when_greater_than_max(factory, market, gov):
     assert actual_cap_payoff == expect_cap_payoff
 
 
-# capOi tests
-def test_set_cap_oi(factory, market, gov):
+# capNotional tests
+def test_set_cap_notional(factory, market, gov):
     feed = market.feed()
-    expect_cap_oi = 700000000000000000000
+    expect_cap_notional = 700000000000000000000
 
-    # set capOi
-    tx = factory.setCapOi(feed, expect_cap_oi, {"from": gov})
+    # set capNotional
+    tx = factory.setCapNotional(feed, expect_cap_notional, {"from": gov})
 
-    # check capOi changed
-    actual_cap_oi = market.capOi()
-    assert expect_cap_oi == actual_cap_oi
+    # check capNotional changed
+    actual_cap_notional = market.capNotional()
+    assert expect_cap_notional == actual_cap_notional
 
     # check event emitted
-    assert 'OpenInterestCapUpdated' in tx.events
+    assert 'NotionalCapUpdated' in tx.events
     expect_event = OrderedDict({
         "user": gov,
         "market": market,
-        "capOi": expect_cap_oi
+        "capNotional": expect_cap_notional
     })
-    actual_event = tx.events['OpenInterestCapUpdated']
+    actual_event = tx.events['NotionalCapUpdated']
     assert actual_event == expect_event
 
 
-def test_set_cap_oi_reverts_when_not_gov(factory, market, alice):
+def test_set_cap_notional_reverts_when_not_gov(factory, market, alice):
     feed = market.feed()
-    expect_cap_oi = 700000000000000000000
+    expect_cap_notional = 700000000000000000000
 
-    # check can't set capOi with non gov account
+    # check can't set capNotional with non gov account
     with reverts("OVLV1: !governor"):
-        _ = factory.setCapOi(feed, expect_cap_oi, {"from": alice})
+        _ = factory.setCapNotional(feed, expect_cap_notional, {"from": alice})
 
 
-# NOTE: don't have test_set_cap_oi_reverts_when_less_than_min because
-# MIN_CAP_OI is zero
+# NOTE: don't have test_set_cap_notional_reverts_when_less_than_min because
+# MIN_CAP_NOTIONAL is zero
 
 
-def test_set_cap_oi_reverts_when_greater_than_max(factory, market, gov):
+def test_set_cap_notional_reverts_when_greater_than_max(factory, market, gov):
     feed = market.feed()
-    expect_cap_oi = factory.MAX_CAP_OI() + 1
+    expect_cap_notional = factory.MAX_CAP_NOTIONAL() + 1
 
-    # check can't set capOi greater than max
-    with reverts("OVLV1: capOi out of bounds"):
-        _ = factory.setCapOi(feed, expect_cap_oi, {"from": gov})
+    # check can't set capNotional greater than max
+    with reverts("OVLV1: capNotional out of bounds"):
+        _ = factory.setCapNotional(feed, expect_cap_notional, {"from": gov})
 
-    # check can set capOi when equal to max
-    expect_cap_oi = factory.MAX_CAP_OI()
-    factory.setCapOi(feed, expect_cap_oi, {"from": gov})
+    # check can set capNotional when equal to max
+    expect_cap_notional = factory.MAX_CAP_NOTIONAL()
+    factory.setCapNotional(feed, expect_cap_notional, {"from": gov})
 
-    actual_cap_oi = market.capOi()
-    assert actual_cap_oi == expect_cap_oi
+    actual_cap_notional = market.capNotional()
+    assert actual_cap_notional == expect_cap_notional
 
 
 # capLeverage tests
