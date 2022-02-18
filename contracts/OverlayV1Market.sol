@@ -230,8 +230,8 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = update();
 
         // cache for gas savings
-        uint256 totalOi = pos.isLong ? oiLong : oiShort;
-        uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
+        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
 
         // longs get the bid and shorts get the ask on unwind
         // register the additional volume on either the ask or bid
@@ -246,7 +246,7 @@ contract OverlayV1Market is IOverlayV1Market {
                 data,
                 _registerVolumeBid(
                     data,
-                    pos.oiCurrent(fraction, totalOi, totalOiShares),
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
                     capOi(data, capNotionalAdjustedForBounds(data, capNotional))
                 )
             )
@@ -254,7 +254,7 @@ contract OverlayV1Market is IOverlayV1Market {
                 data,
                 _registerVolumeAsk(
                     data,
-                    pos.oiCurrent(fraction, totalOi, totalOiShares),
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
                     capOi(data, capNotionalAdjustedForBounds(data, capNotional))
                 )
             );
@@ -263,7 +263,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, totalOi, totalOiShares, price, capPayoff);
+        uint256 value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
         uint256 cost = pos.cost(fraction);
 
         // register the amount to be minted/burned
@@ -273,8 +273,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // calculate the trading fee as % on notional
         uint256 tradingFee = pos.tradingFee(
             fraction,
-            totalOi,
-            totalOiShares,
+            oiTotalOnSide,
+            oiTotalSharesOnSide,
             price,
             capPayoff,
             tradingFeeRate
@@ -285,10 +285,10 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // TODO: test
         if (pos.isLong) {
-            oiLong -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiLong -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
             oiLongShares -= pos.oiSharesCurrent(fraction);
         } else {
-            oiShort -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiShort -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
             oiShortShares -= pos.oiSharesCurrent(fraction);
         }
 
@@ -325,8 +325,8 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = update();
 
         // cache for gas savings
-        uint256 totalOi = pos.isLong ? oiLong : oiShort;
-        uint256 totalOiShares = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
+        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
         uint256 _capPayoff = capPayoff;
 
         // entire position should be liquidated
@@ -343,13 +343,19 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // check position is liquidatable
         require(
-            pos.liquidatable(totalOi, totalOiShares, price, _capPayoff, maintenanceMarginFraction),
+            pos.liquidatable(
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
+                price,
+                _capPayoff,
+                maintenanceMarginFraction
+            ),
             "OVLV1:!liquidatable"
         );
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, totalOi, totalOiShares, price, _capPayoff);
+        uint256 value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, _capPayoff);
         uint256 cost = pos.cost(fraction);
 
         // value is the remaining position margin. reduce value further by
@@ -366,10 +372,10 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // TODO: test
         if (pos.isLong) {
-            oiLong -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiLong -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
             oiLongShares -= pos.oiSharesCurrent(fraction);
         } else {
-            oiShort -= pos.oiCurrent(fraction, totalOi, totalOiShares);
+            oiShort -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
             oiShortShares -= pos.oiSharesCurrent(fraction);
         }
 

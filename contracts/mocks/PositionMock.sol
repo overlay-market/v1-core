@@ -77,39 +77,46 @@ contract PositionMock {
     function oiCurrent(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide
     ) external view returns (uint256) {
-        return pos.oiCurrent(fraction, totalOi, totalOiShares);
+        return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
     function value(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.value(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
+        return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
     function notionalCurrent(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.notionalCurrent(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
+        return
+            pos.notionalCurrent(
+                fraction,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
+                currentPrice,
+                capPayoff
+            );
     }
 
     function tradingFee(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
         uint256 tradingFeeRate
@@ -117,8 +124,8 @@ contract PositionMock {
         return
             pos.tradingFee(
                 fraction,
-                totalOi,
-                totalOiShares,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
                 currentPrice,
                 capPayoff,
                 tradingFeeRate
@@ -127,16 +134,16 @@ contract PositionMock {
 
     function liquidatable(
         Position.Info memory pos,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
         uint256 maintenanceMarginFraction
     ) external view returns (bool) {
         return
             pos.liquidatable(
-                totalOi,
-                totalOiShares,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
                 currentPrice,
                 capPayoff,
                 maintenanceMarginFraction
@@ -145,10 +152,10 @@ contract PositionMock {
 
     function liquidationPrice(
         Position.Info memory pos,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 maintenanceMarginFraction
     ) external view returns (uint256) {
-        return pos.liquidationPrice(totalOi, totalOiShares, maintenanceMarginFraction);
+        return pos.liquidationPrice(oiTotalOnSide, oiTotalSharesOnSide, maintenanceMarginFraction);
     }
 }
