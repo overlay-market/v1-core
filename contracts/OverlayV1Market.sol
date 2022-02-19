@@ -25,7 +25,8 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
 
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
-    uint256 internal constant MAX_NATURAL_EXPONENT = 41e18;
+    // using ~ 1/2 library max for substantial padding
+    uint256 internal constant MAX_NATURAL_EXPONENT = 20e18;
     uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
     uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
@@ -119,7 +120,7 @@ contract OverlayV1Market is IOverlayV1Market {
             "OVLV1: max lev immediately liquidatable"
         );
         require(
-            params.priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            params.priceDriftUpperLimit * data.macroWindow < MAX_NATURAL_EXPONENT,
             "OVLV1: price drift exceeds max exp"
         );
 
@@ -467,30 +468,28 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 oiImbalanceBefore = oiOverweightBefore - oiUnderweightBefore;
 
         // If no OI, no funding occurs. Handles div by zero case below
-        // TODO: test
         if (oiTotalBefore == 0) {
             return (oiOverweightBefore, oiUnderweightBefore);
         }
 
         // draw down the imbalance by factor of e**(-2*k*t)
-        // but min to zero if pow exceeds MAX_NATURAL_EXPONENT
+        // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
         // TODO: test
-        uint256 pow = 2 * k * timeElapsed;
-        uint256 oiImbalanceNow;
-        if (pow <= MAX_NATURAL_EXPONENT) {
-            // oiImbalanceNow guaranteed <= oiImbalanceBefore
-            oiImbalanceNow = oiImbalanceBefore.mulDown(INVERSE_EULER.powDown(pow));
+        uint256 fundingFactor;
+        if (2 * k * timeElapsed < MAX_NATURAL_EXPONENT) {
+            fundingFactor = INVERSE_EULER.powDown(2 * k * timeElapsed);
         }
+        // oiImbalanceNow guaranteed <= oiImbalanceBefore
+        uint256 oiImbalanceNow = oiImbalanceBefore.mulDown(fundingFactor);
 
         // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
         // OI(t) = OI(0) * sqrt( 1 - (OI_imb(0)/OI(0))**2 * (1 - e**(-4*k*t)) )
-        // TODO: test
 
         // Guaranteed 0 <= underRoot <= 1
         uint256 underRoot = ONE -
             oiImbalanceBefore.divDown(oiTotalBefore).powDown(2 * ONE).mulDown(
-                ONE - INVERSE_EULER.powDown(2 * pow)
+                ONE - fundingFactor.powDown(2 * ONE)
             );
 
         // oiTotalNow guaranteed <= oiTotalBefore (burn happens)
@@ -603,7 +602,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
-        require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
+        require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
     }
@@ -614,7 +613,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // add static spread (delta) and market impact (lmbda * volume)
         uint256 pow = delta + lmbda.mulUp(volume);
-        require(pow <= MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
+        require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         ask_ = ask_.mulUp(EULER.powUp(pow));
     }
@@ -779,7 +778,7 @@ contract OverlayV1Market is IOverlayV1Market {
     function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external onlyFactory {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(
-            _priceDriftUpperLimit * data.macroWindow <= MAX_NATURAL_EXPONENT,
+            _priceDriftUpperLimit * data.macroWindow < MAX_NATURAL_EXPONENT,
             "OVLV1: price drift exceeds max exp"
         );
         priceDriftUpperLimit = _priceDriftUpperLimit;
