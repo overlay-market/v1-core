@@ -8,7 +8,6 @@ def test_cap_notional_front_run_bound(market, feed):
     data = feed.latest()
 
     # NOTE: assumes using UniswapV3 feed with hasReserve = true
-    # TODO: generalize for any feed
     _, _, _, _, _, _, reserve_micro, _ = data
 
     # check front run bound is lmbda * reserveOverMicro when has reserve
@@ -22,11 +21,11 @@ def test_cap_notional_back_run_bound(market, feed):
     data = feed.latest()
 
     # NOTE: assumes using UniswapV3 feed with hasReserve = true
-    # TODO: generalize for any feed
     average_block_time = 14
     _, _, macro_window, _, _, _, reserve_micro, _ = data
 
-    # check front run bound is lmbda * reserveOverMicro / 2 when has reserve
+    # check back run bound is macroWindowInBlocks * reserveInOvl * 2 * delta
+    # when has reserve
     window = Decimal(macro_window) / Decimal(average_block_time)
     expect = int(Decimal(2) * delta * Decimal(reserve_micro) * window)
     actual = market.backRunBound(data)
@@ -139,4 +138,15 @@ def test_cap_notional_adjusted_for_circuit_breaker(market, feed):
     assert actual == expect
 
 
-# TODO: test_cap_oi
+def test_cap_oi(market, feed):
+    cap_notional = market.capNotional()
+    data = feed.latest()
+
+    # oi cap should be cap notional / mid, with zero volume assumption on
+    # mid so cap is dependent on only underlying feed price
+    mid = market.mid(data, 0, 0)
+    cap_oi = Decimal(cap_notional) / Decimal(mid)
+
+    expect = int(cap_oi * Decimal(1e18))
+    actual = market.capOi(data, cap_notional)
+    assert int(actual) == approx(expect)

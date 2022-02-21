@@ -100,7 +100,6 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
-    # TODO: build() should take in OI amount to ultimately have
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     pos = market.positions(pos_key)

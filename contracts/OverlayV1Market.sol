@@ -512,7 +512,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev current notional cap with adjustments to lower
     /// @dev cap in the event market has printed a lot in recent past
-    // TODO: test
     function capNotionalAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
@@ -548,7 +547,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev current notional cap with adjustments to prevent
     /// @dev front-running trade and back-running trade
-    // TODO: test
     function capNotionalAdjustedForBounds(Oracle.Data memory data, uint256 cap)
         public
         view
@@ -566,13 +564,12 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev bound on notional cap to mitigate front-running attack
     /// @dev bound = lmbda * reserveInOvl
-    // TODO: test
     function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
         return lmbda.mulDown(data.reserveOverMicroWindow);
     }
 
     /// @dev bound on notional cap to mitigate back-running attack
-    /// @dev bound = macroWindow * reserveInOvl * 2 * delta
+    /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         // TODO: macroWindow should be in blocks in current spec. What to do here to be
         // futureproof vs having an average block time constant (BAD)
@@ -582,7 +579,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev Transforms notional cap into cap on number of contracts (open interest)
     /// @dev Uses mid(data, 0, 0) price to calculate current open interest cap: C_OI = C_Q / P
-    /// TODO: test
     function capOi(Oracle.Data memory data, uint256 capNotionalAdjusted)
         public
         view
