@@ -18,6 +18,7 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     expect_pos_id = market.nextPositionId()
 
     # build attributes
+    # TODO: oi => notional
     oi = Decimal(100)
     leverage = Decimal(1.5)
 
@@ -31,9 +32,11 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
 
     # calculate expected entry price
     # NOTE: ask(), bid() tested in test_price.py
+    # NOTE: capNotional(), capOi() tested in test_oi_cap.py
     data = feed.latest()
-    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
-    volume = int((oi / cap_oi) * Decimal(1e18))
+    cap_notional = Decimal(market.capNotionalAdjustedForBounds(
+        data, market.capNotional())) / Decimal(1e18)
+    volume = int((oi / cap_notional) * Decimal(1e18))
     price = market.ask(data, volume) if is_long else market.bid(data, volume)
 
     # input values for tx
@@ -68,7 +71,7 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
 def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
                                              is_long):
     # build attributes
-    oi = Decimal(100)
+    notional = Decimal(100)
     leverage = Decimal(1.5)
 
     # tolerance
@@ -79,8 +82,8 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    collateral, oi, debt, trade_fee \
-        = calculate_position_info(oi, leverage, trading_fee_rate)
+    collateral, notional, debt, trade_fee \
+        = calculate_position_info(notional, leverage, trading_fee_rate)
 
     # input values for tx
     input_collateral = int((collateral) * Decimal(1e18))
@@ -97,10 +100,20 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    # TODO: build() should take in OI amount to ultimately have
+    # get position info
+    pos_key = get_position_key(alice.address, pos_id)
+    pos = market.positions(pos_key)
+    (actual_notional, _, _, _, actual_entry_price) = pos
+    oi = Decimal(actual_notional) / Decimal(actual_entry_price)
+
     # calculate expected exit price
     # NOTE: ask(), bid() tested in test_price.py
+    # NOTE: capNotional(), capOi() tested in test_oi_cap.py
     data = feed.latest()
-    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi())/1e18)
+    cap_notional = Decimal(market.capNotionalAdjustedForBounds(
+        data, market.capNotional())) / Decimal(1e18)
+    cap_oi = Decimal(market.capOi(data, cap_notional))
     volume = int((oi / cap_oi) * Decimal(1e18))
     price = market.bid(data, volume) if is_long else market.ask(data, volume)
 
@@ -121,11 +134,11 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
 
     # check all oi shares removed
     expect_pos_key = get_position_key(alice.address, input_pos_id)
-    expect_oi_shares = 0
+    expect_notional = 0
     expect_debt = 0
 
     actual_pos = market.positions(expect_pos_key)
-    (actual_oi_shares, actual_debt, _, _, _) = actual_pos
+    (actual_notional, actual_debt, _, _, _) = actual_pos
 
-    assert expect_oi_shares == actual_oi_shares
+    assert expect_notional == actual_notional
     assert expect_debt == actual_debt

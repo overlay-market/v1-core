@@ -196,3 +196,6 @@ def test_set_price_drift_upper_limit_reverts_when_exceeds_max_exp(
     expect = max_price_drift_upper_limit
     actual = market.priceDriftUpperLimit()
     assert expect == actual
+
+
+# TODO: setter revert tests when not factory

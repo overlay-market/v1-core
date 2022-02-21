@@ -239,8 +239,6 @@ contract OverlayV1Market is IOverlayV1Market {
         // where volume = oi / capOi ~ (notional / P(t)) / (capNotional / P(t))
         // current cap only adjusted for bounds (no circuit breaker so traders
         // don't get stuck in a position)
-        //
-        // TODO: think through capOi vs capNotional
         // TODO: test and check
         uint256 price = pos.isLong
             ? bid(
@@ -334,10 +332,10 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 fraction = ONE;
 
         // longs get the bid and shorts get the ask on liquidate
-        // NOTE: liquidated position's oi should *not* add additional volume to roller
-        // NOTE: since market impact intended to mitigate front-running -- not relevant here
-        // NOTE: Use mid price without volume for liquidation (oracle price effectively) to
-        // NOTE: prevent market impact manipulation from causing unneccessary liquidations
+        // liquidated position's oi should *not* add additional volume to roller
+        // since market impact intended to mitigate front-running -- not relevant here
+        // Use mid price without volume for liquidation (oracle price effectively) to
+        // prevent market impact manipulation from causing unneccessary liquidations
         // TODO: think through mid price usage
         // TODO: test
         uint256 price = mid(data, 0, 0);
@@ -474,7 +472,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // draw down the imbalance by factor of e**(-2*k*t)
         // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
-        // TODO: test
         uint256 fundingFactor;
         if (2 * k * timeElapsed < MAX_NATURAL_EXPONENT) {
             fundingFactor = INVERSE_EULER.powDown(2 * k * timeElapsed);
@@ -498,7 +495,6 @@ contract OverlayV1Market is IOverlayV1Market {
         // overweight pays underweight
         // use oiOver * oiUnder = invariant for oiUnderNow to avoid any
         // potential overflow reverts
-        // TODO: test
         uint256 oiOverweightNow = (oiTotalNow + oiImbalanceNow) / 2;
         uint256 oiUnderweightNow;
         if (oiOverweightNow != 0) {
@@ -716,7 +712,6 @@ contract OverlayV1Market is IOverlayV1Market {
         capPayoff = _capPayoff;
     }
 
-    // TODO: test
     function setCapNotional(uint256 _capNotional) external onlyFactory {
         capNotional = _capNotional;
     }
