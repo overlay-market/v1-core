@@ -14,7 +14,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // risk param bounds
     uint256 public constant MIN_K = 4e8; // ~ 0.1 bps / 8 hr
     uint256 public constant MAX_K = 4e12; // ~ 1000 bps / 8 hr
-    uint256 public constant MIN_LMBDA = 1e17; // 0.1
+    uint256 public constant MIN_LMBDA = 1e16; // 0.01
     uint256 public constant MAX_LMBDA = 1e19; // 10
     uint256 public constant MIN_DELTA = 1e14; // 0.01% (1 bps)
     uint256 public constant MAX_DELTA = 2e16; // 2% (200 bps)
@@ -38,8 +38,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
-    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.0001% per sec (0.01 bps/s)
-    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e16; // 1.00% per sec (100 bps/s)
+    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.01 bps/s
+    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e14; // 1 bps/s
 
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);

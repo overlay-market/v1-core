@@ -932,7 +932,7 @@ def test_set_min_collateral_reverts_when_greater_than_max(factory, market,
 # priceDriftUpperLimit tests
 def test_set_price_drift_upper_limit(factory, market, gov):
     feed = market.feed()
-    expect_price_drift_upper_limit = 700000000000000
+    expect_price_drift_upper_limit = 70000000000000
 
     # set priceDriftUpperLimit
     tx = factory.setPriceDriftUpperLimit(feed, expect_price_drift_upper_limit,
