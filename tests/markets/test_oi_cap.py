@@ -2,6 +2,8 @@ from decimal import Decimal
 from pytest import approx
 from brownie.test import given, strategy
 
+from .utils import mid_from_feed
+
 
 def test_cap_notional_front_run_bound(market, feed):
     lmbda = Decimal(market.lmbda()) / Decimal(1e18)
@@ -144,7 +146,7 @@ def test_oi_from_notional(market, feed):
 
     # oi cap should be cap notional / mid, with zero volume assumption on
     # mid so cap is dependent on only underlying feed price
-    mid = market.mid(data, 0, 0)
+    mid = mid_from_feed(data)
     cap_oi = Decimal(cap_notional) / Decimal(mid)
 
     expect = int(cap_oi * Decimal(1e18))

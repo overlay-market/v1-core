@@ -111,7 +111,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // initialize update data
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
-        require(mid(data, 0, 0) > 0, "OVLV1:!data");
+        require(_midFromFeed(data) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
 
         // check risk params valid
@@ -155,7 +155,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // call to update before any effects
         Oracle.Data memory data = update();
 
-        // calculate notional and oi. fees charged on notional
+        // calculate notional, oi, and trading fees. fees charged on notional
+        // and added to collateral transferred in
         uint256 notional = collateral.mulUp(leverage);
         uint256 oi = oiFromNotional(data, notional);
 
@@ -175,39 +176,52 @@ contract OverlayV1Market is IOverlayV1Market {
         require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
         // add new position's open interest to the side's aggregate oi value
-        // and increase number of oi shares issued
-        // TODO: test
-        if (isLong) {
-            oiLong += oi;
-            oiLongShares += oi;
-            require(oiLong <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
-        } else {
-            oiShort += oi;
-            oiShortShares += oi;
-            require(oiShort <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
-        }
+        // and increase number of oi shares issued. assemble position for storage
+        Position.Info memory pos;
+        // avoids stack too deep
+        {
+            // cache for gas savings
+            uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
+            uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
 
-        // assemble position info data
-        // check position is not immediately liquidatable prior to storing
-        Position.Info memory pos = Position.Info({
-            notional: uint120(notional), // won't overflow as capNotional max is 8e24
-            debt: uint120(notional - collateral),
-            isLong: isLong,
-            liquidated: false,
-            entryPrice: price,
-            oiShares: oi
-        });
-        // TODO: test
-        require(
-            !pos.liquidatable(
-                isLong ? oiLong : oiShort,
-                isLong ? oiLongShares : oiShortShares,
-                mid(data, 0, 0), // mid price used on liquidations
-                capPayoff,
-                maintenanceMarginFraction
-            ),
-            "OVLV1:liquidatable"
-        );
+            // check new total oi on side does not exceed capOi
+            // TODO: test
+            oiTotalOnSide += oi;
+            oiTotalSharesOnSide += oi;
+            require(oiTotalOnSide <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
+
+            // update total aggregate oi and oi shares
+            // TODO: test
+            if (isLong) {
+                oiLong = oiTotalOnSide;
+                oiLongShares = oiTotalSharesOnSide;
+            } else {
+                oiShort = oiTotalOnSide;
+                oiShortShares = oiTotalSharesOnSide;
+            }
+
+            // assemble position info data
+            // check position is not immediately liquidatable prior to storing
+            pos = Position.Info({
+                notional: uint120(notional), // won't overflow as capNotional max is 8e24
+                debt: uint120(notional - collateral),
+                isLong: isLong,
+                liquidated: false,
+                entryPrice: price,
+                oiShares: oi
+            });
+            // TODO: test
+            require(
+                !pos.liquidatable(
+                    oiTotalOnSide,
+                    oiTotalSharesOnSide,
+                    _midFromFeed(data), // mid price used on liquidations
+                    capPayoff,
+                    maintenanceMarginFraction
+                ),
+                "OVLV1:liquidatable"
+            );
+        }
 
         // store the position info data
         positionId_ = _totalPositions;
@@ -349,7 +363,7 @@ contract OverlayV1Market is IOverlayV1Market {
         // Use mid price without volume for liquidation (oracle price effectively) to
         // prevent market impact manipulation from causing unneccessary liquidations
         // TODO: test
-        uint256 price = mid(data, 0, 0);
+        uint256 price = _midFromFeed(data);
 
         // check position is liquidatable
         require(
@@ -590,13 +604,13 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev Returns the open interest in number of contracts for a given notional
-    /// @dev Uses mid(data, 0, 0) price to calculate oi: OI = Q / P
+    /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
     function oiFromNotional(Oracle.Data memory data, uint256 notional)
         public
         view
         returns (uint256)
     {
-        uint256 price = mid(data, 0, 0);
+        uint256 price = _midFromFeed(data);
         return notional.divDown(price);
     }
 
@@ -629,6 +643,14 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 volumeAsk
     ) public view returns (uint256 mid_) {
         mid_ = (bid(data, volumeBid) + ask(data, volumeAsk)) / 2;
+    }
+
+    /// @dev mid price without impact/spread given oracle data and recent volume
+    /// @dev used for gas savings to avoid accessing storage for delta, lmbda
+    function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
+        uint256 bid = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
+        uint256 ask = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
+        mid_ = (bid + ask) / 2;
     }
 
     /// @dev Rolling volume adjustments on bid side to be used for market impact.

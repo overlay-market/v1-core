@@ -1,6 +1,7 @@
 from brownie import web3
 from decimal import Decimal
 from hexbytes import HexBytes
+from typing import Any
 
 
 def calculate_position_info(notional: Decimal,
@@ -22,3 +23,14 @@ def get_position_key(owner: str, id: int) -> HexBytes:
     from positions mapping
     """
     return web3.solidityKeccak(['address', 'uint256'], [owner, id])
+
+
+def mid_from_feed(data: Any) -> float:
+    """
+    Returns mid price from oracle feed data
+    """
+    (_, _, _, price_micro, price_macro, _, _, _) = data
+    ask = max(price_micro, price_macro)
+    bid = min(price_micro, price_macro)
+    mid = (ask + bid) / 2
+    return mid
