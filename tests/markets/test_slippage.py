@@ -103,7 +103,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     pos = market.positions(pos_key)
-    (actual_notional, _, _, _, actual_entry_price) = pos
+    (actual_notional, _, _, _, actual_entry_price, _) = pos
     oi = Decimal(actual_notional) / Decimal(actual_entry_price)
 
     # calculate expected exit price
@@ -137,7 +137,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     expect_debt = 0
 
     actual_pos = market.positions(expect_pos_key)
-    (actual_notional, actual_debt, _, _, _) = actual_pos
+    (actual_notional, actual_debt, _, _, _, _) = actual_pos
 
     assert expect_notional == actual_notional
     assert expect_debt == actual_debt

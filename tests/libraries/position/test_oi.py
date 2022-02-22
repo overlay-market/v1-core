@@ -15,7 +15,7 @@ def test_oi_current(position):
 
     # check oi is pro-rata shares of total oi
     expect = int((total_oi * oi / total_oi_shares) * (fraction / 1e18))
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -37,7 +37,7 @@ def test_oi_current_when_fraction_less_than_one(position):
 
     # check oi is pro-rata shares of total oi
     expect = int((total_oi * oi / total_oi_shares) * (fraction / 1e18))
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -63,10 +63,11 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 10000000000000000000  # 10
     total_oi = 0  # 0
     total_oi_shares = 15000000000000000000  # 15
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
 
     # check oi is zero
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -74,9 +75,10 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 0  # 0
     total_oi = 4000000000000000000  # 4
     total_oi_shares = 5000000000000000000  # 5
+    oi = (notional / entry_price) * 1000000000000000000  # 0
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -84,9 +86,10 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 0  # 0
     total_oi = 0  # 0
     total_oi_shares = 0  # 0
+    oi = (notional / entry_price) * 1000000000000000000  # 0
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -95,8 +98,9 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     total_oi = 0  # 0
     total_oi_shares = 5000000000000000000  # 5
     liquidated = True
+    oi = (notional / entry_price) * 1000000000000000000  # 0
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual

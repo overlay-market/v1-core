@@ -148,7 +148,7 @@ def mock_feed(create_mock_feed):
 
 @pytest.fixture(scope="module", params=[(
     1220000000000,  # k
-    1000000000000000000,  # lmbda
+    500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
     800000000000000000000000,  # capOi

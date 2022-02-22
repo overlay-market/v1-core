@@ -85,11 +85,12 @@ interface IOverlayV1Market {
         external
         view
         returns (
-            uint120 oiShares_,
+            uint120 notional_,
             uint120 debt_,
             bool isLong_,
             bool liquidated_,
-            uint256 entryPrice_
+            uint256 entryPrice_,
+            uint256 oiShares_
         );
 
     // update related quantities
@@ -150,8 +151,11 @@ interface IOverlayV1Market {
     // bound on open interest cap to mitigate back-running attack
     function backRunBound(Oracle.Data memory data) external view returns (uint256);
 
-    // transforms notional cap into cap on number of contracts (open interest)
-    function capOi(Oracle.Data memory data, uint256 capNotional) external view returns (uint256);
+    // transforms notional into number of contracts (open interest)
+    function oiFromNotional(Oracle.Data memory data, uint256 notional)
+        external
+        view
+        returns (uint256);
 
     // bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) external view returns (uint256 bid_);

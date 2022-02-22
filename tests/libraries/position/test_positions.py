@@ -20,7 +20,9 @@ def test_positions_setter(position, alice):
     notional = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
 
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     position.set(owner, id, pos)
 
     # pos key
@@ -42,8 +44,9 @@ def test_positions_getter(position, bob):
     entry_price = 100000000000000000000  # 100
     notional = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
 
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     position.set(owner, id, pos)
 
     # check retrieved position is expected

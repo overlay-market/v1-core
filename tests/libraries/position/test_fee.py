@@ -13,7 +13,7 @@ def test_trading_fee(position):
     # check trading fee is notional * fee_rate
     is_long = True
     expect = 11250000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -21,7 +21,7 @@ def test_trading_fee(position):
     # check trading fee is notional * fee_rate
     is_long = False
     expect = 3750000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -30,7 +30,7 @@ def test_trading_fee(position):
     is_long = True
     current_price = entry_price
     expect = 7500000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -39,7 +39,7 @@ def test_trading_fee(position):
     is_long = False
     current_price = entry_price
     expect = 7500000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -60,7 +60,7 @@ def test_trading_fee_when_fraction_less_than_one(position):
     # check trading fee is notional * fee_rate
     is_long = True
     expect = 2812500000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -68,7 +68,7 @@ def test_trading_fee_when_fraction_less_than_one(position):
     # check trading fee is notional * fee_rate
     is_long = False
     expect = 937500000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual
@@ -89,7 +89,7 @@ def test_trading_fee_when_payoff_greater_than_cap(position):
     # check trading fee is notional * fee_rate
     is_long = True
     expect = 45000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.tradingFee(pos, fraction, oi, oi, current_price,
                                  cap_payoff, trading_fee_rate)
     assert expect == actual

@@ -1,3 +1,5 @@
+# TODO: test when oi = notional / mid_price
+
 def test_value(position):
     entry_price = 100000000000000000000  # 100
     current_price = 150000000000000000000  # 150
@@ -13,7 +15,7 @@ def test_value(position):
     # when long
     is_long = True
     expect = 13000000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -21,7 +23,7 @@ def test_value(position):
     # when short
     is_long = False
     expect = 3000000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -41,7 +43,7 @@ def test_value_when_fraction_less_than_one(position):
     # when long
     is_long = True
     expect = 3250000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -49,7 +51,7 @@ def test_value_when_fraction_less_than_one(position):
     # when short
     is_long = False
     expect = 750000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -69,7 +71,7 @@ def test_value_when_payoff_greater_than_cap(position):
     # when long
     is_long = True
     expect = 58000000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -88,7 +90,7 @@ def test_value_when_underwater(position):
     is_long = True
     current_price = 75000000000000000000  # 75
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -96,7 +98,7 @@ def test_value_when_underwater(position):
     is_long = False
     current_price = 125000000000000000000  # 125
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
@@ -115,13 +117,13 @@ def test_value_when_oi_zero(position):
     # check value returns zero when oi is zero and is long
     is_long = True
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual
 
     # check value returns zero when oi is zero and is short
     is_long = False
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
     assert expect == actual

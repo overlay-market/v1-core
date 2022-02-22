@@ -138,7 +138,7 @@ def test_cap_notional_adjusted_for_circuit_breaker(market, feed):
     assert actual == expect
 
 
-def test_cap_oi(market, feed):
+def test_oi_from_notional(market, feed):
     cap_notional = market.capNotional()
     data = feed.latest()
 
@@ -148,5 +148,5 @@ def test_cap_oi(market, feed):
     cap_oi = Decimal(cap_notional) / Decimal(mid)
 
     expect = int(cap_oi * Decimal(1e18))
-    actual = market.capOi(data, cap_notional)
+    actual = market.oiFromNotional(data, cap_notional)
     assert int(actual) == approx(expect)

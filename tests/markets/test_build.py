@@ -73,7 +73,7 @@ def test_build_creates_position(market, feed, ovl, alice, oi, leverage,
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
     (actual_oi_initial, actual_debt, actual_is_long, actual_liquidated,
-     actual_entry_price) = actual_pos
+     actual_entry_price, _) = actual_pos
 
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
@@ -600,7 +600,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         actual_pos_alice = market.positions(
             get_position_key(alice.address, expect_pos_id_alice))
         (actual_oi_alice, actual_debt_alice, actual_is_long_alice,
-         actual_liquidated_alice, _) = actual_pos_alice
+         actual_liquidated_alice, _, _) = actual_pos_alice
 
         assert actual_is_long_alice == expect_is_long_alice
         assert actual_liquidated_alice == expect_liquidated_alice
@@ -639,7 +639,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         actual_pos_bob = market.positions(
             get_position_key(bob.address, expect_pos_id_bob))
         (actual_oi_bob, actual_debt_bob, actual_is_long_bob,
-         actual_liquidated_bob, _) = actual_pos_bob
+         actual_liquidated_bob, _, _) = actual_pos_bob
 
         assert actual_is_long_bob == expect_is_long_bob
         assert actual_liquidated_bob is expect_liquidated_bob

@@ -15,7 +15,7 @@ def test_liquidatable(position):
     is_long = True
     current_price = 90000000000000000000 * (1 - tol)  # 90 * (1-tol)
     expect = True
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -24,7 +24,7 @@ def test_liquidatable(position):
     is_long = True
     current_price = 90000000000000000000 * (1 + tol)  # 90 * (1+tol)
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -33,7 +33,7 @@ def test_liquidatable(position):
     is_long = False
     current_price = 110000000000000000000 * (1 + tol)  # 110 * (1+tol)
     expect = True
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -42,7 +42,7 @@ def test_liquidatable(position):
     is_long = False
     current_price = 110000000000000000000 * (1 - tol)  # 110 * (1-tol)
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -62,7 +62,7 @@ def test_liquidatable_when_oi_zero(position):
     # check returns False when long oi is zero
     is_long = True
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -70,7 +70,7 @@ def test_liquidatable_when_oi_zero(position):
     # check returns False when short oi is zero
     is_long = False
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -90,7 +90,7 @@ def test_liquidatable_when_liquidated(position):
     # check returns False when long oi is zero
     is_long = True
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -98,7 +98,7 @@ def test_liquidatable_when_liquidated(position):
     # check returns False when short oi is zero
     is_long = False
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -120,7 +120,7 @@ def test_liquidatable_when_leverage_one(position):
     is_long = True
     current_price = 10000000000000000000 * (1 + tol)  # 10 * (1+tol)
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -129,7 +129,7 @@ def test_liquidatable_when_leverage_one(position):
     is_long = True
     current_price = 10000000000000000000 * (1 - tol)  # 10 * (1-tol)
     expect = True
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -138,7 +138,7 @@ def test_liquidatable_when_leverage_one(position):
     is_long = False
     current_price = 190000000000000000000 * (1 - tol)  # 190 * (1-tol)
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -147,7 +147,7 @@ def test_liquidatable_when_leverage_one(position):
     is_long = False
     current_price = 190000000000000000000 * (1 + tol)  # 190 * (1+tol)
     expect = True
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidatable(pos, oi, oi, current_price, cap_payoff,
                                    maintenance)
     assert expect == actual
@@ -166,14 +166,14 @@ def test_liquidation_price(position):
     # check returns correct liquidation price for long
     is_long = True
     expect = 90000000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidationPrice(pos, oi, oi, maintenance)
     assert expect == actual
 
     # check returns correct liquidation price for short
     is_long = False
     expect = 110000000000000000000
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.liquidationPrice(pos, oi, oi, maintenance)
     assert expect == actual
 
@@ -188,7 +188,8 @@ def test_liquidation_price_when_oi_zero(position):
     # check liqPrice is zero when posOiInitial is zero
     notional = 0
     total_oi = 100
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
 
     expect = 0
     actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)
@@ -197,7 +198,8 @@ def test_liquidation_price_when_oi_zero(position):
     # check liqPrice is zero when posOiCurrent is zero
     notional = 100
     total_oi = 0
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
 
     expect = 0
     actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)
@@ -214,7 +216,8 @@ def test_liquidation_price_when_liquidated_is_true(position):
     # check liqPrice is zero when posOiInitial is zero
     notional = 100
     total_oi = 100
-    pos = (notional, debt, is_long, liquidated, entry_price)
+    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    pos = (notional, debt, is_long, liquidated, entry_price, oi)
 
     expect = 0
     actual = position.liquidationPrice(pos, total_oi, total_oi, maintenance)

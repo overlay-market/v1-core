@@ -38,20 +38,12 @@ contract PositionMock {
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
+    function notionalInitial(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.oiSharesCurrent(fraction);
-    }
-
-    function debtCurrent(Position.Info memory pos, uint256 fraction)
-        external
-        view
-        returns (uint256)
-    {
-        return pos.debtCurrent(fraction);
+        return pos.notionalInitial(fraction);
     }
 
     function oiInitial(Position.Info memory pos, uint256 fraction)
@@ -62,16 +54,12 @@ contract PositionMock {
         return pos.oiInitial(fraction);
     }
 
-    function notionalInitial(Position.Info memory pos, uint256 fraction)
+    function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.notionalInitial(fraction);
-    }
-
-    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
-        return pos.cost(fraction);
+        return pos.oiSharesCurrent(fraction);
     }
 
     function oiCurrent(
@@ -81,6 +69,14 @@ contract PositionMock {
         uint256 oiTotalSharesOnSide
     ) external view returns (uint256) {
         return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
+    }
+
+    function debtCurrent(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+        return pos.debtCurrent(fraction);
+    }
+
+    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+        return pos.cost(fraction);
     }
 
     function value(
@@ -94,7 +90,7 @@ contract PositionMock {
         return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
-    function notionalCurrent(
+    function notionalWithPnl(
         Position.Info memory pos,
         uint256 fraction,
         uint256 oiTotalOnSide,
@@ -103,7 +99,7 @@ contract PositionMock {
         uint256 capPayoff
     ) external view returns (uint256) {
         return
-            pos.notionalCurrent(
+            pos.notionalWithPnl(
                 fraction,
                 oiTotalOnSide,
                 oiTotalSharesOnSide,

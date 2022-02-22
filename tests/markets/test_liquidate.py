@@ -51,8 +51,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -128,8 +128,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     expect_liquidated = True
 
     # check expected pos attributes match actual after liquidate
-    (actual_oi_shares, actual_debt, actual_is_long, actual_liquidated,
-     actual_entry_price) = mock_market.positions(pos_key)
+    (_, actual_debt, actual_is_long, actual_liquidated,
+     actual_entry_price, actual_oi_shares) = mock_market.positions(pos_key)
 
     assert actual_oi_shares == expect_oi_shares
     assert actual_debt == expect_debt
@@ -204,8 +204,8 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -315,8 +315,8 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # cache prior timestamp update last value
     prior_timestamp_update_last = mock_market.timestampUpdateLast()
@@ -421,8 +421,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -540,8 +540,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -676,8 +676,8 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -839,8 +839,8 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -965,8 +965,8 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1096,8 +1096,8 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1209,8 +1209,8 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1319,8 +1319,8 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1419,8 +1419,8 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price) = mock_market.positions(pos_key)
+    (_, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1500,5 +1500,5 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # check position has been liquidated
-    (_, _, _, actual_liquidated, _) = mock_market.positions(pos_key)
+    (_, _, _, actual_liquidated, _, _) = mock_market.positions(pos_key)
     assert actual_liquidated is True
