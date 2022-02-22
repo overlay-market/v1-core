@@ -6,7 +6,7 @@ from decimal import Decimal
 from math import exp
 from random import randint
 
-from .utils import calculate_position_info, get_position_key
+from .utils import calculate_position_info, get_position_key, mid_from_feed
 
 
 # NOTE: Tests passing with isolation fixture
@@ -23,13 +23,13 @@ def isolation(fn_isolation):
 def test_unwind_updates_position(market, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -52,8 +52,8 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -61,8 +61,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # after unwind.
     # NOTE: update() tests in test_update.py
     chain.mine(timedelta=600)
-    tx = market.update({"from": rando})
-    data = tx.return_value
+    _ = market.update({"from": rando})
 
     # calculate current oi, debt values of position
     expect_total_oi = market.oiLong() if is_long \
@@ -75,15 +74,9 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
-    unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
-
-    # calculate expected exit price
-    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi()))
-    volume = int((unwound_oi / cap_oi) * Decimal(1e18))
-    expect_exit_price = market.bid(data, volume) if is_long \
-        else market.ask(data, volume)
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * Decimal(expect_notional)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
     # input values for unwind
     input_pos_id = pos_id
@@ -97,15 +90,26 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
                        {"from": alice})
 
+    # calculate expected exit price
+    data = feed.latest()
+    cap_notional = Decimal(
+        market.capNotionalAdjustedForBounds(data, market.capNotional()))
+    cap_oi = cap_notional * Decimal(1e18) / Decimal(mid_from_feed(data))
+    volume = int((unwound_oi / cap_oi) * Decimal(1e18))
+    expect_exit_price = market.bid(data, volume) if is_long \
+        else market.ask(data, volume)
+
     # adjust oi shares, debt position expected attributes downward for unwind
     expect_oi_shares = int(expect_oi_shares * (1 - fraction))
+    expect_notional = int(expect_notional * (1 - fraction))
     expect_debt = int(expect_debt * (1 - fraction))
 
     # check expected pos attributes match actual after unwind
-    (actual_oi_shares, actual_debt, actual_is_long, actual_liquidated,
-     actual_entry_price, _) = market.positions(pos_key)
+    (actual_notional, actual_debt, actual_is_long, actual_liquidated,
+     actual_entry_price, actual_oi_shares) = market.positions(pos_key)
 
     assert int(actual_oi_shares) == approx(expect_oi_shares)
+    assert int(actual_notional) == approx(expect_notional)
     assert int(actual_debt) == approx(expect_debt)
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
@@ -121,18 +125,19 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     assert actual_exit_price == approx(expect_exit_price, rel=1e-3)
 
     # calculate expected values for mint comparison
-    unwound_pnl = unwound_oi * \
-        (Decimal(actual_exit_price) / Decimal(expect_entry_price) - 1)
+    unwound_pnl = (unwound_oi / Decimal(1e18)) * \
+        (Decimal(actual_exit_price) - Decimal(expect_entry_price))
     if not is_long:
         unwound_pnl *= -1
+    unwound_funding = unwound_notional * (unwound_oi/unwound_oi_shares - 1)
 
-    expect_value = int(unwound_collateral + unwound_pnl)
+    expect_value = int(unwound_cost + unwound_pnl + unwound_funding)
     expect_cost = int(unwound_cost)
     expect_mint = expect_value - expect_cost
 
-    # TODO: why do we need 1e-2 for tolerance here? Uniswap mainnet-fork moves?
+    # TODO: why do we need 1e-3 for tolerance here? Uniswap mainnet-fork moves?
     actual_mint = int(tx.events["Unwind"]["mint"])
-    assert actual_mint == approx(expect_mint, rel=1e-2)
+    assert actual_mint == approx(expect_mint, rel=1e-3)
 
 
 @given(
@@ -142,13 +147,13 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 def test_unwind_removes_oi(market, feed, alice, rando, ovl,
                            fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -171,8 +176,8 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -221,7 +226,7 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
 
 def test_unwind_updates_market(market, alice, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     fraction = Decimal(1.0)
     is_long = True
@@ -229,7 +234,7 @@ def test_unwind_updates_market(market, alice, ovl):
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -249,11 +254,6 @@ def test_unwind_updates_market(market, alice, ovl):
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
-
-    # get position info
-    pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
 
     # cache prior timestamp update last value
     prior_timestamp_update_last = market.timestampUpdateLast()
@@ -289,13 +289,13 @@ def test_unwind_updates_market(market, alice, ovl):
 def test_unwind_registers_volume(market, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -318,8 +318,8 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -359,7 +359,9 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     _, micro_window, _, _, _, _, _, _ = data
 
     oi = fraction * Decimal(last_pos_oi)
-    cap_oi = Decimal(market.capOiAdjustedForBounds(data, market.capOi()))
+    cap_notional = Decimal(
+        market.capNotionalAdjustedForBounds(data, market.capNotional()))
+    cap_oi = cap_notional * Decimal(1e18) / Decimal(mid_from_feed(data))
 
     input_volume = int((oi / cap_oi) * Decimal(1e18))
     input_window = micro_window
@@ -397,13 +399,13 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
 def test_unwind_registers_mint(market, feed, alice, rando, ovl,
                                fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -423,11 +425,6 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
-
-    # get position info
-    pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -493,13 +490,13 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
 def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
                                    factory, fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -522,8 +519,8 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -558,16 +555,22 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * expect_notional
     unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
-    unwound_pnl = unwound_oi * (Decimal(price) / Decimal(expect_entry_price)
-                                - 1)
-    unwound_value = unwound_collateral + unwound_pnl if is_long \
-        else unwound_collateral - unwound_pnl
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
-    unwound_notional = unwound_value + unwound_debt
-    unwound_trading_fee = unwound_notional * \
+    # unwound collateral here includes adjustments due to funding payments
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+        - unwound_debt
+    unwound_pnl = unwound_oi * \
+        (Decimal(price) - Decimal(expect_entry_price)) / Decimal(1e18)
+    if not is_long:
+        unwound_pnl *= -1
+
+    unwound_value = unwound_collateral + unwound_pnl
+    unwound_notional_w_pnl = unwound_value + unwound_debt
+    unwound_trading_fee = unwound_notional_w_pnl * \
         (Decimal(market.tradingFeeRate()) / Decimal(1e18))
     if unwound_trading_fee > unwound_value:
         unwound_trading_fee = unwound_value
@@ -576,7 +579,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     expect_mint = int(unwound_value - unwound_cost)
 
     # check expected pnl in line with Unwind event first
-    assert int(tx.events["Unwind"]["mint"]) == approx(expect_mint, rel=1e-2)
+    assert int(tx.events["Unwind"]["mint"]) == approx(expect_mint, rel=1e-3)
 
     # Examine transfer event to verify mint or burn happened
     # if expect_mint > 0, should have a mint with Transfer event
@@ -630,13 +633,13 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
                                           fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -659,8 +662,8 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -676,7 +679,7 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_debt = fraction * Decimal(expect_debt)
 
     # input values for unwind
@@ -720,13 +723,13 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
 def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
                                        factory, fraction, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -749,8 +752,8 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -767,7 +770,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_debt = fraction * Decimal(expect_debt)
 
     # input values for unwind
@@ -786,8 +789,8 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
 
     # calculate expected values
     expect_value = int(unwound_cost + actual_mint)
-    expect_notional = int(expect_value + unwound_debt)
-    expect_trade_fee = int(Decimal(expect_notional)
+    expect_notional_w_pnl = int(expect_value + unwound_debt)
+    expect_trade_fee = int(Decimal(expect_notional_w_pnl)
                            * Decimal(market.tradingFeeRate()) / Decimal(1e18))
     if expect_trade_fee > expect_value:
         expect_trade_fee = expect_value
@@ -814,13 +817,13 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
                                       ovl, fraction, is_long,
                                       price_multiplier):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -843,8 +846,8 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -870,9 +873,12 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * expect_notional
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+        - unwound_debt
 
     # input values for unwind
     input_pos_id = pos_id
@@ -887,8 +893,8 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
                             {"from": alice})
     expect_exit_price = tx.events["Unwind"]['price']
 
-    unwound_pnl = unwound_oi * \
-        (Decimal(expect_exit_price) / Decimal(expect_entry_price) - 1)
+    unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
+                                - Decimal(expect_entry_price)) / Decimal(1e18)
     if not is_long:
         unwound_pnl *= -1
 
@@ -910,20 +916,20 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
     fraction=strategy('decimal', min_value='0.001', max_value='1.000',
                       places=3),
     is_long=strategy('bool'),
-    price_multiplier=strategy('decimal', min_value='1.100', max_value='5.000',
+    price_multiplier=strategy('decimal', min_value='1.001', max_value='1.5000',
                               places=3))
 def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                                           alice, rando,
                                           ovl, fraction, is_long,
                                           price_multiplier):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -946,8 +952,8 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -973,9 +979,12 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * expect_notional
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+        - unwound_debt
 
     # input values for unwind
     input_pos_id = pos_id
@@ -990,8 +999,8 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                             {"from": alice})
     expect_exit_price = tx.events["Unwind"]['price']
 
-    unwound_pnl = unwound_oi * \
-        (Decimal(expect_exit_price) / Decimal(expect_entry_price) - 1)
+    unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
+                                - Decimal(expect_entry_price)) / Decimal(1e18)
     if not is_long:
         unwound_pnl *= -1
 
@@ -1024,14 +1033,14 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
                                                    ovl, fraction,
                                                    price_multiplier):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1054,8 +1063,8 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1080,9 +1089,12 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * Decimal(expect_notional)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+        - unwound_debt
 
     # input values for unwind
     input_pos_id = pos_id
@@ -1100,8 +1112,8 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     # impose payoff cap on pnl
     cap_payoff = Decimal(mock_market.capPayoff()) / Decimal(1e18)
     unwound_pnl = unwound_oi * \
-        min(Decimal(expect_exit_price) / Decimal(expect_entry_price) - 1,
-            cap_payoff)
+        min(Decimal(expect_exit_price) - Decimal(expect_entry_price),
+            cap_payoff * Decimal(expect_entry_price)) / Decimal(1e18)
 
     # calculate expected values
     expect_value = int(unwound_collateral + unwound_pnl)
@@ -1122,11 +1134,11 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
                                                             factory, rando,
                                                             ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(5.0)
     is_long = True
     fraction = Decimal(1.0)
-    price_multiplier = Decimal(0.8065)  # close to underwater but not there yet
+    price_multiplier = Decimal(0.8061)  # close to underwater but not there
 
     # exclude funding for testing edge case of fees > value
     mock_market.setK(0, {"from": factory})
@@ -1134,7 +1146,7 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1157,8 +1169,8 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1190,8 +1202,11 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_notional = fraction * expect_notional
     unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_oi - unwound_debt
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+        - unwound_debt
 
     # input values for unwind
     input_pos_id = pos_id
@@ -1212,8 +1227,8 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     actual_mint = tx.events["Unwind"]["mint"]
     expect_balance_market += actual_mint
 
-    unwound_pnl = unwound_oi * \
-        (Decimal(expect_exit_price) / Decimal(expect_entry_price) - 1)
+    unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
+                                - Decimal(expect_entry_price)) / Decimal(1e18)
     if not is_long:
         unwound_pnl *= -1
 
@@ -1244,7 +1259,7 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
                                                               rando, ovl,
                                                               factory):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(5.0)
     is_long = True
     fraction = Decimal(1.0)
@@ -1256,7 +1271,7 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1279,8 +1294,8 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1303,7 +1318,7 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
-    unwound_cost = fraction * Decimal(expect_oi_shares - expect_debt)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
     # input values for unwind
     input_pos_id = pos_id
@@ -1349,14 +1364,14 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
 def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1390,14 +1405,14 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
 
 def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1435,14 +1450,14 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
 
 def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1486,19 +1501,22 @@ def test_unwind_reverts_when_position_not_exists(market, alice, ovl):
 
 
 def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
-                                                 alice, rando, ovl):
+                                                 factory, alice, rando, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # tolerance
     tol = 1e-4
 
+    # set k to zero to avoid funding calcs
+    mock_market.setK(0, {"from": factory})
+
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1521,8 +1539,8 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_oi_shares, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, _) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
+     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1541,18 +1559,18 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
         / Decimal(expect_total_oi_shares)
 
     # calculate expected liquidation price
-    # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
-    # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # NOTE: p_liq = p_entry * ( MM * Q(0) + D ) / OI if long
+    # NOTE:       = p_entry * ( 2 - ( MM * Q(0) + D ) / OI ) if short
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
     delta = Decimal(mock_market.delta()) / Decimal(1e18)
     if is_long:
         expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
+            (maintenance_fraction * Decimal(expect_notional)
              + Decimal(expect_debt)) / expect_oi_current
     else:
         expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
+            (2 - (maintenance_fraction * Decimal(expect_notional)
              + Decimal(expect_debt)) / expect_oi_current)
 
     # change price by factor so position becomes liquidatable
@@ -1589,33 +1607,33 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
                                                     alice, bob):
     # loop through 10 times
     n = 10
-    total_oi_long = Decimal(10000)
-    total_oi_short = Decimal(7500)
+    total_notional_long = Decimal(10000)
+    total_notional_short = Decimal(7500)
 
     # set k to zero to avoid funding calcs
     market.setK(0, {"from": factory})
 
     # alice goes long and bob goes short n times
-    input_total_oi_long = total_oi_long * Decimal(1e18)
-    input_total_oi_short = total_oi_short * Decimal(1e18)
+    input_total_notional_long = total_notional_long * Decimal(1e18)
+    input_total_notional_short = total_notional_short * Decimal(1e18)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
     leverage_cap = Decimal(market.capLeverage() / 1e18)
 
     # approve collateral amount: collateral + trade fee
-    approve_collateral_alice = int((input_total_oi_long *
+    approve_collateral_alice = int((input_total_notional_long *
                                     (1 + trading_fee_rate)))
-    approve_collateral_bob = int((input_total_oi_short *
+    approve_collateral_bob = int((input_total_notional_short *
                                   (1 + trading_fee_rate)))
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral_alice, {"from": alice})
     ovl.approve(market, approve_collateral_bob, {"from": bob})
 
-    # per trade oi values
-    oi_alice = total_oi_long / Decimal(n)
-    oi_bob = total_oi_short / Decimal(n)
+    # per trade notional values
+    notional_alice = total_notional_long / Decimal(n)
+    notional_bob = total_notional_short / Decimal(n)
     is_long_alice = True
     is_long_bob = False
 
@@ -1629,9 +1647,9 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
         # calculate collateral amounts
         collateral_alice, _, debt_alice, _ = calculate_position_info(
-            oi_alice, leverage_alice, trading_fee_rate)
+            notional_alice, leverage_alice, trading_fee_rate)
         collateral_bob, _, debt_bob, _ = calculate_position_info(
-            oi_bob, leverage_bob, trading_fee_rate)
+            notional_bob, leverage_bob, trading_fee_rate)
 
         input_collateral_alice = int(collateral_alice * Decimal(1e18))
         input_collateral_bob = int(collateral_bob * Decimal(1e18))
@@ -1685,8 +1703,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         # cache position attributes for everything for later comparison
         pos_key = get_position_key(trader.address, id)
         expect_pos = market.positions(pos_key)
-        (expect_oi_shares, expect_debt, expect_is_long,
-         expect_liquidated, expect_entry_price, _) = expect_pos
+        (expect_notional, expect_debt, expect_is_long,
+         expect_liquidated, expect_entry_price, expect_oi_shares) = expect_pos
 
         # unwind fraction of position for trader
         _ = market.unwind(id, input_fraction, input_price_limit_trader,
@@ -1694,17 +1712,19 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
         # get updated actual position attributes
         actual_pos = market.positions(pos_key)
-        (actual_oi_shares, actual_debt, actual_is_long,
-         actual_liquidated, actual_entry_price, _) = actual_pos
+        (actual_notional, actual_debt, actual_is_long,
+         actual_liquidated, actual_entry_price, actual_oi_shares) = actual_pos
 
         # check position info for id has decreased position oi, debt
         expect_oi_shares_unwound = int(expect_oi_shares * fraction)
         expect_oi_unwound = int(expect_oi_shares_unwound * total_oi
                                 / total_oi_shares)
 
+        expect_notional = int(expect_notional * (1 - fraction))
         expect_oi_shares = int(expect_oi_shares * (1 - fraction))
         expect_debt = int(expect_debt * (1 - fraction))
 
+        assert int(actual_notional) == approx(expect_notional)
         assert int(actual_oi_shares) == approx(expect_oi_shares)
         assert int(actual_debt) == approx(expect_debt)
         assert actual_is_long == expect_is_long

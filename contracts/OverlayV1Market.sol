@@ -185,13 +185,11 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
 
             // check new total oi on side does not exceed capOi
-            // TODO: test
             oiTotalOnSide += oi;
             oiTotalSharesOnSide += oi;
             require(oiTotalOnSide <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
 
             // update total aggregate oi and oi shares
-            // TODO: test
             if (isLong) {
                 oiLong = oiTotalOnSide;
                 oiLongShares = oiTotalSharesOnSide;
@@ -264,7 +262,6 @@ contract OverlayV1Market is IOverlayV1Market {
         // where volume = oi / capOi
         // current cap only adjusted for bounds (no circuit breaker so traders
         // don't get stuck in a position)
-        // TODO: test and check
         uint256 price = pos.isLong
             ? bid(
                 data,
@@ -307,7 +304,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // subtract unwound open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
-        // TODO: test
         if (pos.isLong) {
             oiLong -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
             oiLongShares -= pos.oiSharesCurrent(fraction);
@@ -317,10 +313,9 @@ contract OverlayV1Market is IOverlayV1Market {
         }
 
         // store the updated position info data
-        // TODO: test and check
         pos.notional -= uint120(pos.notionalInitial(fraction));
         pos.debt -= uint120(pos.debtCurrent(fraction));
-        pos.oiShares -= pos.oiSharesCurrent(fraction); // TODO: test
+        pos.oiShares -= pos.oiSharesCurrent(fraction);
         positions.set(msg.sender, positionId, pos);
 
         // emit unwind event
@@ -605,6 +600,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev Returns the open interest in number of contracts for a given notional
     /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
+    // TODO: fix potential rounding errors w div and large prices; move to Position lib
     function oiFromNotional(Oracle.Data memory data, uint256 notional)
         public
         view
