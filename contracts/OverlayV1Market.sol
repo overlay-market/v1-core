@@ -477,8 +477,8 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 oiTotalBefore = oiOverweightBefore + oiUnderweightBefore;
         uint256 oiImbalanceBefore = oiOverweightBefore - oiUnderweightBefore;
 
-        // If no OI, no funding occurs. Handles div by zero case below
-        if (oiTotalBefore == 0) {
+        // If no OI or imbalance, no funding occurs. Handles div by zero case below
+        if (oiTotalBefore == 0 || oiImbalanceBefore == 0) {
             return (oiOverweightBefore, oiUnderweightBefore);
         }
 
@@ -591,7 +591,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev Returns the open interest in number of contracts for a given notional
     /// @dev Uses mid(data, 0, 0) price to calculate oi: OI = Q / P
-    // TODO: test
     function oiFromNotional(Oracle.Data memory data, uint256 notional)
         public
         view
@@ -694,7 +693,7 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// TODO: emergencyWithdraw(?): allows withdrawal of original collateral
-    /// TODO: without profit/loss if system in emergencyShutdown mode
+    /// TODO: without profit/loss if system in emergencyShutdown mode (factory level)
 
     /// @dev governance adjustable risk parameter setters
     /// @dev min/max bounds checks to risk params imposed at factory level
