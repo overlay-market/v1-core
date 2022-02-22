@@ -71,7 +71,11 @@ contract PositionMock {
         return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
-    function debtCurrent(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+    function debtCurrent(Position.Info memory pos, uint256 fraction)
+        external
+        view
+        returns (uint256)
+    {
         return pos.debtCurrent(fraction);
     }
 
