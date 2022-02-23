@@ -908,7 +908,7 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
         == "0x0000000000000000000000000000000000000000"
     assert tx.events["Transfer"][0]['to'] == mock_market.address
     assert int(tx.events["Transfer"][0]['value']) == approx(expect_mint,
-                                                            rel=1e-4)
+                                                            rel=1e-3)
 
 
 # NOTE: use mock market to change exit price to whatever
@@ -1018,7 +1018,7 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     assert tx.events["Transfer"][0]['to'] \
         == "0x0000000000000000000000000000000000000000"
     assert int(tx.events["Transfer"][0]['value']) == approx(expect_burn,
-                                                            rel=1e-4)
+                                                            rel=1e-3)
 
 
 # NOTE: use mock market to change exit price to whatever
