@@ -208,7 +208,6 @@ contract OverlayV1Market is IOverlayV1Market {
                 entryPrice: price,
                 oiShares: oi
             });
-            // TODO: test
             require(
                 !pos.liquidatable(
                     oiTotalOnSide,
@@ -359,12 +358,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // entire position should be liquidated
         uint256 fraction = ONE;
 
-        // longs get the bid and shorts get the ask on liquidate
-        // liquidated position's oi should *not* add additional volume to roller
-        // since market impact intended to mitigate front-running -- not relevant here
         // Use mid price without volume for liquidation (oracle price effectively) to
         // prevent market impact manipulation from causing unneccessary liquidations
-        // TODO: test
         uint256 price = _midFromFeed(data);
 
         // check position is liquidatable
@@ -397,7 +392,6 @@ contract OverlayV1Market is IOverlayV1Market {
         // subtract liquidated open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
         // use Math.min to avoid reverts with rounding issues
-        // TODO: test
         if (pos.isLong) {
             oiLong -= Math.min(
                 oiLong,
@@ -413,10 +407,9 @@ contract OverlayV1Market is IOverlayV1Market {
         }
 
         // store the updated position info data. mark as liquidated
-        // TODO: test
         pos.notional = 0;
         pos.debt = 0;
-        pos.oiShares = 0; // TODO: test
+        pos.oiShares = 0;
         pos.liquidated = true;
         positions.set(owner, positionId, pos);
 
