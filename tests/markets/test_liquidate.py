@@ -5,7 +5,7 @@ from brownie.test import given, strategy
 from decimal import Decimal
 from math import exp
 
-from .utils import calculate_position_info, get_position_key
+from .utils import calculate_position_info, get_position_key, mid_from_feed
 
 
 # NOTE: Tests passing with isolation fixture
@@ -19,7 +19,7 @@ def isolation(fn_isolation):
 def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
                                     ovl, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # tolerance
@@ -28,7 +28,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -51,7 +51,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -72,47 +72,44 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_cost = Decimal(expect_oi_shares - expect_debt)
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_oi - liq_debt
+    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # calculate expected exit price
     # NOTE: no volume should be added to rollers on liquidate
+    # NOTE: use the mid price
     data = mock_feed.latest()
-    expect_exit_price = mock_market.bid(data, 0) if is_long \
-        else mock_market.ask(data, 0)
+    expect_liq_price = int(mid_from_feed(data))
 
     # input values for liquidate
     input_owner = alice.address
@@ -123,14 +120,16 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # adjust oi shares, debt position attributes to zero
     # liquidated flips to true
+    expect_notional = 0
     expect_oi_shares = 0
     expect_debt = 0
     expect_liquidated = True
 
     # check expected pos attributes match actual after liquidate
-    (_, actual_debt, actual_is_long, actual_liquidated,
+    (actual_notional, actual_debt, actual_is_long, actual_liquidated,
      actual_entry_price, actual_oi_shares) = mock_market.positions(pos_key)
 
+    assert actual_notional == expect_notional
     assert actual_oi_shares == expect_oi_shares
     assert actual_debt == expect_debt
     assert actual_is_long == expect_is_long
@@ -144,16 +143,18 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     assert tx.events["Liquidate"]["positionId"] == pos_id
 
     # check expected liquidate price matches actual
-    actual_exit_price = int(tx.events["Liquidate"]["price"])
-    assert actual_exit_price == approx(expect_exit_price, rel=1e-4)
+    actual_liq_price = int(tx.events["Liquidate"]["price"])
+    assert actual_liq_price == approx(expect_liq_price, rel=1e-4)
 
     # calculate expected values for burn comparison
     if is_long:
         liq_pnl = Decimal(expect_oi_current) * \
-            (Decimal(actual_exit_price) / Decimal(expect_entry_price) - 1)
+            (Decimal(actual_liq_price) - Decimal(expect_entry_price)) \
+            / Decimal(1e18)
     else:
         liq_pnl = Decimal(expect_oi_current) * \
-            (1 - Decimal(actual_exit_price) / Decimal(expect_entry_price))
+            (Decimal(expect_entry_price) - Decimal(actual_liq_price)) \
+            / Decimal(1e18)
 
     expect_value = int(liq_collateral + liq_pnl)
     expect_cost = int(liq_cost)
@@ -161,9 +162,9 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # adjust value for maintenance burn
     maintenance_burn = Decimal(mock_market.maintenanceMarginBurnRate()) \
         / Decimal(1e18)
+
     expect_value -= int(expect_value * maintenance_burn)
     expect_mint = expect_value - expect_cost
-
     actual_mint = int(tx.events["Liquidate"]["mint"])
     assert actual_mint == approx(expect_mint, rel=1e-4)
 
@@ -172,7 +173,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
                               is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
 
     # tolerance
@@ -181,7 +182,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -204,7 +205,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -224,40 +225,35 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
         / Decimal(expect_total_oi_shares)
 
     # calculate position attributes at current time, ignore payoff cap
-    liq_oi = int(expect_oi_current)
-    liq_oi_shares = int(expect_oi_shares)
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
-    if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
-    else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
-
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_owner = alice.address
@@ -267,14 +263,13 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     _ = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # adjust total oi and total oi shares downward for liquidate
-    expect_total_oi -= liq_oi
-    expect_total_oi_shares -= liq_oi_shares
+    expect_total_oi -= int(liq_oi)
+    expect_total_oi_shares -= int(liq_oi_shares)
 
     actual_total_oi = mock_market.oiLong() if is_long \
         else mock_market.oiShort()
     actual_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
-
     assert int(actual_total_oi) == approx(expect_total_oi, rel=1e-4)
     assert int(actual_total_oi_shares) == approx(expect_total_oi_shares,
                                                  rel=1e-4)
@@ -282,7 +277,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
 
 def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -292,7 +287,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -315,7 +310,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # cache prior timestamp update last value
@@ -337,37 +332,32 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
-    # calculate expected liquidation price
-    # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
-    # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
+
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
     if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
-    if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
-    else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
-
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_owner = alice.address
@@ -388,7 +378,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
 def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
                                          ovl, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -398,7 +388,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -421,7 +411,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -437,45 +427,46 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
         else mock_market.snapshotVolumeAsk()
     last_timestamp, last_window, last_volume = snapshot_volume
 
-    # calculate last oi, debt values of position
-    last_total_oi = mock_market.oiLong() if is_long \
+    # calculate current oi, debt values of position
+    expect_total_oi = mock_market.oiLong() if is_long \
         else mock_market.oiShort()
-    last_total_oi_shares = mock_market.oiLongShares() if is_long \
+    expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
-    last_pos_oi = (Decimal(last_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(last_total_oi_shares)
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / last_pos_oi
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / last_pos_oi)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # get the micro window
     data = mock_feed.latest()
@@ -489,8 +480,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     tx = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # calculate expect values for snapshot
-    expect_timestamp = chain[tx.block_number]['timestamp']
-    expect_window = micro_window
+    expect_timestamp = 0
+    expect_window = 0
     expect_volume = last_volume
 
     # check expect == actual for snapshot volume
@@ -507,7 +498,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
                                   is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -517,7 +508,7 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -540,7 +531,7 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -555,45 +546,46 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     snapshot_minted = mock_market.snapshotMinted()
     last_timestamp, last_window, last_minted = snapshot_minted
 
-    # calculate last oi, debt values of position
-    last_total_oi = mock_market.oiLong() if is_long \
+    # calculate current oi, debt values of position
+    expect_total_oi = mock_market.oiLong() if is_long \
         else mock_market.oiShort()
-    last_total_oi_shares = mock_market.oiLongShares() if is_long \
+    expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
-    last_pos_oi = (Decimal(last_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(last_total_oi_shares)
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / last_pos_oi
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / last_pos_oi)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # get the micro window
     data = mock_feed.latest()
@@ -643,7 +635,7 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
 def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
                                       factory, ovl, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -653,7 +645,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -676,7 +668,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -695,37 +687,40 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_cost = Decimal(expect_notional - expect_debt)
+    liq_debt = Decimal(expect_debt)
+    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_owner = alice.address
@@ -737,16 +732,18 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # get expected exit price
     price = tx.events["Liquidate"]["price"]
 
-    # calculate position attributes at the current time
-    # ignore payoff cap
-    liq_oi = expect_oi_current
-    liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_oi - liq_debt
+    # calculate expected values for burn comparison
+    if is_long:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(price) - Decimal(expect_entry_price)) \
+            / Decimal(1e18)
+    else:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(expect_entry_price) - Decimal(price)) \
+            / Decimal(1e18)
 
-    liq_pnl = liq_oi * (Decimal(price) / Decimal(expect_entry_price) - 1)
-    liq_cost = Decimal(expect_oi_shares - expect_debt)
-    liq_value = liq_collateral + liq_pnl if is_long \
-        else liq_collateral - liq_pnl
+    liq_value = int(liq_collateral + liq_pnl)
+    liq_cost = int(liq_cost)
 
     # adjusted liq value downward for mm burn
     maintenance_burn = Decimal(mock_market.maintenanceMarginBurnRate()) \
@@ -806,7 +803,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
                                                  rando, ovl, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -816,7 +813,7 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -839,7 +836,7 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -858,38 +855,39 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_cost = Decimal(expect_notional - expect_debt)
+    liq_debt = Decimal(expect_debt)
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
 
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
-    if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
-    else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
-
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # priors actual values
     expect_balance_rando = ovl.balanceOf(rando)
@@ -932,7 +930,7 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
 def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
                                               factory, rando, ovl, is_long):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -942,7 +940,7 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -965,7 +963,7 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -984,38 +982,39 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_cost = Decimal(expect_notional - expect_debt)
+    liq_debt = Decimal(expect_debt)
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
 
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
-    if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
-    else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
-
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # priors actual values
     recipient = factory.feeRecipient()
@@ -1059,7 +1058,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
                                                                  alice, rando,
                                                                  ovl, factory):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(5.0)
     is_long = True
     price_multiplier = Decimal(0.700)  # close to underwater but not there yet
@@ -1073,7 +1072,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1096,7 +1095,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -1110,16 +1109,15 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
     # calculate price to set for liquidation
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
     if is_long:
         # longs get the bid on exit, which has e**(-delta) multiplied to it
         # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        price_multiplier /= Decimal(1 + tol)
     else:
         # shorts get the ask on exit, which has e**(+delta) multiplied to it
         # mock feed price should then be liq price * e**(-delta) to account
         price_multiplier = 1 / price_multiplier
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        price_multiplier *= Decimal(1 + tol)
 
     price = Decimal(mock_feed.price()) * price_multiplier
     mock_feed.setPrice(price)
@@ -1176,7 +1174,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
                                                    alice, bob,
                                                    rando, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -1186,7 +1184,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1209,7 +1207,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -1228,37 +1226,38 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1286,7 +1285,7 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
                                                     alice, rando,
                                                     ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
@@ -1296,7 +1295,7 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1319,7 +1318,7 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -1338,37 +1337,38 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
 
-    # change price by factor so position becomes liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    # change price to liq_price so position becomes liquidatable
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1386,17 +1386,17 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
                                                           mock_feed, alice,
                                                           rando, ovl):
     # position build attributes
-    oi_initial = Decimal(1000)
+    notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
     is_long = True
 
     # tolerance
-    tol = 1e-2
+    tol = 1e-4
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
     collateral, _, _, trade_fee \
-        = calculate_position_info(oi_initial, leverage, trading_fee_rate)
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
     # input values for build
     input_collateral = int(collateral * Decimal(1e18))
@@ -1419,7 +1419,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (_, expect_debt, expect_is_long, expect_liquidated,
+    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
      expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
@@ -1438,38 +1438,37 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # calculate position attributes at current time, ignore payoff cap
+    liq_oi = expect_oi_current
+    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_notional = Decimal(expect_notional)
+    liq_debt = Decimal(expect_debt)
+
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
+    # TODO: fix ...
     maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    if is_long:
-        expect_liquidation_price = Decimal(expect_entry_price) * \
-            (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current
-    else:
-        expect_liquidation_price = expect_entry_price * \
-            (2 - (maintenance_fraction * Decimal(expect_oi_shares)
-             + Decimal(expect_debt)) / expect_oi_current)
 
-    # change price by factor so position close to but *not* liquidatable yet
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    prior_price = mock_feed.price()
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 - tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 - tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
 
-    price = Decimal(prior_price) * price_multiplier
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(liq_price)
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1479,22 +1478,24 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     with reverts("OVLV1:!liquidatable"):
         mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
-    # change price by factor so position is liquidatable
-    # NOTE: Is simply liq_price but adjusted for prior to static spread applied
-    # NOTE: price_multiplier = (liq_price / entry_price) * e**(-spread); ask
-    # NOTE:                  = (liq_price / entry_price) * e**(spread); bid
-    price_multiplier = expect_liquidation_price / Decimal(expect_entry_price)
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # liq_price = entry_price - notional_initial / oi_initial
+    #             + (mm * notional_initial + debt) / oi_current
+    # liq_price = entry_price + notional_initial / oi_initial
+    #             - (mm * notional_initial + debt) / oi_current
     if is_long:
-        # longs get the bid on exit, which has e**(-delta) multiplied to it
-        # mock feed price should then be liq price * e**(delta) to account
-        price_multiplier *= Decimal(exp(delta)) / Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            - liq_notional / liq_oi_shares \
+            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
-        # shorts get the ask on exit, which has e**(+delta) multiplied to it
-        # mock feed price should then be liq price * e**(-delta) to account
-        price_multiplier *= Decimal(exp(-delta)) * Decimal(1 + tol)
+        liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
+            + liq_notional / liq_oi_shares \
+            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+        liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    price = Decimal(prior_price) * price_multiplier
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(liq_price)
 
     # check can liquidate position when liquidatable
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
