@@ -3,7 +3,7 @@ from pytest import approx
 from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from math import exp, log
+from math import log
 from random import randint
 
 from .utils import calculate_position_info, get_position_key, mid_from_feed
