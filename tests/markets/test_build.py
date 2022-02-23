@@ -3,6 +3,7 @@ from pytest import approx
 from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
+from math import exp, log
 from random import randint
 
 from .utils import calculate_position_info, get_position_key, mid_from_feed
@@ -13,9 +14,6 @@ from .utils import calculate_position_info, get_position_key, mid_from_feed
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
-
-
-# TODO: test pos liquidatable on build revert
 
 
 @given(
@@ -540,6 +538,71 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     actual_pos_id = market.nextPositionId()
 
     assert expect_pos_id == actual_pos_id
+
+
+@given(is_long=strategy('bool'))
+def test_build_reverts_when_liquidatable(market, feed, ovl, alice, is_long):
+    # get position key/id related info
+    expect_pos_id = market.nextPositionId()
+    leverage = Decimal(5)
+
+    tol = 1e-2
+
+    # priors
+    delta = Decimal(market.delta()) / Decimal(1e18)
+    lmbda = Decimal(market.lmbda()) / Decimal(1e18)
+    maintenance_fraction = Decimal(market.maintenanceMarginFraction()) \
+        / Decimal(1e18)
+
+    # calculate the liquidation price factor
+    # then infer market impact required to slip to this price
+    # ask/mid = 1 - mm + 1/L
+    # bid/mid = 1 + mm - 1/L
+    if is_long:
+        liq_price_factor = 1 - maintenance_fraction + Decimal(1)/leverage
+    else:
+        liq_price_factor = 1 + maintenance_fraction - Decimal(1)/leverage
+
+    # Use mid price to calculate liquidation price
+    data = feed.latest()
+    mid_price = Decimal(mid_from_feed(data))
+    liq_price = mid_price * liq_price_factor
+
+    # ask/mid ~ e**(delta + lmbda * volume)
+    # bid/mid = e**(-delta - lmbda * volume)
+    if is_long:
+        volume = (Decimal(log(liq_price / mid_price)) - delta) / lmbda
+    else:
+        volume = (Decimal(log(mid_price / liq_price)) - delta) / lmbda
+
+    # calculate notional from required market impact
+    cap_notional = market.capNotionalAdjustedForBounds(data,
+                                                       market.capNotional())
+
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
+    # approve market for spending before build. use max
+    ovl.approve(market, 2**256 - 1, {"from": alice})
+
+    # check build reverts when position is liquidatable
+    input_notional = Decimal(cap_notional) * volume * Decimal(1 + tol)
+    input_collateral = int((input_notional / leverage))
+    with reverts("OVLV1:liquidatable"):
+        _ = market.build(input_collateral, input_leverage, input_is_long,
+                         input_price_limit, {"from": alice})
+
+    # check build succeeds when position is not liquidatable
+    input_notional = Decimal(cap_notional) * volume * Decimal(1 - tol)
+    input_collateral = int(input_notional / leverage)
+    market.build(input_collateral, input_leverage, input_is_long,
+                 input_price_limit, {"from": alice})
+
+    assert market.nextPositionId() == expect_pos_id + 1
 
 
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,

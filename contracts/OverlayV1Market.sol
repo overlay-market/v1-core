@@ -304,18 +304,25 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // subtract unwound open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
+        // use Math.min to avoid reverts with rounding issues
         if (pos.isLong) {
-            oiLong -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
-            oiLongShares -= pos.oiSharesCurrent(fraction);
+            oiLong -= Math.min(
+                oiLong,
+                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            );
+            oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
         } else {
-            oiShort -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
-            oiShortShares -= pos.oiSharesCurrent(fraction);
+            oiShort -= Math.min(
+                oiShort,
+                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            );
+            oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
         }
 
         // store the updated position info data
-        pos.notional -= uint120(pos.notionalInitial(fraction));
-        pos.debt -= uint120(pos.debtCurrent(fraction));
-        pos.oiShares -= pos.oiSharesCurrent(fraction);
+        pos.notional -= uint120(Math.min(pos.notional, pos.notionalInitial(fraction)));
+        pos.debt -= uint120(Math.min(pos.debt, pos.debtCurrent(fraction)));
+        pos.oiShares -= Math.min(pos.oiShares, pos.oiSharesCurrent(fraction));
         positions.set(msg.sender, positionId, pos);
 
         // emit unwind event
@@ -389,13 +396,20 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // subtract liquidated open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
+        // use Math.min to avoid reverts with rounding issues
         // TODO: test
         if (pos.isLong) {
-            oiLong -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
-            oiLongShares -= pos.oiSharesCurrent(fraction);
+            oiLong -= Math.min(
+                oiLong,
+                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            );
+            oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
         } else {
-            oiShort -= pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
-            oiShortShares -= pos.oiSharesCurrent(fraction);
+            oiShort -= Math.min(
+                oiShort,
+                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            );
+            oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
         }
 
         // store the updated position info data. mark as liquidated
