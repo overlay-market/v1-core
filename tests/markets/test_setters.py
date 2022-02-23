@@ -59,10 +59,10 @@ def test_set_cap_payoff(market, factory):
     assert expect == actual
 
 
-def test_set_cap_oi(market, factory):
+def test_set_cap_notional(market, factory):
     expect = 900000000000000000000000
-    market.setCapOi(expect, {"from": factory})
-    actual = market.capOi()
+    market.setCapNotional(expect, {"from": factory})
+    actual = market.capNotional()
     assert expect == actual
 
 
@@ -169,7 +169,7 @@ def test_set_min_collateral(market, factory):
 
 
 def test_set_price_drift_upper_limit(market, factory):
-    expect = 500000000000000
+    expect = 50000000000000
     market.setPriceDriftUpperLimit(expect, {"from": factory})
     actual = market.priceDriftUpperLimit()
     assert expect == actual
@@ -179,7 +179,7 @@ def test_set_price_drift_upper_limit_reverts_when_exceeds_max_exp(
     market, feed, factory
 ):
     _, _, macro_window, _, _, _, _, _ = feed.latest()
-    max_exp = 41000000000000000000
+    max_exp = 20000000000000000000
     max_price_drift_upper_limit = int(Decimal(max_exp)/Decimal(macro_window)) \
         + 1
 
@@ -196,3 +196,6 @@ def test_set_price_drift_upper_limit_reverts_when_exceeds_max_exp(
     expect = max_price_drift_upper_limit
     actual = market.priceDriftUpperLimit()
     assert expect == actual
+
+
+# TODO: setter revert tests when not factory

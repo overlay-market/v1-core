@@ -7,7 +7,7 @@ library Risk {
         uint256 lmbda; // market impact constant
         uint256 delta; // bid-ask static spread constant
         uint256 capPayoff; // payoff cap
-        uint256 capOi; // static oi cap
+        uint256 capNotional; // initial notional cap
         uint256 capLeverage; // initial leverage cap
         uint256 circuitBreakerWindow; // trailing window for circuit breaker
         uint256 circuitBreakerMintTarget; // target worst case inflation rate over trailing window

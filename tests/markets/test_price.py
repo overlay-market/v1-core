@@ -35,7 +35,7 @@ def test_bid_adds_market_impact(market, volume):
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)
 
-    # use volume anywhere from 0.1% to 100% of the oi cap
+    # use volume anywhere from 0.1% to 100% of the cap
     input_volume = volume * Decimal(1e18)
 
     # bids get the lower of micro/macro prices (worse price), multiplied
@@ -56,7 +56,7 @@ def test_bid_reverts_when_slippage_greater_than_max(market):
 
     # use volume greater than max slippage
     tol = 1e-4  # tolerance put at +/- 1bps
-    max_pow = 41
+    max_pow = 20
     max_volume = (max_pow - delta) / lmbda
 
     # check reverts when volume produces slippage greater than max
@@ -101,7 +101,7 @@ def test_ask_adds_market_impact(market, volume):
     delta = Decimal(market.delta() / 1e18)
     lmbda = Decimal(market.lmbda() / 1e18)
 
-    # use volume anywhere from 0.1% to 100% of the oi cap
+    # use volume anywhere from 0.1% to 100% of the cap
     input_volume = volume * Decimal(1e18)
 
     # asks get the higher of micro/macro prices (worse price), multiplied
@@ -122,7 +122,7 @@ def test_ask_reverts_when_impact_greater_than_max_slippage(market):
 
     # use volume greater than max slippage
     tol = 1e-4  # tolerance put at +/- 1bps
-    max_pow = 41
+    max_pow = 20
     max_volume = (max_pow - delta) / lmbda
 
     # check reverts when volume produces slippage greater than max

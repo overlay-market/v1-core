@@ -23,7 +23,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -35,7 +35,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_price_drift_upper_limit = 100000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -85,7 +85,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.lmbda() == expect_lmbda
     assert market_contract.delta() == expect_delta
     assert market_contract.capPayoff() == expect_cap_payoff
-    assert market_contract.capOi() == expect_cap_oi
+    assert market_contract.capNotional() == expect_cap_notional
     assert market_contract.capLeverage() == expect_cap_leverage
     assert market_contract.maintenanceMarginFraction() \
         == expect_maintenance_margin_fraction
@@ -114,7 +114,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -126,7 +126,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_price_drift_upper_limit = 100000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -161,7 +161,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -173,7 +173,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_price_drift_upper_limit = 100000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -204,7 +204,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -216,7 +216,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_price_drift_upper_limit = 100000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -245,7 +245,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -257,7 +257,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_price_drift_upper_limit = 100000000000000
 
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -288,7 +288,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -302,7 +302,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
     # check can't deploy with k less than min
     expect_k = factory.MIN_K() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -321,7 +321,7 @@ def test_deploy_market_reverts_when_k_less_than_min(factory, feed_factory,
     # check deploys with k equal to min
     expect_k = factory.MIN_K()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -347,7 +347,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -361,7 +361,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
     # check can't deploy with k greater than max
     expect_k = factory.MAX_K() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -380,7 +380,7 @@ def test_deploy_market_reverts_when_k_greater_than_max(factory, feed_factory,
     # check deploys with k equal to max
     expect_k = factory.MAX_K()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -407,7 +407,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
     expect_k = 1220000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -421,7 +421,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
     # check can't deploy with lmbda less than min
     expect_lmbda = factory.MIN_LMBDA() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -440,7 +440,7 @@ def test_deploy_market_reverts_when_lmbda_less_than_min(factory, feed_factory,
     # check deploys with lmbda equal to min
     expect_lmbda = factory.MIN_LMBDA()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -467,7 +467,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
     expect_k = 1220000000000
     expect_delta = 2500000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -481,7 +481,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
     # check can't deploy with lmbda greater than max
     expect_lmbda = factory.MAX_LMBDA() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -500,7 +500,7 @@ def test_deploy_market_reverts_when_lmbda_greater_than_max(factory,
     # check deploys with lmbda equal to max
     expect_lmbda = factory.MAX_LMBDA()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -527,7 +527,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -541,7 +541,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
     # check can't deploy with delta less than min
     expect_delta = factory.MIN_DELTA() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -560,7 +560,7 @@ def test_deploy_market_reverts_when_delta_less_than_min(factory, feed_factory,
     # check deploys with delta equal to min
     expect_delta = factory.MIN_DELTA()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -587,7 +587,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_cap_payoff = 5000000000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -601,7 +601,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
     # check can't deploy with delta greater than max
     expect_delta = factory.MAX_DELTA() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -620,7 +620,7 @@ def test_deploy_market_reverts_when_delta_greater_than_max(factory,
     # check deploys with delta equal to max
     expect_delta = factory.MAX_DELTA()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -651,7 +651,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -665,7 +665,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
     # check can't deploy with capPayoff less than min
     expect_cap_payoff = factory.MIN_CAP_PAYOFF() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -684,7 +684,7 @@ def test_deploy_market_reverts_when_cap_payoff_less_than_min(
     # check deploys with capPayoff equal to min
     expect_cap_payoff = factory.MIN_CAP_PAYOFF()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -714,7 +714,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -728,7 +728,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     # check can't deploy with capPayoff greater than max
     expect_cap_payoff = factory.MAX_CAP_PAYOFF() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -747,7 +747,7 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     # check deploys with capPayoff equal to max
     expect_cap_payoff = factory.MAX_CAP_PAYOFF()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -763,9 +763,9 @@ def test_deploy_market_reverts_when_cap_payoff_greater_than_max(
     )
 
 
-# capOi tests
-# NOTE: no cap_oi_less_than_min test because MIN_CAP_OI is zero
-def test_deploy_market_reverts_when_cap_oi_greater_than_max(
+# capNotional tests
+# NOTE: no cap_notional_less_than_min test because MIN_CAP_NOTIONAL is zero
+def test_deploy_market_reverts_when_cap_notional_greater_than_max(
     factory,
     feed_factory,
     feed_one,
@@ -790,10 +790,10 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
 
-    # check can't deploy with capOi greater than max
-    expect_cap_oi = factory.MAX_CAP_OI() + 1
+    # check can't deploy with capNotional greater than max
+    expect_cap_notional = factory.MAX_CAP_NOTIONAL() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -801,7 +801,7 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
                      expect_liquidation_fee_rate,
                      expect_trading_fee_rate, expect_min_collateral,
                      expect_price_drift_upper_limit)
-    with reverts("OVLV1: capOi out of bounds"):
+    with reverts("OVLV1: capNotional out of bounds"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -809,10 +809,10 @@ def test_deploy_market_reverts_when_cap_oi_greater_than_max(
             {"from": gov}
         )
 
-    # check deploys with capOi equal to max
-    expect_cap_oi = factory.MAX_CAP_OI()
+    # check deploys with capNotional equal to max
+    expect_cap_notional = factory.MAX_CAP_NOTIONAL()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -843,7 +843,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -857,7 +857,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
     # check can't deploy with capLeverage less than min
     expect_cap_leverage = factory.MIN_CAP_LEVERAGE() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -876,7 +876,7 @@ def test_deploy_market_reverts_when_cap_leverage_less_than_min(
     # check deploys with capLeverage equal to min
     expect_cap_leverage = factory.MIN_CAP_LEVERAGE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -906,7 +906,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_circuit_breaker_window = 2592000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -923,7 +923,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     # check can't deploy with capLeverage greater than max
     expect_cap_leverage = factory.MAX_CAP_LEVERAGE() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -942,7 +942,7 @@ def test_deploy_market_reverts_when_cap_leverage_greater_than_max(
     # check deploys with capLeverage equal to max
     expect_cap_leverage = factory.MAX_CAP_LEVERAGE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -973,7 +973,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -987,7 +987,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
     # check can't deploy with circuitBreakerWindow less than min
     expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1006,7 +1006,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_less_than_min(
     # check deploys with circuitBreakerWindow equal to min
     expect_circuit_breaker_window = factory.MIN_CIRCUIT_BREAKER_WINDOW()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1036,7 +1036,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_mint_target = 66670000000000000000000
@@ -1050,7 +1050,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
     # check can't deploy with circuitBreakerWindow greater than max
     expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1069,7 +1069,7 @@ def test_deploy_market_reverts_when_circuit_breaker_window_greater_than_max(
     # check deploys with circuitBreakerWindow equal to max
     expect_circuit_breaker_window = factory.MAX_CIRCUIT_BREAKER_WINDOW()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1100,7 +1100,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1115,7 +1115,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
     expect_circuit_breaker_mint_target = \
         factory.MAX_CIRCUIT_BREAKER_MINT_TARGET() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1135,7 +1135,7 @@ def test_deploy_market_reverts_when_circuit_breaker_target_greater_than_max(
     expect_circuit_breaker_mint_target = \
         factory.MAX_CIRCUIT_BREAKER_MINT_TARGET()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1166,7 +1166,7 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1181,7 +1181,7 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     expect_maintenance_margin_fraction = \
         factory.MIN_MAINTENANCE_MARGIN_FRACTION() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1201,7 +1201,7 @@ def test_deploy_market_reverts_when_maintenance_margin_less_than_min(
     expect_maintenance_margin_fraction = \
         factory.MIN_MAINTENANCE_MARGIN_FRACTION()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1231,7 +1231,7 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     # NOTE: set cap leverage to min to avoid market setter check revert
     expect_cap_leverage = factory.MIN_CAP_LEVERAGE()
@@ -1247,7 +1247,7 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_maintenance_margin_fraction = \
         factory.MAX_MAINTENANCE_MARGIN_FRACTION() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1267,7 +1267,7 @@ def test_deploy_market_reverts_when_maintenance_margin_greater_than_max(
     expect_maintenance_margin_fraction = \
         factory.MAX_MAINTENANCE_MARGIN_FRACTION()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1298,7 +1298,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1313,7 +1313,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
     expect_maintenance_margin_burn_rate = \
         factory.MIN_MAINTENANCE_MARGIN_BURN_RATE() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1333,7 +1333,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_less_than_min(
     expect_maintenance_margin_burn_rate = \
         factory.MIN_MAINTENANCE_MARGIN_BURN_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1363,7 +1363,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1378,7 +1378,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     expect_maintenance_margin_burn_rate = \
         factory.MAX_MAINTENANCE_MARGIN_BURN_RATE() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1398,7 +1398,7 @@ def test_deploy_market_reverts_when_maintenance_margin_burn_greater_than_max(
     expect_maintenance_margin_burn_rate = \
         factory.MAX_MAINTENANCE_MARGIN_BURN_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1429,7 +1429,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1444,7 +1444,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_less_than_min(
     expect_liquidation_fee_rate = \
         factory.MIN_LIQUIDATION_FEE_RATE() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1464,7 +1464,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_less_than_min(
     expect_liquidation_fee_rate = \
         factory.MIN_LIQUIDATION_FEE_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1494,7 +1494,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1509,7 +1509,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_greater_than_max(
     expect_liquidation_fee_rate = \
         factory.MAX_LIQUIDATION_FEE_RATE() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1529,7 +1529,7 @@ def test_deploy_market_reverts_when_liquidation_fee_rate_greater_than_max(
     expect_liquidation_fee_rate = \
         factory.MAX_LIQUIDATION_FEE_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1560,7 +1560,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1574,7 +1574,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
     # check can't deploy with tradingFeeRate less than min
     expect_trading_fee_rate = factory.MIN_TRADING_FEE_RATE() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1593,7 +1593,7 @@ def test_deploy_market_reverts_when_trading_fee_less_than_min(
     # check deploys with tradingFeeRate equal to min
     expect_trading_fee_rate = factory.MIN_TRADING_FEE_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1623,7 +1623,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1637,7 +1637,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
     # check can't deploy with tradingFeeRate greater than max
     expect_trading_fee_rate = factory.MAX_TRADING_FEE_RATE() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1656,7 +1656,7 @@ def test_deploy_market_reverts_when_trading_fee_greater_than_max(
     # check deploys with tradingFeeRate equal to max
     expect_trading_fee_rate = factory.MAX_TRADING_FEE_RATE()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1687,7 +1687,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1701,7 +1701,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
     # check can't deploy with minCollateral less than min
     expect_min_collateral = factory.MIN_MINIMUM_COLLATERAL() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1720,7 +1720,7 @@ def test_deploy_market_reverts_when_min_collateral_less_than_min(
     # check deploys with minCollateral equal to min
     expect_min_collateral = factory.MIN_MINIMUM_COLLATERAL()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1750,7 +1750,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1764,7 +1764,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
     # check can't deploy with minCollateral greater than max
     expect_min_collateral = factory.MAX_MINIMUM_COLLATERAL() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1783,7 +1783,7 @@ def test_deploy_market_reverts_when_min_collateral_greater_than_max(
     # check deploys with minCollateral equal to max
     expect_min_collateral = factory.MAX_MINIMUM_COLLATERAL()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1814,7 +1814,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1828,7 +1828,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
     # check can't deploy with priceDriftUpperLimit less than min
     expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT() - 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1847,7 +1847,7 @@ def test_deploy_market_reverts_when_price_drift_less_than_min(
     # check deploys with priceDriftUpperLimit equal to min
     expect_price_drift_upper_limit = factory.MIN_PRICE_DRIFT_UPPER_LIMIT()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1877,7 +1877,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
     expect_k = 1220000000000
     expect_lmbda = 1000000000000000000
     expect_delta = 2500000000000000
-    expect_cap_oi = 800000000000000000000000
+    expect_cap_notional = 800000000000000000000000
     expect_cap_payoff = 5000000000000000000
     expect_cap_leverage = 5000000000000000000
     expect_circuit_breaker_window = 2592000
@@ -1891,7 +1891,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
     # check can't deploy with priceDriftUpperLimit greater than max
     expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT() + 1
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,
@@ -1910,7 +1910,7 @@ def test_deploy_market_reverts_when_price_drift_greater_than_max(
     # check deploys with priceDriftUpperLimit equal to max
     expect_price_drift_upper_limit = factory.MAX_PRICE_DRIFT_UPPER_LIMIT()
     expect_params = (expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_oi, expect_cap_leverage,
+                     expect_cap_notional, expect_cap_leverage,
                      expect_circuit_breaker_window,
                      expect_circuit_breaker_mint_target,
                      expect_maintenance_margin_fraction,

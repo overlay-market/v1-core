@@ -14,19 +14,19 @@ def test_update_fetches_from_feed(market, feed, rando):
 
 
 @given(
-    oi_long=strategy('decimal', min_value='0.001', max_value='800000',
-                     places=3),
-    oi_short=strategy('decimal', min_value='0.001', max_value='800000',
-                      places=3))
+    notional_long=strategy('decimal', min_value='0.001', max_value='800000',
+                           places=3),
+    notional_short=strategy('decimal', min_value='0.001', max_value='800000',
+                            places=3))
 def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
-                             oi_long, oi_short):
-    oi_long = oi_long * Decimal(1e18)
-    oi_short = oi_short * Decimal(1e18)
+                             notional_long, notional_short):
+    notional_long = notional_long * Decimal(1e18)
+    notional_short = notional_short * Decimal(1e18)
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    approve_collateral_long = oi_long * (1 + trading_fee_rate)
-    approve_collateral_short = oi_short * (1 + trading_fee_rate)
+    approve_collateral_long = notional_long * (1 + trading_fee_rate)
+    approve_collateral_short = notional_short * (1 + trading_fee_rate)
 
     # approve collateral amounts
     ovl.approve(market, approve_collateral_long, {"from": alice})
@@ -34,8 +34,8 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
 
     # build long and short positions for oi
     # NOTE: build() tests in test_build.py
-    _ = market.build(oi_long, 1e18, True, 2**256-1, {"from": alice})
-    _ = market.build(oi_short, 1e18, False, 0, {"from": bob})
+    _ = market.build(notional_long, 1e18, True, 2**256-1, {"from": alice})
+    _ = market.build(notional_short, 1e18, False, 0, {"from": bob})
 
     # get values prior to mine chain
     expect_oi_long = market.oiLong()

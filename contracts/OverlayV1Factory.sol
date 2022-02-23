@@ -14,14 +14,14 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // risk param bounds
     uint256 public constant MIN_K = 4e8; // ~ 0.1 bps / 8 hr
     uint256 public constant MAX_K = 4e12; // ~ 1000 bps / 8 hr
-    uint256 public constant MIN_LMBDA = 1e17; // 0.1
+    uint256 public constant MIN_LMBDA = 1e16; // 0.01
     uint256 public constant MAX_LMBDA = 1e19; // 10
     uint256 public constant MIN_DELTA = 1e14; // 0.01% (1 bps)
     uint256 public constant MAX_DELTA = 2e16; // 2% (200 bps)
     uint256 public constant MIN_CAP_PAYOFF = 1e18; // 1x
     uint256 public constant MAX_CAP_PAYOFF = 1e19; // 10x
-    uint256 public constant MIN_CAP_OI = 0; // 0 OVL
-    uint256 public constant MAX_CAP_OI = 8e24; // 8,000,000 OVL (initial supply)
+    uint256 public constant MIN_CAP_NOTIONAL = 0; // 0 OVL
+    uint256 public constant MAX_CAP_NOTIONAL = 8e24; // 8,000,000 OVL (initial supply)
     uint256 public constant MIN_CAP_LEVERAGE = 1e18; // 1x
     uint256 public constant MAX_CAP_LEVERAGE = 2e19; // 20x
     uint256 public constant MIN_CIRCUIT_BREAKER_WINDOW = 86400; // 1 day
@@ -38,15 +38,15 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
     uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
     uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
-    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.0001% per sec (0.01 bps/s)
-    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e16; // 1.00% per sec (100 bps/s)
+    uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.01 bps/s
+    uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e14; // 1 bps/s
 
     // events for risk param updates
     event FundingUpdated(address indexed user, address indexed market, uint256 k);
     event ImpactUpdated(address indexed user, address indexed market, uint256 lmbda);
     event SpreadUpdated(address indexed user, address indexed market, uint256 delta);
     event PayoffCapUpdated(address indexed user, address indexed market, uint256 capPayoff);
-    event OpenInterestCapUpdated(address indexed user, address indexed market, uint256 capOi);
+    event NotionalCapUpdated(address indexed user, address indexed market, uint256 capNotional);
     event LeverageCapUpdated(address indexed user, address indexed market, uint256 capLeverage);
     event CircuitBreakerWindowUpdated(
         address indexed user,
@@ -186,8 +186,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
             "OVLV1: capPayoff out of bounds"
         );
         require(
-            params.capOi >= MIN_CAP_OI && params.capOi <= MAX_CAP_OI,
-            "OVLV1: capOi out of bounds"
+            params.capNotional >= MIN_CAP_NOTIONAL && params.capNotional <= MAX_CAP_NOTIONAL,
+            "OVLV1: capNotional out of bounds"
         );
         require(
             params.capLeverage >= MIN_CAP_LEVERAGE && params.capLeverage <= MAX_CAP_LEVERAGE,
@@ -280,12 +280,15 @@ contract OverlayV1Factory is IOverlayV1Factory {
         emit PayoffCapUpdated(msg.sender, address(market), capPayoff);
     }
 
-    /// @dev oi cap setter
-    function setCapOi(address feed, uint256 capOi) external onlyGovernor {
-        require(capOi >= MIN_CAP_OI && capOi <= MAX_CAP_OI, "OVLV1: capOi out of bounds");
+    /// @dev notional cap setter
+    function setCapNotional(address feed, uint256 capNotional) external onlyGovernor {
+        require(
+            capNotional >= MIN_CAP_NOTIONAL && capNotional <= MAX_CAP_NOTIONAL,
+            "OVLV1: capNotional out of bounds"
+        );
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
-        market.setCapOi(capOi);
-        emit OpenInterestCapUpdated(msg.sender, address(market), capOi);
+        market.setCapNotional(capNotional);
+        emit NotionalCapUpdated(msg.sender, address(market), capNotional);
     }
 
     /// @dev initial leverage cap setter

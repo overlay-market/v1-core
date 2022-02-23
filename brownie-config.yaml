@@ -17,6 +17,8 @@ dependencies:
 compiler:
   solc:
     version: 0.8.10
+    optimizer:
+      runs: 800
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.4.2"
       - "@uniswap/v3-core=Uniswap/v3-core@1.0.0"

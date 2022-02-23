@@ -38,20 +38,12 @@ contract PositionMock {
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
+    function notionalInitial(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.oiSharesCurrent(fraction);
-    }
-
-    function debtCurrent(Position.Info memory pos, uint256 fraction)
-        external
-        view
-        returns (uint256)
-    {
-        return pos.debtCurrent(fraction);
+        return pos.notionalInitial(fraction);
     }
 
     function oiInitial(Position.Info memory pos, uint256 fraction)
@@ -62,46 +54,69 @@ contract PositionMock {
         return pos.oiInitial(fraction);
     }
 
-    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
-        return pos.cost(fraction);
+    function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
+        external
+        view
+        returns (uint256)
+    {
+        return pos.oiSharesCurrent(fraction);
     }
 
     function oiCurrent(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide
     ) external view returns (uint256) {
-        return pos.oiCurrent(fraction, totalOi, totalOiShares);
+        return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
+    }
+
+    function debtCurrent(Position.Info memory pos, uint256 fraction)
+        external
+        view
+        returns (uint256)
+    {
+        return pos.debtCurrent(fraction);
+    }
+
+    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+        return pos.cost(fraction);
     }
 
     function value(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.value(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
+        return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
-    function notional(
+    function notionalWithPnl(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
-        return pos.notional(fraction, totalOi, totalOiShares, currentPrice, capPayoff);
+        return
+            pos.notionalWithPnl(
+                fraction,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
+                currentPrice,
+                capPayoff
+            );
     }
 
     function tradingFee(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
         uint256 tradingFeeRate
@@ -109,8 +124,8 @@ contract PositionMock {
         return
             pos.tradingFee(
                 fraction,
-                totalOi,
-                totalOiShares,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
                 currentPrice,
                 capPayoff,
                 tradingFeeRate
@@ -119,16 +134,16 @@ contract PositionMock {
 
     function liquidatable(
         Position.Info memory pos,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
         uint256 maintenanceMarginFraction
     ) external view returns (bool) {
         return
             pos.liquidatable(
-                totalOi,
-                totalOiShares,
+                oiTotalOnSide,
+                oiTotalSharesOnSide,
                 currentPrice,
                 capPayoff,
                 maintenanceMarginFraction
@@ -137,10 +152,10 @@ contract PositionMock {
 
     function liquidationPrice(
         Position.Info memory pos,
-        uint256 totalOi,
-        uint256 totalOiShares,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide,
         uint256 maintenanceMarginFraction
     ) external view returns (uint256) {
-        return pos.liquidationPrice(totalOi, totalOiShares, maintenanceMarginFraction);
+        return pos.liquidationPrice(oiTotalOnSide, oiTotalSharesOnSide, maintenanceMarginFraction);
     }
 }
