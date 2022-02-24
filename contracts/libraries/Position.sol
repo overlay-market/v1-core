@@ -116,12 +116,24 @@ library Position {
 
     /// @notice Computes the position's initial open interest cast to uint256
     function _oiX160Shares(Info memory self) private pure returns (uint256) {
-        return oiX160FromNotional(self.notional, self.midPrice);
+        return oiX160FromNotional(self.notional, _midPrice(self));
     }
 
     /// @notice Computes the position's debt cast to uint256
     function _debt(Info memory self) private pure returns (uint256) {
         return uint256(self.debt);
+    }
+
+    /// @notice Computes the position's entry price cast to uint256
+    // TODO: test
+    function _entryPrice(Info memory self) private pure returns (uint256) {
+        return uint256(self.entryPrice);
+    }
+
+    /// @notice Computes the position's mid price at entry cast to uint256
+    // TODO: test
+    function _midPrice(Info memory self) private pure returns (uint256) {
+        return uint256(self.midPrice);
     }
 
     /// @notice Whether the position exists
@@ -251,9 +263,10 @@ library Position {
             oiX160TotalSharesOnSide
         );
         uint256 posDebt = debtCurrent(self, fraction); // D
+        uint256 midPrice = _midPrice(self);
 
         // OI(t) * MP(0)
-        collateral_ = notionalFromOiX160(posOiX160Current, self.midPrice);
+        collateral_ = notionalFromOiX160(posOiX160Current, midPrice);
 
         // subtract off the debt
         // use Math.min to floor to zero in case underwater
@@ -285,35 +298,34 @@ library Position {
             oiX160TotalOnSide,
             oiX160TotalSharesOnSide
         );
-        uint160 currentPrice160 = uint160(currentPrice); // P(t)
-        uint160 entryPrice160 = self.entryPrice; // P(0)
+        uint256 entryPrice = _entryPrice(self); // P(0)
 
         // start with the collateral: N(t)
         val_ = posCollateral;
 
         // pnl calc to add to/subtract from collateral: +/- OI(t) * [P(t) - P(0)]
-        if (self.isLong && currentPrice160 > entryPrice160) {
+        if (self.isLong && currentPrice > entryPrice) {
             // v += OI * [P(t) - P(0)]
-            uint160 dp = currentPrice160 - entryPrice160;
+            uint256 dp = currentPrice - entryPrice;
             // cap the payoff
-            if (dp > entryPrice160 * uint160(capPayoff)) dp = entryPrice160 * uint160(capPayoff);
+            if (dp > entryPrice.mulUp(capPayoff)) dp = entryPrice.mulUp(capPayoff);
             uint256 pnl = notionalFromOiX160(posOiX160Current, dp);
             val_ += pnl;
-        } else if (self.isLong && currentPrice160 <= entryPrice160) {
+        } else if (self.isLong && currentPrice <= entryPrice) {
             // v -= OI * [P(0) - P(t)]
-            uint160 dp = entryPrice160 - currentPrice160;
+            uint256 dp = entryPrice - currentPrice;
             uint256 pnl = notionalFromOiX160(posOiX160Current, dp);
             val_ -= Math.min(val_, pnl); // floor to zero
-        } else if (!self.isLong && currentPrice160 > entryPrice160) {
+        } else if (!self.isLong && currentPrice > entryPrice) {
             // v -= OI * [P(t) - P(0)]
-            uint160 dp = currentPrice160 - entryPrice160;
+            uint256 dp = currentPrice - entryPrice;
             // cap the payoff
-            if (dp > entryPrice160 * uint160(capPayoff)) dp = entryPrice160 * uint160(capPayoff);
+            if (dp > entryPrice.mulUp(capPayoff)) dp = entryPrice.mulUp(capPayoff);
             uint256 pnl = notionalFromOiX160(posOiX160Current, dp);
             val_ -= Math.min(val_, pnl);
         } else {
             // v += OI * [P(0) - P(t)]
-            uint160 dp = entryPrice160 - currentPrice160;
+            uint256 dp = entryPrice - currentPrice;
             uint256 pnl = notionalFromOiX160(posOiX160Current, dp);
             val_ += pnl;
         }

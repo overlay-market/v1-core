@@ -160,7 +160,7 @@ contract OverlayV1Market is IOverlayV1Market {
         // and added to collateral transferred in
         uint256 notional = collateral.mulUp(leverage);
         // TODO: fix
-        uint256 oiX160 = Position.oiX160FromNotional(collateral.mulUp(leverage), midPrice);
+        uint256 oiX160 = Position.oiX160FromNotional(notional, midPrice);
 
         Position.Info memory pos;
         uint256 price;
