@@ -2,6 +2,8 @@
 pragma solidity 0.8.10;
 
 library Oracle {
+    /// @notice Past snapshot values to calculate the TWAP.
+    /// @dev Every Oracle's data must be formatted to conform to this struct.
     struct Data {
         uint256 timestamp;
         uint256 microWindow;

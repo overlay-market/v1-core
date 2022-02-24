@@ -18,12 +18,15 @@ abstract contract OverlayV1Feed is IOverlayV1Feed {
         feedFactory = msg.sender;
     }
 
-    /// @dev returns freshest possible data from oracle
+    /// @dev Returns freshest possible data from oracle
+    /// @return Past snapshot values to calculate the TWAP
     function latest() external view returns (Oracle.Data memory) {
         return _fetch();
     }
 
-    /// @dev fetches data from oracle. should be implemented differently
-    /// @dev for each feed type
+    /// @dev Fetches data from oracle.
+    /// @dev Should be implemented differently for every Oracle's feed type
+    /// @dev For each feed type
+    /// @return Past snapshot values to calculate the TWAP
     function _fetch() internal view virtual returns (Oracle.Data memory);
 }
