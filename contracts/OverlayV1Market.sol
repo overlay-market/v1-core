@@ -52,10 +52,10 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public priceDriftUpperLimit; // upper limit for feed price changes
 
     // aggregate oi quantities
-    uint256 public oiLong;
-    uint256 public oiShort;
-    uint256 public oiLongShares;
-    uint256 public oiShortShares;
+    uint256 public oiX160Long;
+    uint256 public oiX160Short;
+    uint256 public oiX160LongShares;
+    uint256 public oiX160ShortShares;
 
     // rollers
     Roller.Snapshot public override snapshotVolumeBid; // snapshot of recent volume on bid
@@ -79,7 +79,7 @@ contract OverlayV1Market is IOverlayV1Market {
     event Build(
         address indexed sender, // address that initiated build (owns position)
         uint256 positionId, // id of built position
-        uint256 oi, // oi of position at build
+        uint256 notional, // notional of position at build; TODO: fix in tests
         uint256 debt, // debt of position at build
         bool isLong, // whether is long or short
         uint256 price // entry price
@@ -154,65 +154,68 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // call to update before any effects
         Oracle.Data memory data = update();
+        uint256 midPrice = _midFromFeed(data);
 
         // calculate notional, oi, and trading fees. fees charged on notional
         // and added to collateral transferred in
         uint256 notional = collateral.mulUp(leverage);
-        uint256 oi = oiFromNotional(data, notional);
+        uint256 oiX160 = Position.oiX160FromNotional(collateral.mulUp(leverage), midPrice); // TODO: fix
 
-        // calculate current notional cap adjusted for circuit breaker *then* adjust
-        // for front run and back run bounds (order matters)
-        // TODO: test for ordering
-        uint256 capNotionalAdjusted = capNotionalAdjustedForCircuitBreaker(capNotional);
-        capNotionalAdjusted = capNotionalAdjustedForBounds(data, capNotionalAdjusted);
-
-        // longs get the ask and shorts get the bid on build
-        // register the additional volume on either the ask or bid
-        // where volume = oi / capOi
-        uint256 price = isLong
-            ? ask(data, _registerVolumeAsk(data, oi, oiFromNotional(data, capNotionalAdjusted)))
-            : bid(data, _registerVolumeBid(data, oi, oiFromNotional(data, capNotionalAdjusted)));
-        // check price hasn't changed more than max slippage specified by trader
-        require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
-
-        // add new position's open interest to the side's aggregate oi value
-        // and increase number of oi shares issued. assemble position for storage
         Position.Info memory pos;
+        uint256 price;
         // avoids stack too deep
         {
+            // calculate current notional cap adjusted for circuit breaker *then* adjust
+            // for front run and back run bounds (order matters)
+            // TODO: test for ordering
+            uint256 capNotionalAdjusted = capNotionalAdjustedForCircuitBreaker(capNotional);
+            capNotionalAdjusted = capNotionalAdjustedForBounds(data, capNotionalAdjusted);
+
+            // longs get the ask and shorts get the bid on build
+            // register the additional volume on either the ask or bid
+            // where volume = oi / capOi
+            price = isLong
+                ? ask(data, _registerVolumeAsk(data, oiX160, Position.oiX160FromNotional(capNotionalAdjusted, midPrice)))
+                : bid(data, _registerVolumeBid(data, oiX160, Position.oiX160FromNotional(capNotionalAdjusted, midPrice)));
+            // check price hasn't changed more than max slippage specified by trader
+            require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
+
+            // add new position's open interest to the side's aggregate oi value
+            // and increase number of oi shares issued. assemble position for storage
+
             // cache for gas savings
-            uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
-            uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
+            uint256 oiX160TotalOnSide = isLong ? oiX160Long : oiX160Short;
+            uint256 oiX160TotalSharesOnSide = isLong ? oiX160LongShares : oiX160ShortShares;
 
             // check new total oi on side does not exceed capOi
-            oiTotalOnSide += oi;
-            oiTotalSharesOnSide += oi;
-            require(oiTotalOnSide <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
+            oiX160TotalOnSide += oiX160; // TODO: fix
+            oiX160TotalSharesOnSide += oiX160; // TODO: fix
+            require(oiX160TotalOnSide <= Position.oiX160FromNotional(capNotionalAdjusted, midPrice), "OVLV1:oi>cap");
 
             // update total aggregate oi and oi shares
             if (isLong) {
-                oiLong = oiTotalOnSide;
-                oiLongShares = oiTotalSharesOnSide;
+                oiX160Long = oiX160TotalOnSide;
+                oiX160LongShares = oiX160TotalSharesOnSide;
             } else {
-                oiShort = oiTotalOnSide;
-                oiShortShares = oiTotalSharesOnSide;
+                oiX160Short = oiX160TotalOnSide;
+                oiX160ShortShares = oiX160TotalSharesOnSide;
             }
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing
             pos = Position.Info({
-                notional: uint120(notional), // won't overflow as capNotional max is 8e24
-                debt: uint120(notional - collateral),
+                notional: uint88(notional), // won't overflow as capNotional max is 8e24
                 isLong: isLong,
+                entryPrice: uint160(price), // TODO: this should be enforced on feed
+                debt: uint88(notional - collateral),
                 liquidated: false,
-                entryPrice: price,
-                oiShares: oi
+                midPrice: uint160(midPrice)
             });
             require(
                 !pos.liquidatable(
-                    oiTotalOnSide,
-                    oiTotalSharesOnSide,
-                    _midFromFeed(data), // mid price used on liquidations
+                    oiX160TotalOnSide,
+                    oiX160TotalSharesOnSide,
+                    midPrice, // mid price used on liquidations
                     capPayoff,
                     maintenanceMarginFraction
                 ),
@@ -226,7 +229,7 @@ contract OverlayV1Market is IOverlayV1Market {
         _totalPositions++;
 
         // emit build event
-        emit Build(msg.sender, positionId_, oi, notional - collateral, isLong, price);
+        emit Build(msg.sender, positionId_, notional, notional - collateral, isLong, price);
 
         // transfer in the OVL collateral needed to back the position + fees
         // trading fees charged as a percentage on notional size of position
@@ -251,10 +254,11 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // call to update before any effects
         Oracle.Data memory data = update();
+        uint256 midPrice = _midFromFeed(data);
 
         // cache for gas savings
-        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
-        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 oiX160TotalOnSide = pos.isLong ? oiX160Long : oiX160Short;
+        uint256 oiX160TotalSharesOnSide = pos.isLong ? oiX160LongShares : oiX160ShortShares;
 
         // longs get the bid and shorts get the ask on unwind
         // register the additional volume on either the ask or bid
@@ -266,16 +270,16 @@ contract OverlayV1Market is IOverlayV1Market {
                 data,
                 _registerVolumeBid(
                     data,
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
-                    oiFromNotional(data, capNotionalAdjustedForBounds(data, capNotional))
+                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide), // TODO: fix fraction!
+                    Position.oiX160FromNotional(capNotionalAdjustedForBounds(data, capNotional), midPrice) // TODO: fix fraction!
                 )
             )
             : ask(
                 data,
                 _registerVolumeAsk(
                     data,
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
-                    oiFromNotional(data, capNotionalAdjustedForBounds(data, capNotional))
+                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide), // TODO: fix!
+                    Position.oiX160FromNotional(capNotionalAdjustedForBounds(data, capNotional), midPrice) // TODO: fix fraction!
                 )
             );
         // check price hasn't changed more than max slippage specified by trader
@@ -283,7 +287,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
+        uint256 value = pos.value(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide, price, capPayoff);
         uint256 cost = pos.cost(fraction);
 
         // register the amount to be minted/burned
@@ -293,8 +297,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // calculate the trading fee as % on notional
         uint256 tradingFee = pos.tradingFee(
             fraction,
-            oiTotalOnSide,
-            oiTotalSharesOnSide,
+            oiX160TotalOnSide,
+            oiX160TotalSharesOnSide,
             price,
             capPayoff,
             tradingFeeRate
@@ -305,23 +309,22 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // use Math.min to avoid reverts with rounding issues
         if (pos.isLong) {
-            oiLong -= Math.min(
-                oiLong,
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            oiX160Long -= Math.min(
+                oiX160Long,
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide) // TODO: fix
             );
-            oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
+            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
         } else {
-            oiShort -= Math.min(
-                oiShort,
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            oiX160Short -= Math.min(
+                oiX160Short,
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide) // TODO: fix
             );
-            oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
+            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
         }
 
         // store the updated position info data
-        pos.notional -= uint120(Math.min(pos.notional, pos.notionalInitial(fraction)));
-        pos.debt -= uint120(Math.min(pos.debt, pos.debtCurrent(fraction)));
-        pos.oiShares -= Math.min(pos.oiShares, pos.oiSharesCurrent(fraction));
+        pos.notional -= uint88(Math.min(pos.notional, pos.notionalInitial(fraction)));
+        pos.debt -= uint88(Math.min(pos.debt, pos.debtCurrent(fraction)));
         positions.set(msg.sender, positionId, pos);
 
         // emit unwind event
@@ -350,23 +353,23 @@ contract OverlayV1Market is IOverlayV1Market {
         // call to update before any effects
         Oracle.Data memory data = update();
 
+        // Use mid price without volume for liquidation (oracle price effectively) to
+        // prevent market impact manipulation from causing unneccessary liquidations
+        uint256 price = _midFromFeed(data);
+
         // cache for gas savings
-        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
-        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
+        uint256 oiX160TotalOnSide = pos.isLong ? oiX160Long : oiX160Short;
+        uint256 oiX160TotalSharesOnSide = pos.isLong ? oiX160LongShares : oiX160ShortShares;
         uint256 _capPayoff = capPayoff;
 
         // entire position should be liquidated
         uint256 fraction = ONE;
 
-        // Use mid price without volume for liquidation (oracle price effectively) to
-        // prevent market impact manipulation from causing unneccessary liquidations
-        uint256 price = _midFromFeed(data);
-
         // check position is liquidatable
         require(
             pos.liquidatable(
-                oiTotalOnSide,
-                oiTotalSharesOnSide,
+                oiX160TotalOnSide,
+                oiX160TotalSharesOnSide,
                 price,
                 _capPayoff,
                 maintenanceMarginFraction
@@ -376,7 +379,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, _capPayoff);
+        uint256 value = pos.value(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide, price, _capPayoff);
         uint256 cost = pos.cost(fraction);
 
         // value is the remaining position margin. reduce value further by
@@ -393,23 +396,22 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // use Math.min to avoid reverts with rounding issues
         if (pos.isLong) {
-            oiLong -= Math.min(
-                oiLong,
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            oiX160Long -= Math.min(
+                oiX160Long,
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
+            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
         } else {
-            oiShort -= Math.min(
-                oiShort,
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            oiX160Short -= Math.min(
+                oiX160Short,
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
+            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
         }
 
         // store the updated position info data. mark as liquidated
         pos.notional = 0;
         pos.debt = 0;
-        pos.oiShares = 0;
         pos.liquidated = true;
         positions.set(owner, positionId, pos);
 
@@ -433,18 +435,20 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 timeElapsed = block.timestamp - timestampUpdateLast;
         if (timeElapsed > 0) {
             // calculate adjustments to oi due to funding
-            bool isLongOverweight = oiLong > oiShort;
-            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
-            (oiOverweight, oiUnderweight) = oiAfterFunding(
-                oiOverweight,
-                oiUnderweight,
+            bool isLongOverweight = oiX160Long > oiX160Short;
+
+            // TODO: fix
+            uint256 oiX160Overweight = isLongOverweight ? oiX160Long : oiX160Short;
+            uint256 oiX160Underweight = isLongOverweight ? oiX160Short : oiX160Long;
+            (oiX160Overweight, oiX160Underweight) = oiX160AfterFunding(
+                oiX160Overweight,
+                oiX160Underweight,
                 timeElapsed
             );
 
             // pay funding
-            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+            oiX160Long = isLongOverweight ? oiX160Overweight : oiX160Underweight;
+            oiX160Short = isLongOverweight ? oiX160Underweight : oiX160Overweight;
 
             // refresh last update data
             timestampUpdateLast = block.timestamp;
@@ -485,17 +489,19 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev current open interest after funding payments transferred
     /// @dev from overweight oi side to underweight oi side
-    function oiAfterFunding(
-        uint256 oiOverweightBefore,
-        uint256 oiUnderweightBefore,
+    // TODO: change for oiX160
+    // TODO: BE CAREFUL WITH OVERFLOWS
+    function oiX160AfterFunding(
+        uint256 oiX160OverweightBefore,
+        uint256 oiX160UnderweightBefore,
         uint256 timeElapsed
     ) public view returns (uint256, uint256) {
-        uint256 oiTotalBefore = oiOverweightBefore + oiUnderweightBefore;
-        uint256 oiImbalanceBefore = oiOverweightBefore - oiUnderweightBefore;
+        uint256 oiX160TotalBefore = oiX160OverweightBefore + oiX160UnderweightBefore;
+        uint256 oiX160ImbalanceBefore = oiX160OverweightBefore - oiX160UnderweightBefore;
 
         // If no OI or imbalance, no funding occurs. Handles div by zero case below
-        if (oiTotalBefore == 0 || oiImbalanceBefore == 0) {
-            return (oiOverweightBefore, oiUnderweightBefore);
+        if (oiX160TotalBefore == 0 || oiX160ImbalanceBefore == 0) {
+            return (oiX160OverweightBefore, oiX160UnderweightBefore);
         }
 
         // draw down the imbalance by factor of e**(-2*k*t)
@@ -505,7 +511,7 @@ contract OverlayV1Market is IOverlayV1Market {
             fundingFactor = INVERSE_EULER.powDown(2 * k * timeElapsed);
         }
         // oiImbalanceNow guaranteed <= oiImbalanceBefore
-        uint256 oiImbalanceNow = oiImbalanceBefore.mulDown(fundingFactor);
+        uint256 oiX160ImbalanceNow = oiX160ImbalanceBefore.mulDown(fundingFactor);
 
         // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
@@ -513,24 +519,26 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // Guaranteed 0 <= underRoot <= 1
         uint256 underRoot = ONE -
-            oiImbalanceBefore.divDown(oiTotalBefore).powDown(2 * ONE).mulDown(
+            oiX160ImbalanceBefore.divDown(oiX160TotalBefore).powDown(2 * ONE).mulDown(
                 ONE - fundingFactor.powDown(2 * ONE)
             );
 
         // oiTotalNow guaranteed <= oiTotalBefore (burn happens)
-        uint256 oiTotalNow = oiTotalBefore.mulDown(underRoot.powDown(ONE / 2));
+        uint256 oiX160TotalNow = oiX160TotalBefore.mulDown(underRoot.powDown(ONE / 2));
 
         // overweight pays underweight
         // use oiOver * oiUnder = invariant for oiUnderNow to avoid any
         // potential overflow reverts
-        uint256 oiOverweightNow = (oiTotalNow + oiImbalanceNow) / 2;
-        uint256 oiUnderweightNow;
-        if (oiOverweightNow != 0) {
-            oiUnderweightNow = oiUnderweightBefore.mulUp(oiOverweightBefore).divUp(
-                oiOverweightNow
+        uint256 oiX160OverweightNow = (oiX160TotalNow + oiX160ImbalanceNow) / 2;
+        uint256 oiX160UnderweightNow;
+
+        // TODO: BE VERY CAREFUL in taking product with overflows
+        if (oiX160OverweightNow != 0) {
+            oiX160UnderweightNow = oiX160UnderweightBefore.mulUp(oiX160OverweightBefore).divUp(
+                oiX160OverweightNow
             );
         }
-        return (oiOverweightNow, oiUnderweightNow);
+        return (oiX160OverweightNow, oiX160UnderweightNow);
     }
 
     /// @return next position id
@@ -605,18 +613,6 @@ contract OverlayV1Market is IOverlayV1Market {
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
 
-    /// @dev Returns the open interest in number of contracts for a given notional
-    /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
-    // TODO: fix potential rounding errors w div and large prices; move to Position lib
-    function oiFromNotional(Oracle.Data memory data, uint256 notional)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 price = _midFromFeed(data);
-        return notional.divDown(price);
-    }
-
     /// @dev bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) public view returns (uint256 bid_) {
         bid_ = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
@@ -651,17 +647,18 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev mid price without impact/spread given oracle data and recent volume
     /// @dev used for gas savings to avoid accessing storage for delta, lmbda
     function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
-        uint256 bid = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        uint256 ask = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        mid_ = (bid + ask) / 2;
+        uint256 _bid = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
+        uint256 _ask = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
+        mid_ = (_bid + _ask) / 2;
     }
 
     /// @dev Rolling volume adjustments on bid side to be used for market impact.
     /// @dev Volume values are normalized with respect to cap
+    // TODO: FIX .. be careful of overflows w volume/cap given using oiX160
     function _registerVolumeBid(
         Oracle.Data memory data,
-        uint256 volume,
-        uint256 cap
+        uint256 volume, // TODO: volumeX160
+        uint256 cap // TODO: capX160
     ) private returns (uint256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotVolumeBid;
@@ -680,14 +677,15 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev Rolling volume adjustments on ask side to be used for market impact.
     /// @dev Volume values are normalized with respect to cap
+    // TODO: FIX .. be careful of overflows w volume/cap given using oiX160
     function _registerVolumeAsk(
         Oracle.Data memory data,
-        uint256 volume,
-        uint256 cap
+        uint256 volume, // TODO: volumeX160
+        uint256 cap // TODO: capX160
     ) private returns (uint256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotVolumeAsk;
-        int256 value = int256(volume.divUp(cap));
+        int256 value = int256(volume.divUp(cap)); // TODO: FIX
 
         // calculates the decay in the rolling volume since last snapshot
         // and determines new window to decay over

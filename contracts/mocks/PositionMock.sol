@@ -46,29 +46,32 @@ contract PositionMock {
         return pos.notionalInitial(fraction);
     }
 
+    // TODO: fix
     function oiInitial(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.oiInitial(fraction);
+        return pos.oiX160Initial(fraction); // TODO: fix
     }
 
+    // TODO: fix
     function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.oiSharesCurrent(fraction);
+        return pos.oiX160SharesCurrent(fraction); // TODO: fix
     }
 
-    function oiCurrent(
+    // TODO: fix
+    function oiX160Current(
         Position.Info memory pos,
         uint256 fraction,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide
     ) external view returns (uint256) {
-        return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
+        return pos.oiX160Current(fraction, oiTotalOnSide, oiTotalSharesOnSide); // TODO: fix
     }
 
     function debtCurrent(Position.Info memory pos, uint256 fraction)
@@ -83,12 +86,14 @@ contract PositionMock {
         return pos.cost(fraction);
     }
 
+    // TODO: collateral test
+
     function value(
         Position.Info memory pos,
         uint256 fraction,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide,
-        uint256 currentPrice,
+        uint160 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
         return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
@@ -99,7 +104,7 @@ contract PositionMock {
         uint256 fraction,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide,
-        uint256 currentPrice,
+        uint160 currentPrice,
         uint256 capPayoff
     ) external view returns (uint256) {
         return
@@ -117,7 +122,7 @@ contract PositionMock {
         uint256 fraction,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide,
-        uint256 currentPrice,
+        uint160 currentPrice,
         uint256 capPayoff,
         uint256 tradingFeeRate
     ) external view returns (uint256) {
@@ -136,7 +141,7 @@ contract PositionMock {
         Position.Info memory pos,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide,
-        uint256 currentPrice,
+        uint160 currentPrice,
         uint256 capPayoff,
         uint256 maintenanceMarginFraction
     ) external view returns (bool) {
@@ -148,14 +153,5 @@ contract PositionMock {
                 capPayoff,
                 maintenanceMarginFraction
             );
-    }
-
-    function liquidationPrice(
-        Position.Info memory pos,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide,
-        uint256 maintenanceMarginFraction
-    ) external view returns (uint256) {
-        return pos.liquidationPrice(oiTotalOnSide, oiTotalSharesOnSide, maintenanceMarginFraction);
     }
 }

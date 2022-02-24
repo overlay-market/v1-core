@@ -36,8 +36,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256 public constant MAX_LIQUIDATION_FEE_RATE = 1e17; // 10.00% (1000 bps)
     uint256 public constant MIN_TRADING_FEE_RATE = 1e14; // 0.01% (1 bps)
     uint256 public constant MAX_TRADING_FEE_RATE = 3e15; // 0.30% (30 bps)
-    uint256 public constant MIN_MINIMUM_COLLATERAL = 1e12; // 1e-6 OVL
-    uint256 public constant MAX_MINIMUM_COLLATERAL = 1e18; // 1 OVL
+    uint256 public constant MIN_MINIMUM_COLLATERAL = 2e12; // 2e-6 OVL
+    uint256 public constant MAX_MINIMUM_COLLATERAL = 2e18; // 2 OVL
     uint256 public constant MIN_PRICE_DRIFT_UPPER_LIMIT = 1e12; // 0.01 bps/s
     uint256 public constant MAX_PRICE_DRIFT_UPPER_LIMIT = 1e14; // 1 bps/s
 
