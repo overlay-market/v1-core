@@ -159,7 +159,8 @@ contract OverlayV1Market is IOverlayV1Market {
         // calculate notional, oi, and trading fees. fees charged on notional
         // and added to collateral transferred in
         uint256 notional = collateral.mulUp(leverage);
-        uint256 oiX160 = Position.oiX160FromNotional(collateral.mulUp(leverage), midPrice); // TODO: fix
+        // TODO: fix
+        uint256 oiX160 = Position.oiX160FromNotional(collateral.mulUp(leverage), midPrice);
 
         Position.Info memory pos;
         uint256 price;
@@ -175,8 +176,22 @@ contract OverlayV1Market is IOverlayV1Market {
             // register the additional volume on either the ask or bid
             // where volume = oi / capOi
             price = isLong
-                ? ask(data, _registerVolumeAsk(data, oiX160, Position.oiX160FromNotional(capNotionalAdjusted, midPrice)))
-                : bid(data, _registerVolumeBid(data, oiX160, Position.oiX160FromNotional(capNotionalAdjusted, midPrice)));
+                ? ask(
+                    data,
+                    _registerVolumeAsk(
+                        data,
+                        oiX160,
+                        Position.oiX160FromNotional(capNotionalAdjusted, midPrice)
+                    )
+                )
+                : bid(
+                    data,
+                    _registerVolumeBid(
+                        data,
+                        oiX160,
+                        Position.oiX160FromNotional(capNotionalAdjusted, midPrice)
+                    )
+                );
             // check price hasn't changed more than max slippage specified by trader
             require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
@@ -190,7 +205,10 @@ contract OverlayV1Market is IOverlayV1Market {
             // check new total oi on side does not exceed capOi
             oiX160TotalOnSide += oiX160; // TODO: fix
             oiX160TotalSharesOnSide += oiX160; // TODO: fix
-            require(oiX160TotalOnSide <= Position.oiX160FromNotional(capNotionalAdjusted, midPrice), "OVLV1:oi>cap");
+            require(
+                oiX160TotalOnSide <= Position.oiX160FromNotional(capNotionalAdjusted, midPrice),
+                "OVLV1:oi>cap"
+            );
 
             // update total aggregate oi and oi shares
             if (isLong) {
@@ -265,21 +283,27 @@ contract OverlayV1Market is IOverlayV1Market {
         // where volume = oi / capOi
         // current cap only adjusted for bounds (no circuit breaker so traders
         // don't get stuck in a position)
-        uint256 price = pos.isLong
+        uint256 price = pos.isLong // TODO: fix fraction for volume, cap!
             ? bid(
                 data,
                 _registerVolumeBid(
                     data,
-                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide), // TODO: fix fraction!
-                    Position.oiX160FromNotional(capNotionalAdjustedForBounds(data, capNotional), midPrice) // TODO: fix fraction!
+                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide),
+                    Position.oiX160FromNotional(
+                        capNotionalAdjustedForBounds(data, capNotional),
+                        midPrice
+                    )
                 )
             )
             : ask(
                 data,
                 _registerVolumeAsk(
                     data,
-                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide), // TODO: fix!
-                    Position.oiX160FromNotional(capNotionalAdjustedForBounds(data, capNotional), midPrice) // TODO: fix fraction!
+                    pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide),
+                    Position.oiX160FromNotional(
+                        capNotionalAdjustedForBounds(data, capNotional),
+                        midPrice
+                    )
                 )
             );
         // check price hasn't changed more than max slippage specified by trader
@@ -287,7 +311,13 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide, price, capPayoff);
+        uint256 value = pos.value(
+            fraction,
+            oiX160TotalOnSide,
+            oiX160TotalSharesOnSide,
+            price,
+            capPayoff
+        );
         uint256 cost = pos.cost(fraction);
 
         // register the amount to be minted/burned
@@ -309,17 +339,19 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // use Math.min to avoid reverts with rounding issues
         if (pos.isLong) {
+            // TODO: fix
             oiX160Long -= Math.min(
                 oiX160Long,
-                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide) // TODO: fix
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
+            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction));
         } else {
+            // TODO: fix
             oiX160Short -= Math.min(
                 oiX160Short,
-                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide) // TODO: fix
+                pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
+            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction));
         }
 
         // store the updated position info data
@@ -379,7 +411,13 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // calculate the value and cost of the position for pnl determinations
         // and amount to transfer
-        uint256 value = pos.value(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide, price, _capPayoff);
+        uint256 value = pos.value(
+            fraction,
+            oiX160TotalOnSide,
+            oiX160TotalSharesOnSide,
+            price,
+            _capPayoff
+        );
         uint256 cost = pos.cost(fraction);
 
         // value is the remaining position margin. reduce value further by
@@ -396,17 +434,19 @@ contract OverlayV1Market is IOverlayV1Market {
         // and decrease number of oi shares issued
         // use Math.min to avoid reverts with rounding issues
         if (pos.isLong) {
+            // TODO: fix
             oiX160Long -= Math.min(
                 oiX160Long,
                 pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
+            oiX160LongShares -= Math.min(oiX160LongShares, pos.oiX160SharesCurrent(fraction));
         } else {
+            // TODO: fix
             oiX160Short -= Math.min(
                 oiX160Short,
                 pos.oiX160Current(fraction, oiX160TotalOnSide, oiX160TotalSharesOnSide)
             );
-            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction)); // TODO: fix
+            oiX160ShortShares -= Math.min(oiX160ShortShares, pos.oiX160SharesCurrent(fraction));
         }
 
         // store the updated position info data. mark as liquidated
