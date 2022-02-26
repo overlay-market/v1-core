@@ -704,14 +704,14 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         assert actual_is_long_alice == expect_is_long_alice
         assert actual_liquidated_alice == expect_liquidated_alice
         assert int(actual_notional_alice) == approx(expect_notional_alice)
-        assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1e-4)
+        assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1e-3)
         assert int(actual_debt_alice) == approx(expect_debt_alice)
 
         # check oi added to long side by alice
         expect_oi_long += expect_oi_alice
         actual_oi_long = market.oiLong()
 
-        assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-4)
+        assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-3)
 
         # check next position id incremented
         assert market.nextPositionId() == expect_pos_id + 1
@@ -750,14 +750,14 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         assert actual_is_long_bob == expect_is_long_bob
         assert actual_liquidated_bob is expect_liquidated_bob
         assert int(actual_notional_bob) == approx(expect_notional_bob)
-        assert int(actual_oi_bob) == approx(expect_oi_bob, rel=1e-4)
+        assert int(actual_oi_bob) == approx(expect_oi_bob, rel=1e-3)
         assert int(actual_debt_bob) == approx(expect_debt_bob)
 
         # check oi added to short side by bob
         expect_oi_short += expect_oi_bob
         actual_oi_short = market.oiShort()
 
-        assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-4)
+        assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-3)
 
         # check next position id incremented
         assert market.nextPositionId() == expect_pos_id + 1

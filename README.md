@@ -49,7 +49,7 @@ Traders interact directly with the market contract to take positions on a data s
 
 Traders transfer OVL collateral to the market contract to back a position. This collateral is held in the market contract until the trader unwinds their position when exiting the trade. OVL is the only collateral supported for V1.
 
-The market contract tracks the current open interest for all outstanding positions on a market as well as [information about each position](./contracts/libraries/Position.sol), that we need in order to calculate the current value of the position in OVL terms:
+The market contract tracks the current open interest for all outstanding positions on a market as well as [information about each position](./contracts/libraries/Position.sol), that is needed in order to calculate the current value of the position in OVL terms:
 
 ```
 library Position {
@@ -99,7 +99,7 @@ library Oracle {
 ```
 from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data` data is consumed by each deployment of `OverlayV1Market.sol` for traders to take positions on the market of interest.
 
-For each oracle provider we support, there should be a specific implementation of a feed contract that inherits from `OverlayV1Feed.sol` (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools).
+For each oracle provider supported, there should be a specific implementation of a feed contract that inherits from `OverlayV1Feed.sol` (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools).
 
 
 ### OVL Module
@@ -107,11 +107,11 @@ For each oracle provider we support, there should be a specific implementation o
 OVL module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OVL to compensate traders for their PnL on positions.
 
 
-## Deployments
+## Deployment Process
 
 The process to add a new market is as follows:
 
-1. Deploy a feed contract for the data stream we wish to offer a market on. Developers inherit from [`OverlayV1Feed.sol`](./contracts/fees/OverlayV1Feed.sol) to implement a feed contract for the specific type of oracle provider they wish to support if it hasn't already been implemented (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools). The feed contract ingests the data stream directly from the oracle provider and formats the data in a form consumable by the market
+1. Deploy a feed contract for the data stream, if not already deployed. Developers inherit from [`OverlayV1Feed.sol`](./contracts/fees/OverlayV1Feed.sol) to implement a feed contract for the specific type of oracle provider they are looking to support if it hasn't already been implemented (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools). The feed contract ingests the data stream directly from the oracle provider and formats the data in a form consumable by the market.
 
 2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
