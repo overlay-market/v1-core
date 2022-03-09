@@ -1,24 +1,23 @@
 def test_get_time_weighted(feed):
     #  variable = PAIR_PRICE
     secs = 1800
-    ago = 600
+    ago = 0
     res = feed.getTimeWeightedAverage(secs, ago);
-    print('RES', res)
-    print(type(res))
+    print('RES', res[0]/ 1e18)
     assert (res == 1)
 
 
 def test_get_time_weighted_average_pair_price(feed):
     res = feed.getTimeWeightedAveragePairPrice();
-    print('RES', res)
+    print('RES', res[0]/ 1e18)
     assert (res == 1)
 
 
 def test_get_time_weighted_average_invariant(feed):
     secs = 1800
-    ago = 600
+    ago = 0
     res = feed.getTimeWeightedAverageInvariant(secs, ago);
-    print('RES', res)
+    print('RES', res[0]/ 1e18)
     assert (res == 1)
 
 

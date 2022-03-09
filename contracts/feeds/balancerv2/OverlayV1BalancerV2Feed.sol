@@ -2,12 +2,12 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../OverlayV1Feed.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
+import "../../interfaces/feeds/balancerv2/IBalancerV2Vault.sol";
+import "../../interfaces/feeds/balancerv2/IBalancerV2PriceOracle.sol";
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
-import "../OverlayV1Feed.sol";
-import "./IBalancerV2Vault.sol";
-import "./IBalancerV2PriceOracle.sol";
 
 contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -102,30 +102,36 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @dev tokens decimals. This means that the pair price of a Pool with DAI and USDC will be
     /// @dev close to 1.0, despite DAI having 18 decimals and USDC 6.
     function getTimeWeightedAverage(
-      uint256 secs,
-      uint256 ago
+      address pool,
+      IBalancerV2PriceOracle.OracleAverageQuery memory query 
     ) public view returns (
     uint256[] memory results
     ) {
-      address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(poolWethDai);
-      IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-      uint256 secs = 1800;
-      uint256 ago = 0;
-
-      // IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
-      // IBalancerV2PriceOracle.OracleAverageQuery[1] memory queries;
-      // queries[0] = query;
-      // uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
-
+      // address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
+      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
       IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
       queries[0] = query;
       uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
-
-      uint256 latest = priceOracle.getLatest(variable);
       return results;
     }
+
+    function getOracleAverageQuery(
+      IBalancerV2PriceOracle.Variable variable,
+      uint256 secs,
+      uint256 ago
+    )
+    public view
+    returns(IBalancerV2PriceOracle.OracleAverageQuery memory query) {
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(
+        variable,
+        secs,
+        ago
+      );
+    }
+
+
+
     /// @notice Returns the time average weighted price corresponding to each of `queries`.
     /// @dev Prices are dev represented as 18 decimal fixed point values.
     /// @dev PAIR_PRICE: the price of the tokens in the Pool, expressed as the price of the second
@@ -133,25 +139,28 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @dev worth $4, the pair price will be 2.0. Note that the price is computed *including* the
     /// @dev tokens decimals. This means that the pair price of a Pool with DAI and USDC will be
     /// @dev close to 1.0, despite DAI having 18 decimals and USDC 6.
-    function getTimeWeightedAveragePairPrice(uint256 secs, uint256 ago) public view returns (uint256[] memory results) {
-      address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(poolWethDai);
+    function getTimeWeightedAveragePairPrice(
+      address pool,
+      uint256 secs,
+      uint256 ago
+    )
+    public
+    view returns (uint256 result) {
+      // address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
+      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
       IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-      uint256 secs = 1800;
-      uint256 ago = 0;
-
-      // IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
-      // IBalancerV2PriceOracle.OracleAverageQuery[1] memory queries;
-      // queries[0] = query;
-      // uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
+      // uint256 secs = 1800;
+      // uint256 ago = 0;
 
       IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
+      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(
+        variable,
+        secs,
+        ago
+      );
       queries[0] = query;
       uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
-
-      uint256 latest = priceOracle.getLatest(variable);
-      return results;
+      uint256 result = results[0];
     }
 
     /// @notice Returns the time average weighted price corresponding to each of `queries`.
@@ -200,10 +209,11 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        // TODO - put just enough code in to get this compiling
-        // cache micro and macro windows for gas savings
+        // SN TODO - put just enough code in to get this compiling
+        // cache globals for gas savings
         uint256 _microWindow = microWindow;
         uint256 _macroWindow = macroWindow;
+        address _marketPool = marketPool;
 
         // consult to market pool
         // secondsAgo.length = 4; twaps.length = liqs.length = 3
@@ -214,18 +224,46 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
 
         uint256[] memory prices = new uint256[](nowIdxs.length);
-        uint256 price = 10;
-        prices[0] = 10;
         uint256 reserve = 10;
+
+
+        IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        IBalancerV2PriceOracle.OracleAverageQuery memory query = getOracleAverageQuery(
+          variable,
+          3600,
+          0
+        );
+        uint256[] memory tt = getTimeWeightedAverage(_marketPool, query);
+        uint256 priceOverMicroWindow = tt[0];
+
+        // // priceOverMicroWindow -> TWAP, PAIR_PRICE market pool,
+        // uint256 priceOverMicroWindow = getTimeWeightedAveragePairPrice(
+        //   _marketPool,
+        //   _microWindow,
+        //   secondsAgos[3]
+        // );
+        // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool, 
+        uint256 priceOverMacroWindow = getTimeWeightedAveragePairPrice(
+          _marketPool,
+          _macroWindow,
+          secondsAgos[1]
+        );
+
+        // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool, 
+        uint256 priceOneMacroWindowAgo = getTimeWeightedAveragePairPrice(
+          _marketPool,
+          _macroWindow,
+          secondsAgos[2]
+        );
 
         return
             Oracle.Data({
                 timestamp: block.timestamp,
                 microWindow: _microWindow,
                 macroWindow: _macroWindow,
-                priceOverMicroWindow: prices[2], // secondsAgos = _microWindow
-                priceOverMacroWindow: prices[1], // secondsAgos = _macroWindow
-                priceOneMacroWindowAgo: prices[0], // secondsAgos = _macroWindow * 2
+                priceOverMicroWindow: priceOverMicroWindow, // secondsAgos = _microWindow
+                priceOverMacroWindow: priceOverMacroWindow, // secondsAgos = _macroWindow
+                priceOneMacroWindowAgo: priceOneMacroWindowAgo, // secondsAgos = _macroWindow * 2
                 reserveOverMicroWindow: reserve,
                 hasReserve: true
             });
