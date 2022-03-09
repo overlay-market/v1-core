@@ -94,6 +94,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         ovl = balancerV2Pool.ovl;
     }
 
+
     /// @notice Returns the time average weighted price corresponding to each of `queries`.
     /// @dev Prices are dev represented as 18 decimal fixed point values.
     /// @dev PAIR_PRICE: the price of the tokens in the Pool, expressed as the price of the second
@@ -103,14 +104,13 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @dev close to 1.0, despite DAI having 18 decimals and USDC 6.
     function getTimeWeightedAverage(
       address pool,
-      IBalancerV2PriceOracle.OracleAverageQuery memory query 
-    ) public view returns (
-    uint256[] memory results
-    ) {
-      // address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
+    )
+    public
+    view
+    returns (uint256[] memory results)
+    {
       IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      queries[0] = query;
       uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
       return results;
     }
@@ -227,14 +227,17 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 reserve = 10;
 
 
-        IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-        IBalancerV2PriceOracle.OracleAverageQuery memory query = getOracleAverageQuery(
-          variable,
-          3600,
-          0
-        );
-        uint256[] memory tt = getTimeWeightedAverage(_marketPool, query);
-        uint256 priceOverMicroWindow = tt[0];
+        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](3);
+
+        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
+        queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
+        queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
+
+        uint256[] memory twaps = getTimeWeightedAverage(_marketPool, queries);
+        uint256 priceOverMicroWindow = twaps[0];
+        uint256 priceOverMacroWindow = twaps[1];
+        uint256 priceOneMacroWindowAgo = twaps[2];
 
         // // priceOverMicroWindow -> TWAP, PAIR_PRICE market pool,
         // uint256 priceOverMicroWindow = getTimeWeightedAveragePairPrice(
@@ -242,19 +245,19 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         //   _microWindow,
         //   secondsAgos[3]
         // );
-        // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool, 
-        uint256 priceOverMacroWindow = getTimeWeightedAveragePairPrice(
-          _marketPool,
-          _macroWindow,
-          secondsAgos[1]
-        );
-
-        // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool, 
-        uint256 priceOneMacroWindowAgo = getTimeWeightedAveragePairPrice(
-          _marketPool,
-          _macroWindow,
-          secondsAgos[2]
-        );
+        // // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool,
+        // uint256 priceOverMacroWindow = getTimeWeightedAveragePairPrice(
+        //   _marketPool,
+        //   _macroWindow,
+        //   secondsAgos[1]
+        // );
+        //
+        // // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool,
+        // uint256 priceOneMacroWindowAgo = getTimeWeightedAveragePairPrice(
+        //   _marketPool,
+        //   _macroWindow,
+        //   secondsAgos[2]
+        // );
 
         return
             Oracle.Data({
