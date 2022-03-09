@@ -214,50 +214,29 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 _microWindow = microWindow;
         uint256 _macroWindow = macroWindow;
         address _marketPool = marketPool;
+        address _ovlWethPool = ovlWethPool;
 
-        // consult to market pool
-        // secondsAgo.length = 4; twaps.length = liqs.length = 3
-        (
-            uint32[] memory secondsAgos,
-            uint32[] memory windows,
-            uint256[] memory nowIdxs
-        ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
-
-        uint256[] memory prices = new uint256[](nowIdxs.length);
+        // // consult to market pool
+        // // secondsAgo.length = 4; twaps.length = liqs.length = 3
+        // (
+        //     uint32[] memory secondsAgos,
+        //     uint32[] memory windows,
+        //     uint256[] memory nowIdxs
+        // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
+        //
         uint256 reserve = 10;
 
-
-        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](3);
-
-        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-        queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
-        queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
-        queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
-
-        uint256[] memory twaps = getTimeWeightedAverage(_marketPool, queries);
+        /* Pair Price Calculations */
+        uint256[] memory twaps = getPairPrices();
         uint256 priceOverMicroWindow = twaps[0];
         uint256 priceOverMacroWindow = twaps[1];
         uint256 priceOneMacroWindowAgo = twaps[2];
 
-        // // priceOverMicroWindow -> TWAP, PAIR_PRICE market pool,
-        // uint256 priceOverMicroWindow = getTimeWeightedAveragePairPrice(
-        //   _marketPool,
-        //   _microWindow,
-        //   secondsAgos[3]
-        // );
-        // // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool,
-        // uint256 priceOverMacroWindow = getTimeWeightedAveragePairPrice(
-        //   _marketPool,
-        //   _macroWindow,
-        //   secondsAgos[1]
-        // );
-        //
-        // // priceOverMacroWindow -> TWAP, PAIR_PRICE market pool,
-        // uint256 priceOneMacroWindowAgo = getTimeWeightedAveragePairPrice(
-        //   _marketPool,
-        //   _macroWindow,
-        //   secondsAgos[2]
-        // );
+        // /* Reserve Calculations */
+        // IBalancerV2PriceOracle.OracleAverageQuery[] memory reserveQueries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+        // reserveQueries[0] = getOracleAverageQuery(variableInvariant, 600, 0); // for reserve
+        // uint256[] memory twapsReserve = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
+
 
         return
             Oracle.Data({
@@ -270,6 +249,22 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
                 reserveOverMicroWindow: reserve,
                 hasReserve: true
             });
+    }
+    
+    function getPairPrices() public view returns (uint256[] memory twaps) {
+        // cache globals for gas savings, SN TODO: verify that this makes a diff here
+        address _marketPool = marketPool;
+        /* Pair Price Calculations */
+        // SN LEFT OFF HERE
+        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        IBalancerV2PriceOracle.Variable variableInvariant = IBalancerV2PriceOracle.Variable.INVARIANT;
+
+        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](4);
+        queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
+        queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
+        queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
+
+        uint256[] memory twaps = getTimeWeightedAverage(_marketPool, queries);
     }
 
     /// @dev returns input params needed for call to marketPool consult
