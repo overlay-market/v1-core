@@ -17,4 +17,5 @@ pragma experimental ABIEncoderV2;
 
 interface IBalancerV2Pool {
     function getPoolId() external view returns (bytes32);
+    function getNormalizedWeights() external view returns (uint256[] memory);
 }

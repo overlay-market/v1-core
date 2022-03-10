@@ -48,10 +48,12 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
             "OVLV1Feed: ovlWethPoolId mismatch"
         );
 
-        // TODO: verify token ordering
+        // SN TODO: verified the order is token0=dai, token1=weth: now make sure code reflects this
+        // specifically when we calculate the reserve in getReserve where we query for the weights
+        // we get back [token0 weight, token1 weight]
         // need WETH in market pool to make reserve conversion from ETH => OVL
-        address _marketToken0 = address(marketTokens[0]);
-        address _marketToken1 = address(marketTokens[1]);
+        address _marketToken0 = address(marketTokens[0]); // DAI
+        address _marketToken1 = address(marketTokens[1]); // WETH
 
         require(_marketToken0 == WETH || _marketToken1 == WETH, "OVLV1Feed: marketToken != WETH");
         marketToken0 = _marketToken0;
@@ -208,6 +210,10 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         return IBalancerV2Pool(pool).getPoolId();
     }
 
+    function getNormalizedWeights(address pool) public view returns (uint256[] memory) {
+        return IBalancerV2Pool(pool).getNormalizedWeights();
+    }
+
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
         // SN TODO - put just enough code in to get this compiling
         // cache globals for gas savings
@@ -224,7 +230,6 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         //     uint256[] memory nowIdxs
         // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
         //
-        uint256 reserve = 10;
 
         /* Pair Price Calculations */
         uint256[] memory twaps = getPairPrices();
@@ -232,11 +237,8 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 priceOverMacroWindow = twaps[1];
         uint256 priceOneMacroWindowAgo = twaps[2];
 
-        // /* Reserve Calculations */
-        // IBalancerV2PriceOracle.OracleAverageQuery[] memory reserveQueries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-        // reserveQueries[0] = getOracleAverageQuery(variableInvariant, 600, 0); // for reserve
-        // uint256[] memory twapsReserve = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
-
+        /* Reserve Calculations */
+        uint256 reserve = getReserve(priceOverMicroWindow);
 
         return
             Oracle.Data({
@@ -250,6 +252,35 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
                 hasReserve: true
             });
     }
+
+    /// @dev V = B1 ** w1 * B2 ** w2
+    /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
+    function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve) {
+      // cache globals for gas savings, SN TODO: verify that this makes a diff here
+      address _marketPool = marketPool;
+      address _ovlWethPool = ovlWethPool;
+
+      // Retrieve pool weights
+      // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000 
+      uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
+      // SN TODO: what if the pool has more than 2 tokens?
+      // SN TODO: sanity check that the order the normalized weights are returned are NOT the same
+      // order as the return of getPoolId for the market pool. does not impact this code, but still
+      // something to note I think
+      uint256 weightToken0 = normalizedWeights[0]; // WETH
+      uint256 weightToken1 = normalizedWeights[1]; // DAI
+
+      IBalancerV2PriceOracle.Variable variableInvariant = IBalancerV2PriceOracle.Variable.INVARIANT;
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory reserveQueries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+      reserveQueries[0] = getOracleAverageQuery(variableInvariant, 600, 0); // for reserve
+      uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
+
+      // B1 represents the WETH reserve over a micro window
+      // B1 = [ ( (P * w2 / w1) ** w2 ) / V ] ** [ 1 / (w1 + w2) ]
+      uint256 numerator = (twaps[0] * weightToken1 / weightToken0) ** weightToken1;
+      uint256 power = 1 / (weightToken0 + weightToken1);
+      uint256 reserve = (numerator / priceOverMicroWindow) ** power;
+    }
     
     function getPairPrices() public view returns (uint256[] memory twaps) {
         // cache globals for gas savings, SN TODO: verify that this makes a diff here
@@ -257,7 +288,6 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         /* Pair Price Calculations */
         // SN LEFT OFF HERE
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-        IBalancerV2PriceOracle.Variable variableInvariant = IBalancerV2PriceOracle.Variable.INVARIANT;
 
         IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](4);
         queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
