@@ -50,7 +50,7 @@ def rando(accounts):
 def dai():
     '''
     Outputs:
-      [Contract] DAI token contract instance
+      [Contract]: DAI token contract instance
 
     https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F
     '''
@@ -61,7 +61,7 @@ def dai():
 def weth():
     '''
     Outputs:
-      [Contract] WETH token contract instance
+      [Contract]: WETH token contract instance
 
     https://etherscan.io/address/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
     '''
@@ -72,7 +72,7 @@ def weth():
 def balancer():
     '''
     Outputs:
-      [Contract] Balancer V2 BalancerGovernanceToken token contract instance
+      [Contract]: BalancerGovernanceToken token contract instance
 
     https://etherscan.io/address/0xba100000625a3754423978a60c9317c58a424e3D
     '''
@@ -83,8 +83,8 @@ def balancer():
 def pool_daiweth():
     '''
     Outputs:
-      [Contract] Balancer V2 WeightedPool2Tokens contract instance for the
-                 DAI/WETH pool
+      [Contract]: Balancer V2 WeightedPool2Tokens contract instance for the
+                  DAI/WETH pool
 
 
     https://etherscan.io/address/0x0b09deA16768f0799065C475bE02919503cB2a35
@@ -186,18 +186,18 @@ def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
     market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
 
     Inputs:
-      gov              [Account]:  Governor role account deploys the
-                                   OverlayV1BalancerV2Feed contract
-      dai              [Contract]: DAI token contract instance
-      weth             [Contract]: WETH token contract instance
-      balancer         [Contract]: BAL token contract instance representing the
-                                   OVL token
-      balv2_tokens     [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth     [Contract]: Balancer V2 WeightedPool2Tokens contract
-                                   instance for the DAI/WETH pool
-      pool_balweth    [Contract]:  BAL/WETH Balancer V2 WeightedPool2Tokens
-                                   contract instance representing the OVL/WETH
-                                   token pair
+      gov          [Account]:  Governor role account deploys the
+                               OverlayV1BalancerV2Feed contract
+      dai          [Contract]: DAI token contract instance
+      weth         [Contract]: WETH token contract instance
+      balancer     [Contract]: BAL token contract instance representing the OVL
+                               token
+      balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
+      pool_daiweth [Contract]: Balancer V2 WeightedPool2Tokens contract
+                               instance for the DAI/WETH pool
+      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the OVL/WETH
+                               token pair
     '''
     market_pool = pool_daiweth
     ovlweth_pool = pool_balweth
