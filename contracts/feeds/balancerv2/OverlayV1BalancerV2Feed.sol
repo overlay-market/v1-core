@@ -39,7 +39,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         VAULT = balancerV2Tokens.vault;
         // Check if gas cost is reduced by storing vault in memory
         IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
-        (IERC20[] memory marketTokens, , ) = getPoolTokensData(balancerV2Tokens.marketPoolId);
+        (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Tokens.marketPoolId);
 
         require(
             getPoolId(balancerV2Pool.marketPool) == balancerV2Tokens.marketPoolId,
@@ -77,7 +77,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         marketQuoteToken = balancerV2Pool.marketQuoteToken;
         marketBaseAmount = balancerV2Pool.marketBaseAmount;
 
-        (IERC20[] memory ovlWethTokens, , ) = getPoolTokensData(balancerV2Tokens.ovlWethPoolId);
+        (IERC20[] memory ovlWethTokens, , ) = getPoolTokens(balancerV2Tokens.ovlWethPoolId);
 
         // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = address(ovlWethTokens[0]);
@@ -195,24 +195,39 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
       return results;
     }
 
-    function getPoolTokensData(bytes32 balancerV2PoolId)
+    /// @notice Returns pool token information given a pool id
+    /// @dev Interfaces the WeightedPool2Tokens contract and calls getPoolTokens
+    /// @param balancerV2PoolId pool id
+    /// @return The pool's registered tokens
+    /// @return Total balances of each token in the pool
+    /// @return Most recent block in which any of the pool tokens were updated
+    function getPoolTokens(bytes32 balancerV2PoolId)
         public
         view
         returns (
-            IERC20[] memory tokens,
-            uint256[] memory balances,
-            uint256 lastChangeBlock
+            IERC20[] memory,
+            uint256[] memory,
+            uint256
         )
     {
         IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
-        (tokens, balances, lastChangeBlock) = vault.getPoolTokens(balancerV2PoolId);
-        return (tokens, balances, lastChangeBlock);
+        return vault.getPoolTokens(balancerV2PoolId);
     }
 
+    /// @notice Returns the pool id corresponding to the given pool address
+    /// @dev Interfaces with WeightedPool2Tokens contract and calls getPoolId
+    /// @param pool Pool address
+    /// @return pool id corresponding to the given pool address
     function getPoolId(address pool) public view returns (bytes32) {
         return IBalancerV2Pool(pool).getPoolId();
     }
 
+    /// @notice Returns the normalized weight of the token
+    /// @dev Weights are fixed point numbers that sum to FixedPoint.ONE
+    /// @dev Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
+    /// @dev Interfaces with the WeightedPool2Tokens contract and calls getNormalizedWeights
+    /// @param pool Pool address
+    /// @return Normalized pool weights
     function getNormalizedWeights(address pool) public view returns (uint256[] memory) {
         return IBalancerV2Pool(pool).getNormalizedWeights();
     }
@@ -264,7 +279,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
       address _ovlWethPool = ovlWethPool;
 
       // Retrieve pool weights
-      // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000 
+      // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
       uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
       // SN TODO: what if the pool has more than 2 tokens?
       // SN TODO: sanity check that the order the normalized weights are returned are NOT the same
@@ -285,7 +300,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
       uint256 power = 1 / (weightToken0 + weightToken1);
       uint256 reserveInWeth = (twavs[0] / denominator) ** power;
 
-      (IERC20[] memory ovlWethTokens, uint256[] memory ovlWethBalances, ) = getPoolTokensData(ovlWethPoolId);
+      (IERC20[] memory ovlWethTokens, uint256[] memory ovlWethBalances, ) = getPoolTokens(ovlWethPoolId);
       // Ensure that the global ovlWethToken0 and ovlWethToken1 are each present in ovlWethTokens
       require(
         address(ovlWethTokens[0]) == ovlWethToken0 || address(ovlWethTokens[1]) == ovlWethToken0,
