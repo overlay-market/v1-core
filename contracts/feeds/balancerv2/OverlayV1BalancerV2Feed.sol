@@ -27,12 +27,15 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
+    bytes32 public immutable ovlWethPoolId;
+
     constructor(
         BalancerV2PoolInfo.Pool memory balancerV2Pool,
         BalancerV2Tokens.Info memory balancerV2Tokens,
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
+        ovlWethPoolId = balancerV2Tokens.ovlWethPoolId;
         VAULT = balancerV2Tokens.vault;
         // Check if gas cost is reduced by storing vault in memory
         IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
@@ -273,13 +276,42 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
       IBalancerV2PriceOracle.Variable variableInvariant = IBalancerV2PriceOracle.Variable.INVARIANT;
       IBalancerV2PriceOracle.OracleAverageQuery[] memory reserveQueries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
       reserveQueries[0] = getOracleAverageQuery(variableInvariant, 600, 0); // for reserve
-      uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
+      // uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
+			uint256[] memory twavs = getTimeWeightedAverage(_marketPool, reserveQueries);
 
       // B1 represents the WETH reserve over a micro window
-      // B1 = [ ( (P * w2 / w1) ** w2 ) / V ] ** [ 1 / (w1 + w2) ]
-      uint256 numerator = (twaps[0] * weightToken1 / weightToken0) ** weightToken1;
+      // B1 = [ V / ( (P * w2 / w1) ** w2 ) ] ** [ 1 / (w1 + w2) ]
+      uint256 denominator = (priceOverMicroWindow * weightToken1 / weightToken0) ** weightToken1;
       uint256 power = 1 / (weightToken0 + weightToken1);
-      uint256 reserve = (numerator / priceOverMicroWindow) ** power;
+      uint256 reserveInWeth = (twavs[0] / denominator) ** power;
+
+      (IERC20[] memory ovlWethTokens, uint256[] memory ovlWethBalances, ) = getPoolTokensData(ovlWethPoolId);
+      // Ensure that the global ovlWethToken0 and ovlWethToken1 are each present in ovlWethTokens
+      require(
+        address(ovlWethTokens[0]) == ovlWethToken0 || address(ovlWethTokens[1]) == ovlWethToken0,
+        "OVLV1Feed: ovlWethToken0 not found"
+      );
+      require(
+        address(ovlWethTokens[1]) == ovlWethToken1 || address(ovlWethTokens[0]) == ovlWethToken1,
+        "OVLV1Feed: ovlWethToken1 not found"
+      );
+
+      // SN TODO: This only works if two tokens in pool
+      uint256 ovlWethBalance0;
+      uint256 ovlWethBalance1;
+      // uint256 balanceOvlWethToken0;
+      // uint256 balanceOvlWethToken1;
+      if (address(ovlWethTokens[0]) == ovlWethToken0) {
+      // OVL is first in return (expected)
+        ovlWethBalance0 = ovlWethBalances[0];
+        ovlWethBalance1 = ovlWethBalances[1];
+      } else {
+      // WETH is first in return
+        ovlWethBalance0 = ovlWethBalances[1];
+        ovlWethBalance1 = ovlWethBalances[0];
+      }
+
+      uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
     }
     
     function getPairPrices() public view returns (uint256[] memory twaps) {
