@@ -100,50 +100,51 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     }
 
 
-    /// @notice Returns the time average weighted price corresponding to each of `queries`.
-    /// @dev Prices are dev represented as 18 decimal fixed point values.
-    /// @dev PAIR_PRICE: the price of the tokens in the Pool, expressed as the price of the second
-    /// @dev token in units of the first token. For example, if token A is worth $2, and token B is
-    /// @dev worth $4, the pair price will be 2.0. Note that the price is computed *including* the
-    /// @dev tokens decimals. This means that the pair price of a Pool with DAI and USDC will be
-    /// @dev close to 1.0, despite DAI having 18 decimals and USDC 6.
-    function getTimeWeightedAverage(
-      address pool,
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
-    )
-    public
-    view
-    returns (uint256[] memory results)
-    {
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
-      uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
-      return results;
-    }
-
+    /// @notice Returns the OracleAverageQuery struct containing information for a TWAP query
+    /// @dev Builds the OracleAverageQuery struct required to retrieve TWAPs from the 
+    /// @dev getTimeWeightedAverage function
+    /// @param variable Queryable values pertinent to this contract: PAIR_PRICE and INVARIANT
+    /// @param secs Duration of TWAP in seconds
+    /// @param ago End of TWAP in seconds
+    /// @return query Information for a TWAP query
     function getOracleAverageQuery(
       IBalancerV2PriceOracle.Variable variable,
       uint256 secs,
       uint256 ago
     )
     public view
-    returns(IBalancerV2PriceOracle.OracleAverageQuery memory query) {
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(
-        variable,
-        secs,
-        ago
-      );
+    returns(IBalancerV2PriceOracle.OracleAverageQuery memory) {
+      return IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
     }
 
 
+    /// @notice Returns the time average weighted price corresponding to each of queries.
+    /// @dev Prices are represented as 18 decimal fixed point values.
+    /// @dev Interfaces with the WeightedPool2Tokens contract and calls getTimeWeightedAverage
+    /// @param pool Pool address
+    /// @param queries Information for a time weighted average query
+    /// @return Time weighted average price corresponding to each query
+    function getTimeWeightedAverage(
+      address pool,
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
+    )
+    public
+    view
+    returns (uint256[] memory)
+    {
+      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
+      return priceOracle.getTimeWeightedAverage(queries);
+    }
 
-    /// @notice Returns the time average weighted price corresponding to each of `queries`.
-    /// @dev Prices are dev represented as 18 decimal fixed point values.
-    /// @dev PAIR_PRICE: the price of the tokens in the Pool, expressed as the price of the second
-    /// @dev token in units of the first token. For example, if token A is worth $2, and token B is
-    /// @dev worth $4, the pair price will be 2.0. Note that the price is computed *including* the
-    /// @dev tokens decimals. This means that the pair price of a Pool with DAI and USDC will be
-    /// @dev close to 1.0, despite DAI having 18 decimals and USDC 6.
+
+    /// @notice Returns the TWAP corresponding to a single query for the price of the tokens in the
+    /// @notice pool, expressed as the price of the second token in units of the first token
+    /// @dev Prices are dev represented as 18 decimal fixed point values
+    /// @dev Variable.PAIR_PRICE is used to construct OracleAverageQuery struct
+    /// @param pool Pool address
+    /// @param secs Duration of TWAP in seconds
+    /// @param ago End of TWAP in seconds
+    /// @return result TWAP of tokens in the pool
     function getTimeWeightedAveragePairPrice(
       address pool,
       uint256 secs,
@@ -151,48 +152,52 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     )
     public
     view returns (uint256 result) {
-      // address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
       IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-      // uint256 secs = 1800;
-      // uint256 ago = 0;
 
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = 
+        new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+      IBalancerV2PriceOracle.OracleAverageQuery memory query = 
+        IBalancerV2PriceOracle.OracleAverageQuery(
         variable,
         secs,
         ago
       );
       queries[0] = query;
-      uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
+
+      uint256[] memory results = getTimeWeightedAverage(pool, queries);
       uint256 result = results[0];
     }
 
-    /// @notice Returns the time average weighted price corresponding to each of `queries`.
-    /// @dev INVARIANT: the value of the Pool's invariant, which serves as a measure of its
-    /// @dev liquidity.
+
+    /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query for the value of the pool's
+    /// @notice invariant, which is a measure of its liquidity
+    /// @dev Prices are dev represented as 18 decimal fixed point values
+    /// @dev Variable.INVARIANT is used to construct OracleAverageQuery struct
+    /// @param pool Pool address
+    /// @param secs Duration of TWAP in seconds
+    /// @param ago End of TWAP in seconds
+    /// @return result TWAP of inverse of tokens in pool
     function getTimeWeightedAverageInvariant(
+      address pool,
       uint256 secs,
       uint256 ago
     ) public view returns (
-    uint256[] memory results
+    uint256 result
     ) {
-      address poolWethDai = 0x0b09deA16768f0799065C475bE02919503cB2a35;
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(poolWethDai);
       IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.INVARIANT;
 
-      // IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
-      // IBalancerV2PriceOracle.OracleAverageQuery[1] memory queries;
-      // queries[0] = query;
-      // uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
-
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
+      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries =
+        new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+      IBalancerV2PriceOracle.OracleAverageQuery memory query =
+        IBalancerV2PriceOracle.OracleAverageQuery(
+          variable,
+      secs,
+      ago
+      );
       queries[0] = query;
-      uint256[] memory results = priceOracle.getTimeWeightedAverage(queries);
 
-      uint256 latest = priceOracle.getLatest(variable);
-      return results;
+      uint256[] memory results = getTimeWeightedAverage(pool, queries);
+      uint256 result = results[0];
     }
 
     /// @notice Returns pool token information given a pool id
@@ -200,7 +205,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @param balancerV2PoolId pool id
     /// @return The pool's registered tokens
     /// @return Total balances of each token in the pool
-    /// @return Most recent block in which any of the pool tokens were updated
+    /// @return Most recent block in which any of the pool tokens were updated (never used)
     function getPoolTokens(bytes32 balancerV2PoolId)
         public
         view
@@ -240,14 +245,15 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         address _marketPool = marketPool;
         address _ovlWethPool = ovlWethPool;
 
-        // // consult to market pool
-        // // secondsAgo.length = 4; twaps.length = liqs.length = 3
+        // SN TODO
+        // consult to market pool
+        // secondsAgo.length = 4; twaps.length = liqs.length = 3
         // (
         //     uint32[] memory secondsAgos,
         //     uint32[] memory windows,
         //     uint256[] memory nowIdxs
         // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
-        //
+
 
         /* Pair Price Calculations */
         uint256[] memory twaps = getPairPrices();
@@ -267,14 +273,14 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
                 priceOverMacroWindow: priceOverMacroWindow, // secondsAgos = _macroWindow
                 priceOneMacroWindowAgo: priceOneMacroWindowAgo, // secondsAgos = _macroWindow * 2
                 reserveOverMicroWindow: reserve,
-                hasReserve: true
+                hasReserve: true // only time false if not using a spot AMM (like for chainlink)
             });
     }
 
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
     function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve) {
-      // cache globals for gas savings, SN TODO: verify that this makes a diff here
+      // Cache globals for gas savings, SN TODO: verify that this makes a diff here
       address _marketPool = marketPool;
       address _ovlWethPool = ovlWethPool;
 
