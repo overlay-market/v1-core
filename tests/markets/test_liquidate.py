@@ -117,12 +117,16 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # liquidate alice's position by rando
     tx = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
+    # cache entry price at build for mint calcs later
+    entry_price = expect_entry_price
+
     # adjust oi shares, debt position attributes to zero
-    # liquidated flips to true
+    # liquidated flips to true and sets entry price to zero
     expect_notional = 0
     expect_oi_shares = 0
     expect_debt = 0
     expect_liquidated = True
+    expect_entry_price = 0
 
     # check expected pos attributes match actual after liquidate
     (actual_notional, actual_debt, actual_is_long, actual_liquidated,
@@ -148,11 +152,11 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # calculate expected values for burn comparison
     if is_long:
         liq_pnl = Decimal(expect_oi_current) * \
-            (Decimal(actual_liq_price) - Decimal(expect_entry_price)) \
+            (Decimal(actual_liq_price) - Decimal(entry_price)) \
             / Decimal(1e18)
     else:
         liq_pnl = Decimal(expect_oi_current) * \
-            (Decimal(expect_entry_price) - Decimal(actual_liq_price)) \
+            (Decimal(entry_price) - Decimal(actual_liq_price)) \
             / Decimal(1e18)
 
     expect_value = int(liq_collateral + liq_pnl)
@@ -617,8 +621,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # weights are accumulator values for the respective time window
     numerator = int((last_window - dt) * abs(last_minted_decayed)
                     + input_window * abs(input_minted))
-    expect_window = int(numerator /
-                        (abs(last_minted_decayed) + abs(input_minted)))
+    expect_window = int(numerator
+                        / (abs(last_minted_decayed) + abs(input_minted)))
     expect_timestamp = input_timestamp
 
     # check expect == actual for snapshot minted

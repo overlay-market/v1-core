@@ -411,6 +411,7 @@ contract OverlayV1Market is IOverlayV1Market {
         pos.debt = 0;
         pos.oiShares = 0;
         pos.liquidated = true;
+        pos.entryPrice = 0;
         positions.set(owner, positionId, pos);
 
         // emit liquidate event
