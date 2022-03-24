@@ -21,7 +21,7 @@ contract OverlayV1Deployer is IOverlayV1Deployer {
     function deploy(
         address ovl,
         address feed,
-        Risk.Params memory params
+        Risk.Params calldata params
     ) external onlyFactory returns (address market_) {
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already

@@ -141,7 +141,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function deployMarket(
         address feedFactory,
         address feed,
-        Risk.Params memory params
+        Risk.Params calldata params
     ) external onlyGovernor returns (address market_) {
         // check feed and feed factory are available for a new market
         _checkFeed(feedFactory, feed);
