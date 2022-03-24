@@ -26,7 +26,7 @@ library Roller {
         uint256 window,
         int256 value
     ) internal view returns (Snapshot memory) {
-        uint32 timestamp32 = uint32(timestamp % 2**32); // mod to fit in uint32
+        uint32 timestamp32 = uint32(timestamp); // truncated by compiler
 
         // int/uint256 values to use in calculations
         uint256 dt = uint256(timestamp32 - self.timestamp);
