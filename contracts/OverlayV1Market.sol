@@ -564,7 +564,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 _circuitBreakerMintTarget = circuitBreakerMintTarget;
         if (minted <= int256(_circuitBreakerMintTarget)) {
             return cap;
-        } else if (uint256(minted).divDown(_circuitBreakerMintTarget) >= 2 * ONE) {
+        } else if (minted >= 2 * int256(_circuitBreakerMintTarget)) {
             return 0;
         }
 
