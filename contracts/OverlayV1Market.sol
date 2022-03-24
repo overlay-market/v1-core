@@ -653,9 +653,7 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev mid price without impact/spread given oracle data and recent volume
     /// @dev used for gas savings to avoid accessing storage for delta, lmbda
     function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
-        uint256 bid = Math.min(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        uint256 ask = Math.max(data.priceOverMicroWindow, data.priceOverMacroWindow);
-        mid_ = (bid + ask) / 2;
+        mid_ = Math.average(data.priceOverMicroWindow, data.priceOverMacroWindow);
     }
 
     /// @dev Rolling volume adjustments on bid side to be used for market impact.

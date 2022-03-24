@@ -632,10 +632,10 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     leverage_cap = Decimal(market.capLeverage() / 1e18)
 
     # approve collateral amount: collateral + trade fee
-    approve_collateral_alice = int((input_total_notional_long *
-                                    (1 + trading_fee_rate)))
-    approve_collateral_bob = int((input_total_notional_short *
-                                  (1 + trading_fee_rate)))
+    approve_collateral_alice = int((input_total_notional_long
+                                    * (1 + trading_fee_rate)))
+    approve_collateral_bob = int((input_total_notional_short
+                                  * (1 + trading_fee_rate)))
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral_alice, {"from": alice})
