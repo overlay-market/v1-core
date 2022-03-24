@@ -72,7 +72,7 @@ def burner(create_burner):
 @pytest.fixture(scope="module")
 def create_admin(token, gov, accounts):
     def create_admin(tok=token, governance=gov):
-        tok.grantRole(tok.ADMIN_ROLE(), accounts[6], {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), accounts[6], {"from": gov})
         return accounts[6]
 
     yield create_admin

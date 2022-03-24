@@ -118,7 +118,7 @@ def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
         factory = gov.deploy(OverlayV1Factory, tok, recipient)
 
         # grant market factory token admin role
-        tok.grantRole(tok.ADMIN_ROLE(), factory, {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(tok.GOVERNOR_ROLE(), gov, {"from": gov})

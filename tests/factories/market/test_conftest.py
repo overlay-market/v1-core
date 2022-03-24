@@ -11,7 +11,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert deployer.factory() == factory
 
     # check factory has been given admin role on ovl token
-    assert ovl.hasRole(ovl.ADMIN_ROLE(), factory) is True
+    assert ovl.hasRole(ovl.DEFAULT_ADMIN_ROLE(), factory) is True
 
     # check gov has been given governance role on ovl token
     assert ovl.hasRole(ovl.GOVERNOR_ROLE(), gov) is True

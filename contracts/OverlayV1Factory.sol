@@ -114,7 +114,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
-        require(ovl.hasRole(ovl.GOVERNOR_ROLE(), msg.sender), "OVLV1: !governor");
+        require(ovl.hasRole(GOVERNOR_ROLE, msg.sender), "OVLV1: !governor");
         _;
     }
 
@@ -153,8 +153,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
         market_ = deployer.deploy(address(ovl), feed, params);
 
         // grant market mint and burn priveleges on ovl
-        ovl.grantRole(ovl.MINTER_ROLE(), market_);
-        ovl.grantRole(ovl.BURNER_ROLE(), market_);
+        ovl.grantRole(MINTER_ROLE, market_);
+        ovl.grantRole(BURNER_ROLE, market_);
 
         // store market registry record for given feed
         // and record address as a deployed market
