@@ -546,7 +546,7 @@ contract OverlayV1Market is IOverlayV1Market {
         // last snapshot taken
         Roller.Snapshot memory snapshot = snapshotMinted;
         snapshot = snapshot.transform(block.timestamp, circuitBreakerWindow, 0);
-        cap = Math.min(cap, circuitBreaker(snapshot, cap));
+        cap = circuitBreaker(snapshot, cap);
         return cap;
     }
 
