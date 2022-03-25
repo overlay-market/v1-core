@@ -237,46 +237,6 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         return IBalancerV2Pool(pool).getNormalizedWeights();
     }
 
-    function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        // SN TODO - put just enough code in to get this compiling
-        // cache globals for gas savings
-        uint256 _microWindow = microWindow;
-        uint256 _macroWindow = macroWindow;
-        address _marketPool = marketPool;
-        address _ovlWethPool = ovlWethPool;
-
-        // SN TODO
-        // consult to market pool
-        // secondsAgo.length = 4; twaps.length = liqs.length = 3
-        // (
-        //     uint32[] memory secondsAgos,
-        //     uint32[] memory windows,
-        //     uint256[] memory nowIdxs
-        // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
-
-
-        /* Pair Price Calculations */
-        uint256[] memory twaps = getPairPrices();
-        uint256 priceOverMicroWindow = twaps[0];
-        uint256 priceOverMacroWindow = twaps[1];
-        uint256 priceOneMacroWindowAgo = twaps[2];
-
-        /* Reserve Calculations */
-        uint256 reserve = getReserve(priceOverMicroWindow);
-
-        return
-            Oracle.Data({
-                timestamp: block.timestamp,
-                microWindow: _microWindow,
-                macroWindow: _macroWindow,
-                priceOverMicroWindow: priceOverMicroWindow, // secondsAgos = _microWindow
-                priceOverMacroWindow: priceOverMacroWindow, // secondsAgos = _macroWindow
-                priceOneMacroWindowAgo: priceOneMacroWindowAgo, // secondsAgos = _macroWindow * 2
-                reserveOverMicroWindow: reserve,
-                hasReserve: true // only time false if not using a spot AMM (like for chainlink)
-            });
-    }
-
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
     function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve) {
@@ -350,6 +310,46 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
 
         uint256[] memory twaps = getTimeWeightedAverage(_marketPool, queries);
+    }
+
+    function _fetch() internal view virtual override returns (Oracle.Data memory) {
+        // SN TODO - put just enough code in to get this compiling
+        // cache globals for gas savings
+        uint256 _microWindow = microWindow;
+        uint256 _macroWindow = macroWindow;
+        address _marketPool = marketPool;
+        address _ovlWethPool = ovlWethPool;
+
+        // SN TODO
+        // consult to market pool
+        // secondsAgo.length = 4; twaps.length = liqs.length = 3
+        // (
+        //     uint32[] memory secondsAgos,
+        //     uint32[] memory windows,
+        //     uint256[] memory nowIdxs
+        // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
+
+
+        /* Pair Price Calculations */
+        uint256[] memory twaps = getPairPrices();
+        uint256 priceOverMicroWindow = twaps[0];
+        uint256 priceOverMacroWindow = twaps[1];
+        uint256 priceOneMacroWindowAgo = twaps[2];
+
+        /* Reserve Calculations */
+        uint256 reserve = getReserve(priceOverMicroWindow);
+
+        return
+            Oracle.Data({
+                timestamp: block.timestamp,
+                microWindow: _microWindow,
+                macroWindow: _macroWindow,
+                priceOverMicroWindow: priceOverMicroWindow, // secondsAgos = _microWindow
+                priceOverMacroWindow: priceOverMacroWindow, // secondsAgos = _macroWindow
+                priceOneMacroWindowAgo: priceOneMacroWindowAgo, // secondsAgos = _macroWindow * 2
+                reserveOverMicroWindow: reserve,
+                hasReserve: true // only time false if not using a spot AMM (like for chainlink)
+            });
     }
 
     /// @dev returns input params needed for call to marketPool consult
@@ -427,4 +427,5 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
 
         return (secondsAgos, windows, nowIdxs);
     }
+
 }
