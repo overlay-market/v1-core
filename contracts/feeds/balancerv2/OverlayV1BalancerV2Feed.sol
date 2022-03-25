@@ -37,7 +37,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         ovlWethPoolId = balancerV2Tokens.ovlWethPoolId;
         VAULT = balancerV2Tokens.vault;
-        // Check if gas cost is reduced by storing vault in memory
+        // SN TODO: Check if gas cost is reduced by storing vault in memory
         IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
         (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Tokens.marketPoolId);
 
@@ -294,55 +294,57 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
       uint256 weightToken0 = normalizedWeights[0]; // WETH
       uint256 weightToken1 = normalizedWeights[1]; // DAI
 
-      IBalancerV2PriceOracle.Variable variableInvariant = IBalancerV2PriceOracle.Variable.INVARIANT;
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory reserveQueries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      reserveQueries[0] = getOracleAverageQuery(variableInvariant, 600, 0); // for reserve
-      // uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, reserveQueries);
-			uint256[] memory twavs = getTimeWeightedAverage(_marketPool, reserveQueries);
-
+      // SN TODO: Remove hardcode
+      uint256 twav = getTimeWeightedAverageInvariant(_marketPool, 600, 0);
+      
+      // Want to solve for B2 because if B1 is the expression we want, that means P is B2
+      // so B2 = DIA, B1 = WETH
+      // account for 2 conditions:
+      // 1. if weightToken0 is the market base token (WETH), then we try to get B1
+      // 2. if weightToken0 is market quote token (DAI), then we try to get B2
+      // could: in normalizedWeights do flip so always WETH first
+      // priceOverMicroWindow is laways num quote/num base, the weightToken0 and weightToken1 we 
+      // get back, could have it where normalizedWeights0 is laways base, and nomarwe1 is always quote
+      // so the logic of calculating here is always right (always B1)
       // B1 represents the WETH reserve over a micro window
       // B1 = [ V / ( (P * w2 / w1) ** w2 ) ] ** [ 1 / (w1 + w2) ]
+      // SN TODO: use fixedpoint
+      // follow mikeys logic by splitting ths out into another function getReserveInWeth, then the logic
+      // getRerseveInOvl (that logic below talking about getPairPrice). this makes a call to getReserveInWeth,
+      // then gets the reserve number in WETH (B1). getReserveInOvl takes that number and multiplies it by the price in ovlweth
       uint256 denominator = (priceOverMicroWindow * weightToken1 / weightToken0) ** weightToken1;
+      // this is going to be 0 (since weights are so large), prob same with denominator
+      // the FixedPoint lib
       uint256 power = 1 / (weightToken0 + weightToken1);
-      uint256 reserveInWeth = (twavs[0] / denominator) ** power;
+      uint256 reserveInWeth = (twav / denominator) ** power;
 
-      (IERC20[] memory ovlWethTokens, uint256[] memory ovlWethBalances, ) = getPoolTokens(ovlWethPoolId);
-      // Ensure that the global ovlWethToken0 and ovlWethToken1 are each present in ovlWethTokens
-      require(
-        address(ovlWethTokens[0]) == ovlWethToken0 || address(ovlWethTokens[1]) == ovlWethToken0,
-        "OVLV1Feed: ovlWethToken0 not found"
-      );
-      require(
-        address(ovlWethTokens[1]) == ovlWethToken1 || address(ovlWethTokens[0]) == ovlWethToken1,
-        "OVLV1Feed: ovlWethToken1 not found"
-      );
 
-      // SN TODO: This only works if two tokens in pool
-      uint256 ovlWethBalance0;
-      uint256 ovlWethBalance1;
-      // uint256 balanceOvlWethToken0;
-      // uint256 balanceOvlWethToken1;
-      if (address(ovlWethTokens[0]) == ovlWethToken0) {
-      // OVL is first in return (expected)
-        ovlWethBalance0 = ovlWethBalances[0];
-        ovlWethBalance1 = ovlWethBalances[1];
-      } else {
-      // WETH is first in return
-        ovlWethBalance0 = ovlWethBalances[1];
-        ovlWethBalance1 = ovlWethBalances[0];
-      }
+      // NOT right. 1. does not factor in the weigths and really manipulatable because not using TWAP
+      // want to do getPairPrices for ovlWethPool
+      // I need the TWAP value from ovlWethPool -> getPairPrice with ovlWethPool
+      // duplicate getPairPrices -> getOvlWethPrice. keep pairprices but adapt for OVlweth with on query
+      // the one query is 600, 0 for micor (only want for micro)
+      // only wrinkle is we want to amke sure that the price we are getting is num ETH / num OVL
+      // just return what getovlWeithPairPrice
 
-      uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
+      // DO NOT NEED THIS LINE ANYMORE:
+      // uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
+      // https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L160
     }
     
+    /// @notice Market pool only (not reserve)
     function getPairPrices() public view returns (uint256[] memory twaps) {
         // cache globals for gas savings, SN TODO: verify that this makes a diff here
         address _marketPool = marketPool;
         /* Pair Price Calculations */
         // SN LEFT OFF HERE
-        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        IBalancerV2PriceOracle.Variable variablePairPrice =
+          IBalancerV2PriceOracle.Variable.PAIR_PRICE;
 
-        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](4);
+        // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
+        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries =
+          new IBalancerV2PriceOracle.OracleAverageQuery[](3);
+        // SN TODO: HARD CODE HERE
         queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
         queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
         queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
