@@ -1,4 +1,4 @@
-from brownie import interface
+from brownie import interface, reverts
 from collections import OrderedDict
 
 
@@ -110,3 +110,39 @@ def test_deploy_feed_creates_inverse_feed(factory, weth, bal, alice,
     assert feed_contract.marketBaseToken() == market_base_token
     assert feed_contract.marketQuoteToken() == market_quote_token
     assert feed_contract.marketBaseAmount() == market_base_amount
+
+
+def test_deploy_feed_reverts_when_feed_already_exits(factory, weth, bal, dai,
+                                                     alice, pool_daiweth,
+                                                     balv2_tokens):
+    '''
+    Tests that the deployFeed function in the OverlayV1BalancerV2Factory
+    contract reverts if it tries to deploy an already existing feed.
+
+    Inputs:
+      factory      [Contract]: OverlayV1BalancerV2Factory contract instance
+      weth         [Contract]: WETH token contract instance
+      bal          [Contract]: BAL token contract instance representing the OVL
+                               token
+      dai          [Contract]: DAI token contract instance
+      alice        [Account]:  Brownie provided eth account address for Alice
+                               the trader
+      pool_daiweth [Contract]: Balancer V2 WeightedPool2Tokens contract
+                               instance for the DAI/WETH pool
+      balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
+    '''
+    market_pool = pool_daiweth
+    market_base_token = weth
+    market_quote_token = dai
+    market_base_amount = 1000000000000000000  # 1e18
+
+    # Check feed already exists first from prior balt test above
+    feed = factory.getFeed(market_pool, market_base_token, market_quote_token,
+                           market_base_amount)
+    assert factory.isFeed(feed) is True
+
+    # check reverts when attempt to deploy again
+    with reverts("OVLV1: feed already exists"):
+        _ = factory.deployFeed(market_pool, market_base_token,
+                               market_quote_token, market_base_amount,
+                               balv2_tokens, {"from": alice})
