@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import "../libraries/Oracle.sol";
+import "../libraries/Risk.sol";
 import "../libraries/Roller.sol";
 
 import "./IOverlayV1Token.sol";
@@ -15,33 +16,7 @@ interface IOverlayV1Market {
     function factory() external view returns (address);
 
     // risk params
-    function k() external view returns (uint256);
-
-    function lmbda() external view returns (uint256);
-
-    function delta() external view returns (uint256);
-
-    function capPayoff() external view returns (uint256);
-
-    function capNotional() external view returns (uint256);
-
-    function capLeverage() external view returns (uint256);
-
-    function circuitBreakerWindow() external view returns (uint256);
-
-    function circuitBreakerMintTarget() external view returns (uint256);
-
-    function maintenanceMarginFraction() external view returns (uint256);
-
-    function maintenanceMarginBurnRate() external view returns (uint256);
-
-    function liquidationFeeRate() external view returns (uint256);
-
-    function tradingFeeRate() external view returns (uint256);
-
-    function minCollateral() external view returns (uint256);
-
-    function priceDriftUpperLimit() external view returns (uint256);
+    function params(uint256 idx) external view returns (uint256);
 
     // oi related quantities
     function oiLong() external view returns (uint256);
@@ -170,32 +145,6 @@ interface IOverlayV1Market {
         uint256 volumeAsk
     ) external view returns (uint256 mid_);
 
-    // risk parameter setters
-    function setK(uint256 _k) external;
-
-    function setLmbda(uint256 _lmbda) external;
-
-    function setDelta(uint256 _delta) external;
-
-    function setCapPayoff(uint256 _capPayoff) external;
-
-    function setCapNotional(uint256 _capNotional) external;
-
-    function setCapLeverage(uint256 _capLeverage) external;
-
-    function setCircuitBreakerWindow(uint256 _circuitBreakerWindow) external;
-
-    function setCircuitBreakerMintTarget(uint256 _circuitBreakerMintTarget) external;
-
-    function setMaintenanceMarginFraction(uint256 _maintenanceMarginFraction) external;
-
-    function setMaintenanceMarginBurnRate(uint256 _maintenanceMarginBurnRate) external;
-
-    function setLiquidationFeeRate(uint256 _liquidationFeeRate) external;
-
-    function setTradingFeeRate(uint256 _tradingFeeRate) external;
-
-    function setMinCollateral(uint256 _minCollateral) external;
-
-    function setPriceDriftUpperLimit(uint256 _priceDriftUpperLimit) external;
+    // risk parameter setter
+    function setRiskParam(Risk.Parameters name, uint256 value) external;
 }

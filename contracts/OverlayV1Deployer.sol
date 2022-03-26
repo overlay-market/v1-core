@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 import "./interfaces/IOverlayV1Deployer.sol";
-import "./libraries/Risk.sol";
 import "./OverlayV1Market.sol";
 
 contract OverlayV1Deployer is IOverlayV1Deployer {
@@ -21,7 +20,7 @@ contract OverlayV1Deployer is IOverlayV1Deployer {
     function deploy(
         address ovl,
         address feed,
-        Risk.Params calldata params
+        uint256[14] calldata params
     ) external onlyFactory returns (address market_) {
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already

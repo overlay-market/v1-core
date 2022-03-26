@@ -42,17 +42,21 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.factory() == factory
     assert market.feed() == feed_three
 
-    assert market.k() == 1220000000000
-    assert market.lmbda() == 1000000000000000000
-    assert market.delta() == 2500000000000000
-    assert market.capPayoff() == 5000000000000000000
-    assert market.capNotional() == 800000000000000000000000
-    assert market.capLeverage() == 5000000000000000000
-    assert market.circuitBreakerWindow() == 2592000
-    assert market.circuitBreakerMintTarget() == 66670000000000000000000
-    assert market.maintenanceMarginFraction() == 100000000000000000
-    assert market.maintenanceMarginBurnRate() == 100000000000000000
-    assert market.liquidationFeeRate() == 10000000000000000
-    assert market.tradingFeeRate() == 750000000000000
-    assert market.minCollateral() == 100000000000000
-    assert market.priceDriftUpperLimit() == 100000000000000
+    expect_params = [
+        1220000000000,
+        1000000000000000000,
+        2500000000000000,
+        5000000000000000000,
+        800000000000000000000000,
+        2000000000000000000,
+        2592000,
+        66670000000000000000000,
+        10000000000000000,
+        100000000000000000,
+        10000000000000000,
+        750000000000000,
+        100000000000000,
+        10000000000000
+    ]
+    actual_params = [market.params(i) for i in range(14)]
+    assert expect_params == actual_params

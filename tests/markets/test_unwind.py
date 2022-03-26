@@ -6,7 +6,12 @@ from decimal import Decimal
 from math import exp
 from random import randint
 
-from .utils import calculate_position_info, get_position_key, mid_from_feed
+from .utils import (
+    calculate_position_info,
+    get_position_key,
+    mid_from_feed,
+    RiskParameter
+)
 
 
 # NOTE: Tests passing with isolation fixture
@@ -27,7 +32,8 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -92,8 +98,9 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
     # calculate expected exit price
     data = feed.latest()
-    cap_notional = Decimal(
-        market.capNotionalAdjustedForBounds(data, market.capNotional()))
+    idx_cap_notional = market.params(RiskParameter.CAP_NOTIONAL.value)
+    cap_notional = Decimal(market.capNotionalAdjustedForBounds(
+        data, market.params(idx_cap_notional)))
     cap_oi = cap_notional * Decimal(1e18) / Decimal(mid_from_feed(data))
     volume = int((unwound_oi / cap_oi) * Decimal(1e18))
     expect_exit_price = market.bid(data, volume) if is_long \
@@ -151,7 +158,8 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -232,7 +240,8 @@ def test_unwind_updates_market(market, alice, ovl):
     is_long = True
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -293,7 +302,8 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -359,8 +369,9 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
     _, micro_window, _, _, _, _, _, _ = data
 
     oi = fraction * Decimal(last_pos_oi)
-    cap_notional = Decimal(
-        market.capNotionalAdjustedForBounds(data, market.capNotional()))
+    idx_cap_notional = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = Decimal(market.capNotionalAdjustedForBounds(
+        data, market.params(idx_cap_notional)))
     cap_oi = cap_notional * Decimal(1e18) / Decimal(mid_from_feed(data))
 
     input_volume = int((oi / cap_oi) * Decimal(1e18))
@@ -403,7 +414,8 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -455,7 +467,8 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     # adjusted for decay
     # NOTE: decayOverWindow() tested in test_rollers.py
     input_minted = int(actual_mint)
-    input_window = int(market.circuitBreakerWindow())
+    input_window = int(market.params(
+        RiskParameter.CIRCUIT_BREAKER_WINDOW.value))
     input_timestamp = chain[tx.block_number]['timestamp']
 
     # expect accumulator now to be calculated as
@@ -470,8 +483,8 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     # weights are accumulator values for the respective time window
     numerator = int((last_window - dt) * abs(last_minted_decayed)
                     + input_window * abs(input_minted))
-    expect_window = int(numerator /
-                        (abs(last_minted_decayed) + abs(input_minted)))
+    expect_window = int(numerator
+                        / (abs(last_minted_decayed) + abs(input_minted)))
     expect_timestamp = input_timestamp
 
     # compare with actual rolling minted, timestamp last, window last values
@@ -494,7 +507,8 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -570,8 +584,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 
     unwound_value = unwound_collateral + unwound_pnl
     unwound_notional_w_pnl = unwound_value + unwound_debt
-    unwound_trading_fee = unwound_notional_w_pnl * \
-        (Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    unwound_trading_fee = unwound_notional_w_pnl * trading_fee_rate
     if unwound_trading_fee > unwound_value:
         unwound_trading_fee = unwound_value
 
@@ -637,7 +650,8 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -699,8 +713,7 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
     # calculate expected values
     expect_value = int(unwound_cost + actual_mint)
     expect_notional = int(expect_value + unwound_debt)
-    expect_trade_fee = int(Decimal(expect_notional)
-                           * Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    expect_trade_fee = int(Decimal(expect_notional) * trading_fee_rate)
     if expect_trade_fee > expect_value:
         expect_trade_fee = expect_value
 
@@ -727,7 +740,8 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -790,8 +804,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
     # calculate expected values
     expect_value = int(unwound_cost + actual_mint)
     expect_notional_w_pnl = int(expect_value + unwound_debt)
-    expect_trade_fee = int(Decimal(expect_notional_w_pnl)
-                           * Decimal(market.tradingFeeRate()) / Decimal(1e18))
+    expect_trade_fee = int(Decimal(expect_notional_w_pnl) * trading_fee_rate)
     if expect_trade_fee > expect_value:
         expect_trade_fee = expect_value
 
@@ -821,7 +834,8 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -927,7 +941,8 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     leverage = Decimal(1.5)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1038,7 +1053,8 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     is_long = True
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1110,7 +1126,8 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     expect_exit_price = tx.events["Unwind"]['price']
 
     # impose payoff cap on pnl
-    cap_payoff = Decimal(mock_market.capPayoff()) / Decimal(1e18)
+    idx_cap_payoff = RiskParameter.CAP_PAYOFF.value
+    cap_payoff = Decimal(mock_market.params(idx_cap_payoff)) / Decimal(1e18)
     unwound_pnl = unwound_oi * \
         min(Decimal(expect_exit_price) - Decimal(expect_entry_price),
             cap_payoff * Decimal(expect_entry_price)) / Decimal(1e18)
@@ -1141,10 +1158,11 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     price_multiplier = Decimal(0.8061)  # close to underwater but not there
 
     # exclude funding for testing edge case of fees > value
-    mock_market.setK(0, {"from": factory})
+    mock_market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1266,10 +1284,11 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
     price_multiplier = Decimal(0.700)  # underwater
 
     # exclude funding for testing edge case
-    mock_market.setK(0, {"from": factory})
+    mock_market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1369,7 +1388,8 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
     is_long = True
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1410,7 +1430,8 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
     is_long = True
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1455,7 +1476,8 @@ def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
     is_long = True
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1511,10 +1533,11 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
     tol = 1e-4
 
     # set k to zero to avoid funding calcs
-    mock_market.setK(0, {"from": factory})
+    mock_market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1561,9 +1584,12 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * Q(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * Q(0) + D ) / OI ) if short
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
+
+    idx_delta = RiskParameter.DELTA.value
+    delta = Decimal(mock_market.params(idx_delta)) / Decimal(1e18)
     if is_long:
         expect_liquidation_price = Decimal(expect_entry_price) * \
             (maintenance_fraction * Decimal(expect_notional)
@@ -1571,7 +1597,7 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
     else:
         expect_liquidation_price = expect_entry_price * \
             (2 - (maintenance_fraction * Decimal(expect_notional)
-             + Decimal(expect_debt)) / expect_oi_current)
+                  + Decimal(expect_debt)) / expect_oi_current)
 
     # change price by factor so position becomes liquidatable
     # NOTE: Is simply liq_price but adjusted for prior to static spread applied
@@ -1611,21 +1637,24 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
     total_notional_short = Decimal(7500)
 
     # set k to zero to avoid funding calcs
-    market.setK(0, {"from": factory})
+    market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # alice goes long and bob goes short n times
     input_total_notional_long = total_notional_long * Decimal(1e18)
     input_total_notional_short = total_notional_short * Decimal(1e18)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    leverage_cap = Decimal(market.capLeverage() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
+
+    idx_cap_leverage = RiskParameter.CAP_LEVERAGE.value
+    leverage_cap = Decimal(market.params(idx_cap_leverage) / 1e18)
 
     # approve collateral amount: collateral + trade fee
-    approve_collateral_alice = int((input_total_notional_long *
-                                    (1 + trading_fee_rate)))
-    approve_collateral_bob = int((input_total_notional_short *
-                                  (1 + trading_fee_rate)))
+    approve_collateral_alice = int((input_total_notional_long
+                                    * (1 + trading_fee_rate)))
+    approve_collateral_bob = int((input_total_notional_short
+                                  * (1 + trading_fee_rate)))
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral_alice, {"from": alice})

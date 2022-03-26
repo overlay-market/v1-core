@@ -2,11 +2,12 @@ from decimal import Decimal
 from pytest import approx
 from brownie.test import given, strategy
 
-from .utils import mid_from_feed
+from .utils import mid_from_feed, RiskParameter
 
 
 def test_cap_notional_front_run_bound(market, feed):
-    lmbda = Decimal(market.lmbda()) / Decimal(1e18)
+    idx = RiskParameter.LMBDA.value
+    lmbda = Decimal(market.params(idx)) / Decimal(1e18)
     data = feed.latest()
 
     # NOTE: assumes using UniswapV3 feed with hasReserve = true
@@ -19,7 +20,8 @@ def test_cap_notional_front_run_bound(market, feed):
 
 
 def test_cap_notional_back_run_bound(market, feed):
-    delta = Decimal(market.delta()) / Decimal(1e18)
+    idx = RiskParameter.DELTA.value
+    delta = Decimal(market.params(idx)) / Decimal(1e18)
     data = feed.latest()
 
     # NOTE: assumes using UniswapV3 feed with hasReserve = true
@@ -36,7 +38,8 @@ def test_cap_notional_back_run_bound(market, feed):
 
 def test_cap_notional_adjusted_for_bounds(market, feed):
     # Test cap notional adjustments is min of all bounds and circuit breaker
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
     data = feed.latest()
 
     # calculate cap notional bounds:
@@ -53,7 +56,8 @@ def test_cap_notional_adjusted_for_bounds(market, feed):
 
 def test_cap_notional_adjusted_for_bounds_when_no_reserve(market, feed):
     # Test cap notional adjustments is min of all bounds and circuit breaker
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
     data = (1642797758, 600, 3600, 2729583770051358617413,
             2739701430255362520176, 2729583770051358617413,
             1909229154186640322863637, False)  # has_reserve = False
@@ -69,8 +73,11 @@ def test_cap_notional_adjusted_for_bounds_when_no_reserve(market, feed):
     minted=strategy('decimal', min_value='66670', max_value='133340',
                     places=1))
 def test_cap_notional_circuit_breaker(market, minted):
-    cap_notional = market.capNotional()
-    target = market.circuitBreakerMintTarget()
+    idx_notional = RiskParameter.CAP_NOTIONAL.value
+    idx_target = RiskParameter.CIRCUIT_BREAKER_MINT_TARGET.value
+
+    cap_notional = market.params(idx_notional)
+    target = market.params(idx_target)
 
     # assemble Roller.snapshot struct
     timestamp = 1643247197
@@ -90,7 +97,8 @@ def test_cap_notional_circuit_breaker(market, minted):
                     places=1))
 def test_cap_notional_circuit_breaker_when_minted_less_than_target(market,
                                                                    minted):
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
 
     # assemble Roller.snapshot struct
     timestamp = 1643247197
@@ -110,7 +118,8 @@ def test_cap_notional_circuit_breaker_when_minted_less_than_target(market,
                     places=1))
 def test_cap_notional_circuit_breaker_when_mint_greater_than_2x_target(market,
                                                                        minted):
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
 
     # assemble Roller.snapshot struct
     timestamp = 1643247197
@@ -127,7 +136,8 @@ def test_cap_notional_circuit_breaker_when_mint_greater_than_2x_target(market,
 def test_cap_notional_adjusted_for_circuit_breaker(market, feed):
     # Test cap notional circuit adjustment is min cap notional and
     # circuit breaker
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
     snapshot = market.snapshotMinted()
 
     # calculate cap notional adjusted for circuit breaker
@@ -141,7 +151,8 @@ def test_cap_notional_adjusted_for_circuit_breaker(market, feed):
 
 
 def test_oi_from_notional(market, feed):
-    cap_notional = market.capNotional()
+    idx = RiskParameter.CAP_NOTIONAL.value
+    cap_notional = market.params(idx)
     data = feed.latest()
 
     # oi cap should be cap notional / mid, with zero volume assumption on

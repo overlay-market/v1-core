@@ -132,15 +132,15 @@ def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
         delta = 2500000000000000
         cap_payoff = 5000000000000000000
         cap_notional = 800000000000000000000000
-        cap_leverage = 5000000000000000000
+        cap_leverage = 2000000000000000000
         circuit_breaker_window = 2592000  # 30d
         circuit_breaker_mint_target = 66670000000000000000000  # 10% per year
-        maintenance = 100000000000000000
+        maintenance = 10000000000000000
         maintenance_burn = 100000000000000000
         liquidation_fee = 10000000000000000  # 1.00% (100 bps)
         trade_fee = 750000000000000
         min_collateral = 100000000000000
-        price_drift_upper_limit = 100000000000000  # 0.01% per sec
+        price_drift_upper_limit = 10000000000000  # 0.001% per sec
 
         params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,

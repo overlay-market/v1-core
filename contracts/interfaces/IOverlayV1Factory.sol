@@ -8,61 +8,9 @@ import "./IOverlayV1Token.sol";
 
 interface IOverlayV1Factory {
     // risk param bounds
-    function MIN_K() external view returns (uint256);
+    function PARAMS_MIN(uint256 idx) external view returns (uint256);
 
-    function MAX_K() external view returns (uint256);
-
-    function MIN_LMBDA() external view returns (uint256);
-
-    function MAX_LMBDA() external view returns (uint256);
-
-    function MIN_DELTA() external view returns (uint256);
-
-    function MAX_DELTA() external view returns (uint256);
-
-    function MIN_CAP_PAYOFF() external view returns (uint256);
-
-    function MAX_CAP_PAYOFF() external view returns (uint256);
-
-    function MIN_CAP_NOTIONAL() external view returns (uint256);
-
-    function MAX_CAP_NOTIONAL() external view returns (uint256);
-
-    function MIN_CAP_LEVERAGE() external view returns (uint256);
-
-    function MAX_CAP_LEVERAGE() external view returns (uint256);
-
-    function MIN_CIRCUIT_BREAKER_WINDOW() external view returns (uint256);
-
-    function MAX_CIRCUIT_BREAKER_WINDOW() external view returns (uint256);
-
-    function MIN_CIRCUIT_BREAKER_MINT_TARGET() external view returns (uint256);
-
-    function MAX_CIRCUIT_BREAKER_MINT_TARGET() external view returns (uint256);
-
-    function MIN_MAINTENANCE_MARGIN_FRACTION() external view returns (uint256);
-
-    function MAX_MAINTENANCE_MARGIN_FRACTION() external view returns (uint256);
-
-    function MIN_MAINTENANCE_MARGIN_BURN_RATE() external view returns (uint256);
-
-    function MAX_MAINTENANCE_MARGIN_BURN_RATE() external view returns (uint256);
-
-    function MIN_LIQUIDATION_FEE_RATE() external view returns (uint256);
-
-    function MAX_LIQUIDATION_FEE_RATE() external view returns (uint256);
-
-    function MIN_TRADING_FEE_RATE() external view returns (uint256);
-
-    function MAX_TRADING_FEE_RATE() external view returns (uint256);
-
-    function MIN_MINIMUM_COLLATERAL() external view returns (uint256);
-
-    function MAX_MINIMUM_COLLATERAL() external view returns (uint256);
-
-    function MIN_PRICE_DRIFT_UPPER_LIMIT() external view returns (uint256);
-
-    function MAX_PRICE_DRIFT_UPPER_LIMIT() external view returns (uint256);
+    function PARAMS_MAX(uint256 idx) external view returns (uint256);
 
     // immutables
     function ovl() external view returns (IOverlayV1Token);
@@ -88,37 +36,16 @@ interface IOverlayV1Factory {
     function deployMarket(
         address feedFactory,
         address feed,
-        Risk.Params memory params
+        uint256[14] calldata params
     ) external returns (address market_);
 
     // per-market risk parameter setters
-    function setK(address feed, uint256 k) external;
+    function setRiskParam(
+        address feed,
+        Risk.Parameters name,
+        uint256 value
+    ) external;
 
-    function setLmbda(address feed, uint256 lmbda) external;
-
-    function setDelta(address feed, uint256 delta) external;
-
-    function setCapPayoff(address feed, uint256 capPayoff) external;
-
-    function setCapNotional(address feed, uint256 capNotional) external;
-
-    function setCapLeverage(address feed, uint256 capLeverage) external;
-
-    function setCircuitBreakerWindow(address feed, uint256 circuitBreakerWindow) external;
-
-    function setCircuitBreakerMintTarget(address feed, uint256 circuitBreakerMintTarget) external;
-
-    function setMaintenanceMarginFraction(address feed, uint256 maintenanceMarginFraction)
-        external;
-
-    function setMaintenanceMarginBurnRate(address feed, uint256 maintenanceMarginBurnRate)
-        external;
-
-    function setLiquidationFeeRate(address feed, uint256 liquidationFeeRate) external;
-
-    function setTradingFeeRate(address feed, uint256 tradingFeeRate) external;
-
-    function setMinCollateral(address feed, uint256 minCollateral) external;
-
-    function setPriceDriftUpperLimit(address feed, uint256 priceDriftUpperLimit) external;
+    // fee repository setter
+    function setFeeRecipient(address _feeRecipient) external;
 }

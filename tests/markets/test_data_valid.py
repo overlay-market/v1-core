@@ -1,13 +1,16 @@
 from decimal import Decimal
 from math import exp
 
+from .utils import RiskParameter
+
 
 def test_data_is_valid(market):
     tx = market.update()
     data = tx.return_value
+    idx = RiskParameter.PRICE_DRIFT_UPPER_LIMIT.value
 
     _, _, _, _, price_macro_now, price_macro_ago, _, _ = data
-    drift = (market.priceDriftUpperLimit() / Decimal(1e18))
+    drift = (market.params(idx) / Decimal(1e18))
 
     dp = price_macro_now / price_macro_ago
     dp_lower_limit = exp(-drift * 3600)
@@ -20,7 +23,8 @@ def test_data_is_valid(market):
 
 def test_data_is_valid_when_dp_less_than_lower_limit(market):
     tol = 1e-04
-    drift = (market.priceDriftUpperLimit() / Decimal(1e18))
+    idx = RiskParameter.PRICE_DRIFT_UPPER_LIMIT.value
+    drift = (market.params(idx) / Decimal(1e18))
 
     price_now = 2562676671798193257266
 
@@ -49,7 +53,8 @@ def test_data_is_valid_when_dp_less_than_lower_limit(market):
 
 def test_data_is_valid_when_dp_greater_than_upper_limit(market):
     tol = 1e-04
-    drift = (market.priceDriftUpperLimit() / Decimal(1e18))
+    idx = RiskParameter.PRICE_DRIFT_UPPER_LIMIT.value
+    drift = (market.params(idx) / Decimal(1e18))
 
     price_ago = 2562676671798193257266
 

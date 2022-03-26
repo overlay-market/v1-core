@@ -3,6 +3,8 @@ from brownie.test import given, strategy
 from decimal import Decimal
 from math import exp, sqrt
 
+from .utils import RiskParameter
+
 
 @given(
     oi_long=strategy('decimal', min_value='0.001', max_value='800000',
@@ -20,7 +22,7 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
     oi_imb = oi_overweight - oi_underweight
 
     # calculate expected oi values long and short
-    k = Decimal(market.k()) / Decimal(1e18)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
     expect_oi = oi * Decimal(
         sqrt(1 - (oi_imb/oi)**2 * Decimal(1 - exp(-4*k*dt))))
     expect_oi_imb = oi_imb * Decimal(exp(-2*k*dt))
@@ -48,7 +50,7 @@ def test_oi_after_funding_when_underweight_is_zero(market, oi_overweight, dt):
     oi_imb = oi_overweight
 
     # calculate expected oi values long and short
-    k = Decimal(market.k()) / Decimal(1e18)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
     expect_oi_imb = oi_imb * Decimal(exp(-2*k*dt))
 
     # overweight gets drawn down
@@ -97,7 +99,7 @@ def test_oi_after_funding_when_dt_infinite(market, oi_long, oi_short):
     # calculate time elapsed needed to get a MAX_NATURAL_EXPONENT in
     # imb drawdown power
     max_exponent = Decimal(20)
-    k = Decimal(market.k()) / Decimal(1e18)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
     dt = (max_exponent / (2 * k)) * Decimal(1 + tol)
 
     # calculate expected oi values long and short
@@ -130,7 +132,7 @@ def test_oi_after_funding_when_underweight_is_zero_dt_infinite(market):
     # calculate time elapsed needed to get a MAX_NATURAL_EXPONENT in
     # imb drawdown power
     max_exponent = Decimal(20)
-    k = Decimal(market.k()) / Decimal(1e18)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
     dt = (max_exponent / (2 * k)) * Decimal(1 + tol)
 
     # overweight gets drawn down to zero if beyond "infinite" time elasped

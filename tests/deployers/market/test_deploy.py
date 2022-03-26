@@ -35,20 +35,24 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     assert market.factory() == factory
 
     # check market deployed correctly with risk params
-    assert market.k() == k
-    assert market.lmbda() == lmbda
-    assert market.delta() == delta
-    assert market.capPayoff() == cap_payoff
-    assert market.capNotional() == cap_notional
-    assert market.capLeverage() == cap_leverage
-    assert market.circuitBreakerWindow() == circuit_breaker_window
-    assert market.circuitBreakerMintTarget() == circuit_breaker_mint_target
-    assert market.maintenanceMarginFraction() == maintenance_margin_fraction
-    assert market.maintenanceMarginBurnRate() == maintenance_margin_burn_rate
-    assert market.liquidationFeeRate() == liquidation_fee_rate
-    assert market.tradingFeeRate() == trading_fee_rate
-    assert market.minCollateral() == min_collateral
-    assert market.priceDriftUpperLimit() == price_drift_upper_limit
+    expect_params = [
+        k,
+        lmbda,
+        delta,
+        cap_payoff,
+        cap_notional,
+        cap_leverage,
+        circuit_breaker_window,
+        circuit_breaker_mint_target,
+        maintenance_margin_fraction,
+        maintenance_margin_burn_rate,
+        liquidation_fee_rate,
+        trading_fee_rate,
+        min_collateral,
+        price_drift_upper_limit
+    ]
+    actual_params = [market.params(i) for i in range(14)]
+    assert expect_params == actual_params
 
 
 def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
