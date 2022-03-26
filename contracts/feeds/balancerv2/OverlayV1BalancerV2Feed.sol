@@ -99,24 +99,20 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         ovl = balancerV2Pool.ovl;
     }
 
-
     /// @notice Returns the OracleAverageQuery struct containing information for a TWAP query
-    /// @dev Builds the OracleAverageQuery struct required to retrieve TWAPs from the 
+    /// @dev Builds the OracleAverageQuery struct required to retrieve TWAPs from the
     /// @dev getTimeWeightedAverage function
     /// @param variable Queryable values pertinent to this contract: PAIR_PRICE and INVARIANT
     /// @param secs Duration of TWAP in seconds
     /// @param ago End of TWAP in seconds
     /// @return query Information for a TWAP query
     function getOracleAverageQuery(
-      IBalancerV2PriceOracle.Variable variable,
-      uint256 secs,
-      uint256 ago
-    )
-    public view
-    returns(IBalancerV2PriceOracle.OracleAverageQuery memory) {
-      return IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
+        IBalancerV2PriceOracle.Variable variable,
+        uint256 secs,
+        uint256 ago
+    ) public view returns (IBalancerV2PriceOracle.OracleAverageQuery memory) {
+        return IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
     }
-
 
     /// @notice Returns the time average weighted price corresponding to each of queries.
     /// @dev Prices are represented as 18 decimal fixed point values.
@@ -125,17 +121,12 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @param queries Information for a time weighted average query
     /// @return Time weighted average price corresponding to each query
     function getTimeWeightedAverage(
-      address pool,
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
-    )
-    public
-    view
-    returns (uint256[] memory)
-    {
-      IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
-      return priceOracle.getTimeWeightedAverage(queries);
+        address pool,
+        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
+    ) public view returns (uint256[] memory) {
+        IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
+        return priceOracle.getTimeWeightedAverage(queries);
     }
-
 
     /// @notice Returns the TWAP corresponding to a single query for the price of the tokens in the
     /// @notice pool, expressed as the price of the second token in units of the first token
@@ -146,30 +137,24 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @param ago End of TWAP in seconds
     /// @return result TWAP of tokens in the pool
     function getTimeWeightedAveragePairPrice(
-      address pool,
-      uint256 secs,
-      uint256 ago
-    )
-    public
-    view returns (uint256 result) {
-      IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        address pool,
+        uint256 secs,
+        uint256 ago
+    ) public view returns (uint256 result) {
+        IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
 
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries = 
-        new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query = 
-        IBalancerV2PriceOracle.OracleAverageQuery(
-        variable,
-        secs,
-        ago
-      );
-      queries[0] = query;
+        IBalancerV2PriceOracle.OracleAverageQuery[]
+            memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+        IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle
+            .OracleAverageQuery(variable, secs, ago);
+        queries[0] = query;
 
-      uint256[] memory results = getTimeWeightedAverage(pool, queries);
-      uint256 result = results[0];
+        uint256[] memory results = getTimeWeightedAverage(pool, queries);
+        uint256 result = results[0];
     }
 
-
-    /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query for the value of the pool's
+    /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query
+    /// @notice for the value of the pool's
     /// @notice invariant, which is a measure of its liquidity
     /// @dev Prices are dev represented as 18 decimal fixed point values
     /// @dev Variable.INVARIANT is used to construct OracleAverageQuery struct
@@ -178,26 +163,20 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @param ago End of TWAP in seconds
     /// @return result TWAP of inverse of tokens in pool
     function getTimeWeightedAverageInvariant(
-      address pool,
-      uint256 secs,
-      uint256 ago
-    ) public view returns (
-    uint256 result
-    ) {
-      IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.INVARIANT;
+        address pool,
+        uint256 secs,
+        uint256 ago
+    ) public view returns (uint256 result) {
+        IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.INVARIANT;
 
-      IBalancerV2PriceOracle.OracleAverageQuery[] memory queries =
-        new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-      IBalancerV2PriceOracle.OracleAverageQuery memory query =
-        IBalancerV2PriceOracle.OracleAverageQuery(
-          variable,
-      secs,
-      ago
-      );
-      queries[0] = query;
+        IBalancerV2PriceOracle.OracleAverageQuery[]
+            memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+        IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle
+            .OracleAverageQuery(variable, secs, ago);
+        queries[0] = query;
 
-      uint256[] memory results = getTimeWeightedAverage(pool, queries);
-      uint256 result = results[0];
+        uint256[] memory results = getTimeWeightedAverage(pool, queries);
+        uint256 result = results[0];
     }
 
     /// @notice Returns pool token information given a pool id
@@ -240,70 +219,71 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
     function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve) {
-      // Cache globals for gas savings, SN TODO: verify that this makes a diff here
-      address _marketPool = marketPool;
-      address _ovlWethPool = ovlWethPool;
+        // Cache globals for gas savings, SN TODO: verify that this makes a diff here
+        address _marketPool = marketPool;
+        address _ovlWethPool = ovlWethPool;
 
-      // Retrieve pool weights
-      // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
-      uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
-      // SN TODO: what if the pool has more than 2 tokens?
-      // SN TODO: sanity check that the order the normalized weights are returned are NOT the same
-      // order as the return of getPoolId for the market pool. does not impact this code, but still
-      // something to note I think
-      uint256 weightToken0 = normalizedWeights[0]; // WETH
-      uint256 weightToken1 = normalizedWeights[1]; // DAI
+        // Retrieve pool weights
+        // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
+        uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
+        // SN TODO: what if the pool has more than 2 tokens?
+        // SN TODO: sanity check that the order the normalized weights are returned are NOT the
+        // same order as the return of getPoolId for the market pool. does not impact this code,
+        // but still something to note I think
+        uint256 weightToken0 = normalizedWeights[0]; // WETH
+        uint256 weightToken1 = normalizedWeights[1]; // DAI
 
-      // SN TODO: Remove hardcode
-      uint256 twav = getTimeWeightedAverageInvariant(_marketPool, 600, 0);
-      
-      // Want to solve for B2 because if B1 is the expression we want, that means P is B2
-      // so B2 = DIA, B1 = WETH
-      // account for 2 conditions:
-      // 1. if weightToken0 is the market base token (WETH), then we try to get B1
-      // 2. if weightToken0 is market quote token (DAI), then we try to get B2
-      // could: in normalizedWeights do flip so always WETH first
-      // priceOverMicroWindow is laways num quote/num base, the weightToken0 and weightToken1 we 
-      // get back, could have it where normalizedWeights0 is laways base, and nomarwe1 is always quote
-      // so the logic of calculating here is always right (always B1)
-      // B1 represents the WETH reserve over a micro window
-      // B1 = [ V / ( (P * w2 / w1) ** w2 ) ] ** [ 1 / (w1 + w2) ]
-      // SN TODO: use fixedpoint
-      // follow mikeys logic by splitting ths out into another function getReserveInWeth, then the logic
-      // getRerseveInOvl (that logic below talking about getPairPrice). this makes a call to getReserveInWeth,
-      // then gets the reserve number in WETH (B1). getReserveInOvl takes that number and multiplies it by the price in ovlweth
-      uint256 denominator = (priceOverMicroWindow * weightToken1 / weightToken0) ** weightToken1;
-      // this is going to be 0 (since weights are so large), prob same with denominator
-      // the FixedPoint lib
-      uint256 power = 1 / (weightToken0 + weightToken1);
-      uint256 reserveInWeth = (twav / denominator) ** power;
+        // SN TODO: Remove hardcode
+        uint256 twav = getTimeWeightedAverageInvariant(_marketPool, 600, 0);
 
+        // Want to solve for B2 because if B1 is the expression we want, that means P is B2
+        // so B2 = DIA, B1 = WETH
+        // account for 2 conditions:
+        // 1. if weightToken0 is the market base token (WETH), then we try to get B1
+        // 2. if weightToken0 is market quote token (DAI), then we try to get B2
+        // could: in normalizedWeights do flip so always WETH first
+        // priceOverMicroWindow is laways num quote/num base, the weightToken0 and weightToken1 we
+        // get back, could have it where normalizedWeights0 is laways base, and nomarwe1 is always
+        // quote so the logic of calculating here is always right (always B1)
+        // B1 represents the WETH reserve over a micro window
+        // B1 = [ V / ( (P * w2 / w1) ** w2 ) ] ** [ 1 / (w1 + w2) ]
+        // SN TODO: use fixedpoint
+        // follow mikeys logic by splitting ths out into another function getReserveInWeth, then
+        // the logic getRerseveInOvl (that logic below talking about getPairPrice). this makes a
+        // call to getReserveInWeth, then gets the reserve number in WETH (B1). getReserveInOvl
+        // takes that number and multiplies it by the price in ovlweth
+        uint256 denominator = ((priceOverMicroWindow * weightToken1) / weightToken0)**weightToken1;
+        // this is going to be 0 (since weights are so large), prob same with denominator
+        // the FixedPoint lib
+        uint256 power = 1 / (weightToken0 + weightToken1);
+        uint256 reserveInWeth = (twav / denominator)**power;
 
-      // NOT right. 1. does not factor in the weigths and really manipulatable because not using TWAP
-      // want to do getPairPrices for ovlWethPool
-      // I need the TWAP value from ovlWethPool -> getPairPrice with ovlWethPool
-      // duplicate getPairPrices -> getOvlWethPrice. keep pairprices but adapt for OVlweth with on query
-      // the one query is 600, 0 for micor (only want for micro)
-      // only wrinkle is we want to amke sure that the price we are getting is num ETH / num OVL
-      // just return what getovlWeithPairPrice
+        // NOT right. 1. does not factor in the weigths and really manipulatable because not using
+        // TWAP want to do getPairPrices for ovlWethPool
+        // I need the TWAP value from ovlWethPool -> getPairPrice with ovlWethPool
+        // duplicate getPairPrices -> getOvlWethPrice. keep pairprices but adapt for OVlweth with
+        // on query the one query is 600, 0 for micor (only want for micro)
+        // only wrinkle is we want to amke sure that the price we are getting is num ETH / num OVL
+        // just return what getovlWeithPairPrice
 
-      // DO NOT NEED THIS LINE ANYMORE:
-      // uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
-      // https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L160
+        // DO NOT NEED THIS LINE ANYMORE:
+        // uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
+        // https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L160
     }
-    
+
     /// @notice Market pool only (not reserve)
     function getPairPrices() public view returns (uint256[] memory twaps) {
         // cache globals for gas savings, SN TODO: verify that this makes a diff here
         address _marketPool = marketPool;
         /* Pair Price Calculations */
         // SN LEFT OFF HERE
-        IBalancerV2PriceOracle.Variable variablePairPrice =
-          IBalancerV2PriceOracle.Variable.PAIR_PRICE;
+        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
+            .Variable
+            .PAIR_PRICE;
 
         // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
-        IBalancerV2PriceOracle.OracleAverageQuery[] memory queries =
-          new IBalancerV2PriceOracle.OracleAverageQuery[](3);
+        IBalancerV2PriceOracle.OracleAverageQuery[]
+            memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](3);
         // SN TODO: HARD CODE HERE
         queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
         queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
@@ -328,7 +308,6 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         //     uint32[] memory windows,
         //     uint256[] memory nowIdxs
         // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
-
 
         /* Pair Price Calculations */
         uint256[] memory twaps = getPairPrices();
@@ -427,5 +406,4 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
 
         return (secondsAgos, windows, nowIdxs);
     }
-
 }
