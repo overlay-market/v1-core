@@ -1,6 +1,8 @@
 import pytest
 from brownie import chain, reverts
 from decimal import Decimal
+from math import exp
+from pytest import approx
 
 from .utils import RiskParameter
 
@@ -42,6 +44,26 @@ def test_set_risk_param(market, factory):
 
         # undo tx for params to revert to conftest.py market state
         chain.undo()
+
+
+def test_set_risk_param_caches_calc(market, feed, factory):
+    # set the risk param
+    expect_param = 50000000000000
+    idx_drift = RiskParameter.PRICE_DRIFT_UPPER_LIMIT.value
+    market.setRiskParam(idx_drift, expect_param, {"from": factory})
+
+    # check was actually set
+    actual_param = market.params(idx_drift)
+    assert expect_param == actual_param
+
+    # check was actually cached
+    data = feed.latest()
+    (_, _, macro_window, _, _, _, _, _) = data
+    drift = Decimal(expect_param) / Decimal(1e18)
+    pow = drift * Decimal(macro_window)
+    expect = int(Decimal(exp(pow)) * Decimal(1e18))
+    actual = market.dpUpperLimit()
+    assert expect == approx(actual)
 
 
 def test_set_risk_param_reverts_when_not_factory(market, alice):

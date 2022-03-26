@@ -1,5 +1,8 @@
 import pytest
 from brownie import reverts, OverlayV1Market
+from decimal import Decimal
+from math import exp
+from pytest import approx
 
 from .utils import RiskParameter
 
@@ -45,6 +48,15 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
     expect_params = params
     actual_params = [market.params(i) for i in range(len(RiskParameter))]
     assert expect_params == actual_params
+
+    # check risk calc cached for price drift upper limit
+    data = feed.latest()
+    (_, _, macro_window, _, _, _, _, _) = data
+    drift = Decimal(price_drift_upper_limit) / Decimal(1e18)
+    pow = drift * Decimal(macro_window)
+    expect_drift = int(Decimal(exp(pow)) * Decimal(1e18))
+    actual_drift = market.dpUpperLimit()
+    assert expect_drift == approx(actual_drift)
 
 
 def test_deploy_reverts_when_price_is_zero(ovl, mock_feed, factory, gov):

@@ -71,6 +71,9 @@ interface IOverlayV1Market {
     // update related quantities
     function timestampUpdateLast() external view returns (uint256);
 
+    // cached risk calcs
+    function dpUpperLimit() external view returns (uint256);
+
     // position altering functions
     function build(
         uint256 collateral,

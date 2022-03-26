@@ -22,6 +22,7 @@ contract OverlayV1Market is IOverlayV1Market {
     using Risk for uint256[14];
     using Roller for Roller.Snapshot;
 
+    // internal constants
     uint256 internal constant ONE = 1e18; // 18 decimal places
     uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
 
@@ -56,6 +57,9 @@ contract OverlayV1Market is IOverlayV1Market {
 
     // data from last call to update
     uint256 public timestampUpdateLast;
+
+    // cached risk calcs
+    uint256 public dpUpperLimit; // e**(+priceDriftUpperLimit * macroWindow)
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
@@ -121,6 +125,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // set the risk params
         for (uint256 i = 0; i < _params.length; i++) {
+            _cacheRiskCalc(Risk.Parameters(i), _params[i]);
             params[i] = _params[i];
         }
     }
@@ -473,10 +478,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev when comparing priceMacro(now) vs priceMacro(now - macroWindow)
     function dataIsValid(Oracle.Data memory data) public view returns (bool) {
         // upper and lower limits are e**(+/- priceDriftUpperLimit * dt)
-        uint256 priceDriftUpperLimit = params.get(Risk.Parameters.PriceDriftUpperLimit);
-        uint256 pow = priceDriftUpperLimit * data.macroWindow;
-        uint256 dpLowerLimit = INVERSE_EULER.powUp(pow);
-        uint256 dpUpperLimit = EULER.powUp(pow);
+        uint256 _dpUpperLimit = dpUpperLimit;
+        uint256 _dpLowerLimit = ONE.divDown(_dpUpperLimit);
 
         // compare current price over macro window vs price over macro window
         // one macro window in the past
@@ -490,7 +493,7 @@ contract OverlayV1Market is IOverlayV1Market {
         // price is valid if within upper and lower limits on drift given
         // time elapsed over one macro window
         uint256 dp = priceNow.divUp(priceLast);
-        return (dp >= dpLowerLimit && dp <= dpUpperLimit);
+        return (dp >= _dpLowerLimit && dp <= _dpUpperLimit);
     }
 
     /// @dev current open interest after funding payments transferred
@@ -738,6 +741,7 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @notice Sets the governance per-market risk parameter
     function setRiskParam(Risk.Parameters name, uint256 value) external onlyFactory {
         _checkRiskParam(name, value);
+        _cacheRiskCalc(name, value);
         params.set(name, value);
     }
 
@@ -795,6 +799,19 @@ contract OverlayV1Market is IOverlayV1Market {
                 _priceDriftUpperLimit * data.macroWindow < MAX_NATURAL_EXPONENT,
                 "OVLV1: price drift exceeds max exp"
             );
+        }
+    }
+
+    /// @notice Caches risk param calculations used in market contract
+    /// @notice for gas savings
+    function _cacheRiskCalc(Risk.Parameters name, uint256 value) private {
+        // caches calculations for dpUpperLimit
+        // = e**(priceDriftUpperLimit * data.macroWindow)
+        if (name == Risk.Parameters.PriceDriftUpperLimit) {
+            Oracle.Data memory data = IOverlayV1Feed(feed).latest();
+            uint256 _priceDriftUpperLimit = value;
+            uint256 pow = _priceDriftUpperLimit * data.macroWindow;
+            dpUpperLimit = EULER.powUp(pow);
         }
     }
 }
