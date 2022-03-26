@@ -98,7 +98,7 @@ def pool_balweth():
     '''
     Outputs:
       [Contract]: Balancer V2 WeightedPool2Tokens contract instance for the
-                  BAL/WETH pool, used as an example OVL/WETH pair.
+                  BAL/WETH pool, representing the OVL/WETH token pair
 
     https://etherscan.io/address/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56
     https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
@@ -195,9 +195,9 @@ def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
       balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
       pool_daiweth [Contract]: Balancer V2 WeightedPool2Tokens contract
                                instance for the DAI/WETH pool
-      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the OVL/WETH
-                               token pair
+      pool_balweth [Contract]: Balancer V2 WeightedPool2Tokens contract
+                               instance for the BAL/WETH pool, representing the
+                               OVL/WETH token pair
     '''
     market_pool = pool_daiweth
     ovlweth_pool = pool_balweth
