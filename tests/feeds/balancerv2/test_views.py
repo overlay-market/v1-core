@@ -6,17 +6,17 @@ from brownie.test import given, strategy
 #
 #
 #  def test_get_time_weighted_average_invariant(feed):
-    #  '''
-    #  Tests that the OverlayV1BalancerV2Feed contract
-    #  getTimeWeightedAverageInvariant function returns the expected TWAP.
-    #
-    #  SN TODO: secs are hard coded in contract rn
-    #  Inputs:
-    #    feed         [Contract]: OverlayV1BalancerV2Feed contract instance
-    #    pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-    #                             contract instance representing the OVL/WETH
-    #                             token pair
-    #  '''
+#      '''
+#      Tests that the OverlayV1BalancerV2Feed contract
+#      getTimeWeightedAverageInvariant function returns the expected TWAP.
+#
+#      SN TODO: secs are hard coded in contract rn
+#      Inputs:
+#        feed         [Contract]: OverlayV1BalancerV2Feed contract instance
+#        pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+#                                 contract instance representing the OVL/WETH
+#                                 token pair
+#      '''
 #      secs = 1800
 #      ago = 0
 #      res = feed.getTimeWeightedAverageInvariant(secs, ago);
@@ -37,9 +37,9 @@ def test_get_time_weighted_average(feed, pool_balweth):
     '''
     secs = 1800
     ago = 0
-    variable = 0 # Variable.PAIR_PRICE
+    variable = 0  # Variable.PAIR_PRICE
     query = feed.getOracleAverageQuery(variable, secs, ago)
-    actual = feed.getTimeWeightedAverage(pool_balweth, [query])
+    actual = feed.getTimeWeightedAverage(pool_balweth, [query])  # noqa: F841
     # SN TODO
     assert 1 == 1
 
@@ -55,22 +55,22 @@ def test_get_oracle_average_query(feed, secs):
     '''
     ago = [0, 1800]
 
-    variable = 0 # Variable.PAIR_PRICE
+    variable = 0  # Variable.PAIR_PRICE
     actual = feed.getOracleAverageQuery(variable, secs, ago[0])
     expect = (variable, secs, ago[0])
     assert expect == actual
 
-    variable = 2 # Variable.INVARIANT
+    variable = 2  # Variable.INVARIANT
     actual = feed.getOracleAverageQuery(variable, secs, ago[0])
     expect = (variable, secs, ago[0])
     assert expect == actual
 
-    variable = 0 # Variable.PAIR_PRICE
+    variable = 0  # Variable.PAIR_PRICE
     actual = feed.getOracleAverageQuery(variable, secs, ago[1])
     expect = (variable, secs, ago[1])
     assert expect == actual
 
-    variable = 2 # Variable.INVARIANT
+    variable = 2  # Variable.INVARIANT
     actual = feed.getOracleAverageQuery(variable, secs, ago[1])
     expect = (variable, secs, ago[1])
     assert expect == actual
