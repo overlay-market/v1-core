@@ -115,9 +115,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _checkFeed(feedFactory, feed);
 
         // check risk parameters are within bounds
-        for (uint256 i = 0; i < params.length; i++) {
-            _checkRiskParam(Risk.Parameters(i), params[i]);
-        }
+        _checkRiskParams(params);
 
         // deploy the new market
         market_ = deployer.deploy(address(ovl), feed, params);
@@ -138,6 +136,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(getMarket[feed] == address(0), "OVLV1: market already exists");
         require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
         require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
+    }
+
+    /// @notice Checks all risk params are within acceptable bounds
+    function _checkRiskParams(uint256[14] calldata params) private {
+        for (uint256 i = 0; i < params.length; i++) {
+            _checkRiskParam(Risk.Parameters(i), params[i]);
+        }
     }
 
     /// @notice Checks risk param is within acceptable bounds
