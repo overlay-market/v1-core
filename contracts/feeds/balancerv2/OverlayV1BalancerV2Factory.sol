@@ -3,12 +3,14 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2FeedFactory.sol";
+
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1BalancerV2Feed.sol";
 
-contract OverlayV1BalancerV2Factory is OverlayV1FeedFactory {
+contract OverlayV1BalancerV2Factory is IOverlayV1BalancerV2FeedFactory, OverlayV1FeedFactory {
     using BalancerV2Tokens for BalancerV2Tokens.Info;
     using BalancerV2PoolInfo for BalancerV2PoolInfo.Pool;
     address public immutable ovlWethPool;
