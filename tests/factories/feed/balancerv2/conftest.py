@@ -1,5 +1,5 @@
 import pytest
-from brownie import Contract, OverlayV1BalancerV2Factory
+from brownie import Contract, OverlayV1BalancerV2Factory, convert
 
 
 @pytest.fixture(scope="module")
@@ -93,6 +93,50 @@ def pool_balweth():
     https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
     '''
     yield Contract.from_explorer("0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56")
+
+
+@pytest.fixture(scope="module")
+def balweth_poolid():
+    '''
+    Output:
+      [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool contract pool id
+    '''
+    yield convert.to_bytes(
+        '0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a',
+        'bytes32')
+
+
+@pytest.fixture(scope="module")
+def balv2_tokens(balweth_poolid):
+    '''
+    Returns the BalancerV2Tokens struct fields for a DAI/WETH market token pair
+    using the BAL/WETH token pair to simulate the OVL/WETH token pair for
+    testing. The BalancerV2Tokens struct is an input argument to the
+    constructor of the OverlayV1BalancerV2Feed contract so that token addresses
+    can be retrieved from the BalancerV2 Vault contract.
+
+    Inputs:
+      balweth_poolid [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool
+                                contract pool id, representing the market token
+                                pair
+    Outputs:
+      (
+         [Contract]: BalancerV2Vault contract instance
+         [bytes32]:  BAL/WETH Balancer V2 OracleWeighted contract pool id,
+                     representing the OVL/WETH token pair
+         [bytes32]:  DAI/WETH Balancer V2 OracleWeightedPool contract pool id,
+                     representing the market token pair
+      )
+    '''
+    # BalancerV2Vault contract address is BalancerV2Tokens.vault
+    # https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+    vault = Contract.from_explorer(
+            '0xBA12222222228d8Ba445958a75a0704d566BF2C8')
+
+    ovlweth_poolid = convert.to_bytes(
+        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
+        'bytes32')
+    yield (vault, ovlweth_poolid, balweth_poolid)
 
 
 @pytest.fixture(scope="module", params=[(600, 3600)])
