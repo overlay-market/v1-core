@@ -1,6 +1,7 @@
 import pytest
 from brownie import (
-    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock
+    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock,
+    web3
 )
 
 
@@ -32,6 +33,21 @@ def rando(accounts):
 @pytest.fixture(scope="module")
 def fee_recipient(accounts):
     yield accounts[5]
+
+
+@pytest.fixture(scope="module")
+def minter_role():
+    yield web3.solidityKeccak(['string'], ["MINTER"])
+
+
+@pytest.fixture(scope="module")
+def burner_role():
+    yield web3.solidityKeccak(['string'], ["BURNER"])
+
+
+@pytest.fixture(scope="module")
+def governor_role():
+    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
 @pytest.fixture(scope="module", params=[8000000])
@@ -110,7 +126,8 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
+def create_factory(gov, fee_recipient, request, ovl, governor_role,
+                   feed_factory, feed_three):
 
     def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
@@ -121,7 +138,7 @@ def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
         tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
 
         # grant gov the governor role on token to access factory methods
-        tok.grantRole(tok.GOVERNOR_ROLE(), gov, {"from": gov})
+        tok.grantRole(governor_role, gov, {"from": gov})
 
         # add the feed factory
         factory.addFeedFactory(feeds, {"from": gov})

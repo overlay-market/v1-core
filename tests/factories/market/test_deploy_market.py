@@ -13,7 +13,7 @@ def isolation(fn_isolation):
 
 
 def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
-                                      gov):
+                                      minter_role, burner_role, gov):
     # NOTE: feed_one will have a successfully deployed market on it for
     # remainder of test_deploy_market.py
     expect_feed_factory = feed_factory
@@ -60,8 +60,8 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert factory.isMarket(expect_market) is True
 
     # check market granted mint/burn roles on ovl
-    assert ovl.hasRole(ovl.MINTER_ROLE(), actual_market) is True
-    assert ovl.hasRole(ovl.BURNER_ROLE(), actual_market) is True
+    assert ovl.hasRole(minter_role, actual_market) is True
+    assert ovl.hasRole(burner_role, actual_market) is True
 
     # check event emitted
     assert 'MarketDeployed' in tx.events

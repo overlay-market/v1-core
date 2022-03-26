@@ -1,5 +1,5 @@
 def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
-                         gov, market, deployer):
+                         gov, market, deployer, governor_role):
     # check ovl immutable set
     assert factory.ovl() == ovl
 
@@ -14,7 +14,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert ovl.hasRole(ovl.DEFAULT_ADMIN_ROLE(), factory) is True
 
     # check gov has been given governance role on ovl token
-    assert ovl.hasRole(ovl.GOVERNOR_ROLE(), gov) is True
+    assert ovl.hasRole(governor_role, gov) is True
 
     # check feed factory has been added to registry
     assert factory.isFeedFactory(feed_factory) is True

@@ -98,7 +98,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
     # calculate expected exit price
     data = feed.latest()
-    idx_cap_notional = market.params(RiskParameter.CAP_NOTIONAL.value)
+    idx_cap_notional = RiskParameter.CAP_NOTIONAL.value
     cap_notional = Decimal(market.capNotionalAdjustedForBounds(
         data, market.params(idx_cap_notional)))
     cap_oi = cap_notional * Decimal(1e18) / Decimal(mid_from_feed(data))

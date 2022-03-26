@@ -32,7 +32,8 @@ def test_mock_feed_fixture(mock_feed):
     assert mock_feed.reserve() == 2000000000000000000000000
 
 
-def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
+def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
+                             minter_role, burner_role, gov):
     # check addresses set properly
     assert mock_market.ovl() == ovl
     assert mock_market.feed() == mock_feed
@@ -59,8 +60,8 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert expect_params == actual_params
 
     # check mock market has minter and burner roles on ovl token
-    assert ovl.hasRole(ovl.MINTER_ROLE(), mock_market) is True
-    assert ovl.hasRole(ovl.BURNER_ROLE(), mock_market) is True
+    assert ovl.hasRole(minter_role, mock_market) is True
+    assert ovl.hasRole(burner_role, mock_market) is True
 
     # check oi related quantities are zero
     assert mock_market.oiLong() == 0
@@ -76,7 +77,8 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory, gov):
     assert mock_market.timestampUpdateLast() == chain[-3]["timestamp"]
 
 
-def test_market_fixture(market, feed, ovl, factory, gov):
+def test_market_fixture(market, feed, ovl, factory, minter_role,
+                        burner_role, gov):
     # check addresses set properly
     assert market.ovl() == ovl
     assert market.feed() == feed
@@ -103,8 +105,8 @@ def test_market_fixture(market, feed, ovl, factory, gov):
     assert expect_params == actual_params
 
     # check market has minter and burner roles on ovl token
-    assert ovl.hasRole(ovl.MINTER_ROLE(), market) is True
-    assert ovl.hasRole(ovl.BURNER_ROLE(), market) is True
+    assert ovl.hasRole(minter_role, market) is True
+    assert ovl.hasRole(burner_role, market) is True
 
     # check oi related quantities are zero
     assert market.oiLong() == 0

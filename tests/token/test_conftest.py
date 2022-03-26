@@ -7,19 +7,20 @@ def test_balances(token, gov, alice, bob, minter, burner, admin):
     assert token.balanceOf(admin) == 0
 
 
-def test_roles(token, gov, minter, burner, admin, market, rando):
+def test_roles(token, gov, minter, burner, admin, market,
+               rando, minter_role, burner_role):
     assert token.hasRole(token.DEFAULT_ADMIN_ROLE(), gov) is True
-    assert token.hasRole(token.MINTER_ROLE(), minter) is True
-    assert token.hasRole(token.BURNER_ROLE(), burner) is True
+    assert token.hasRole(minter_role, minter) is True
+    assert token.hasRole(burner_role, burner) is True
 
     assert token.hasRole(token.DEFAULT_ADMIN_ROLE(), admin) is True
 
-    assert token.hasRole(token.MINTER_ROLE(), market) is True
-    assert token.hasRole(token.BURNER_ROLE(), market) is True
+    assert token.hasRole(minter_role, market) is True
+    assert token.hasRole(burner_role, market) is True
 
     assert token.hasRole(token.DEFAULT_ADMIN_ROLE(), rando) is False
-    assert token.hasRole(token.MINTER_ROLE(), rando) is False
-    assert token.hasRole(token.BURNER_ROLE(), rando) is False
+    assert token.hasRole(minter_role, rando) is False
+    assert token.hasRole(burner_role, rando) is False
 
 
 def test_erc20(token):

@@ -7,10 +7,6 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "./interfaces/IOverlayV1Token.sol";
 
 contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OVL") {
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER");
-    bytes32 public constant BURNER_ROLE = keccak256("BURNER");
-    bytes32 public constant GOVERNOR_ROLE = keccak256("GOVERNOR");
-
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
