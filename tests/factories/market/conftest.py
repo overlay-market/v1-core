@@ -1,6 +1,7 @@
 import pytest
 from brownie import (
-    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock
+    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock,
+    web3
 )
 
 
@@ -32,6 +33,21 @@ def rando(accounts):
 @pytest.fixture(scope="module")
 def fee_recipient(accounts):
     yield accounts[5]
+
+
+@pytest.fixture(scope="module")
+def minter_role():
+    yield web3.solidityKeccak(['string'], ["MINTER"])
+
+
+@pytest.fixture(scope="module")
+def burner_role():
+    yield web3.solidityKeccak(['string'], ["BURNER"])
+
+
+@pytest.fixture(scope="module")
+def governor_role():
+    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
 @pytest.fixture(scope="module", params=[8000000])
@@ -110,7 +126,8 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
+def create_factory(gov, fee_recipient, request, ovl, governor_role,
+                   feed_factory, feed_three):
 
     def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
@@ -118,10 +135,10 @@ def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
         factory = gov.deploy(OverlayV1Factory, tok, recipient)
 
         # grant market factory token admin role
-        tok.grantRole(tok.ADMIN_ROLE(), factory, {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
 
         # grant gov the governor role on token to access factory methods
-        tok.grantRole(tok.GOVERNOR_ROLE(), gov, {"from": gov})
+        tok.grantRole(governor_role, gov, {"from": gov})
 
         # add the feed factory
         factory.addFeedFactory(feeds, {"from": gov})
@@ -132,15 +149,15 @@ def create_factory(gov, fee_recipient, request, ovl, feed_factory, feed_three):
         delta = 2500000000000000
         cap_payoff = 5000000000000000000
         cap_notional = 800000000000000000000000
-        cap_leverage = 5000000000000000000
+        cap_leverage = 2000000000000000000
         circuit_breaker_window = 2592000  # 30d
         circuit_breaker_mint_target = 66670000000000000000000  # 10% per year
-        maintenance = 100000000000000000
+        maintenance = 10000000000000000
         maintenance_burn = 100000000000000000
         liquidation_fee = 10000000000000000  # 1.00% (100 bps)
         trade_fee = 750000000000000
         min_collateral = 100000000000000
-        price_drift_upper_limit = 100000000000000  # 0.01% per sec
+        price_drift_upper_limit = 10000000000000  # 0.001% per sec
 
         params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,

@@ -3,7 +3,7 @@ from brownie import reverts
 from brownie.test import given, strategy
 from decimal import Decimal
 
-from .utils import calculate_position_info, get_position_key
+from .utils import calculate_position_info, get_position_key, RiskParameter
 
 
 # NOTE: Tests passing with isolation fixture
@@ -14,8 +14,8 @@ def isolation(fn_isolation):
 
 @given(is_long=strategy('bool'))
 def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     # build attributes
     notional = Decimal(100)
@@ -25,7 +25,8 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     tol = 1e-3
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    trading_fee_rate = Decimal(
+        market.params(RiskParameter.TRADING_FEE_RATE.value) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -35,7 +36,7 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     data = feed.latest()
     oi = market.oiFromNotional(data, int(notional * Decimal(1e18)))
     cap_notional = Decimal(market.capNotionalAdjustedForBounds(
-        data, market.capNotional()))
+        data, market.params(RiskParameter.CAP_NOTIONAL.value)))
     cap_oi = Decimal(market.oiFromNotional(data, cap_notional))
     volume = int((oi / cap_oi) * Decimal(1e18))
     price = market.ask(data, volume) if is_long else market.bid(data, volume)
@@ -59,13 +60,12 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
 
     # check build succeeds when price does not surpass limit
     input_price_limit = price * (1 + tol) if is_long else price * (1 - tol)
-    market.build(input_collateral, input_leverage, input_is_long,
-                 input_price_limit, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
     # check position created through id increment
-    expect_pos_id += 1
-    actual = market.nextPositionId()
-    assert expect_pos_id == actual
+    actual_pos_id = tx.return_value
+    assert expect_pos_id == actual_pos_id
 
 
 @given(is_long=strategy('bool'))
@@ -79,10 +79,11 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     tol = 1e-3
 
     # so don't have to worry about funding
-    market.setK(0, {"from": factory})
+    market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    trading_fee_rate = Decimal(
+        market.params(RiskParameter.TRADING_FEE_RATE.value) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -112,7 +113,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     data = feed.latest()
     oi = market.oiFromNotional(data, actual_notional)
     cap_notional = Decimal(market.capNotionalAdjustedForBounds(
-        data, market.capNotional()))
+        data, market.params(RiskParameter.CAP_NOTIONAL.value)))
     cap_oi = Decimal(market.oiFromNotional(data, cap_notional))
     volume = int((oi / cap_oi) * Decimal(1e18))
     price = market.bid(data, volume) if is_long else market.ask(data, volume)

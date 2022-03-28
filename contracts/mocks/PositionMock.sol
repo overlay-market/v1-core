@@ -149,13 +149,4 @@ contract PositionMock {
                 maintenanceMarginFraction
             );
     }
-
-    function liquidationPrice(
-        Position.Info memory pos,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide,
-        uint256 maintenanceMarginFraction
-    ) external view returns (uint256) {
-        return pos.liquidationPrice(oiTotalOnSide, oiTotalSharesOnSide, maintenanceMarginFraction);
-    }
 }

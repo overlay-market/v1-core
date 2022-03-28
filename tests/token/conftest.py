@@ -1,5 +1,5 @@
 import pytest
-from brownie import OverlayV1Token
+from brownie import OverlayV1Token, web3
 
 
 @pytest.fixture(scope="module")
@@ -22,6 +22,21 @@ def rando(accounts):
     yield accounts[3]
 
 
+@pytest.fixture(scope="module")
+def minter_role():
+    yield web3.solidityKeccak(['string'], ["MINTER"])
+
+
+@pytest.fixture(scope="module")
+def burner_role():
+    yield web3.solidityKeccak(['string'], ["BURNER"])
+
+
+@pytest.fixture(scope="module")
+def governor_role():
+    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
 def create_token(gov, alice, bob, request):
     sup = request.param
@@ -42,9 +57,9 @@ def token(create_token):
 
 
 @pytest.fixture(scope="module")
-def create_minter(token, gov, accounts):
+def create_minter(token, gov, accounts, minter_role):
     def create_minter(tok=token, governance=gov):
-        tok.grantRole(tok.MINTER_ROLE(), accounts[4], {"from": gov})
+        tok.grantRole(minter_role, accounts[4], {"from": gov})
         return accounts[4]
 
     yield create_minter
@@ -56,9 +71,9 @@ def minter(create_minter):
 
 
 @pytest.fixture(scope="module")
-def create_burner(token, gov, accounts):
+def create_burner(token, gov, accounts, burner_role):
     def create_burner(tok=token, governance=gov):
-        tok.grantRole(tok.BURNER_ROLE(), accounts[5], {"from": gov})
+        tok.grantRole(burner_role, accounts[5], {"from": gov})
         return accounts[5]
 
     yield create_burner
@@ -72,7 +87,7 @@ def burner(create_burner):
 @pytest.fixture(scope="module")
 def create_admin(token, gov, accounts):
     def create_admin(tok=token, governance=gov):
-        tok.grantRole(tok.ADMIN_ROLE(), accounts[6], {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), accounts[6], {"from": gov})
         return accounts[6]
 
     yield create_admin
@@ -84,10 +99,10 @@ def admin(create_admin):
 
 
 @pytest.fixture(scope="module")
-def create_market(token, admin, accounts):
+def create_market(token, admin, accounts, minter_role, burner_role):
     def create_market(tok=token, adm=admin):
-        tok.grantRole(tok.MINTER_ROLE(), accounts[7], {"from": adm})
-        tok.grantRole(tok.BURNER_ROLE(), accounts[7], {"from": adm})
+        tok.grantRole(minter_role, accounts[7], {"from": adm})
+        tok.grantRole(burner_role, accounts[7], {"from": adm})
         return accounts[7]
 
     yield create_market

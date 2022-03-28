@@ -1,5 +1,5 @@
 def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
-                         gov, market, deployer):
+                         gov, market, deployer, governor_role):
     # check ovl immutable set
     assert factory.ovl() == ovl
 
@@ -11,10 +11,10 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert deployer.factory() == factory
 
     # check factory has been given admin role on ovl token
-    assert ovl.hasRole(ovl.ADMIN_ROLE(), factory) is True
+    assert ovl.hasRole(ovl.DEFAULT_ADMIN_ROLE(), factory) is True
 
     # check gov has been given governance role on ovl token
-    assert ovl.hasRole(ovl.GOVERNOR_ROLE(), gov) is True
+    assert ovl.hasRole(governor_role, gov) is True
 
     # check feed factory has been added to registry
     assert factory.isFeedFactory(feed_factory) is True
@@ -42,17 +42,21 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
     assert market.factory() == factory
     assert market.feed() == feed_three
 
-    assert market.k() == 1220000000000
-    assert market.lmbda() == 1000000000000000000
-    assert market.delta() == 2500000000000000
-    assert market.capPayoff() == 5000000000000000000
-    assert market.capNotional() == 800000000000000000000000
-    assert market.capLeverage() == 5000000000000000000
-    assert market.circuitBreakerWindow() == 2592000
-    assert market.circuitBreakerMintTarget() == 66670000000000000000000
-    assert market.maintenanceMarginFraction() == 100000000000000000
-    assert market.maintenanceMarginBurnRate() == 100000000000000000
-    assert market.liquidationFeeRate() == 10000000000000000
-    assert market.tradingFeeRate() == 750000000000000
-    assert market.minCollateral() == 100000000000000
-    assert market.priceDriftUpperLimit() == 100000000000000
+    expect_params = [
+        1220000000000,
+        1000000000000000000,
+        2500000000000000,
+        5000000000000000000,
+        800000000000000000000000,
+        2000000000000000000,
+        2592000,
+        66670000000000000000000,
+        10000000000000000,
+        100000000000000000,
+        10000000000000000,
+        750000000000000,
+        100000000000000,
+        10000000000000
+    ]
+    actual_params = [market.params(i) for i in range(14)]
+    assert expect_params == actual_params

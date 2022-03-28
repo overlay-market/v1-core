@@ -1,7 +1,7 @@
 import pytest
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
-    OverlayV1UniswapV3Feed, OverlayV1FeedMock
+    OverlayV1UniswapV3Feed, OverlayV1FeedMock, web3
 )
 
 
@@ -28,6 +28,21 @@ def rando(accounts):
 @pytest.fixture(scope="module")
 def fee_recipient(accounts):
     yield accounts[4]
+
+
+@pytest.fixture(scope="module")
+def minter_role():
+    yield web3.solidityKeccak(['string'], ["MINTER"])
+
+
+@pytest.fixture(scope="module")
+def burner_role():
+    yield web3.solidityKeccak(['string'], ["BURNER"])
+
+
+@pytest.fixture(scope="module")
+def governor_role():
+    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
 @pytest.fixture(scope="module", params=[8000000])
@@ -169,12 +184,12 @@ def mock_market(gov, mock_feed, factory, ovl, create_market, request):
 
 
 @pytest.fixture(scope="module")
-def create_market(gov, ovl):
+def create_market(gov, ovl, minter_role, burner_role):
     def create_market(feed, factory, risk_params, governance=gov, ovl=ovl):
         market = governance.deploy(OverlayV1Market, ovl, feed, factory,
                                    risk_params)
-        ovl.grantRole(ovl.MINTER_ROLE(), market, {"from": governance})
-        ovl.grantRole(ovl.BURNER_ROLE(), market, {"from": governance})
+        ovl.grantRole(minter_role, market, {"from": governance})
+        ovl.grantRole(burner_role, market, {"from": governance})
         return market
 
     yield create_market

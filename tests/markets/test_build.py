@@ -6,7 +6,12 @@ from decimal import Decimal
 from math import log
 from random import randint
 
-from .utils import calculate_position_info, get_position_key, mid_from_feed
+from .utils import (
+    calculate_position_info,
+    get_position_key,
+    mid_from_feed,
+    RiskParameter
+)
 
 
 # NOTE: Tests passing with isolation fixture
@@ -23,11 +28,12 @@ def isolation(fn_isolation):
     is_long=strategy('bool'))
 def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
                                 is_long):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -52,19 +58,19 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     actual_pos_id = tx.return_value
     assert actual_pos_id == expect_pos_id
 
-    expect_next_pos_id = expect_pos_id + 1
-    actual_next_pos_id = market.nextPositionId()
-    assert actual_next_pos_id == expect_next_pos_id
-
     # calculate oi and expected entry price
     # NOTE: ask(), bid() tested in test_price.py
     data = feed.latest()
     mid = Decimal(mid_from_feed(data)) / Decimal(1e18)
     oi = notional / mid
+
+    idx_cap_notional = RiskParameter.CAP_NOTIONAL.value
     cap_notional = Decimal(
-        market.capNotionalAdjustedForBounds(data, market.capNotional())) \
+        market.capNotionalAdjustedForBounds(
+            data, market.params(idx_cap_notional))) \
         / Decimal(1e18)
     cap_oi = (Decimal(cap_notional) / mid)
+
     volume = int((oi / cap_oi) * Decimal(1e18))  # TODO: circuit breaker adj
     price = market.ask(data, volume) if is_long \
         else market.bid(data, volume)
@@ -107,7 +113,8 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     is_long=strategy('bool'))
 def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -164,7 +171,8 @@ def test_build_updates_market(market, ovl, alice):
     chain.mine(timedelta=600)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -202,7 +210,8 @@ def test_build_updates_market(market, ovl, alice):
 def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
                                 is_long):
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -239,8 +248,10 @@ def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
     mid = Decimal(mid_from_feed(data)) / Decimal(1e18)
 
     oi = notional / mid
+    idx_cap_notional = RiskParameter.CAP_NOTIONAL.value
     cap_notional = Decimal(
-        market.capNotionalAdjustedForBounds(data, market.capNotional())/1e18)
+        market.capNotionalAdjustedForBounds(
+            data, market.params(idx_cap_notional))/1e18)
     cap_oi = cap_notional / mid
 
     input_volume = int((oi / cap_oi) * Decimal(1e18))
@@ -280,7 +291,8 @@ def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
 def test_build_executes_transfers(market, factory, ovl, alice, notional,
                                   leverage, is_long):
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -331,7 +343,8 @@ def test_build_executes_transfers(market, factory, ovl, alice, notional,
 def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
                                               leverage, is_long):
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -377,7 +390,8 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
 def test_build_transfers_trading_fees(market, factory, ovl, alice, notional,
                                       leverage, is_long):
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     collateral, notional, debt, trade_fee \
         = calculate_position_info(notional, leverage, trading_fee_rate)
 
@@ -410,8 +424,8 @@ def test_build_transfers_trading_fees(market, factory, ovl, alice, notional,
 
 
 def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     input_collateral = int(100 * Decimal(1e18))
     input_is_long = True
@@ -431,18 +445,17 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
 
     # check build succeeds when input leverage is equal to one
     input_leverage = int(Decimal(1e18))
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
-    expect_pos_id += 1
-    actual_pos_id = market.nextPositionId()
-
+    # check position id
+    actual_pos_id = tx.return_value
     assert expect_pos_id == actual_pos_id
 
 
 def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     input_collateral = int(100 * Decimal(1e18))
     input_is_long = True
@@ -455,19 +468,19 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     ovl.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts when input leverage is less than one (ONE = 1e18)
-    input_leverage = market.capLeverage() + 1
+    cap_leverage = market.params(RiskParameter.CAP_LEVERAGE.value)
+    input_leverage = cap_leverage + 1
     with reverts("OVLV1:lev>max"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
     # check build succeeds when input leverage is equal to cap
-    input_leverage = market.capLeverage()
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    input_leverage = cap_leverage
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
-    expect_pos_id += 1
-    actual_pos_id = market.nextPositionId()
-
+    # check position id
+    actual_pos_id = tx.return_value
     assert expect_pos_id == actual_pos_id
 
 
@@ -476,12 +489,13 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     is_long=strategy('bool'))
 def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
                                                      leverage, is_long):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
+    min_collateral = market.params(RiskParameter.MIN_COLLATERAL.value)
 
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
-    input_collateral = market.minCollateral() - 1
+    input_collateral = min_collateral - 1
 
     # NOTE: slippage tests in test_slippage.py
     # NOTE: setting to min/max here, so never reverts with slippage>max
@@ -496,20 +510,19 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
                          input_price_limit, {"from": alice})
 
     # check build succeeds for min_collat <= collat
-    input_collateral = market.minCollateral()
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    input_collateral = min_collateral
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
-    expect_pos_id += 1
-    actual_pos_id = market.nextPositionId()
-
+    # check position id
+    actual_pos_id = tx.return_value
     assert expect_pos_id == actual_pos_id
 
 
 @given(is_long=strategy('bool'))
 def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     input_leverage = int(1e18)
     input_is_long = is_long
@@ -524,19 +537,19 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     ovl.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts when notional is greater than static cap
-    input_collateral = market.capNotional() * (1 + tol)
+    cap_notional = market.params(RiskParameter.CAP_NOTIONAL.value)
+    input_collateral = cap_notional * (1 + tol)
     with reverts("OVLV1:oi>cap"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
     # check build succeeds when notional is less than static cap
-    input_collateral = market.capNotional() * (1 - tol)
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    input_collateral = cap_notional * (1 - tol)
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
-    expect_pos_id += 1
-    actual_pos_id = market.nextPositionId()
-
+    # check position id
+    actual_pos_id = tx.return_value
     assert expect_pos_id == actual_pos_id
 
 
@@ -544,17 +557,20 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 @given(is_long=strategy('bool'))
 def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
                                          is_long):
-    # get position key/id related info
-    expect_pos_id = mock_market.nextPositionId()
+    idx_delta = RiskParameter.DELTA.value
+    idx_lmbda = RiskParameter.LMBDA.value
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
     leverage = Decimal(5)
 
     tol = 1e-3
 
     # priors
-    delta = Decimal(mock_market.delta()) / Decimal(1e18)
-    lmbda = Decimal(mock_market.lmbda()) / Decimal(1e18)
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
-        / Decimal(1e18)
+    delta = Decimal(mock_market.params(idx_delta)) / Decimal(1e18)
+    lmbda = Decimal(mock_market.params(idx_lmbda)) / Decimal(1e18)
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) / Decimal(1e18)
 
     # Use mid price to calculate liquidation price
     data = feed.latest()
@@ -581,8 +597,9 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
             * (Decimal(log(entry_price / mid_price)) + delta) / lmbda
 
     # calculate notional from required market impact
+    idx_cap_notional = RiskParameter.CAP_NOTIONAL.value
     cap_notional = mock_market.capNotionalAdjustedForBounds(
-        data, mock_market.capNotional())
+        data, mock_market.params(idx_cap_notional))
 
     input_leverage = int(leverage * Decimal(1e18))
     input_is_long = is_long
@@ -604,10 +621,11 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     # check build succeeds when position is not liquidatable
     input_notional = Decimal(cap_notional) * volume * Decimal(1 - tol)
     input_collateral = int(input_notional / leverage)
-    mock_market.build(input_collateral, input_leverage, input_is_long,
-                      input_price_limit, {"from": alice})
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
 
-    assert mock_market.nextPositionId() == expect_pos_id + 1
+    # check position id
+    assert tx.return_value == expect_pos_id
 
 
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
@@ -618,24 +636,26 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     total_notional_short = Decimal(7500)
 
     # set k to zero to avoid funding calcs
-    market.setK(0, {"from": factory})
+    market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # alice goes long and bob goes short n times
     input_total_notional_long = total_notional_long * Decimal(1e18)
     input_total_notional_short = total_notional_short * Decimal(1e18)
 
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
-    leverage_cap = Decimal(market.capLeverage() / 1e18)
+    trading_fee_rate = Decimal(
+        market.params(RiskParameter.TRADING_FEE_RATE.value) / 1e18)
+    leverage_cap = Decimal(
+        market.params(RiskParameter.CAP_LEVERAGE.value) / 1e18)
 
     # approve collateral amount: collateral + trade fee
-    approve_collateral_alice = int((input_total_notional_long *
-                                    (1 + trading_fee_rate)))
-    approve_collateral_bob = int((input_total_notional_short *
-                                  (1 + trading_fee_rate)))
+    approve_collateral_alice = int((input_total_notional_long
+                                    * (1 + trading_fee_rate)))
+    approve_collateral_bob = int((input_total_notional_short
+                                  * (1 + trading_fee_rate)))
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral_alice, {"from": alice})
@@ -713,8 +733,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-3)
 
-        # check next position id incremented
-        assert market.nextPositionId() == expect_pos_id + 1
+        # increment expect position id
         expect_pos_id += 1
 
         # cache price, liquidity data from feed
@@ -759,6 +778,5 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-3)
 
-        # check next position id incremented
-        assert market.nextPositionId() == expect_pos_id + 1
+        # increment expect position id
         expect_pos_id += 1

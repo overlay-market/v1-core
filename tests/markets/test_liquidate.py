@@ -4,7 +4,12 @@ from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
 
-from .utils import calculate_position_info, get_position_key, mid_from_feed
+from .utils import (
+    calculate_position_info,
+    get_position_key,
+    mid_from_feed,
+    RiskParameter
+)
 
 
 # NOTE: Tests passing with isolation fixture
@@ -25,7 +30,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -80,8 +86,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -117,12 +123,16 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # liquidate alice's position by rando
     tx = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
+    # cache entry price at build for mint calcs later
+    entry_price = expect_entry_price
+
     # adjust oi shares, debt position attributes to zero
-    # liquidated flips to true
+    # liquidated flips to true and sets entry price to zero
     expect_notional = 0
     expect_oi_shares = 0
     expect_debt = 0
     expect_liquidated = True
+    expect_entry_price = 0
 
     # check expected pos attributes match actual after liquidate
     (actual_notional, actual_debt, actual_is_long, actual_liquidated,
@@ -148,18 +158,19 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # calculate expected values for burn comparison
     if is_long:
         liq_pnl = Decimal(expect_oi_current) * \
-            (Decimal(actual_liq_price) - Decimal(expect_entry_price)) \
+            (Decimal(actual_liq_price) - Decimal(entry_price)) \
             / Decimal(1e18)
     else:
         liq_pnl = Decimal(expect_oi_current) * \
-            (Decimal(expect_entry_price) - Decimal(actual_liq_price)) \
+            (Decimal(entry_price) - Decimal(actual_liq_price)) \
             / Decimal(1e18)
 
     expect_value = int(liq_collateral + liq_pnl)
     expect_cost = int(liq_cost)
 
     # adjust value for maintenance burn
-    maintenance_burn = Decimal(mock_market.maintenanceMarginBurnRate()) \
+    idx_mmbr = RiskParameter.MAINTENANCE_MARGIN_BURN_RATE.value
+    maintenance_burn = Decimal(mock_market.params(idx_mmbr)) \
         / Decimal(1e18)
 
     expect_value -= int(expect_value * maintenance_burn)
@@ -179,7 +190,8 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -232,7 +244,8 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -284,7 +297,8 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -343,7 +357,8 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     #             + (mm * notional_initial + debt) / oi_current
     # liq_price = entry_price + notional_initial / oi_initial
     #             - (mm * notional_initial + debt) / oi_current
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
@@ -385,7 +400,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -443,8 +459,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -505,7 +521,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -562,8 +579,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -602,7 +619,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # adjusted for decay
     # NOTE: decayOverWindow() tested in test_rollers.py
     input_minted = int(actual_mint)
-    input_window = int(mock_market.circuitBreakerWindow())
+    input_window = int(
+        mock_market.params(RiskParameter.CIRCUIT_BREAKER_WINDOW.value))
     input_timestamp = chain[tx.block_number]['timestamp']
 
     # expect accumulator now to be calculated as
@@ -617,8 +635,8 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # weights are accumulator values for the respective time window
     numerator = int((last_window - dt) * abs(last_minted_decayed)
                     + input_window * abs(input_minted))
-    expect_window = int(numerator /
-                        (abs(last_minted_decayed) + abs(input_minted)))
+    expect_window = int(numerator
+                        / (abs(last_minted_decayed) + abs(input_minted)))
     expect_timestamp = input_timestamp
 
     # check expect == actual for snapshot minted
@@ -642,7 +660,8 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -697,8 +716,8 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -745,12 +764,14 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     liq_cost = int(liq_cost)
 
     # adjusted liq value downward for mm burn
-    maintenance_burn = Decimal(mock_market.maintenanceMarginBurnRate()) \
+    idx_mmbr = RiskParameter.MAINTENANCE_MARGIN_BURN_RATE.value
+    maintenance_burn = Decimal(mock_market.params(idx_mmbr)) \
         / Decimal(1e18)
     liq_value -= liq_value * maintenance_burn
 
     # calculate liquidation fee
-    liq_fee_rate = Decimal(mock_market.liquidationFeeRate()) / Decimal(1e18)
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
     liq_fee = liq_value * liq_fee_rate
 
     # calculate expected values
@@ -810,7 +831,8 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -864,8 +886,8 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -911,7 +933,8 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     expect_value = int(liq_cost + actual_mint)
 
     # adjust value for liquidation fee
-    liq_fee_rate = Decimal(mock_market.liquidationFeeRate()) / Decimal(1e18)
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
     expect_liq_fee = int(Decimal(expect_value) * liq_fee_rate)
     expect_value_out = expect_value - expect_liq_fee  # value less fees
 
@@ -937,7 +960,8 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -991,8 +1015,8 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -1039,7 +1063,8 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     expect_value = int(liq_cost + actual_mint)
 
     # adjust value for liquidation fee
-    liq_fee_rate = Decimal(mock_market.liquidationFeeRate()) / Decimal(1e18)
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
     expect_liq_fee = int(Decimal(expect_value) * liq_fee_rate)
 
     expect_balance_recipient += expect_liq_fee
@@ -1063,13 +1088,14 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
     price_multiplier = Decimal(0.700)  # close to underwater but not there yet
 
     # exclude funding for testing edge case
-    mock_market.setK(0, {"from": factory})
+    mock_market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # tolerance
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1181,7 +1207,8 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1234,8 +1261,8 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -1292,7 +1319,8 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1345,8 +1373,8 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor
@@ -1393,7 +1421,8 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     tol = 1e-4
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(mock_market.tradingFeeRate() / 1e18)
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
     collateral, _, _, trade_fee \
         = calculate_position_info(notional_initial, leverage, trading_fee_rate)
 
@@ -1446,8 +1475,8 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
-    # TODO: fix ...
-    maintenance_fraction = Decimal(mock_market.maintenanceMarginFraction()) \
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
 
     # calculate the liquidation price factor

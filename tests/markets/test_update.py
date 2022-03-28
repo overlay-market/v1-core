@@ -2,6 +2,8 @@ from brownie import chain
 from brownie.test import given, strategy
 from decimal import Decimal
 
+from .utils import RiskParameter
+
 
 def test_update_fetches_from_feed(market, feed, rando):
     # call update
@@ -20,11 +22,13 @@ def test_update_fetches_from_feed(market, feed, rando):
                             places=3))
 def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
                              notional_long, notional_short):
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+
     notional_long = notional_long * Decimal(1e18)
     notional_short = notional_short * Decimal(1e18)
 
     # calculate expected pos info data
-    trading_fee_rate = Decimal(market.tradingFeeRate() / 1e18)
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
     approve_collateral_long = notional_long * (1 + trading_fee_rate)
     approve_collateral_short = notional_short * (1 + trading_fee_rate)
 

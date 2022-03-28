@@ -82,17 +82,13 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     /// @dev market pool and ovlweth pool have different consult inputs
     /// @dev to minimize accumulator snapshot queries with consult
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        // cache micro and macro windows for gas savings
-        uint256 _microWindow = microWindow;
-        uint256 _macroWindow = macroWindow;
-
         // consult to market pool
         // secondsAgo.length = 4; twaps.length = liqs.length = 3
         (
             uint32[] memory secondsAgos,
             uint32[] memory windows,
             uint256[] memory nowIdxs
-        ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
+        ) = _inputsToConsultMarketPool(microWindow, macroWindow);
         (
             int24[] memory arithmeticMeanTicksMarket,
             uint128[] memory harmonicMeanLiquiditiesMarket
@@ -104,7 +100,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
             uint32[] memory secondsAgosOvlWeth,
             uint32[] memory windowsOvlWeth,
             uint256[] memory nowIdxsOvlWeth
-        ) = _inputsToConsultOvlWethPool(_microWindow, _macroWindow);
+        ) = _inputsToConsultOvlWethPool(microWindow, macroWindow);
         (int24[] memory arithmeticMeanTicksOvlWeth, ) = consult(
             ovlWethPool,
             secondsAgosOvlWeth,
@@ -147,11 +143,11 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         return
             Oracle.Data({
                 timestamp: block.timestamp,
-                microWindow: _microWindow,
-                macroWindow: _macroWindow,
-                priceOverMicroWindow: prices[2], // secondsAgos = _microWindow
-                priceOverMacroWindow: prices[1], // secondsAgos = _macroWindow
-                priceOneMacroWindowAgo: prices[0], // secondsAgos = _macroWindow * 2
+                microWindow: microWindow,
+                macroWindow: macroWindow,
+                priceOverMicroWindow: prices[2], // secondsAgos = microWindow
+                priceOverMacroWindow: prices[1], // secondsAgos = macroWindow
+                priceOneMacroWindowAgo: prices[0], // secondsAgos = macroWindow * 2
                 reserveOverMicroWindow: reserve,
                 hasReserve: true
             });
