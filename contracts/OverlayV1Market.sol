@@ -159,24 +159,19 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // calculate current notional cap adjusted for circuit breaker *then* adjust
             // for front run and back run bounds (order matters)
-            // TODO: test for ordering
+            // finally, transform into a cap on open interest
             uint256 capNotionalAdjusted = capNotionalAdjustedForBounds(
                 data,
                 capNotionalAdjustedForCircuitBreaker(params.get(Risk.Parameters.CapNotional))
             );
+            uint256 capOi = oiFromNotional(data, capNotionalAdjusted);
 
             // longs get the ask and shorts get the bid on build
             // register the additional volume on either the ask or bid
             // where volume = oi / capOi
             price = isLong
-                ? ask(
-                    data,
-                    _registerVolumeAsk(data, oi, oiFromNotional(data, capNotionalAdjusted))
-                )
-                : bid(
-                    data,
-                    _registerVolumeBid(data, oi, oiFromNotional(data, capNotionalAdjusted))
-                );
+                ? ask(data, _registerVolumeAsk(data, oi, capOi))
+                : bid(data, _registerVolumeBid(data, oi, capOi));
             // check price hasn't changed more than max slippage specified by trader
             require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
@@ -190,7 +185,7 @@ contract OverlayV1Market is IOverlayV1Market {
             // check new total oi on side does not exceed capOi
             oiTotalOnSide += oi;
             oiTotalSharesOnSide += oi;
-            require(oiTotalOnSide <= oiFromNotional(data, capNotionalAdjusted), "OVLV1:oi>cap");
+            require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
 
             // update total aggregate oi and oi shares
             if (isLong) {
@@ -270,14 +265,17 @@ contract OverlayV1Market is IOverlayV1Market {
             // where volume = oi / capOi
             // current cap only adjusted for bounds (no circuit breaker so traders
             // don't get stuck in a position)
-            uint256 capNotional = params.get(Risk.Parameters.CapNotional);
+            uint256 capOi = oiFromNotional(
+                data,
+                capNotionalAdjustedForBounds(data, params.get(Risk.Parameters.CapNotional))
+            );
             price = pos.isLong
                 ? bid(
                     data,
                     _registerVolumeBid(
                         data,
                         pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
-                        oiFromNotional(data, capNotionalAdjustedForBounds(data, capNotional))
+                        capOi
                     )
                 )
                 : ask(
@@ -285,7 +283,7 @@ contract OverlayV1Market is IOverlayV1Market {
                     _registerVolumeAsk(
                         data,
                         pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide),
-                        oiFromNotional(data, capNotionalAdjustedForBounds(data, capNotional))
+                        capOi
                     )
                 );
             // check price hasn't changed more than max slippage specified by trader
