@@ -23,6 +23,52 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert factory.getMarket(feed_three) == market
     assert factory.isMarket(market) is True
 
+    # check min param bounds
+    expect_params_min = [
+        400000000,  # MIN_K = ~ 0.1 bps / 8 hr
+        10000000000000000,  # MIN_LMBDA = 0.01
+        100000000000000,  # MIN_DELTA = 0.01% (1 bps)
+        1000000000000000000,  # MIN_CAP_PAYOFF = 1x
+        0,  # MIN_CAP_NOTIONAL = 0 OVL
+        1000000000000000000,  # MIN_CAP_LEVERAGE= 1x
+        86400,  # MIN_CIRCUIT_BREAKER_WINDOW= 1 day
+        0,  # MIN_CIRCUIT_BREAKER_MINT_TARGET= 0 OVL
+        10000000000000000,  # MIN_MAINTENANCE_MARGIN_FRACTION = 1 %
+        10000000000000000,  # MIN_MAINTENANCE_MARGIN_BURN_RATE = 1 %
+        1000000000000000,  # MIN_LIQUIDATION_FEE_RATE = 0.10 % (10 bps)
+        100000000000000,  # MIN_TRADING_FEE_RATE = 0.01 % (1 bps)
+        1000000000000,  # MIN_MINIMUM_COLLATERAL= 1e-6 OVL
+        1000000000000  # MIN_PRICE_DRIFT_UPPER_LIMIT= 0.01 bps/s
+    ]
+    actual_params_min = [
+        factory.PARAMS_MIN(i) for i in range(len(expect_params_min))
+    ]
+    assert expect_params_min == actual_params_min
+
+    # check max param bounds
+    expect_params_max = [
+        4000000000000,  # MAX_K = ~ 1000 bps / 8 hr
+        10000000000000000000,  # MAX_LMBDA = 10
+        20000000000000000,  # MAX_DELTA = 2% (200 bps)
+        100000000000000000000,  # MAX_CAP_PAYOFF = 100x
+        # MAX_CAP_NOTIONAL = 8,000,000 OVL (initial supply)
+        8000000000000000000000000,
+        20000000000000000000,  # MAX_CAP_LEVERAGE = 20x
+        31536000,  # MAX_CIRCUIT_BREAKER_WINDOW = 365 days
+        # MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OVL
+        8000000000000000000000000,
+        200000000000000000,  # MAX_MAINTENANCE_MARGIN_FRACTION = 20%
+        500000000000000000,  # MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
+        100000000000000000,  # MAX_LIQUIDATION_FEE_RATE = 10.00% (1000 bps)
+        5000000000000000,  # MAX_TRADING_FEE_RATE = 0.50% (50 bps)
+        1000000000000000000,  # MAX_MINIMUM_COLLATERAL = 1 OVL
+        100000000000000  # MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
+    ]
+    actual_params_max = [
+        factory.PARAMS_MAX(i) for i in range(len(expect_params_max))
+    ]
+    assert expect_params_max == actual_params_max
+
 
 def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
     # check params set properly
