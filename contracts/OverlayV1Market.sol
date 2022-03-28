@@ -513,9 +513,9 @@ contract OverlayV1Market is IOverlayV1Market {
         // draw down the imbalance by factor of e**(-2*k*t)
         // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
         uint256 fundingFactor;
-        uint256 k = params.get(Risk.Parameters.K);
-        if (2 * k * timeElapsed < MAX_NATURAL_EXPONENT) {
-            fundingFactor = INVERSE_EULER.powDown(2 * k * timeElapsed);
+        uint256 pow = 2 * params.get(Risk.Parameters.K) * timeElapsed;
+        if (pow < MAX_NATURAL_EXPONENT) {
+            fundingFactor = INVERSE_EULER.powDown(pow);
         }
 
         // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
