@@ -52,7 +52,6 @@ library Roller {
         int256 accumulatorNow = snapAccumulator + value;
         if (accumulatorNow == 0) {
             // if accumulator now is zero, windowNow is simply window
-            // to avoid 0/0 case below
             return
                 Snapshot({
                     timestamp: timestamp32,
