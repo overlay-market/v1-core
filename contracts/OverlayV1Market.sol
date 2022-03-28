@@ -494,8 +494,9 @@ contract OverlayV1Market is IOverlayV1Market {
         return (dp >= _dpLowerLimit && dp <= _dpUpperLimit);
     }
 
-    /// @dev current open interest after funding payments transferred
-    /// @dev from overweight oi side to underweight oi side
+    /// @notice Current open interest after funding payments transferred
+    /// @notice from overweight oi side to underweight oi side
+    /// @dev The value of oiOverweight must be >= oiUnderweight
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
