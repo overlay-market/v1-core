@@ -69,9 +69,6 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     assert mock_market.oiLongShares() == 0
     assert mock_market.oiShortShares() == 0
 
-    # check no positions exist
-    assert mock_market.nextPositionId() == 0
-
     # check timestamp update last is same as block when mock_market deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py
     assert mock_market.timestampUpdateLast() == chain[-3]["timestamp"]
@@ -113,9 +110,6 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
     assert market.oiShort() == 0
     assert market.oiLongShares() == 0
     assert market.oiShortShares() == 0
-
-    # check no positions exist
-    assert market.nextPositionId() == 0
 
     # check timestamp update last is same as block when market was deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py

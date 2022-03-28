@@ -14,8 +14,8 @@ def isolation(fn_isolation):
 
 @given(is_long=strategy('bool'))
 def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
-    # get position key/id related info
-    expect_pos_id = market.nextPositionId()
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
 
     # build attributes
     notional = Decimal(100)
@@ -60,13 +60,12 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
 
     # check build succeeds when price does not surpass limit
     input_price_limit = price * (1 + tol) if is_long else price * (1 - tol)
-    market.build(input_collateral, input_leverage, input_is_long,
-                 input_price_limit, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
     # check position created through id increment
-    expect_pos_id += 1
-    actual = market.nextPositionId()
-    assert expect_pos_id == actual
+    actual_pos_id = tx.return_value
+    assert expect_pos_id == actual_pos_id
 
 
 @given(is_long=strategy('bool'))

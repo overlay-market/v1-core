@@ -245,49 +245,4 @@ library Position {
         uint256 maintenanceMargin = posNotionalInitial.mulUp(maintenanceMarginFraction);
         can_ = val < maintenanceMargin;
     }
-
-    /// @notice Computes the liquidation price of a position
-    /// @dev price when value = maintenance margin
-    function liquidationPrice(
-        Info memory self,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide,
-        uint256 maintenanceMarginFraction
-    ) internal pure returns (uint256 liqPrice_) {
-        uint256 fraction = ONE;
-
-        uint256 posOiInitial = oiInitial(self, fraction);
-        uint256 posNotionalInitial = notionalInitial(self, fraction);
-        uint256 posDebt = debtCurrent(self, fraction);
-
-        uint256 posOiCurrent = oiCurrent(self, fraction, oiTotalOnSide, oiTotalSharesOnSide);
-        uint256 entryPrice = self.entryPrice;
-
-        if (self.liquidated || posNotionalInitial == 0 || posOiCurrent == 0) {
-            // return 0 if already liquidated or no oi left in position
-            return 0;
-        }
-
-        if (self.isLong) {
-            // liqPrice = (debt + mm * notionalInitial) / oiCurrent
-            //            + entryPrice - notionalInitial / oiInitial
-            liqPrice_ =
-                posNotionalInitial.mulDown(maintenanceMarginFraction).add(posDebt).divDown(
-                    posOiCurrent
-                ) +
-                entryPrice -
-                posNotionalInitial.divUp(posOiInitial);
-        } else {
-            // liqPrice = entryPrice + notionalInitial / oiInitial
-            //            - (debt + mm * notionalInitial) / oiCurrent
-            liqPrice_ = self.entryPrice + posNotionalInitial.divUp(posOiInitial);
-            // floor to zero
-            liqPrice_ -= Math.min(
-                liqPrice_,
-                posNotionalInitial.mulUp(maintenanceMarginFraction).add(posDebt).divUp(
-                    posOiCurrent
-                )
-            );
-        }
-    }
 }

@@ -548,11 +548,6 @@ contract OverlayV1Market is IOverlayV1Market {
         return (oiOverweight, oiUnderweight);
     }
 
-    /// @return next position id
-    function nextPositionId() external view returns (uint256) {
-        return _totalPositions;
-    }
-
     /// @dev current notional cap with adjustments to lower
     /// @dev cap in the event market has printed a lot in recent past
     function capNotionalAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
@@ -659,15 +654,6 @@ contract OverlayV1Market is IOverlayV1Market {
         require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
         ask_ = ask_.mulUp(EULER.powUp(pow));
-    }
-
-    /// @dev mid price given oracle data and recent volume
-    function mid(
-        Oracle.Data memory data,
-        uint256 volumeBid,
-        uint256 volumeAsk
-    ) public view returns (uint256 mid_) {
-        mid_ = (bid(data, volumeBid) + ask(data, volumeAsk)) / 2;
     }
 
     /// @dev mid price without impact/spread given oracle data and recent volume
