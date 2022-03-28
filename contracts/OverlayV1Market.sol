@@ -519,7 +519,7 @@ contract OverlayV1Market is IOverlayV1Market {
             fundingFactor = INVERSE_EULER.powDown(pow);
         }
 
-        // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
+        // Decrease total aggregate open interest (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
         // OI_tot(t) = OI_tot(0) * \
         //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - e**(-4*k*t)) )
