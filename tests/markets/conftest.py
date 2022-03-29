@@ -176,6 +176,7 @@ def mock_feed(create_mock_feed):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
+    14,  # averageBlockTime
 )])
 def mock_market(gov, mock_feed, factory, ovl, create_market, request):
     risk_params = request.param
@@ -210,6 +211,7 @@ def create_market(gov, ovl, minter_role, burner_role):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
+    14,  # averageBlockTime
 )])
 def market(gov, feed, factory, ovl, create_market, request):
     risk_params = request.param

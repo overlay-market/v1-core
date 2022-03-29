@@ -14,4 +14,4 @@ def test_get(risk):
 
 def test_get_reverts_when_non_valid_enum(risk):
     with reverts():
-        risk.get(14)
+        risk.get(15)

@@ -1,5 +1,7 @@
 from brownie import chain
 
+from .utils import RiskParameter
+
 
 def test_ovl_fixture(ovl):
     assert ovl.decimals() == 18
@@ -54,9 +56,10 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
         10000000000000000,
         750000000000000,
         100000000000000,
-        25000000000000
+        25000000000000,
+        14
     ]
-    actual_params = [mock_market.params(i) for i in range(14)]
+    actual_params = [mock_market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
 
     # check mock market has minter and burner roles on ovl token
@@ -96,9 +99,10 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
         10000000000000000,
         750000000000000,
         100000000000000,
-        25000000000000
+        25000000000000,
+        14
     ]
-    actual_params = [market.params(i) for i in range(14)]
+    actual_params = [market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
 
     # check market has minter and burner roles on ovl token

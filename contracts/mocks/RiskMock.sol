@@ -4,10 +4,10 @@ pragma solidity 0.8.10;
 import "../libraries/Risk.sol";
 
 contract RiskMock {
-    using Risk for uint256[14];
+    using Risk for uint256[15];
 
     // risk params
-    uint256[14] public params; // params.idx order based on Risk.Parameters enum
+    uint256[15] public params; // params.idx order based on Risk.Parameters enum
 
     function get(Risk.Parameters name) external view returns (uint256) {
         return params.get(name);

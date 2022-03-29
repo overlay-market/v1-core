@@ -20,6 +20,7 @@ class RiskParameter(Enum):
     TRADING_FEE_RATE = 11
     MIN_COLLATERAL = 12
     PRICE_DRIFT_UPPER_LIMIT = 13
+    AVERAGE_BLOCK_TIME = 14
 
 
 def calculate_position_info(notional: Decimal,

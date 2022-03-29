@@ -19,12 +19,11 @@ contract OverlayV1Market is IOverlayV1Market {
     using Oracle for Oracle.Data;
     using Position for mapping(bytes32 => Position.Info);
     using Position for Position.Info;
-    using Risk for uint256[14];
+    using Risk for uint256[15];
     using Roller for Roller.Snapshot;
 
     // internal constants
     uint256 internal constant ONE = 1e18; // 18 decimal places
-    uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
 
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     // using ~ 1/2 library max for substantial padding
@@ -36,7 +35,7 @@ contract OverlayV1Market is IOverlayV1Market {
     address public immutable factory; // factory that deployed this market
 
     // risk params
-    uint256[14] public params; // params.idx order based on Risk.Parameters enum
+    uint256[15] public params; // params.idx order based on Risk.Parameters enum
 
     // aggregate oi quantities
     uint256 public oiLong;
@@ -93,7 +92,7 @@ contract OverlayV1Market is IOverlayV1Market {
         address _ovl,
         address _feed,
         address _factory,
-        uint256[14] memory _params
+        uint256[15] memory _params
     ) {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
@@ -603,9 +602,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev bound on notional cap to mitigate back-running attack
     /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
-        // TODO: macroWindow should be in blocks in current spec. What to do here to be
-        // futureproof vs having an average block time constant (BAD)
-        uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
+        uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
+        uint256 window = (data.macroWindow * ONE) / averageBlockTime;
         uint256 delta = params.get(Risk.Parameters.Delta);
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }

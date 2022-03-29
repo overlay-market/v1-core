@@ -17,12 +17,13 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
+    average_block_time = 14
 
     params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit)
+              price_drift_upper_limit, average_block_time)
 
     # deploy the market
     tx = deployer.deploy(ovl, feed, params, {"from": factory})
@@ -49,9 +50,10 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
         liquidation_fee_rate,
         trading_fee_rate,
         min_collateral,
-        price_drift_upper_limit
+        price_drift_upper_limit,
+        average_block_time
     ]
-    actual_params = [market.params(i) for i in range(14)]
+    actual_params = [market.params(i) for i in range(15)]
     assert expect_params == actual_params
 
 
@@ -71,12 +73,13 @@ def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
+    average_block_time = 14
 
     params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit)
+              price_drift_upper_limit, average_block_time)
 
     # check attempting to deploy
     with reverts("OVLV1: !factory"):

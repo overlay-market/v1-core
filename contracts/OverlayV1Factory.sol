@@ -11,11 +11,11 @@ import "./libraries/Risk.sol";
 import "./OverlayV1Deployer.sol";
 
 contract OverlayV1Factory is IOverlayV1Factory {
-    using Risk for uint256[14];
+    using Risk for uint256[15];
 
     // risk param bounds
     // NOTE: 1bps = 1e14
-    uint256[14] public PARAMS_MIN = [
+    uint256[15] public PARAMS_MIN = [
         0.000_004e14, // MIN_K = ~ 0.1 bps / 8 hr
         0.01e18, // MIN_LMBDA = 0.01
         1e14, // MIN_DELTA = 0.01% (1 bps)
@@ -29,9 +29,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
         0.001e18, // MIN_LIQUIDATION_FEE_RATE = 0.10% (10 bps)
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
         0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OVL
-        0.01e14 // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
+        0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
+        0 // MIN_AVERAGE_BLOCK_TIME = 0s
     ];
-    uint256[14] public PARAMS_MAX = [
+    uint256[15] public PARAMS_MAX = [
         0.04e14, // MAX_K = ~ 1000 bps / 8 hr
         10e18, // MAX_LMBDA = 10
         200e14, // MAX_DELTA = 2% (200 bps)
@@ -45,7 +46,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
         0.1e18, // MAX_LIQUIDATION_FEE_RATE = 10.00% (1000 bps)
         50e14, // MAX_TRADING_FEE_RATE = 0.50% (50 bps)
         1e18, // MAX_MINIMUM_COLLATERAL = 1 OVL
-        1e14 // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
+        1e14, // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
+        3600 // MAX_AVERAGE_BLOCK_TIME = 1h (arbitrary but large)
     ];
 
     // event for risk param updates
@@ -108,7 +110,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function deployMarket(
         address feedFactory,
         address feed,
-        uint256[14] calldata params
+        uint256[15] calldata params
     ) external onlyGovernor returns (address market_) {
         // check feed and feed factory are available for a new market
         _checkFeed(feedFactory, feed);
@@ -138,7 +140,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Checks all risk params are within acceptable bounds
-    function _checkRiskParams(uint256[14] calldata params) private {
+    function _checkRiskParams(uint256[15] calldata params) private {
         uint256 length = params.length;
         for (uint256 i = 0; i < length; i++) {
             _checkRiskParam(Risk.Parameters(i), params[i]);

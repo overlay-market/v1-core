@@ -34,6 +34,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
+    expect_average_block_time = 14
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -42,7 +43,8 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
                      expect_maintenance_margin_fraction,
                      expect_maintenance_margin_burn_rate,
                      expect_liquidation_fee_rate, expect_trading_fee_rate,
-                     expect_min_collateral, expect_price_drift_upper_limit]
+                     expect_min_collateral, expect_price_drift_upper_limit,
+                     expect_average_block_time]
 
     # deploy market
     tx = factory.deployMarket(
@@ -82,7 +84,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert market_contract.factory() == factory
 
     # check risk params set in constructor
-    actual_params = [market_contract.params(i) for i in range(14)]
+    actual_params = [market_contract.params(i) for i in range(15)]
     assert expect_params == actual_params
 
     # check update last timestamp is last block's
@@ -112,6 +114,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
+    expect_average_block_time = 14
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -121,7 +124,8 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
                      expect_maintenance_margin_burn_rate,
                      expect_liquidation_fee_rate,
                      expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit]
+                     expect_price_drift_upper_limit,
+                     expect_average_block_time]
 
     # check can't deploy from rando account
     with reverts("OVLV1: !governor"):
@@ -159,6 +163,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
+    expect_average_block_time = 14
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -168,7 +173,8 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
                      expect_maintenance_margin_burn_rate,
                      expect_liquidation_fee_rate,
                      expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit]
+                     expect_price_drift_upper_limit,
+                     expect_average_block_time]
 
     # check can't deploy from rando account
     with reverts("OVLV1: market already exists"):
@@ -202,6 +208,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
+    expect_average_block_time = 14
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -211,7 +218,8 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
                      expect_maintenance_margin_burn_rate,
                      expect_liquidation_fee_rate,
                      expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit]
+                     expect_price_drift_upper_limit,
+                     expect_average_block_time]
 
     # check can't deploy with rando factory feed
     with reverts("OVLV1: feed factory not supported"):
@@ -243,6 +251,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
+    expect_average_block_time = 14
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -252,7 +261,8 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
                      expect_maintenance_margin_burn_rate,
                      expect_liquidation_fee_rate,
                      expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit]
+                     expect_price_drift_upper_limit,
+                     expect_average_block_time]
 
     # check can't deploy with rando feed not in factory feed registry
     with reverts("OVLV1: feed does not exist"):
@@ -287,6 +297,7 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
         750000000000000,  # expect_trading_fee_rate
         100000000000000,  # expect_min_collateral
         100000000000000,  # expect_price_drift_upper_limit
+        14,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):
@@ -341,6 +352,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
         750000000000000,  # expect_trading_fee_rate
         100000000000000,  # expect_min_collateral
         100000000000000,  # expect_price_drift_upper_limit
+        14,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):
