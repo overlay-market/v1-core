@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "./interfaces/IOverlayV1Deployer.sol";
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Token.sol";
