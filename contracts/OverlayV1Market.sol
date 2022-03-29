@@ -122,10 +122,10 @@ contract OverlayV1Market is IOverlayV1Market {
             _priceDriftUpperLimit * data.macroWindow < MAX_NATURAL_EXPONENT,
             "OVLV1: price drift exceeds max exp"
         );
+        _cacheRiskCalc(Risk.Parameters.PriceDriftUpperLimit, _priceDriftUpperLimit);
 
         // set the risk params
         for (uint256 i = 0; i < _params.length; i++) {
-            _cacheRiskCalc(Risk.Parameters(i), _params[i]);
             params[i] = _params[i];
         }
     }
