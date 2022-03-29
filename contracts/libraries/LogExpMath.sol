@@ -326,10 +326,13 @@ library LogExpMath {
     function ln(int256 a) internal pure returns (int256) {
         // The real natural logarithm is not defined for negative numbers or zero.
         _require(a > 0, Errors.OUT_OF_BOUNDS);
-        if (LN_36_LOWER_BOUND < a && a < LN_36_UPPER_BOUND) {
-            return _ln_36(a) / ONE_18;
-        } else {
-            return _ln(a);
+
+        unchecked {
+            if (LN_36_LOWER_BOUND < a && a < LN_36_UPPER_BOUND) {
+                return _ln_36(a) / ONE_18;
+            } else {
+                return _ln(a);
+            }    
         }
     }
 
