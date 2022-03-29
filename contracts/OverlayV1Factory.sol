@@ -141,7 +141,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @notice Checks all risk params are within acceptable bounds
     function _checkRiskParams(uint256[14] calldata params) private {
-        for (uint256 i = 0; i < params.length; i++) {
+        uint256 length = params.length;
+        for (uint256 i = 0; i < length; i++) {
             _checkRiskParam(Risk.Parameters(i), params[i]);
         }
     }
