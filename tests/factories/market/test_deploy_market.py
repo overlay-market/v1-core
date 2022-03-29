@@ -297,7 +297,7 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
         expect_param = factory.PARAMS_MIN(i) - 1
         if expect_param >= 0:
             expect_params[i] = expect_param
-            with reverts(f"OVLV1: param {i} out of bounds"):
+            with reverts("OVLV1: param out of bounds"):
                 _ = factory.deployMarket(
                     expect_feed_factory,
                     expect_feed,
@@ -350,7 +350,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
         # check can't deploy with param greater than max
         expect_param = factory.PARAMS_MAX(i) + 1
         expect_params[i] = expect_param
-        with reverts(f"OVLV1: param {i} out of bounds"):
+        with reverts("OVLV1: param out of bounds"):
             _ = factory.deployMarket(
                 expect_feed_factory,
                 expect_feed,
