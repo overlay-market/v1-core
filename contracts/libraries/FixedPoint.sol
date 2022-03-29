@@ -11,7 +11,10 @@
 
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// XXX for changes
 
+// XXX: 0.8.10; removed requires for overflow checks
 pragma solidity 0.8.10;
 
 import "./LogExpMath.sol";
@@ -41,6 +44,7 @@ library FixedPoint {
     }
 
     /// @notice a - b but floors to zero if a <= b
+    /// XXX: subFloor implementation
     function subFloor(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a > b ? a - b : 0;
         return c;
@@ -96,6 +100,7 @@ library FixedPoint {
     function powDown(uint256 x, uint256 y) internal pure returns (uint256) {
         // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple
         // to implement and occur often in 50/50 and 80/20 Weighted Pools
+        // XXX: checks for y == 0, x == ONE, x == 0
         if (0 == y || x == ONE) {
             return ONE;
         } else if (x == 0) {
@@ -127,6 +132,7 @@ library FixedPoint {
     function powUp(uint256 x, uint256 y) internal pure returns (uint256) {
         // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple
         // to implement and occur often in 50/50 and 80/20 Weighted Pools
+        // XXX: checks for y == 0, x == ONE, x == 0
         if (0 == y || x == ONE) {
             return ONE;
         } else if (x == 0) {
