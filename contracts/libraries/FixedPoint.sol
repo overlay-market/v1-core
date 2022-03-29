@@ -158,7 +158,9 @@ library FixedPoint {
      * XXX: expDown implementation
      */
     function expDown(uint256 x) internal pure returns (uint256) {
-        if (x == 0) { return ONE; }
+        if (x == 0) {
+            return ONE;
+        }
         require(x < 2**255, "FixedPoint: x out of bounds");
 
         int256 x_int256 = int256(x);
@@ -179,7 +181,9 @@ library FixedPoint {
      * XXX: expUp implementation
      */
     function expUp(uint256 x) internal pure returns (uint256) {
-        if (x == 0) { return ONE; }
+        if (x == 0) {
+            return ONE;
+        }
         require(x < 2**255, "FixedPoint: x out of bounds");
 
         int256 x_int256 = int256(x);
