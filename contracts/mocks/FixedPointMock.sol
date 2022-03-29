@@ -42,6 +42,14 @@ contract FixedPointMock {
         return x.powUp(y);
     }
 
+    function expDown(uint256 x) external pure returns (uint256) {
+        return x.expDown();
+    }
+
+    function expUp(uint256 x) external pure returns (uint256) {
+        return x.expUp();
+    }
+
     function complement(uint256 x) external pure returns (uint256) {
         return x.complement();
     }

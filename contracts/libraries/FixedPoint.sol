@@ -152,6 +152,44 @@ library FixedPoint {
     }
 
     /**
+     * @dev Returns e^x, assuming x is a fixed point number, rounding down.
+     * The result is guaranteed to not be above the true value (that is,
+     * the error function expected - actual is always positive).
+     * XXX: expDown implementation
+     */
+    function expDown(uint256 x) internal pure returns (uint256) {
+        if (x == 0) { return ONE; }
+        require(x < 2**255, "FixedPoint: x out of bounds");
+
+        int256 x_int256 = int256(x);
+        uint256 raw = uint256(LogExpMath.exp(x_int256));
+        uint256 maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1);
+
+        if (raw < maxError) {
+            return 0;
+        } else {
+            return sub(raw, maxError);
+        }
+    }
+
+    /**
+     * @dev Returns e^x, assuming x is a fixed point number, rounding up.
+     * The result is guaranteed to not be below the true value (that is,
+     * the error function expected - actual is always negative).
+     * XXX: expUp implementation
+     */
+    function expUp(uint256 x) internal pure returns (uint256) {
+        if (x == 0) { return ONE; }
+        require(x < 2**255, "FixedPoint: x out of bounds");
+
+        int256 x_int256 = int256(x);
+        uint256 raw = uint256(LogExpMath.exp(x_int256));
+        uint256 maxError = add(mulUp(raw, MAX_POW_RELATIVE_ERROR), 1);
+
+        return add(raw, maxError);
+    }
+
+    /**
      * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
      *
      * Useful when computing the complement for values with some level of relative error,

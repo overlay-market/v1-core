@@ -29,8 +29,6 @@ contract OverlayV1Market is IOverlayV1Market {
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     // using ~ 1/2 library max for substantial padding
     uint256 internal constant MAX_NATURAL_EXPONENT = 20e18;
-    uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
-    uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
     // immutables
     IOverlayV1Token public immutable ovl; // ovl token
@@ -511,7 +509,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 fundingFactor;
         uint256 pow = 2 * params.get(Risk.Parameters.K) * timeElapsed;
         if (pow < MAX_NATURAL_EXPONENT) {
-            fundingFactor = INVERSE_EULER.powDown(pow);
+            fundingFactor = ONE.divDown(pow.expUp()); // e**(-pow)
         }
 
         // Decrease total aggregate open interest (i.e. oiLong + oiShort)
@@ -634,7 +632,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
-        bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
+        bid_ = bid_.mulDown(ONE.divDown(pow.expUp())); // bid * e**(-pow)
     }
 
     /// @dev ask price given oracle data and recent volume
@@ -647,7 +645,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
-        ask_ = ask_.mulUp(EULER.powUp(pow));
+        ask_ = ask_.mulUp(pow.expUp()); // ask * e**(pow)
     }
 
     /// @dev mid price without impact/spread given oracle data and recent volume
@@ -792,7 +790,7 @@ contract OverlayV1Market is IOverlayV1Market {
             Oracle.Data memory data = IOverlayV1Feed(feed).latest();
             uint256 _priceDriftUpperLimit = value;
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
-            dpUpperLimit = EULER.powUp(pow);
+            dpUpperLimit = pow.expUp(); // e**(pow)
         }
     }
 }
