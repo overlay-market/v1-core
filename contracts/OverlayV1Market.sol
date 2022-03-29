@@ -295,10 +295,6 @@ contract OverlayV1Market is IOverlayV1Market {
             value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
             cost = pos.cost(fraction);
 
-            // register the amount to be minted/burned
-            // capPayoff prevents overflow reverts with int256 cast
-            _registerMint(int256(value) - int256(cost));
-
             // calculate the trading fee as % on notional
             uint256 tradingFeeRate = params.get(Risk.Parameters.TradingFeeRate);
             tradingFee = pos.tradingFee(
@@ -327,6 +323,10 @@ contract OverlayV1Market is IOverlayV1Market {
                 );
                 oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
             }
+
+            // register the amount to be minted/burned
+            // capPayoff prevents overflow reverts with int256 cast
+            _registerMintOrBurn(int256(value) - int256(cost));
 
             // store the updated position info data
             pos.notional -= uint120(Math.min(pos.notional, pos.notionalInitial(fraction)));
@@ -394,9 +394,6 @@ contract OverlayV1Market is IOverlayV1Market {
         // the mm burn rate, as insurance for cases when not liquidated in time
         value -= value.mulDown(params.get(Risk.Parameters.MaintenanceMarginBurnRate));
 
-        // register the amount to be burned
-        _registerMint(int256(value) - int256(cost));
-
         // calculate the liquidation fee as % on remaining value
         uint256 liquidationFee = value.mulDown(params.get(Risk.Parameters.LiquidationFeeRate));
 
@@ -416,6 +413,9 @@ contract OverlayV1Market is IOverlayV1Market {
             );
             oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
         }
+
+        // register the amount to be burned
+        _registerMintOrBurn(int256(value) - int256(cost));
 
         // store the updated position info data. mark as liquidated
         pos.notional = 0;
@@ -705,8 +705,9 @@ contract OverlayV1Market is IOverlayV1Market {
         return uint256(snapshot.cumulative());
     }
 
-    /// @dev Rolling mint accumulator to be used for circuit breaker
-    function _registerMint(int256 value) private returns (int256) {
+    /// @notice Rolling mint accumulator to be used for circuit breaker
+    /// @dev value > 0 registers a mint, value <= 0 registers a burn
+    function _registerMintOrBurn(int256 value) private returns (int256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotMinted;
 
