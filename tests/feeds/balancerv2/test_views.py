@@ -1,8 +1,12 @@
 from brownie.test import given, strategy
-#  def test_get_time_weighted_average_pair_price(feed):
-#      res = feed.getTimeWeightedAveragePairPrice();
-#      print('RES', res[0]/ 1e18)
-#      assert (res == 1)
+
+
+def test_get_time_weighted_average_pair_price(feed):
+    res = feed.getPairPrices();
+    print()
+    print('RES', res)
+    print()
+    assert (res == 1)
 #
 #
 #  def test_get_time_weighted_average_invariant(feed):
