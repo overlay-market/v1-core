@@ -18,7 +18,6 @@
 pragma solidity 0.8.10;
 
 import "./LogExpMath.sol";
-import "../utils/Errors.sol";
 
 /* solhint-disable private-vars-leading-underscore */
 
