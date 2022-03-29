@@ -332,7 +332,7 @@ library LogExpMath {
                 return _ln_36(a) / ONE_18;
             } else {
                 return _ln(a);
-            }    
+            }
         }
     }
 
