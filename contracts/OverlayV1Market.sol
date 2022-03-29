@@ -311,10 +311,14 @@ contract OverlayV1Market is IOverlayV1Market {
             // and decrease number of oi shares issued
             // use subFloor to avoid reverts with rounding issues
             if (pos.isLong) {
-                oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
+                oiLong = oiLong.subFloor(
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+                );
                 oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
             } else {
-                oiShort = oiShort.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
+                oiShort = oiShort.subFloor(
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+                );
                 oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
             }
 
@@ -399,7 +403,9 @@ contract OverlayV1Market is IOverlayV1Market {
             oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
             oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
         } else {
-            oiShort = oiShort.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
+            oiShort = oiShort.subFloor(
+                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            );
             oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
         }
 
