@@ -151,16 +151,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function _checkRiskParam(Risk.Parameters name, uint256 value) private {
         uint256 minValue = PARAMS_MIN.get(name);
         uint256 maxValue = PARAMS_MAX.get(name);
-        require(
-            value >= minValue && value <= maxValue,
-            string(
-                abi.encodePacked(
-                    "OVLV1: param ",
-                    Strings.toString(uint256(name)),
-                    " out of bounds"
-                )
-            )
-        );
+        require(value >= minValue && value <= maxValue, "OVLV1: param out of bounds");
     }
 
     /// @notice Setter for per-market risk parameters adjustable by governance

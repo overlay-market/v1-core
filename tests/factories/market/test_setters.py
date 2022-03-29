@@ -106,7 +106,7 @@ def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
 
         if expect_param >= 0:
             # check can't set param less than min
-            with reverts(f"OVLV1: param {i} out of bounds"):
+            with reverts("OVLV1: param out of bounds"):
                 _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to min
@@ -127,7 +127,7 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
         expect_param = factory.PARAMS_MAX(i) + 1
 
         # check can't set param greater than max
-        with reverts(f"OVLV1: param {i} out of bounds"):
+        with reverts("OVLV1: param out of bounds"):
             _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to max
