@@ -34,6 +34,12 @@ library FixedPoint {
         return c;
     }
 
+    /// @notice a - b but floors to zero if a <= b
+    function subFloor(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a > b ? a - b : 0;
+        return c;
+    }
+
     function mulDown(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 product = a * b;
         return product / ONE;

@@ -166,7 +166,7 @@ def mock_feed(create_mock_feed):
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
-    800000000000000000000000,  # capOi
+    800000000000000000000000,  # capNotional
     5000000000000000000,  # capLeverage
     2592000,  # circuitBreakerWindow
     66670000000000000000000,  # circuitBreakerMintTarget
