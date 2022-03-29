@@ -89,12 +89,13 @@ library FixedPoint {
     }
 
     /**
-     * @dev Returns x^y, assuming both are fixed point numbers, rounding down. The result is guaranteed to not be above
-     * the true value (that is, the error function expected - actual is always positive).
+     * @dev Returns x^y, assuming both are fixed point numbers, rounding down.
+     * The result is guaranteed to not be above the true value (that is,
+     * the error function expected - actual is always positive).
      */
     function powDown(uint256 x, uint256 y) internal pure returns (uint256) {
-        // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
-        // and 80/20 Weighted Pools
+        // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple
+        // to implement and occur often in 50/50 and 80/20 Weighted Pools
         if (0 == y || x == ONE) {
             return ONE;
         } else if (x == 0) {
@@ -119,12 +120,13 @@ library FixedPoint {
     }
 
     /**
-     * @dev Returns x^y, assuming both are fixed point numbers, rounding up. The result is guaranteed to not be below
-     * the true value (that is, the error function expected - actual is always negative).
+     * @dev Returns x^y, assuming both are fixed point numbers, rounding up.
+     * The result is guaranteed to not be below the true value (that is,
+     * the error function expected - actual is always negative).
      */
     function powUp(uint256 x, uint256 y) internal pure returns (uint256) {
-        // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple to implement and occur often in 50/50
-        // and 80/20 Weighted Pools
+        // Optimize for when y equals 1.0, 2.0 or 4.0, as those are very simple
+        // to implement and occur often in 50/50 and 80/20 Weighted Pools
         if (0 == y || x == ONE) {
             return ONE;
         } else if (x == 0) {
@@ -147,8 +149,8 @@ library FixedPoint {
     /**
      * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
      *
-     * Useful when computing the complement for values with some level of relative error, as it strips this error and
-     * prevents intermediate negative values.
+     * Useful when computing the complement for values with some level of relative error,
+     * as it strips this error and prevents intermediate negative values.
      */
     function complement(uint256 x) internal pure returns (uint256) {
         return (x < ONE) ? (ONE - x) : 0;
