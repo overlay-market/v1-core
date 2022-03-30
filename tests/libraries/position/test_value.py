@@ -1,5 +1,3 @@
-# TODO: test when oi = notional / mid_price
-
 def test_value(position):
     entry_price = 100000000000000000000  # 100
     current_price = 150000000000000000000  # 150

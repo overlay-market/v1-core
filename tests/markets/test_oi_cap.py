@@ -25,7 +25,7 @@ def test_cap_notional_back_run_bound(market, feed):
     data = feed.latest()
 
     # NOTE: assumes using UniswapV3 feed with hasReserve = true
-    average_block_time = 14
+    average_block_time = market.params(RiskParameter.AVERAGE_BLOCK_TIME.value)
     _, _, macro_window, _, _, _, reserve_micro, _ = data
 
     # check back run bound is macroWindowInBlocks * reserveInOvl * 2 * delta

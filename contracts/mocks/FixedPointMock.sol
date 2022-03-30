@@ -14,6 +14,10 @@ contract FixedPointMock {
         return a.sub(b);
     }
 
+    function subFloor(uint256 a, uint256 b) external pure returns (uint256) {
+        return a.subFloor(b);
+    }
+
     function mulDown(uint256 a, uint256 b) external pure returns (uint256) {
         return a.mulDown(b);
     }
@@ -36,6 +40,14 @@ contract FixedPointMock {
 
     function powUp(uint256 x, uint256 y) external pure returns (uint256) {
         return x.powUp(y);
+    }
+
+    function expDown(uint256 x) external pure returns (uint256) {
+        return x.expDown();
+    }
+
+    function expUp(uint256 x) external pure returns (uint256) {
+        return x.expUp();
     }
 
     function complement(uint256 x) external pure returns (uint256) {

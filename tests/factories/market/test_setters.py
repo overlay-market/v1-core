@@ -66,6 +66,7 @@ def test_set_risk_param(factory, market, gov):
         550000000000000,  # expect_trading_fee_rate
         200000000000000,  # expect_min_collateral
         12000000000000,  # expect_price_drift_upper_limit
+        14,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):
@@ -101,12 +102,12 @@ def test_set_risk_param_reverts_when_not_gov(factory, market, alice):
 def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
     feed = market.feed()
 
-    for i in range(14):
+    for i in range(15):
         expect_param = factory.PARAMS_MIN(i) - 1
 
         if expect_param >= 0:
             # check can't set param less than min
-            with reverts(f"OVLV1: param {i} out of bounds"):
+            with reverts("OVLV1: param out of bounds"):
                 _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to min
@@ -123,11 +124,11 @@ def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
 def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
     feed = market.feed()
 
-    for i in range(14):
+    for i in range(15):
         expect_param = factory.PARAMS_MAX(i) + 1
 
         # check can't set param greater than max
-        with reverts(f"OVLV1: param {i} out of bounds"):
+        with reverts("OVLV1: param out of bounds"):
             _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to max

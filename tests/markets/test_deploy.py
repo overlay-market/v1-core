@@ -29,12 +29,13 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
+    average_block_time = 14
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit]
+              price_drift_upper_limit, average_block_time]
 
     # deploy the market
     market = gov.deploy(OverlayV1Market, ovl, feed, factory, params)
@@ -75,12 +76,13 @@ def test_deploy_reverts_when_price_is_zero(ovl, mock_feed, factory, gov):
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
+    average_block_time = 14
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit]
+              price_drift_upper_limit, average_block_time]
 
     # set mock feed price to zero
     price = 0
@@ -108,12 +110,13 @@ def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, mock_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
+    average_block_time = 14
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit]
+              price_drift_upper_limit, average_block_time]
 
     # check can not deploy the market
     with reverts("OVLV1: max lev immediately liquidatable"):
@@ -137,12 +140,13 @@ def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, mock_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000000
+    average_block_time = 14
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
               maintenance_margin_fraction, maintenance_margin_burn_rate,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit]
+              price_drift_upper_limit, average_block_time]
 
     # check can not deploy the market
     with reverts("OVLV1: price drift exceeds max exp"):

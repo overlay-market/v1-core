@@ -36,7 +36,7 @@ interface IOverlayV1Factory {
     function deployMarket(
         address feedFactory,
         address feed,
-        uint256[14] calldata params
+        uint256[15] calldata params
     ) external returns (address market_);
 
     // per-market risk parameter setters

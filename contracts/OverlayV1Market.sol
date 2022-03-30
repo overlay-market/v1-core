@@ -19,18 +19,15 @@ contract OverlayV1Market is IOverlayV1Market {
     using Oracle for Oracle.Data;
     using Position for mapping(bytes32 => Position.Info);
     using Position for Position.Info;
-    using Risk for uint256[14];
+    using Risk for uint256[15];
     using Roller for Roller.Snapshot;
 
     // internal constants
     uint256 internal constant ONE = 1e18; // 18 decimal places
-    uint256 internal constant AVERAGE_BLOCK_TIME = 14; // (BAD) TODO: remove since not futureproof
 
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     // using ~ 1/2 library max for substantial padding
     uint256 internal constant MAX_NATURAL_EXPONENT = 20e18;
-    uint256 internal constant EULER = 2718281828459045091; // 2.71828e18
-    uint256 internal constant INVERSE_EULER = 367879441171442334; // 0.367879e18
 
     // immutables
     IOverlayV1Token public immutable ovl; // ovl token
@@ -38,7 +35,7 @@ contract OverlayV1Market is IOverlayV1Market {
     address public immutable factory; // factory that deployed this market
 
     // risk params
-    uint256[14] public params; // params.idx order based on Risk.Parameters enum
+    uint256[15] public params; // params.idx order based on Risk.Parameters enum
 
     // aggregate oi quantities
     uint256 public oiLong;
@@ -95,7 +92,7 @@ contract OverlayV1Market is IOverlayV1Market {
         address _ovl,
         address _feed,
         address _factory,
-        uint256[14] memory _params
+        uint256[15] memory _params
     ) {
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
@@ -122,10 +119,10 @@ contract OverlayV1Market is IOverlayV1Market {
             _priceDriftUpperLimit * data.macroWindow < MAX_NATURAL_EXPONENT,
             "OVLV1: price drift exceeds max exp"
         );
+        _cacheRiskCalc(Risk.Parameters.PriceDriftUpperLimit, _priceDriftUpperLimit);
 
         // set the risk params
         for (uint256 i = 0; i < _params.length; i++) {
-            _cacheRiskCalc(Risk.Parameters(i), _params[i]);
             params[i] = _params[i];
         }
     }
@@ -295,10 +292,6 @@ contract OverlayV1Market is IOverlayV1Market {
             value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
             cost = pos.cost(fraction);
 
-            // register the amount to be minted/burned
-            // capPayoff prevents overflow reverts with int256 cast
-            _registerMint(int256(value) - int256(cost));
-
             // calculate the trading fee as % on notional
             uint256 tradingFeeRate = params.get(Risk.Parameters.TradingFeeRate);
             tradingFee = pos.tradingFee(
@@ -313,25 +306,28 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract unwound open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // use Math.min to avoid reverts with rounding issues
+            // use subFloor to avoid reverts with rounding issues
             if (pos.isLong) {
-                oiLong -= Math.min(
-                    oiLong,
+                oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
+                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
             } else {
-                oiShort -= Math.min(
-                    oiShort,
+                oiShort = oiShort.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
+                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
             }
 
+            // register the amount to be minted/burned
+            // capPayoff prevents overflow reverts with int256 cast
+            _registerMintOrBurn(int256(value) - int256(cost));
+
             // store the updated position info data
-            pos.notional -= uint120(Math.min(pos.notional, pos.notionalInitial(fraction)));
-            pos.debt -= uint120(Math.min(pos.debt, pos.debtCurrent(fraction)));
-            pos.oiShares -= Math.min(pos.oiShares, pos.oiSharesCurrent(fraction));
+            // use subFloor to avoid reverts with rounding issues
+            pos.notional = uint120(uint256(pos.notional).subFloor(pos.notionalInitial(fraction)));
+            pos.debt = uint120(uint256(pos.debt).subFloor(pos.debtCurrent(fraction)));
+            pos.oiShares = pos.oiShares.subFloor(pos.oiSharesCurrent(fraction));
             positions.set(msg.sender, positionId, pos);
         }
 
@@ -394,28 +390,24 @@ contract OverlayV1Market is IOverlayV1Market {
         // the mm burn rate, as insurance for cases when not liquidated in time
         value -= value.mulDown(params.get(Risk.Parameters.MaintenanceMarginBurnRate));
 
-        // register the amount to be burned
-        _registerMint(int256(value) - int256(cost));
-
         // calculate the liquidation fee as % on remaining value
         uint256 liquidationFee = value.mulDown(params.get(Risk.Parameters.LiquidationFeeRate));
 
         // subtract liquidated open interest from the side's aggregate oi value
         // and decrease number of oi shares issued
-        // use Math.min to avoid reverts with rounding issues
+        // use subFloor to avoid reverts with rounding issues
         if (pos.isLong) {
-            oiLong -= Math.min(
-                oiLong,
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-            );
-            oiLongShares -= Math.min(oiLongShares, pos.oiSharesCurrent(fraction));
+            oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
+            oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
         } else {
-            oiShort -= Math.min(
-                oiShort,
+            oiShort = oiShort.subFloor(
                 pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
             );
-            oiShortShares -= Math.min(oiShortShares, pos.oiSharesCurrent(fraction));
+            oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
         }
+
+        // register the amount to be burned
+        _registerMintOrBurn(int256(value) - int256(cost));
 
         // store the updated position info data. mark as liquidated
         pos.notional = 0;
@@ -494,8 +486,9 @@ contract OverlayV1Market is IOverlayV1Market {
         return (dp >= _dpLowerLimit && dp <= _dpUpperLimit);
     }
 
-    /// @dev current open interest after funding payments transferred
-    /// @dev from overweight oi side to underweight oi side
+    /// @notice Current open interest after funding payments transferred
+    /// @notice from overweight oi side to underweight oi side
+    /// @dev The value of oiOverweight must be >= oiUnderweight
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
@@ -513,12 +506,12 @@ contract OverlayV1Market is IOverlayV1Market {
         // draw down the imbalance by factor of e**(-2*k*t)
         // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
         uint256 fundingFactor;
-        uint256 k = params.get(Risk.Parameters.K);
-        if (2 * k * timeElapsed < MAX_NATURAL_EXPONENT) {
-            fundingFactor = INVERSE_EULER.powDown(2 * k * timeElapsed);
+        uint256 pow = 2 * params.get(Risk.Parameters.K) * timeElapsed;
+        if (pow < MAX_NATURAL_EXPONENT) {
+            fundingFactor = ONE.divDown(pow.expUp()); // e**(-pow)
         }
 
-        // Burn portion of all aggregate contracts (i.e. oiLong + oiShort)
+        // Decrease total aggregate open interest (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
         // OI_tot(t) = OI_tot(0) * \
         //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - e**(-4*k*t)) )
@@ -609,9 +602,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev bound on notional cap to mitigate back-running attack
     /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
-        // TODO: macroWindow should be in blocks in current spec. What to do here to be
-        // futureproof vs having an average block time constant (BAD)
-        uint256 window = (data.macroWindow * ONE) / AVERAGE_BLOCK_TIME;
+        uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
+        uint256 window = (data.macroWindow * ONE) / averageBlockTime;
         uint256 delta = params.get(Risk.Parameters.Delta);
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
@@ -638,7 +630,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
-        bid_ = bid_.mulDown(INVERSE_EULER.powUp(pow));
+        bid_ = bid_.mulDown(ONE.divDown(pow.expUp())); // bid * e**(-pow)
     }
 
     /// @dev ask price given oracle data and recent volume
@@ -651,7 +643,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 pow = delta + lmbda.mulUp(volume);
         require(pow < MAX_NATURAL_EXPONENT, "OVLV1:slippage>max");
 
-        ask_ = ask_.mulUp(EULER.powUp(pow));
+        ask_ = ask_.mulUp(pow.expUp()); // ask * e**(pow)
     }
 
     /// @dev mid price without impact/spread given oracle data and recent volume
@@ -704,8 +696,9 @@ contract OverlayV1Market is IOverlayV1Market {
         return uint256(snapshot.cumulative());
     }
 
-    /// @dev Rolling mint accumulator to be used for circuit breaker
-    function _registerMint(int256 value) private returns (int256) {
+    /// @notice Rolling mint accumulator to be used for circuit breaker
+    /// @dev value > 0 registers a mint, value <= 0 registers a burn
+    function _registerMintOrBurn(int256 value) private returns (int256) {
         // save gas with snapshot in memory
         Roller.Snapshot memory snapshot = snapshotMinted;
 
@@ -795,7 +788,7 @@ contract OverlayV1Market is IOverlayV1Market {
             Oracle.Data memory data = IOverlayV1Feed(feed).latest();
             uint256 _priceDriftUpperLimit = value;
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
-            dpUpperLimit = EULER.powUp(pow);
+            dpUpperLimit = pow.expUp(); // e**(pow)
         }
     }
 }

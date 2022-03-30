@@ -14,30 +14,34 @@
 
 pragma solidity 0.8.10;
 
-/// @dev Reverts if `condition` is false, with a revert reason containing `errorCode`.
-/// @dev Only codes up to 999 are supported.
+// solhint-disable
+
+/**
+ * @dev Reverts if `condition` is false, with a revert reason containing `errorCode`. Only codes up to 999 are
+ * supported.
+ */
 function _require(bool condition, uint256 errorCode) pure {
     if (!condition) _revert(errorCode);
 }
 
-/// @dev Reverts with a revert reason containing `errorCode`. Only codes up to 999 are supported.
+/**
+ * @dev Reverts with a revert reason containing `errorCode`. Only codes up to 999 are supported.
+ */
 function _revert(uint256 errorCode) pure {
-    // We're going to dynamically create a revert string based on the error code, with the
-    // following format:
+    // We're going to dynamically create a revert string based on the error code, with the following format:
     // 'BAL#{errorCode}'
     // where the code is left-padded with zeroes to three digits (so they range from 000 to 999).
     //
-    // We don't have revert strings embedded in the contract to save bytecode size: it takes much
-    // less space to store a number (8 to 16 bits) than the individual string characters.
+    // We don't have revert strings embedded in the contract to save bytecode size: it takes much less space to store a
+    // number (8 to 16 bits) than the individual string characters.
     //
-    // The dynamic string creation algorithm that follows could be implemented in Solidity, but
-    // assembly allows for a much denser implementation, again saving bytecode size. Given this
-    // function unconditionally reverts, this is a safe place to rely on it without worrying about
-    // how its usage might affect e.g. memory contents.
+    // The dynamic string creation algorithm that follows could be implemented in Solidity, but assembly allows for a
+    // much denser implementation, again saving bytecode size. Given this function unconditionally reverts, this is a
+    // safe place to rely on it without worrying about how its usage might affect e.g. memory contents.
     assembly {
-        // First, we need to compute the ASCII representation of the error code. We assume that it
-        // is in the 0-999 range, so we only need to convert three digits. To convert the digits to
-        // ASCII, we add 0x30, the value for the '0' character.
+        // First, we need to compute the ASCII representation of the error code. We assume that it is in the 0-999
+        // range, so we only need to convert three digits. To convert the digits to ASCII, we add 0x30, the value for
+        // the '0' character.
 
         let units := add(mod(errorCode, 10), 0x30)
 
@@ -47,36 +51,34 @@ function _revert(uint256 errorCode) pure {
         errorCode := div(errorCode, 10)
         let hundreds := add(mod(errorCode, 10), 0x30)
 
-        // With the individual characters, we can now construct the full string. The "BAL#" part is
-        // a known constant (0x42414c23): we simply shift this by 24 (to provide space for the 3
-        // bytes of the error code), and add the characters to it, each shifted by a multiple of 8.
-        // The revert reason is then shifted left by 200 bits (256 minus the length of the string,
-        // 7 characters * 8 bits per character = 56) to locate it in the most significant part of
-        // the 256 slot (the beginning of a byte array).
+        // With the individual characters, we can now construct the full string. The "BAL#" part is a known constant
+        // (0x42414c23): we simply shift this by 24 (to provide space for the 3 bytes of the error code), and add the
+        // characters to it, each shifted by a multiple of 8.
+        // The revert reason is then shifted left by 200 bits (256 minus the length of the string, 7 characters * 8 bits
+        // per character = 56) to locate it in the most significant part of the 256 slot (the beginning of a byte
+        // array).
 
         let revertReason := shl(
             200,
             add(0x42414c23000000, add(add(units, shl(8, tenths)), shl(16, hundreds)))
         )
 
-        // We can now encode the reason in memory, which can be safely overwritten as we're about
-        // to revert. The encoded message will have the following layout:
-        // [revert reason identifier] [string location offset] [string length] [string contents]
+        // We can now encode the reason in memory, which can be safely overwritten as we're about to revert. The encoded
+        // message will have the following layout:
+        // [ revert reason identifier ] [ string location offset ] [ string length ] [ string contents ]
 
-        // The Solidity revert reason identifier is 0x08c739a0, the function selector of the
-        // Error(string) function. We also write zeroes to the next 28 bytes of memory, but those
-        // are about to be overwritten.
+        // The Solidity revert reason identifier is 0x08c739a0, the function selector of the Error(string) function. We
+        // also write zeroes to the next 28 bytes of memory, but those are about to be overwritten.
         mstore(0x0, 0x08c379a000000000000000000000000000000000000000000000000000000000)
-        // Next is the offset to the location of the string, which will be placed immediately after
-        // (20 bytes away).
+        // Next is the offset to the location of the string, which will be placed immediately after (20 bytes away).
         mstore(0x04, 0x0000000000000000000000000000000000000000000000000000000000000020)
         // The string length is fixed: 7 characters.
         mstore(0x24, 7)
         // Finally, the string itself is stored.
         mstore(0x44, revertReason)
 
-        // Even if the string is only 7 bytes long, we need to return a full 32 byte slot
-        // containing it. The length of the encoded message is therefore 4 + 32 + 32 + 32 = 100.
+        // Even if the string is only 7 bytes long, we need to return a full 32 byte slot containing it. The length of
+        // the encoded message is therefore 4 + 32 + 32 + 32 = 100.
         revert(0, 100)
     }
 }
@@ -113,6 +115,7 @@ library Errors {
     uint256 internal constant BPT_OUT_MIN_AMOUNT = 208;
     uint256 internal constant EXPIRED_PERMIT = 209;
     uint256 internal constant NOT_TWO_TOKENS = 210;
+    uint256 internal constant DISABLED = 211;
 
     // Pools
     uint256 internal constant MIN_AMP = 300;
@@ -146,6 +149,21 @@ library Errors {
     uint256 internal constant CALLER_IS_NOT_LBP_OWNER = 328;
     uint256 internal constant PRICE_RATE_OVERFLOW = 329;
     uint256 internal constant INVALID_JOIN_EXIT_KIND_WHILE_SWAPS_DISABLED = 330;
+    uint256 internal constant WEIGHT_CHANGE_TOO_FAST = 331;
+    uint256 internal constant LOWER_GREATER_THAN_UPPER_TARGET = 332;
+    uint256 internal constant UPPER_TARGET_TOO_HIGH = 333;
+    uint256 internal constant UNHANDLED_BY_LINEAR_POOL = 334;
+    uint256 internal constant OUT_OF_TARGET_RANGE = 335;
+    uint256 internal constant UNHANDLED_EXIT_KIND = 336;
+    uint256 internal constant UNAUTHORIZED_EXIT = 337;
+    uint256 internal constant MAX_MANAGEMENT_SWAP_FEE_PERCENTAGE = 338;
+    uint256 internal constant UNHANDLED_BY_MANAGED_POOL = 339;
+    uint256 internal constant UNHANDLED_BY_PHANTOM_POOL = 340;
+    uint256 internal constant TOKEN_DOES_NOT_HAVE_RATE_PROVIDER = 341;
+    uint256 internal constant INVALID_INITIALIZATION = 342;
+    uint256 internal constant OUT_OF_NEW_TARGET_RANGE = 343;
+    uint256 internal constant UNAUTHORIZED_OPERATION = 344;
+    uint256 internal constant UNINITIALIZED_POOL_CONTROLLER = 345;
 
     // Lib
     uint256 internal constant REENTRANCY = 400;
@@ -179,6 +197,10 @@ library Errors {
     uint256 internal constant CODE_DEPLOYMENT_FAILED = 428;
     uint256 internal constant CALL_TO_NON_CONTRACT = 429;
     uint256 internal constant LOW_LEVEL_CALL_FAILED = 430;
+    uint256 internal constant NOT_PAUSED = 431;
+    uint256 internal constant ADDRESS_ALREADY_ALLOWLISTED = 432;
+    uint256 internal constant ADDRESS_NOT_ALLOWLISTED = 433;
+    uint256 internal constant ERC20_BURN_EXCEEDS_BALANCE = 434;
 
     // Vault
     uint256 internal constant INVALID_POOL_ID = 500;

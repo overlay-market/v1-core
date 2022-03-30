@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 import "./interfaces/IOverlayV1Deployer.sol";
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Token.sol";
@@ -13,40 +11,43 @@ import "./libraries/Risk.sol";
 import "./OverlayV1Deployer.sol";
 
 contract OverlayV1Factory is IOverlayV1Factory {
-    using Risk for uint256[14];
+    using Risk for uint256[15];
 
     // risk param bounds
-    uint256[14] public PARAMS_MIN = [
-        4e8, // MIN_K = ~ 0.1 bps / 8 hr
-        1e16, // MIN_LMBDA = 0.01
+    // NOTE: 1bps = 1e14
+    uint256[15] public PARAMS_MIN = [
+        0.000_004e14, // MIN_K = ~ 0.1 bps / 8 hr
+        0.01e18, // MIN_LMBDA = 0.01
         1e14, // MIN_DELTA = 0.01% (1 bps)
         1e18, // MIN_CAP_PAYOFF = 1x
         0, // MIN_CAP_NOTIONAL = 0 OVL
         1e18, // MIN_CAP_LEVERAGE = 1x
         86400, // MIN_CIRCUIT_BREAKER_WINDOW = 1 day
         0, // MIN_CIRCUIT_BREAKER_MINT_TARGET = 0 OVL
-        1e16, // MIN_MAINTENANCE_MARGIN_FRACTION = 1%
-        1e16, // MIN_MAINTENANCE_MARGIN_BURN_RATE = 1%
-        1e15, // MIN_LIQUIDATION_FEE_RATE = 0.10% (10 bps)
+        0.01e18, // MIN_MAINTENANCE_MARGIN_FRACTION = 1%
+        0.01e18, // MIN_MAINTENANCE_MARGIN_BURN_RATE = 1%
+        0.001e18, // MIN_LIQUIDATION_FEE_RATE = 0.10% (10 bps)
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
-        1e12, // MIN_MINIMUM_COLLATERAL = 1e-6 OVL
-        1e12 // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
+        0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OVL
+        0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
+        0 // MIN_AVERAGE_BLOCK_TIME = 0s
     ];
-    uint256[14] public PARAMS_MAX = [
-        4e12, // MAX_K = ~ 1000 bps / 8 hr
-        1e19, // MAX_LMBDA = 10
-        2e16, // MAX_DELTA = 2% (200 bps)
-        1e20, // MAX_CAP_PAYOFF = 100x
-        8e24, // MAX_CAP_NOTIONAL = 8,000,000 OVL (initial supply)
-        2e19, // MAX_CAP_LEVERAGE = 20x
+    uint256[15] public PARAMS_MAX = [
+        0.04e14, // MAX_K = ~ 1000 bps / 8 hr
+        10e18, // MAX_LMBDA = 10
+        200e14, // MAX_DELTA = 2% (200 bps)
+        100e18, // MAX_CAP_PAYOFF = 100x
+        8_000_000e18, // MAX_CAP_NOTIONAL = 8,000,000 OVL (initial supply)
+        20e18, // MAX_CAP_LEVERAGE = 20x
         31536000, // MAX_CIRCUIT_BREAKER_WINDOW = 365 days
-        8e24, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OVL
-        2e17, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
-        5e17, // MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
-        1e17, // MAX_LIQUIDATION_FEE_RATE = 10.00% (1000 bps)
-        5e15, // MAX_TRADING_FEE_RATE = 0.50% (50 bps)
+        8_000_000e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OVL
+        0.2e18, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
+        0.5e18, // MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
+        0.1e18, // MAX_LIQUIDATION_FEE_RATE = 10.00% (1000 bps)
+        50e14, // MAX_TRADING_FEE_RATE = 0.50% (50 bps)
         1e18, // MAX_MINIMUM_COLLATERAL = 1 OVL
-        1e14 // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
+        1e14, // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
+        3600 // MAX_AVERAGE_BLOCK_TIME = 1h (arbitrary but large)
     ];
 
     // event for risk param updates
@@ -109,7 +110,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function deployMarket(
         address feedFactory,
         address feed,
-        uint256[14] calldata params
+        uint256[15] calldata params
     ) external onlyGovernor returns (address market_) {
         // check feed and feed factory are available for a new market
         _checkFeed(feedFactory, feed);
@@ -139,8 +140,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Checks all risk params are within acceptable bounds
-    function _checkRiskParams(uint256[14] calldata params) private {
-        for (uint256 i = 0; i < params.length; i++) {
+    function _checkRiskParams(uint256[15] calldata params) private {
+        uint256 length = params.length;
+        for (uint256 i = 0; i < length; i++) {
             _checkRiskParam(Risk.Parameters(i), params[i]);
         }
     }
@@ -149,16 +151,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function _checkRiskParam(Risk.Parameters name, uint256 value) private {
         uint256 minValue = PARAMS_MIN.get(name);
         uint256 maxValue = PARAMS_MAX.get(name);
-        require(
-            value >= minValue && value <= maxValue,
-            string(
-                abi.encodePacked(
-                    "OVLV1: param ",
-                    Strings.toString(uint256(name)),
-                    " out of bounds"
-                )
-            )
-        );
+        require(value >= minValue && value <= maxValue, "OVLV1: param out of bounds");
     }
 
     /// @notice Setter for per-market risk parameters adjustable by governance

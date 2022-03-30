@@ -7,6 +7,6 @@ interface IOverlayV1Deployer {
     function deploy(
         address ovl,
         address feed,
-        uint256[14] calldata params
+        uint256[15] calldata params
     ) external returns (address);
 }

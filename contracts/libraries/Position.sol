@@ -121,15 +121,14 @@ library Position {
         uint256 posNotionalInitial = notionalInitial(self, fraction);
         uint256 posDebt = debtCurrent(self, fraction);
 
-        // should always be > 0 but use Math.min to be safe w reverts
+        // should always be > 0 but use subFloor to be safe w reverts
         uint256 posCost = posNotionalInitial;
-        posCost -= Math.min(posCost, posDebt);
+        posCost = posCost.subFloor(posDebt);
         return posCost;
     }
 
     /// @notice Computes the value of a position
     /// @dev Floors to zero, so won't properly compute if self is underwater
-    // TODO: test
     function value(
         Info memory self,
         uint256 fraction,
@@ -160,7 +159,7 @@ library Position {
                     posOiCurrent.mulUp(entryPrice).mulUp(ONE + capPayoff)
                 );
             // floor to 0
-            val_ -= Math.min(val_, posDebt + posOiCurrent.mulUp(entryPrice));
+            val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(entryPrice));
         } else {
             // NOTE: capPayoff >= 1, so no need to include w short
             // val = notionalInitial * oiCurrent / oiInitial + oiCurrent * entryPrice
@@ -169,7 +168,7 @@ library Position {
                 posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial) +
                 posOiCurrent.mulUp(entryPrice);
             // floor to 0
-            val_ -= Math.min(val_, posDebt + posOiCurrent.mulUp(currentPrice));
+            val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(currentPrice));
         }
     }
 

@@ -166,7 +166,7 @@ def mock_feed(create_mock_feed):
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
-    800000000000000000000000,  # capOi
+    800000000000000000000000,  # capNotional
     5000000000000000000,  # capLeverage
     2592000,  # circuitBreakerWindow
     66670000000000000000000,  # circuitBreakerMintTarget
@@ -176,6 +176,7 @@ def mock_feed(create_mock_feed):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
+    14,  # averageBlockTime
 )])
 def mock_market(gov, mock_feed, factory, ovl, create_market, request):
     risk_params = request.param
@@ -210,6 +211,7 @@ def create_market(gov, ovl, minter_role, burner_role):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
+    14,  # averageBlockTime
 )])
 def market(gov, feed, factory, ovl, create_market, request):
     risk_params = request.param
