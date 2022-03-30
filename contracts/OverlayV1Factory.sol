@@ -37,8 +37,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
         10e18, // MAX_LMBDA = 10
         200e14, // MAX_DELTA = 2% (200 bps)
         100e18, // MAX_CAP_PAYOFF = 100x
-        8e24, // MAX_CAP_NOTIONAL = 8,000,000 OVL (initial supply)
-        2e19, // MAX_CAP_LEVERAGE = 20x
+        8_000_000e18, // MAX_CAP_NOTIONAL = 8,000,000 OVL (initial supply)
+        20e18, // MAX_CAP_LEVERAGE = 20x
         31536000, // MAX_CIRCUIT_BREAKER_WINDOW = 365 days
         8_000_000e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OVL
         0.2e18, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
