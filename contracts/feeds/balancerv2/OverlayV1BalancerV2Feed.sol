@@ -161,12 +161,12 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     /// @param pool Pool address
     /// @param secs Duration of TWAP in seconds
     /// @param ago End of TWAP in seconds
-    /// @return result TWAP of inverse of tokens in pool
+    /// @return result_ TWAP of inverse of tokens in pool
     function getTimeWeightedAverageInvariant(
         address pool,
         uint256 secs,
         uint256 ago
-    ) public view returns (uint256 result) {
+    ) public view returns (uint256 result_) {
         IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.INVARIANT;
 
         IBalancerV2PriceOracle.OracleAverageQuery[]
@@ -176,7 +176,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         queries[0] = query;
 
         uint256[] memory results = getTimeWeightedAverage(pool, queries);
-        uint256 result = results[0];
+        result_ = results[0];
     }
 
     /// @notice Returns pool token information given a pool id
@@ -272,7 +272,7 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
     }
 
     /// @notice Market pool only (not reserve)
-    function getPairPrices() public view returns (uint256[] memory twaps) {
+    function getPairPrices() public view returns (uint256[] memory twaps_) {
         // cache globals for gas savings, SN TODO: verify that this makes a diff here
         address _marketPool = marketPool;
         uint256 _microWindow = microWindow;
@@ -294,25 +294,11 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         // queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
 
         // SN TODO: Check if we really need _inputsToConsultMarketPool, or can just use globals
-        // SN Q1: Is setting the `queries` array like this the problem?
-        // SN Q1: Tried setting it like `SN Q2` but makes no difference
         queries[0] = getOracleAverageQuery(variablePairPrice, microWindow, 0);
         queries[1] = getOracleAverageQuery(variablePairPrice, macroWindow, 0);
         queries[2] = getOracleAverageQuery(variablePairPrice, macroWindow, macroWindow);
 
-        // SN Q2: Tried setting each array entry explicitly, but made no difference
-        // IBalancerV2PriceOracle.OracleAverageQuery memory microPairPrice =
-        //   getOracleAverageQuery(variablePairPrice, microWindow, 0);
-        // queries[0] = microPairPrice;
-        // IBalancerV2PriceOracle.OracleAverageQuery memory macroPairPrice =
-        //   getOracleAverageQuery(variablePairPrice, macroWindow, 0);
-        // queries[0] = macroPairPrice;
-        //
-        // IBalancerV2PriceOracle.OracleAverageQuery memory macroOneWindowAgoPrice
-        //   = getOracleAverageQuery(variablePairPrice, macroWindow, macroWindow);
-        // queries[2] = macroOneWindowAgoPrice;
-
-        uint256[] memory twaps = getTimeWeightedAverage(_marketPool, queries);
+        twaps_ = getTimeWeightedAverage(_marketPool, queries);
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
@@ -338,13 +324,8 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 priceOverMacroWindow = twaps[1];
         uint256 priceOneMacroWindowAgo = twaps[2];
 
-        // uint256 priceOverMicroWindow = 1;
-        // uint256 priceOverMacroWindow = 1;
-        // uint256 priceOneMacroWindowAgo = 1;
-
         /* Reserve Calculations */
-        // uint256 reserve = getReserve(priceOverMicroWindow);
-        uint256 reserve = 1;
+        uint256 reserve = getReserve(priceOverMicroWindow);
 
         return
             Oracle.Data({

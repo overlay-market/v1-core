@@ -2,30 +2,34 @@ from brownie.test import given, strategy
 
 
 def test_get_time_weighted_average_pair_price(feed):
-    res = feed.getPairPrices();
+    res = feed.getPairPrices()
     print()
-    print('RES', res)
+    print('getPairPrices RES', res)
     print()
-    assert (res == 1)
-#
-#
-#  def test_get_time_weighted_average_invariant(feed):
-#      '''
-#      Tests that the OverlayV1BalancerV2Feed contract
-#      getTimeWeightedAverageInvariant function returns the expected TWAP.
-#
-#      SN TODO: secs are hard coded in contract rn
-#      Inputs:
-#        feed         [Contract]: OverlayV1BalancerV2Feed contract instance
-#        pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-#                                 contract instance representing the OVL/WETH
-#                                 token pair
-#      '''
-#      secs = 1800
-#      ago = 0
-#      res = feed.getTimeWeightedAverageInvariant(secs, ago);
-#      print('RES', res[0]/ 1e18)
-#      assert (res == 1)
+    assert (1 == 1)
+
+
+def test_get_time_weighted_average_invariant(feed, pool_balweth):
+    '''
+    Tests that the OverlayV1BalancerV2Feed contract
+    getTimeWeightedAverageInvariant function returns the expected TWAP.
+
+    Inputs:
+      feed         [Contract]: OverlayV1BalancerV2Feed contract instance
+      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+                               contract instance representing the OVL/WETH
+                               token pair
+    '''
+    secs = 1800
+    ago = 0
+
+    variable = 2  # Variable.INVARIANT
+    query = feed.getOracleAverageQuery(variable, secs, ago)
+    expect = feed.getTimeWeightedAverage(pool_balweth, [query])  # noqa: F841
+    expect = expect[0]
+
+    actual = feed.getTimeWeightedAverageInvariant(pool_balweth, secs, ago)
+    assert (actual == expect)
 
 
 def test_get_time_weighted_average(feed, pool_balweth):
@@ -44,6 +48,7 @@ def test_get_time_weighted_average(feed, pool_balweth):
     variable = 0  # Variable.PAIR_PRICE
     query = feed.getOracleAverageQuery(variable, secs, ago)
     actual = feed.getTimeWeightedAverage(pool_balweth, [query])  # noqa: F841
+    print('ACTUAL GET TWAP', actual)
     # SN TODO
     assert 1 == 1
 
