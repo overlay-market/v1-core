@@ -636,6 +636,46 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     assert tx.return_value == expect_pos_id
 
 
+def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
+    # NOTE: current position id is zero given isolation fixture
+    expect_pos_id = 0
+
+    input_collateral = int(1e18)
+    input_leverage = int(1e18)
+    input_is_long = True
+
+    tol = 1e-4
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve market for spending before build. use max
+    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+
+    # check build reverts when price so large that
+    # notional / price rounds down to zero
+    price = int(Decimal(input_collateral)
+                * Decimal(input_leverage) * Decimal(1 + tol))
+    mock_feed.setPrice(price)
+
+    with reverts("OVLV1:oi==0"):
+        _ = mock_market.build(input_collateral, input_leverage, input_is_long,
+                              input_price_limit, {"from": alice})
+
+    # check build succeeds when price is below rounding limit
+    price = int(Decimal(input_collateral)
+                * Decimal(input_leverage) * Decimal(1 - tol))
+
+    mock_feed.setPrice(price)
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
+
+    # check position id
+    actual_pos_id = tx.return_value
+    assert expect_pos_id == actual_pos_id
+
+
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                                    feed, alice, bob):
     # loop through 10 times

@@ -167,7 +167,6 @@ library Position {
 
     /// @notice Computes the value of a position
     /// @dev Floors to zero, so won't properly compute if self is underwater
-    // TODO: clean this up ...
     function value(
         Info memory self,
         uint256 fraction,

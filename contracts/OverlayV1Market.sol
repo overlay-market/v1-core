@@ -154,7 +154,6 @@ contract OverlayV1Market is IOverlayV1Market {
             oi = oiFromNotional(notional, midPrice);
 
             // check have more than zero number of contracts built
-            // TODO: test
             require(oi > 0, "OVLV1:oi==0");
 
             // calculate debt and trading fees. fees charged on notional
