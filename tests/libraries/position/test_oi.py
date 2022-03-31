@@ -2,12 +2,16 @@ def test_oi_current(position):
     # NOTE: oi = pos.oi_shares
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
     fraction = 1000000000000000000  # 1
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # lost 3 from total oi due to funding
     total_oi = 12000000000000000000  # 12
@@ -15,7 +19,6 @@ def test_oi_current(position):
 
     # check oi is pro-rata shares of total oi
     expect = int((total_oi * oi / total_oi_shares) * (fraction / 1e18))
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -24,12 +27,16 @@ def test_oi_current_when_fraction_less_than_one(position):
     # NOTE: oi = pos.oi_shares
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
     fraction = 250000000000000000  # 0.25
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # lost 3 from total oi due to funding
     total_oi = 12000000000000000000  # 12
@@ -37,7 +44,6 @@ def test_oi_current_when_fraction_less_than_one(position):
 
     # check oi is pro-rata shares of total oi
     expect = int((total_oi * oi / total_oi_shares) * (fraction / 1e18))
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -55,7 +61,8 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     # NOTE: oi = pos.oi_shares
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     debt = 2000000000000000000  # 2
     fraction = 1000000000000000000  # 1
 
@@ -63,11 +70,13 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 10000000000000000000  # 10
     total_oi = 0  # 0
     total_oi_shares = 15000000000000000000  # 15
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oi is zero
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -75,10 +84,12 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 0  # 0
     total_oi = 4000000000000000000  # 4
     total_oi_shares = 5000000000000000000  # 5
-    oi = (notional / entry_price) * 1000000000000000000  # 0
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -86,10 +97,12 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     notional = 0  # 0
     total_oi = 0  # 0
     total_oi_shares = 0  # 0
-    oi = (notional / entry_price) * 1000000000000000000  # 0
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -98,9 +111,11 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     total_oi = 0  # 0
     total_oi_shares = 5000000000000000000  # 5
     liquidated = True
-    oi = (notional / entry_price) * 1000000000000000000  # 0
+    # NOTE: mid_ratio tests in test_entry_price.py
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     expect = 0
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual

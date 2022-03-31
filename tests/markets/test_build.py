@@ -10,6 +10,8 @@ from .utils import (
     calculate_position_info,
     get_position_key,
     mid_from_feed,
+    entry_from_mid_ratio,
+    calculate_mid_ratio,
     RiskParameter
 )
 
@@ -82,16 +84,22 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     expect_notional_initial = int(notional * Decimal(1e18))
     expect_oi_initial = int(oi * Decimal(1e18))
     expect_debt = int(debt * Decimal(1e18))
+    expect_mid_ratio = calculate_mid_ratio(price, int(mid_from_feed(data)))
 
     # check position info
     expect_pos_key = get_position_key(alice.address, expect_pos_id)
     actual_pos = market.positions(expect_pos_key)
-    (actual_notional_initial, actual_debt, actual_is_long, actual_liquidated,
-     actual_entry_price, actual_oi_initial) = actual_pos
+    (actual_notional_initial, actual_debt, actual_mid_ratio,
+     actual_is_long, actual_liquidated, actual_oi_initial) = actual_pos
+
+    # calculate the entry price
+    mid_price = int(mid_from_feed(data))
+    actual_entry_price = entry_from_mid_ratio(actual_mid_ratio, mid_price)
 
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
     assert int(actual_entry_price) == approx(expect_entry_price)
+    assert actual_mid_ratio == expect_mid_ratio
     assert int(actual_notional_initial) == approx(expect_notional_initial)
     assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)
@@ -103,7 +111,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     assert tx.events["Build"]["oi"] == actual_oi_initial
     assert tx.events["Build"]["debt"] == actual_debt
     assert tx.events["Build"]["isLong"] == actual_is_long
-    assert tx.events["Build"]["price"] == actual_entry_price
+    assert int(tx.events["Build"]["price"]) == approx(actual_entry_price)
 
 
 @given(
@@ -715,23 +723,24 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         expect_debt_alice = int(debt_alice * Decimal(1e18))
         expect_is_long_alice = is_long_alice
         expect_liquidated_alice = False
-
         actual_pos_alice = market.positions(
             get_position_key(alice.address, expect_pos_id_alice))
-        (actual_notional_alice, actual_debt_alice, actual_is_long_alice,
-         actual_liquidated_alice, _, actual_oi_alice) = actual_pos_alice
+
+        (actual_notional_alice, actual_debt_alice, actual_mid_ratio_alice,
+         actual_is_long_alice, actual_liquidated_alice,
+         actual_oi_alice) = actual_pos_alice
 
         assert actual_is_long_alice == expect_is_long_alice
         assert actual_liquidated_alice == expect_liquidated_alice
         assert int(actual_notional_alice) == approx(expect_notional_alice)
-        assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1e-3)
+        assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1e-4)
         assert int(actual_debt_alice) == approx(expect_debt_alice)
 
         # check oi added to long side by alice
         expect_oi_long += expect_oi_alice
         actual_oi_long = market.oiLong()
 
-        assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-3)
+        assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-4)
 
         # increment expect position id
         expect_pos_id += 1
@@ -760,23 +769,24 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         expect_debt_bob = int(debt_bob * Decimal(1e18))
         expect_is_long_bob = is_long_bob
         expect_liquidated_bob = False
-
         actual_pos_bob = market.positions(
             get_position_key(bob.address, expect_pos_id_bob))
-        (actual_notional_bob, actual_debt_bob, actual_is_long_bob,
-         actual_liquidated_bob, _, actual_oi_bob) = actual_pos_bob
+
+        (actual_notional_bob, actual_debt_bob, actual_mid_ratio_bob,
+         actual_is_long_bob, actual_liquidated_bob,
+         actual_oi_bob) = actual_pos_bob
 
         assert actual_is_long_bob == expect_is_long_bob
         assert actual_liquidated_bob is expect_liquidated_bob
         assert int(actual_notional_bob) == approx(expect_notional_bob)
-        assert int(actual_oi_bob) == approx(expect_oi_bob, rel=1e-3)
+        assert int(actual_oi_bob) == approx(expect_oi_bob, rel=1e-4)
         assert int(actual_debt_bob) == approx(expect_debt_bob)
 
         # check oi added to short side by bob
         expect_oi_short += expect_oi_bob
         actual_oi_short = market.oiShort()
 
-        assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-3)
+        assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-4)
 
         # increment expect position id
         expect_pos_id += 1

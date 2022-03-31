@@ -161,5 +161,5 @@ def test_oi_from_notional(market, feed):
     cap_oi = Decimal(cap_notional) / Decimal(mid)
 
     expect = int(cap_oi * Decimal(1e18))
-    actual = market.oiFromNotional(data, cap_notional)
+    actual = market.oiFromNotional(cap_notional, mid)
     assert int(actual) == approx(expect)

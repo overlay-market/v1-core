@@ -33,3 +33,8 @@ def create_position(alice):
 @pytest.fixture(scope="module")
 def position(create_position):
     yield create_position()
+
+
+@pytest.fixture(scope="module")
+def mid_resolution():
+    yield 100000000000000  # 1e14

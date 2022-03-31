@@ -53,3 +53,26 @@ def mid_from_feed(data: Any) -> float:
     bid = min(price_micro, price_macro)
     mid = (ask + bid) / 2
     return mid
+
+
+def entry_from_mid_ratio(mid_ratio: int, mid: int) -> int:
+    """
+    Returns entry price from mid ratio and mid price
+
+    NOTE: mid_ratio is uint48 format and mid price is int FixedPoint format
+    """
+    # NOTE: mid_ratio "ONE" is 1e14 given uint48
+    entry_price = int((Decimal(mid_ratio) / Decimal(1e14)) * mid)
+    return entry_price
+
+
+def calculate_mid_ratio(entry_price: int, mid_price: int) -> int:
+    """
+    Returns mid ratio from entry price and mid price
+
+    NOTE: mid_ratio is uint48 format and mid, entry prices
+    are int FixedPoint format
+    """
+    # NOTE: mid_ratio "ONE" is 1e14 given uint48
+    mid_ratio = int(Decimal(entry_price) * Decimal(1e14) / Decimal(mid_price))
+    return mid_ratio
