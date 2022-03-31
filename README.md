@@ -54,11 +54,11 @@ The market contract tracks the current open interest for all outstanding positio
 ```
 library Position {
   struct Info {
-      uint120 notional; // initial notional = collateral * leverage
-      uint120 debt; // debt
+      uint96 notional; // initial notional = collateral * leverage
+      uint96 debt; // debt
+      uint48 entryToMidRatio; // ratio of entryPrice / _midFromFeed() at build
       bool isLong; // whether long or short
       bool liquidated; // whether has been liquidated
-      uint256 entryPrice; // price received at entry
       uint256 oiShares; // shares of aggregate open interest on side
   }
 }
