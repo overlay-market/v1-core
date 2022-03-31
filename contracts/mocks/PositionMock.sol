@@ -38,7 +38,11 @@ contract PositionMock {
                     POSITION ENTRY PRICE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function calcEntryToMidRatio(uint256 entryPrice, uint256 midPrice) external view returns (uint48) {
+    function calcEntryToMidRatio(uint256 entryPrice, uint256 midPrice)
+        external
+        view
+        returns (uint48)
+    {
         return Position.calcEntryToMidRatio(entryPrice, midPrice);
     }
 
