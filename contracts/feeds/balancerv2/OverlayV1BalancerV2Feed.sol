@@ -8,8 +8,11 @@ import "../../interfaces/feeds/balancerv2/IBalancerV2Vault.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2PriceOracle.sol";
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
+import "../../libraries/FixedPoint.sol";
 
 contract OverlayV1BalancerV2Feed is OverlayV1Feed {
+    using FixedPoint for uint256;
+
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
@@ -218,57 +221,68 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
 
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
-    function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve) {
+    function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve_) {
         // Cache globals for gas savings, SN TODO: verify that this makes a diff here
         address _marketPool = marketPool;
         address _ovlWethPool = ovlWethPool;
+        uint256 _microWindow = microWindow;
 
+        uint256 twav = getTimeWeightedAverageInvariant(_marketPool, _microWindow, 0);
+        uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow);
+
+        uint256 ovlWethPairPrice = getPairPriceOvlWeth();
+        reserve_ = reserveInWeth * ovlWethPairPrice;
+    }
+
+    function getReserveInWeth(uint256 twav, uint256 priceOverMicroWindow)
+        public
+        view
+        returns (uint256 reserveInWeth_)
+    {
+        address _marketPool = marketPool;
         // Retrieve pool weights
         // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
         uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
-        // SN TODO: what if the pool has more than 2 tokens?
+
         // SN TODO: sanity check that the order the normalized weights are returned are NOT the
         // same order as the return of getPoolId for the market pool. does not impact this code,
         // but still something to note I think
+
+        // WeightedPool2Tokens contract only ever has two pools
         uint256 weightToken0 = normalizedWeights[0]; // WETH
         uint256 weightToken1 = normalizedWeights[1]; // DAI
 
-        // SN TODO: Remove hardcode
-        uint256 twav = getTimeWeightedAverageInvariant(_marketPool, 600, 0);
+        // ((priceOverMicroWindow * weightToken1) / weightToken0) ** weightToken1;
+        uint256 denominator = (priceOverMicroWindow.mulUp(weightToken1).divUp(weightToken0)).powUp(
+            weightToken1
+        );
+        // 1 / (weightToken0 + weightToken1);
+        uint256 power = uint256(1).divUp(weightToken0.add(weightToken1));
+        // B1 = reserveInWeth_ = (twav / denominator) ** power;
+        reserveInWeth_ = twav.divUp(denominator).powUp(power);
+    }
 
-        // Want to solve for B2 because if B1 is the expression we want, that means P is B2
-        // so B2 = DIA, B1 = WETH
-        // account for 2 conditions:
-        // 1. if weightToken0 is the market base token (WETH), then we try to get B1
-        // 2. if weightToken0 is market quote token (DAI), then we try to get B2
-        // could: in normalizedWeights do flip so always WETH first
-        // priceOverMicroWindow is laways num quote/num base, the weightToken0 and weightToken1 we
-        // get back, could have it where normalizedWeights0 is laways base, and nomarwe1 is always
-        // quote so the logic of calculating here is always right (always B1)
-        // B1 represents the WETH reserve over a micro window
-        // B1 = [ V / ( (P * w2 / w1) ** w2 ) ] ** [ 1 / (w1 + w2) ]
-        // SN TODO: use fixedpoint
-        // follow mikeys logic by splitting ths out into another function getReserveInWeth, then
-        // the logic getRerseveInOvl (that logic below talking about getPairPrice). this makes a
-        // call to getReserveInWeth, then gets the reserve number in WETH (B1). getReserveInOvl
-        // takes that number and multiplies it by the price in ovlweth
-        uint256 denominator = ((priceOverMicroWindow * weightToken1) / weightToken0)**weightToken1;
-        // this is going to be 0 (since weights are so large), prob same with denominator
-        // the FixedPoint lib
-        uint256 power = 1 / (weightToken0 + weightToken1);
-        uint256 reserveInWeth = (twav / denominator)**power;
+    /// @notice Market pool only (not reserve)
+    function getPairPriceOvlWeth() public view returns (uint256 twap_) {
+        // cache globals for gas savings, SN TODO: verify that this makes a diff here
+        address _ovlWethPool = ovlWethPool;
+        uint256 _microWindow = microWindow;
 
-        // NOT right. 1. does not factor in the weigths and really manipulatable because not using
-        // TWAP want to do getPairPrices for ovlWethPool
-        // I need the TWAP value from ovlWethPool -> getPairPrice with ovlWethPool
-        // duplicate getPairPrices -> getOvlWethPrice. keep pairprices but adapt for OVlweth with
-        // on query the one query is 600, 0 for micor (only want for micro)
-        // only wrinkle is we want to amke sure that the price we are getting is num ETH / num OVL
-        // just return what getovlWeithPairPrice
+        /* Pair Price Calculations */
+        // SN LEFT OFF HERE
+        IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
+            .Variable
+            .PAIR_PRICE;
 
-        // DO NOT NEED THIS LINE ANYMORE:
-        // uint256 reserve = reserveInWeth * (ovlWethBalance0 / ovlWethBalance1);
-        // https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L160
+        // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
+        IBalancerV2PriceOracle.OracleAverageQuery[]
+            memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
+
+        // [Variable enum, seconds, ago]
+        queries[0] = getOracleAverageQuery(variablePairPrice, microWindow, 0);
+
+        uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, queries);
+        twap_ = twaps[0];
     }
 
     /// @notice Market pool only (not reserve)
@@ -287,13 +301,8 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
         IBalancerV2PriceOracle.OracleAverageQuery[]
             memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](3);
-        // SN TODO: HARD CODE HERE
-        // [Variable enum, seconds, ago]
-        // queries[0] = getOracleAverageQuery(variablePairPrice, 600, 0);
-        // queries[1] = getOracleAverageQuery(variablePairPrice, 3600, 0);
-        // queries[2] = getOracleAverageQuery(variablePairPrice, 3600, 3600);
 
-        // SN TODO: Check if we really need _inputsToConsultMarketPool, or can just use globals
+        // [Variable enum, seconds, ago]
         queries[0] = getOracleAverageQuery(variablePairPrice, microWindow, 0);
         queries[1] = getOracleAverageQuery(variablePairPrice, macroWindow, 0);
         queries[2] = getOracleAverageQuery(variablePairPrice, macroWindow, macroWindow);
@@ -308,15 +317,6 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
         uint256 _macroWindow = macroWindow;
         address _marketPool = marketPool;
         address _ovlWethPool = ovlWethPool;
-
-        // // SN TODO
-        // // consult to market pool
-        // // secondsAgo.length = 4; twaps.length = liqs.length = 3
-        // (
-        //     uint32[] memory secondsAgos,
-        //     uint32[] memory windows,
-        //     uint256[] memory nowIdxs
-        // ) = _inputsToConsultMarketPool(_microWindow, _macroWindow);
 
         /* Pair Price Calculations */
         uint256[] memory twaps = getPairPrices();
@@ -338,81 +338,5 @@ contract OverlayV1BalancerV2Feed is OverlayV1Feed {
                 reserveOverMicroWindow: reserve,
                 hasReserve: true // only time false if not using a spot AMM (like for chainlink)
             });
-    }
-
-    /// @dev returns input params needed for call to marketPool consult
-    function _inputsToConsultMarketPool(uint256 _microWindow, uint256 _macroWindow)
-        private
-        pure
-        returns (
-            uint32[] memory,
-            uint32[] memory,
-            uint256[] memory
-        )
-    {
-        uint32[] memory secondsAgos = new uint32[](4);
-        uint32[] memory windows = new uint32[](3);
-        uint256[] memory nowIdxs = new uint256[](3);
-
-        // number of seconds in past for which we want accumulator snapshot
-        // for Oracle.Data, need:
-        //  1. now (0 s ago)
-        //  2. now - microWindow (microWindow seconds ago)
-        //  3. now - macroWindow (macroWindow seconds ago)
-        //  4. now - 2 * macroWindow (2 * macroWindow seconds ago)
-        secondsAgos[0] = uint32(_macroWindow * 2);
-        secondsAgos[1] = uint32(_macroWindow);
-        secondsAgos[2] = uint32(_microWindow);
-        secondsAgos[3] = 0;
-
-        // window lengths for each cumulative differencing
-        // in terms of prices, will use for indexes
-        //  0: priceOneMacroWindowAgo
-        //  1: priceOverMacroWindow
-        //  2: priceOverMicroWindow
-        windows[0] = uint32(_macroWindow);
-        windows[1] = uint32(_macroWindow);
-        windows[2] = uint32(_microWindow);
-
-        // index in secondsAgos which we treat as current time when differencing
-        // for mean calcs
-        nowIdxs[0] = 1;
-        nowIdxs[1] = secondsAgos.length - 1;
-        nowIdxs[2] = secondsAgos.length - 1;
-
-        return (secondsAgos, windows, nowIdxs);
-    }
-
-    /// @dev returns input params needed for call to ovlWethPool consult
-    function _inputsToConsultOvlWethPool(uint256 _microWindow, uint256 _macroWindow)
-        private
-        pure
-        returns (
-            uint32[] memory,
-            uint32[] memory,
-            uint256[] memory
-        )
-    {
-        uint32[] memory secondsAgos = new uint32[](2);
-        uint32[] memory windows = new uint32[](1);
-        uint256[] memory nowIdxs = new uint256[](1);
-
-        // number of seconds in past for which we want accumulator snapshot
-        // for Oracle.Data, need:
-        //  1. now (0 s ago)
-        //  2. now - microWindow (microWindow seconds ago)
-        secondsAgos[0] = uint32(_microWindow);
-        secondsAgos[1] = 0;
-
-        // window lengths for each cumulative differencing
-        // in terms of prices, will use for indexes
-        //  0: priceOvlWethOverMicroWindow
-        windows[0] = uint32(_microWindow);
-
-        // index in secondsAgos which we treat as current time when differencing
-        // for mean calcs
-        nowIdxs[0] = secondsAgos.length - 1;
-
-        return (secondsAgos, windows, nowIdxs);
     }
 }

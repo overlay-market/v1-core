@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-
-// SN TODO: Direct copy from IOverlayV1UniswapV3Feed.sol -> Needs modification to suit the 
+// SN TODO: Direct copy from IOverlayV1UniswapV3Feed.sol -> Needs modification to suit the
 // OverlayV1BalancerV2Feed.sol contract
 import "../IOverlayV1Feed.sol";
 
