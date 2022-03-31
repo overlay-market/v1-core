@@ -7,14 +7,14 @@ import "./FixedPoint.sol";
 library Position {
     using FixedPoint for uint256;
     uint256 internal constant ONE = 1e18;
+    uint256 internal constant RATIO_PRECISION_SHIFT = 1e4; // RATIO_PRECISION = 1e14
 
-    // TODO: pack better
     struct Info {
-        uint120 notional; // initial notional = collateral * leverage
-        uint120 debt; // debt
+        uint96 notional; // initial notional = collateral * leverage
+        uint96 debt; // debt
+        uint48 entryToMidRatio; // ratio of entryPrice / _midFromFeed() at build
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated
-        uint256 entryPrice; // price received at entry
         uint256 oiShares; // shares of aggregate open interest on side
     }
 
@@ -64,6 +64,44 @@ library Position {
     /// @dev Is false if position has been liquidated or has zero oi
     function exists(Info memory self) internal pure returns (bool exists_) {
         return (!self.liquidated && self.notional > 0);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    POSITION ENTRY PRICE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Computes the entryToMidRatio cast to uint48 to be set
+    /// @notice on position build
+    function calcEntryToMidRatio(uint256 _entryPrice, uint256 _midPrice)
+        internal
+        pure
+        returns (uint48)
+    {
+        require(_entryPrice <= 2 * _midPrice, "OVLV1: value == 0 at entry");
+        return uint48(_entryPrice.divDown(_midPrice) / RATIO_PRECISION_SHIFT);
+    }
+
+    /// @notice Computes the ratio of the entryPrice of position to the midPrice
+    /// @notice at build cast to uint256
+    function getEntryToMidRatio(Info memory self) internal pure returns (uint256) {
+        return (uint256(self.entryToMidRatio) * RATIO_PRECISION_SHIFT);
+    }
+
+    /// @notice Computes the entryPrice of the position cast to uint256
+    /// @dev entryPrice = entryToMidRatio * midPrice (at build)
+    function entryPrice(Info memory self) internal pure returns (uint256 entryPrice_) {
+        uint256 priceRatio = getEntryToMidRatio(self);
+        uint256 oi = _oiShares(self);
+        uint256 q = _notional(self);
+
+        // will only be zero if all oi shares unwound; handles 0/0 case
+        // of notion / oi
+        if (oi == 0) {
+            return 0;
+        }
+
+        // entry = ratio * mid = ratio * (notional / oi)
+        entryPrice_ = priceRatio.mulUp(q).divUp(oi);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -142,7 +180,7 @@ library Position {
         uint256 posDebt = debtCurrent(self, fraction);
 
         uint256 posOiCurrent = oiCurrent(self, fraction, oiTotalOnSide, oiTotalSharesOnSide);
-        uint256 entryPrice = self.entryPrice;
+        uint256 posEntryPrice = entryPrice(self);
 
         // NOTE: PnL = +/- oiCurrent * [currentPrice - entryPrice]; ... (w/o capPayoff)
         // NOTE: fundingPayments = notionalInitial * ( oiCurrent / oiInitial - 1 )
@@ -156,17 +194,17 @@ library Position {
                 posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial) +
                 Math.min(
                     posOiCurrent.mulUp(currentPrice),
-                    posOiCurrent.mulUp(entryPrice).mulUp(ONE + capPayoff)
+                    posOiCurrent.mulUp(posEntryPrice).mulUp(ONE + capPayoff)
                 );
             // floor to 0
-            val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(entryPrice));
+            val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(posEntryPrice));
         } else {
             // NOTE: capPayoff >= 1, so no need to include w short
             // val = notionalInitial * oiCurrent / oiInitial + oiCurrent * entryPrice
             //       - oiCurrent * currentPrice - debt
             val_ =
                 posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial) +
-                posOiCurrent.mulUp(entryPrice);
+                posOiCurrent.mulUp(posEntryPrice);
             // floor to 0
             val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(currentPrice));
         }

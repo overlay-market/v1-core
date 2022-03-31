@@ -60,11 +60,11 @@ interface IOverlayV1Market {
         external
         view
         returns (
-            uint120 notional_,
-            uint120 debt_,
+            uint96 notional_,
+            uint96 debt_,
+            uint48 entryToMidRatio_,
             bool isLong_,
             bool liquidated_,
-            uint256 entryPrice_,
             uint256 oiShares_
         );
 
@@ -127,10 +127,7 @@ interface IOverlayV1Market {
     function backRunBound(Oracle.Data memory data) external view returns (uint256);
 
     // transforms notional into number of contracts (open interest)
-    function oiFromNotional(Oracle.Data memory data, uint256 notional)
-        external
-        view
-        returns (uint256);
+    function oiFromNotional(uint256 notional, uint256 midPrice) external view returns (uint256);
 
     // bid price given oracle data and recent volume
     function bid(Oracle.Data memory data, uint256 volume) external view returns (uint256 bid_);

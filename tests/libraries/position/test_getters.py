@@ -3,14 +3,17 @@ def test_oi_shares_current(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 1000000000000000000  # 1
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(oi * (fraction / 1e18))  # 10
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiSharesCurrent(pos, fraction)
     assert expect == actual
 
@@ -20,14 +23,17 @@ def test_oi_shares_current_when_fraction_less_than_one(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 250000000000000000  # 0.25
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(oi * (fraction / 1e18))  # 10
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiSharesCurrent(pos, fraction)
     assert expect == actual
 
@@ -37,14 +43,17 @@ def test_debt(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 1000000000000000000  # 1
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(debt * (fraction / 1e18))  # 2
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.debtCurrent(pos, fraction)
     assert expect == actual
 
@@ -54,14 +63,17 @@ def test_debt_when_fraction_less_than_one(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 250000000000000000  # 0.25
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(debt * (fraction / 1e18))  # 2
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.debtCurrent(pos, fraction)
     assert expect == actual
 
@@ -71,14 +83,17 @@ def test_oi_initial(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 1000000000000000000  # 1
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(oi * (fraction / 1e18))  # 2
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiInitial(pos, fraction)
     assert expect == actual
 
@@ -88,14 +103,17 @@ def test_oi_initial_when_fraction_less_than_one(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 250000000000000000  # 0.25
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check oiShares * fraction
     expect = int(oi * (fraction / 1e18))  # 2
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.oiInitial(pos, fraction)
     assert expect == actual
 
@@ -105,14 +123,17 @@ def test_cost(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 1000000000000000000  # 1
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check cost = notional - debt
     expect = int((notional - debt) * (fraction / 1e18))  # 8
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.cost(pos, fraction)
     assert expect == actual
 
@@ -122,14 +143,17 @@ def test_cost_when_fraction_less_than_one(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
     fraction = 250000000000000000  # 0.25
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check cost = oi - debt
     expect = int((notional - debt) * (fraction / 1e18))  # 8
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.cost(pos, fraction)
     assert expect == actual
 
@@ -139,13 +163,16 @@ def test_exists(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check exists when not liquidated and oi > 0
     expect = True
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.exists(pos)
     assert expect == actual
 
@@ -155,13 +182,16 @@ def test_exists_when_liquidated(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = True
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check exists when not liquidated and oi > 0
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.exists(pos)
     assert expect == actual
 
@@ -171,12 +201,15 @@ def test_exists_when_oi_zero(position):
     debt = 2000000000000000000  # 2
     is_long = True
     liquidated = False
-    entry_price = 100000000000000000000  # 100
+    mid_price = 100000000000000000000  # 100
+    entry_price = 101000000000000000000  # 101
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
 
     # check exists when not liquidated and oi > 0
     expect = False
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
     actual = position.exists(pos)
     assert expect == actual

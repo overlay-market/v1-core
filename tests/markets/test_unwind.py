@@ -10,6 +10,7 @@ from .utils import (
     calculate_position_info,
     get_position_key,
     mid_from_feed,
+    entry_from_mid_ratio,
     RiskParameter
 )
 
@@ -58,8 +59,14 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
+
+    # calculate the entry price
+    data = feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -112,15 +119,16 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     expect_debt = int(expect_debt * (1 - fraction))
 
     # check expected pos attributes match actual after unwind
-    (actual_notional, actual_debt, actual_is_long, actual_liquidated,
-     actual_entry_price, actual_oi_shares) = market.positions(pos_key)
+    (actual_notional, actual_debt, actual_mid_ratio,
+     actual_is_long, actual_liquidated,
+     actual_oi_shares) = market.positions(pos_key)
 
     assert int(actual_oi_shares) == approx(expect_oi_shares)
     assert int(actual_notional) == approx(expect_notional)
     assert int(actual_debt) == approx(expect_debt)
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
-    assert actual_entry_price == expect_entry_price
+    assert actual_mid_ratio == expect_mid_ratio
 
     # check unwind event with expected values
     assert "Unwind" in tx.events
@@ -184,8 +192,9 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -328,8 +337,9 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -533,8 +543,14 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
+
+    # calculate the entry price
+    data = feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -676,8 +692,9 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -766,8 +783,9 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -860,8 +878,14 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
+
+    # calculate the entry price
+    data = mock_feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -967,8 +991,14 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
+
+    # calculate the entry price
+    data = mock_feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1079,8 +1109,14 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
+
+    # calculate the entry price
+    data = mock_feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1187,8 +1223,14 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
+
+    # calculate the entry price
+    data = mock_feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1313,8 +1355,9 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
@@ -1562,8 +1605,14 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_is_long, expect_liquidated,
-     expect_entry_price, expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_ratio,
+     expect_is_long, expect_liquidated,
+     expect_oi_shares) = mock_market.positions(pos_key)
+
+    # calculate the entry price
+    data = mock_feed.latest()
+    mid_price = int(mid_from_feed(data))
+    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
@@ -1732,8 +1781,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         # cache position attributes for everything for later comparison
         pos_key = get_position_key(trader.address, id)
         expect_pos = market.positions(pos_key)
-        (expect_notional, expect_debt, expect_is_long,
-         expect_liquidated, expect_entry_price, expect_oi_shares) = expect_pos
+        (expect_notional, expect_debt, expect_mid_ratio,
+         expect_is_long, expect_liquidated, expect_oi_shares) = expect_pos
 
         # unwind fraction of position for trader
         _ = market.unwind(id, input_fraction, input_price_limit_trader,
@@ -1741,8 +1790,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
         # get updated actual position attributes
         actual_pos = market.positions(pos_key)
-        (actual_notional, actual_debt, actual_is_long,
-         actual_liquidated, actual_entry_price, actual_oi_shares) = actual_pos
+        (actual_notional, actual_debt, actual_mid_ratio,
+         actual_is_long, actual_liquidated, actual_oi_shares) = actual_pos
 
         # check position info for id has decreased position oi, debt
         expect_oi_shares_unwound = int(expect_oi_shares * fraction)
@@ -1758,7 +1807,7 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         assert int(actual_debt) == approx(expect_debt)
         assert actual_is_long == expect_is_long
         assert actual_liquidated == expect_liquidated
-        assert actual_entry_price == expect_entry_price
+        assert actual_mid_ratio == expect_mid_ratio
 
         # check aggregate oi and oi shares on side have decreased
         expect_total_oi = total_oi - expect_oi_unwound

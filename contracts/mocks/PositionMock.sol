@@ -35,6 +35,26 @@ contract PositionMock {
     }
 
     /*///////////////////////////////////////////////////////////////
+                    POSITION ENTRY PRICE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function calcEntryToMidRatio(uint256 entryPrice, uint256 midPrice)
+        external
+        view
+        returns (uint48)
+    {
+        return Position.calcEntryToMidRatio(entryPrice, midPrice);
+    }
+
+    function getEntryToMidRatio(Position.Info memory pos) external view returns (uint256) {
+        return pos.getEntryToMidRatio();
+    }
+
+    function entryPrice(Position.Info memory pos) external view returns (uint256) {
+        return pos.entryPrice();
+    }
+
+    /*///////////////////////////////////////////////////////////////
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 

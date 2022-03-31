@@ -20,9 +20,11 @@ def test_positions_setter(position, alice):
     notional = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
 
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
+    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, entry_price)
 
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
     position.set(owner, id, pos)
 
     # pos key
@@ -44,9 +46,12 @@ def test_positions_getter(position, bob):
     entry_price = 100000000000000000000  # 100
     notional = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
-    oi = (notional / entry_price) * 1000000000000000000  # 0.1
 
-    pos = (notional, debt, is_long, liquidated, entry_price, oi)
+    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_ratio = position.calcEntryToMidRatio(entry_price, entry_price)
+
+    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
     position.set(owner, id, pos)
 
     # check retrieved position is expected

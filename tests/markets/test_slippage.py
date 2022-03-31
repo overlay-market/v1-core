@@ -3,7 +3,9 @@ from brownie import reverts
 from brownie.test import given, strategy
 from decimal import Decimal
 
-from .utils import calculate_position_info, get_position_key, RiskParameter
+from .utils import (
+    calculate_position_info, get_position_key, mid_from_feed, RiskParameter
+)
 
 
 # NOTE: Tests passing with isolation fixture
@@ -34,11 +36,14 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     # NOTE: ask(), bid() tested in test_price.py
     # NOTE: capNotional(), oiFromNotional() tested in test_oi_cap.py
     data = feed.latest()
-    oi = market.oiFromNotional(data, int(notional * Decimal(1e18)))
+    mid = mid_from_feed(data)
+
+    oi = market.oiFromNotional(int(notional * Decimal(1e18)), mid)
     cap_notional = Decimal(market.capNotionalAdjustedForBounds(
         data, market.params(RiskParameter.CAP_NOTIONAL.value)))
-    cap_oi = Decimal(market.oiFromNotional(data, cap_notional))
+    cap_oi = Decimal(market.oiFromNotional(cap_notional, mid))
     volume = int((oi / cap_oi) * Decimal(1e18))
+
     price = market.ask(data, volume) if is_long else market.bid(data, volume)
 
     # input values for tx
@@ -111,11 +116,14 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     # NOTE: ask(), bid() tested in test_price.py
     # NOTE: capNotional(), oiFromNotional() tested in test_oi_cap.py
     data = feed.latest()
-    oi = market.oiFromNotional(data, actual_notional)
+    mid = mid_from_feed(data)
+
+    oi = market.oiFromNotional(actual_notional, mid)
     cap_notional = Decimal(market.capNotionalAdjustedForBounds(
         data, market.params(RiskParameter.CAP_NOTIONAL.value)))
-    cap_oi = Decimal(market.oiFromNotional(data, cap_notional))
+    cap_oi = Decimal(market.oiFromNotional(cap_notional, mid))
     volume = int((oi / cap_oi) * Decimal(1e18))
+
     price = market.bid(data, volume) if is_long else market.ask(data, volume)
 
     # input values
