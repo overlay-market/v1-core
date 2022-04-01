@@ -2,7 +2,7 @@ import pytest
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
     OverlayV1UniswapV3Factory, OverlayV1FeedFactoryMock,
-    OverlayV1FeedMock, OverlayV1UniswapV3Feed, web3
+    OverlayV1FeedMock, OverlayV1Deployer, OverlayV1UniswapV3Feed, web3
 )
 
 
@@ -29,6 +29,11 @@ def rando(accounts):
 @pytest.fixture(scope="module")
 def fee_recipient(accounts):
     yield accounts[4]
+
+
+@pytest.fixture(scope="module")
+def fake_factory(accounts):
+    yield accounts[5]
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +68,26 @@ def create_token(gov, alice, bob, request):
 @pytest.fixture(scope="module")
 def ovl(create_token):
     yield create_token()
+
+
+@pytest.fixture(scope="module", params=[
+    (600, 3600, 1000000000000000000, 2000000000000000000000000)
+])
+def create_fake_feed(gov, request):
+    micro, macro, p, r = request.param
+
+    def create_fake_feed(micro_window=micro, macro_window=macro,
+                         price=p, reserve=r):
+        fake_feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
+                               price, reserve)
+        return fake_feed
+
+    yield create_fake_feed
+
+
+@pytest.fixture(scope="module")
+def fake_feed(create_fake_feed):
+    yield create_fake_feed()
 
 
 @pytest.fixture(scope="module")
@@ -203,6 +228,19 @@ def create_factory(gov, fee_recipient, request, ovl, governor_role,
 @pytest.fixture(scope="module")
 def factory(create_factory):
     yield create_factory()
+
+
+@pytest.fixture(scope="module")
+def create_fake_deployer(fake_factory, ovl):
+    def create_fake_deployer(fake_factory=fake_factory, ovl=ovl):
+        return fake_factory.deploy(OverlayV1Deployer, ovl)
+
+    yield create_fake_deployer
+
+
+@pytest.fixture(scope="module")
+def fake_deployer(create_fake_deployer):
+    yield create_fake_deployer()
 
 
 @pytest.fixture(scope="module")

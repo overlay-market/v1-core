@@ -32,6 +32,23 @@ def test_mock_feed_fixture(mock_feed):
     assert mock_feed.reserve() == 2000000000000000000000000
 
 
+def test_fake_feed_fixture(fake_feed):
+    assert fake_feed.microWindow() == 600
+    assert fake_feed.macroWindow() == 3600
+    assert fake_feed.price() == 1000000000000000000
+    assert fake_feed.reserve() == 2000000000000000000000000
+
+
+def test_fake_deployer_fixture(fake_deployer, fake_factory, ovl):
+    assert fake_deployer.factory() == fake_factory
+    assert fake_deployer.ovl() == ovl
+
+    tok, feed, fact = fake_deployer.parameters()
+    assert tok == "0x0000000000000000000000000000000000000000"
+    assert feed == "0x0000000000000000000000000000000000000000"
+    assert fact == "0x0000000000000000000000000000000000000000"
+
+
 def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
                              minter_role, burner_role, gov):
     # check addresses set properly

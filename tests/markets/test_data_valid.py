@@ -4,8 +4,8 @@ from math import exp
 from .utils import RiskParameter
 
 
-def test_data_is_valid(market):
-    tx = market.update()
+def test_data_is_valid(market, rando):
+    tx = market.update({"from": rando})
     data = tx.return_value
     idx = RiskParameter.PRICE_DRIFT_UPPER_LIMIT.value
 

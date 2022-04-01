@@ -657,7 +657,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     # notional / price rounds down to zero
     price = int(Decimal(input_collateral)
                 * Decimal(input_leverage) * Decimal(1 + tol))
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(price, {"from": bob})
 
     with reverts("OVLV1:oi==0"):
         _ = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -667,7 +667,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     price = int(Decimal(input_collateral)
                 * Decimal(input_leverage) * Decimal(1 - tol))
 
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(price, {"from": bob})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
 

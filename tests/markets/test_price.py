@@ -7,12 +7,12 @@ from pytest import approx
 from .utils import RiskParameter
 
 
-def test_bid_adds_static_spread(market):
+def test_bid_adds_static_spread(market, rando):
     # params idx for delta param
     idx = RiskParameter.DELTA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 
@@ -31,13 +31,13 @@ def test_bid_adds_static_spread(market):
 @given(
     volume=strategy('decimal', min_value='0.0001', max_value='1.0000',
                     places=4))
-def test_bid_adds_market_impact(market, volume):
+def test_bid_adds_market_impact(market, volume, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 
@@ -54,13 +54,13 @@ def test_bid_adds_market_impact(market, volume):
     assert actual_bid == approx(expect_bid)
 
 
-def test_bid_reverts_when_slippage_greater_than_max(market):
+def test_bid_reverts_when_slippage_greater_than_max(market, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 
@@ -84,12 +84,12 @@ def test_bid_reverts_when_slippage_greater_than_max(market):
     _ = market.bid(data, input_volume)
 
 
-def test_ask_adds_static_spread(market):
+def test_ask_adds_static_spread(market, rando):
     # params idx for delta param
     idx = RiskParameter.DELTA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 
@@ -108,13 +108,13 @@ def test_ask_adds_static_spread(market):
 @given(
     volume=strategy('decimal', min_value='0.0001', max_value='1.0000',
                     places=4))
-def test_ask_adds_market_impact(market, volume):
+def test_ask_adds_market_impact(market, volume, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 
@@ -131,13 +131,13 @@ def test_ask_adds_market_impact(market, volume):
     assert actual_ask == approx(expect_ask)
 
 
-def test_ask_reverts_when_impact_greater_than_max_slippage(market):
+def test_ask_reverts_when_impact_greater_than_max_slippage(market, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
 
     # get the price data from call to update. update tests in test_update.py
-    tx = market.update()
+    tx = market.update({"from": rando})
     data = tx.return_value
     _, _, _, price_micro, price_macro, _, _, _ = data
 

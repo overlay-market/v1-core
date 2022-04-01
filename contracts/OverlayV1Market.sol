@@ -267,6 +267,18 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
             uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
 
+            // check position not liquidatable otherwise can't unwind
+            require(
+                !pos.liquidatable(
+                    oiTotalOnSide,
+                    oiTotalSharesOnSide,
+                    _midFromFeed(data), // mid price used on liquidations
+                    params.get(Risk.Parameters.CapPayoff),
+                    params.get(Risk.Parameters.MaintenanceMarginFraction)
+                ),
+                "OVLV1:liquidatable"
+            );
+
             // longs get the bid and shorts get the ask on unwind
             // register the additional volume on either the ask or bid
             // where volume = oi / capOi

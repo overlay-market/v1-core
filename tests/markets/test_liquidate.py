@@ -115,7 +115,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # calculate expected exit price
     # NOTE: no volume should be added to rollers on liquidate
@@ -279,7 +279,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_owner = alice.address
@@ -391,7 +391,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
             - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_owner = alice.address
@@ -507,7 +507,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # get the micro window
     data = mock_feed.latest()
@@ -633,7 +633,7 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # get the micro window
     data = mock_feed.latest()
@@ -776,7 +776,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_owner = alice.address
@@ -952,7 +952,7 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # priors actual values
     expect_balance_rando = ovl.balanceOf(rando)
@@ -1087,7 +1087,7 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # priors actual values
     recipient = factory.feeRecipient()
@@ -1196,7 +1196,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
         price_multiplier *= Decimal(1 + tol)
 
     price = Decimal(mock_feed.price()) * price_multiplier
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(price, {"from": rando})
 
     # priors actual values
     recipient = factory.feeRecipient()
@@ -1340,7 +1340,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1458,7 +1458,7 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1565,7 +1565,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
             - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
 
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # input values for liquidate
     input_pos_id = pos_id
@@ -1592,7 +1592,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
             - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
-    mock_feed.setPrice(liq_price)
+    mock_feed.setPrice(liq_price, {"from": rando})
 
     # check can liquidate position when liquidatable
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
