@@ -88,16 +88,17 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 price // liquidation price
     );
 
-    constructor(
-        address _ovl,
-        address _feed,
-        address _factory,
-        uint256[15] memory _params
-    ) {
+    constructor() {
+        (address _ovl, address _feed, address _factory) = IOverlayV1Deployer(msg.sender)
+            .parameters();
         ovl = IOverlayV1Token(_ovl);
         feed = _feed;
         factory = _factory;
+    }
 
+    /// @notice initializes the market and its risk params
+    /// @notice called only once by factory on deployment
+    function initialize(uint256[15] memory _params) external onlyFactory {
         // initialize update data
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(_midFromFeed(data) > 0, "OVLV1:!data");

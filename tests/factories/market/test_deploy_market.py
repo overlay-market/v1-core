@@ -1,6 +1,6 @@
 import pytest
 from copy import copy
-from brownie import chain, interface, reverts
+from brownie import chain, reverts, OverlayV1Market
 from collections import OrderedDict
 
 
@@ -76,7 +76,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert actual_event == expect_event
 
     # check contract deployed with correct constructor params
-    market_contract = interface.IOverlayV1Market(actual_market)
+    market_contract = OverlayV1Market.at(actual_market)
 
     # check immutables set in constructor
     assert market_contract.ovl() == ovl

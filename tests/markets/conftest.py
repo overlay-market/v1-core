@@ -1,7 +1,8 @@
 import pytest
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
-    OverlayV1UniswapV3Feed, OverlayV1FeedMock, web3
+    OverlayV1UniswapV3Factory, OverlayV1FeedFactoryMock,
+    OverlayV1FeedMock, OverlayV1UniswapV3Feed, web3
 )
 
 
@@ -65,22 +66,6 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl):
-    def create_factory(tok=ovl, recipient=fee_recipient):
-        # create the market factory
-        # NOTE: Doesn't do anything in these market tests
-        # NOTE: except return factory.feeRecipient()
-        factory = gov.deploy(OverlayV1Factory, tok, recipient)
-        return factory
-    yield create_factory
-
-
-@pytest.fixture(scope="module")
-def factory(create_factory):
-    yield create_factory()
-
-
-@pytest.fixture(scope="module")
 def dai():
     yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
 
@@ -107,29 +92,45 @@ def pool_uniweth_30bps():
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
+@pytest.fixture(scope="module", params=[(600, 3600)])
+def create_feed_factory(gov, pool_uniweth_30bps, weth, uni, request):
+    micro, macro = request.param
+    oe_pool = pool_uniweth_30bps.address
+    tok = uni.address
+
+    def create_feed_factory(ovlweth_pool=oe_pool, ovl=tok, micro_window=micro,
+                            macro_window=macro):
+        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovlweth_pool, ovl,
+                                  micro_window, macro_window)
+        return feed_factory
+
+    yield create_feed_factory
+
+
+@pytest.fixture(scope="module")
+def feed_factory(create_feed_factory):
+    yield create_feed_factory()
+
+
 # TODO: params for different OverlayV1Feed types ... (to test BalancerV2
 # and UniswapV3 in same test run)
-@pytest.fixture(scope="module", params=[(600, 3600)])
-def create_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
-                uni, request):
-    micro, macro = request.param
-
+@pytest.fixture(scope="module")
+def create_feed(gov, feed_factory, pool_daiweth_30bps, dai, weth, request):
     # ovlweth treated as uniweth for test purposes, feed ovl treated as uni
     mkt_pool = pool_daiweth_30bps.address
-    oe_pool = pool_uniweth_30bps.address  # ovlweth => uniweth for testing
-    tok = uni.address  # ovl => uni for testing
     mkt_base_tok = weth.address
     mkt_quote_tok = dai.address
     mkt_base_amt = 1 * 10 ** weth.decimals()
 
-    def create_feed(market_pool=mkt_pool, ovlweth_pool=oe_pool, ovl=tok,
+    def create_feed(market_pool=mkt_pool,
                     market_base_token=mkt_base_tok,
                     market_quote_token=mkt_quote_tok,
-                    market_base_amount=mkt_base_amt, micro_window=micro,
-                    macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool,
-                          ovl, market_base_token, market_quote_token,
-                          market_base_amount, micro_window, macro_window)
+                    market_base_amount=mkt_base_amt):
+        tx = feed_factory.deployFeed(
+            market_pool, market_base_token, market_quote_token,
+            market_base_amount)
+        feed_addr = tx.return_value
+        feed = OverlayV1UniswapV3Feed.at(feed_addr)
         return feed
 
     yield create_feed
@@ -140,17 +141,34 @@ def feed(create_feed):
     yield create_feed()
 
 
+@pytest.fixture(scope="module", params=[(600, 3600)])
+def create_mock_feed_factory(gov, request):
+    micro, macro = request.param
+
+    def create_mock_feed_factory(micro_window=micro, macro_window=macro):
+        feed_factory = gov.deploy(OverlayV1FeedFactoryMock, micro_window,
+                                  macro_window)
+        return feed_factory
+
+    yield create_mock_feed_factory
+
+
+@pytest.fixture(scope="module")
+def mock_feed_factory(create_mock_feed_factory):
+    yield create_mock_feed_factory()
+
+
 # Mock feed to easily change price/reserve for testing of various conditions
 @pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 2000000000000000000000000)
+    (1000000000000000000, 2000000000000000000000000)
 ])
-def create_mock_feed(gov, request):
-    micro, macro, price, reserve = request.param
+def create_mock_feed(gov, mock_feed_factory, request):
+    price, reserve = request.param
 
-    def create_mock_feed(micro_window=micro, macro_window=macro, price=price,
-                         reserve=reserve):
-        mock_feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
-                               price, reserve)
+    def create_mock_feed(price=price, reserve=reserve):
+        tx = mock_feed_factory.deployFeed(price, reserve)
+        mock_feed_addr = tx.return_value
+        mock_feed = OverlayV1FeedMock.at(mock_feed_addr)
         return mock_feed
 
     yield create_mock_feed
@@ -159,6 +177,44 @@ def create_mock_feed(gov, request):
 @pytest.fixture(scope="module")
 def mock_feed(create_mock_feed):
     yield create_mock_feed()
+
+
+@pytest.fixture(scope="module")
+def create_factory(gov, fee_recipient, request, ovl, governor_role,
+                   feed_factory, mock_feed_factory):
+    def create_factory(tok=ovl, recipient=fee_recipient):
+        # create the market factory
+        factory = gov.deploy(OverlayV1Factory, tok, recipient)
+
+        # grant market factory token admin role
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
+
+        # grant gov the governor role on token to access factory methods
+        tok.grantRole(governor_role, gov, {"from": gov})
+
+        # add both feed factories
+        factory.addFeedFactory(feed_factory, {"from": gov})
+        factory.addFeedFactory(mock_feed_factory, {"from": gov})
+
+        return factory
+    yield create_factory
+
+
+@pytest.fixture(scope="module")
+def factory(create_factory):
+    yield create_factory()
+
+
+@pytest.fixture(scope="module")
+def create_market(gov, ovl):
+    def create_market(feed, factory, feed_factory, risk_params,
+                      governance=gov, ovl=ovl):
+        tx = factory.deployMarket(feed_factory, feed, risk_params)
+        market_addr = tx.return_value
+        market = OverlayV1Market.at(market_addr)
+        return market
+
+    yield create_market
 
 
 @pytest.fixture(scope="module", params=[(
@@ -178,22 +234,12 @@ def mock_feed(create_mock_feed):
     25000000000000,  # priceDriftUpperLimit
     14,  # averageBlockTime
 )])
-def mock_market(gov, mock_feed, factory, ovl, create_market, request):
+def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
+                create_market, request):
     risk_params = request.param
-    yield create_market(feed=mock_feed, factory=factory,
-                        risk_params=risk_params, governance=gov, ovl=ovl)
-
-
-@pytest.fixture(scope="module")
-def create_market(gov, ovl, minter_role, burner_role):
-    def create_market(feed, factory, risk_params, governance=gov, ovl=ovl):
-        market = governance.deploy(OverlayV1Market, ovl, feed, factory,
-                                   risk_params)
-        ovl.grantRole(minter_role, market, {"from": governance})
-        ovl.grantRole(burner_role, market, {"from": governance})
-        return market
-
-    yield create_market
+    yield create_market(feed=mock_feed, feed_factory=mock_feed_factory,
+                        factory=factory, risk_params=risk_params,
+                        governance=gov, ovl=ovl)
 
 
 @pytest.fixture(scope="module", params=[(
@@ -213,7 +259,8 @@ def create_market(gov, ovl, minter_role, burner_role):
     25000000000000,  # priceDriftUpperLimit
     14,  # averageBlockTime
 )])
-def market(gov, feed, factory, ovl, create_market, request):
+def market(gov, feed, feed_factory, factory, ovl, create_market, request):
     risk_params = request.param
-    yield create_market(feed=feed, factory=factory, risk_params=risk_params,
+    yield create_market(feed=feed, feed_factory=feed_factory,
+                        factory=factory, risk_params=risk_params,
                         governance=gov, ovl=ovl)

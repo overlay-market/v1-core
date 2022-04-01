@@ -1,6 +1,7 @@
 import pytest
 from brownie import (
-    interface, OverlayV1Factory, OverlayV1Token, OverlayV1FeedFactoryMock,
+    OverlayV1Factory, OverlayV1Market,
+    OverlayV1Deployer, OverlayV1Token, OverlayV1FeedFactoryMock,
     web3
 )
 
@@ -179,10 +180,10 @@ def factory(create_factory):
 @pytest.fixture(scope="module")
 def market(factory, feed_three):
     market_addr = factory.getMarket(feed_three)
-    yield interface.IOverlayV1Market(market_addr)
+    yield OverlayV1Market.at(market_addr)
 
 
 @pytest.fixture(scope="module")
 def deployer(factory):
     deployer_addr = factory.deployer()
-    yield interface.IOverlayV1Deployer(deployer_addr)
+    yield OverlayV1Deployer.at(deployer_addr)
