@@ -142,3 +142,35 @@ def test_transform_when_last_timestamp_zero(roller):
     expect = (now, window, value)
     actual = roller.transform(snapshot, now, window, value)
     assert actual == expect
+
+
+def test_transform_when_timestamp_32_wraps(roller):
+    # timestampLast == 0 edge case occurs before first write to rolling values
+    accumulator_last = 200000000000000000  # 20% of cap
+    dt = 100
+    now = 2**32 + 10
+    timestamp_last = now - dt
+    window_last = 1000
+    value = 500000000000000000  # 50% of cap
+    window = 600
+
+    # assemble Roller.snapshot struct
+    snapshot = (timestamp_last, window_last, accumulator_last)
+
+    # calculate the new snapshot state accumulator value
+    accumulator_last_decayed = accumulator_last * (1 - dt / window_last)
+    expect_accumulator = int(accumulator_last_decayed + value)
+
+    # calculate the new snapshot state window value
+    w1 = abs(accumulator_last_decayed)
+    w2 = abs(value)
+    expect_window = int((w1 * (window_last - dt) + w2 * window) / (w1 + w2))
+
+    # Check actual == expect
+    expect_timestamp = int(now % 2**32)
+    actual = roller.transform(snapshot, now, window, value)
+    (actual_timestamp, actual_window, actual_accumulator) = actual
+
+    assert actual_timestamp == expect_timestamp
+    assert int(actual_window) == approx(expect_window)
+    assert int(actual_accumulator) == approx(expect_accumulator)

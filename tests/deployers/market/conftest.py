@@ -65,9 +65,9 @@ def feed(create_feed):
 
 
 @pytest.fixture(scope="module")
-def create_deployer(factory):
+def create_deployer(factory, ovl):
     def create_deployer():
-        deployer = factory.deploy(OverlayV1Deployer)
+        deployer = factory.deploy(OverlayV1Deployer, ovl)
         return deployer
     yield create_deployer
 

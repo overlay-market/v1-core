@@ -13,7 +13,8 @@ def isolation(fn_isolation):
     pass
 
 
-def test_deploy_creates_market(ovl, feed, factory, gov):
+def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
+                                   fake_factory, gov):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -37,13 +38,18 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
               liquidation_fee_rate, trading_fee_rate, min_collateral,
               price_drift_upper_limit, average_block_time]
 
-    # deploy the market
-    market = gov.deploy(OverlayV1Market, ovl, feed, factory, params)
+    # deploy the market from the deployer
+    tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
+    market_addr = tx.return_value
+    market = OverlayV1Market.at(market_addr)
 
     # check market deployed correctly with immutables
     assert market.ovl() == ovl
-    assert market.feed() == feed
-    assert market.factory() == factory
+    assert market.feed() == fake_feed
+    assert market.factory() == fake_factory
+
+    # initialize market with risk params
+    market.initialize(params, {"from": fake_factory})
 
     # check market deployed correctly with risk params
     expect_params = params
@@ -51,7 +57,7 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
     assert expect_params == actual_params
 
     # check risk calc cached for price drift upper limit
-    data = feed.latest()
+    data = fake_feed.latest()
     (_, _, macro_window, _, _, _, _, _) = data
     drift = Decimal(price_drift_upper_limit) / Decimal(1e18)
     pow = drift * Decimal(macro_window)
@@ -60,7 +66,39 @@ def test_deploy_creates_market(ovl, feed, factory, gov):
     assert expect_drift == approx(actual_drift)
 
 
-def test_deploy_reverts_when_price_is_zero(ovl, mock_feed, factory, gov):
+def test_initialize_reverts_when_not_factory(fake_deployer, fake_feed,
+                                             fake_factory, rando):
+    # risk params
+    params = [
+        2220000000000,  # expect_k
+        500000000000000000,  # expect_lmbda
+        5000000000000000,  # expect_delta
+        7000000000000000000,  # expect_cap_payoff
+        900000000000000000000000,  # expect_cap_notional
+        4000000000000000000,  # expect_cap_leverage
+        3592000,  # expect_circuit_breaker_window
+        96670000000000000000000,  # expect_circuit_breaker_mint_target
+        50000000000000000,  # expect_maintenance_margin_fraction
+        200000000000000000,  # expect_maintenance_margin_burn_rate
+        5000000000000000,  # expect_liquidation_fee_rate
+        250000000000000,  # expect_trading_fee_rate
+        500000000000000,  # expect_min_collateral
+        50000000000000,  # expect_price_drift_upper_limit
+        14,  # expect_average_block_time
+    ]
+
+    # deploy the market from the deployer
+    tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
+    market_addr = tx.return_value
+    market = OverlayV1Market.at(market_addr)
+
+    # attempt to initialize not from factory
+    with reverts("OVLV1: !factory"):
+        _ = market.initialize(params, {"from": rando})
+
+
+def test_initialize_reverts_when_price_is_zero(ovl, fake_deployer, fake_feed,
+                                               fake_factory, gov):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -84,17 +122,24 @@ def test_deploy_reverts_when_price_is_zero(ovl, mock_feed, factory, gov):
               liquidation_fee_rate, trading_fee_rate, min_collateral,
               price_drift_upper_limit, average_block_time]
 
+    # deploy the market from the deployer
+    tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
+    market_addr = tx.return_value
+    market = OverlayV1Market.at(market_addr)
+
     # set mock feed price to zero
     price = 0
-    mock_feed.setPrice(price)
+    fake_feed.setPrice(price, {"from": gov})
 
     # check can not deploy the market
     with reverts("OVLV1:!data"):
-        gov.deploy(OverlayV1Market, ovl, mock_feed, factory, params)
+        market.initialize(params, {"from": fake_factory})
 
 
-def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, mock_feed,
-                                                          factory, gov):
+def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, fake_feed,
+                                                          fake_deployer,
+                                                          fake_factory,
+                                                          gov):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -118,13 +163,20 @@ def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, mock_feed,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
               price_drift_upper_limit, average_block_time]
 
+    # deploy the market from the deployer
+    tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
+    market_addr = tx.return_value
+    market = OverlayV1Market.at(market_addr)
+
     # check can not deploy the market
     with reverts("OVLV1: max lev immediately liquidatable"):
-        gov.deploy(OverlayV1Market, ovl, mock_feed, factory, params)
+        market.initialize(params, {"from": fake_factory})
 
 
-def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, mock_feed,
-                                                         factory, gov):
+def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, fake_feed,
+                                                         fake_deployer,
+                                                         fake_factory,
+                                                         gov):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -148,6 +200,11 @@ def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, mock_feed,
               liquidation_fee_rate, trading_fee_rate, min_collateral,
               price_drift_upper_limit, average_block_time]
 
+    # deploy the market from the deployer
+    tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
+    market_addr = tx.return_value
+    market = OverlayV1Market.at(market_addr)
+
     # check can not deploy the market
     with reverts("OVLV1: price drift exceeds max exp"):
-        gov.deploy(OverlayV1Market, ovl, mock_feed, factory, params)
+        market.initialize(params, {"from": fake_factory})

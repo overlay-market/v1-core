@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "./interfaces/IOverlayV1Deployer.sol";
 import "./interfaces/IOverlayV1Factory.sol";
+import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1FeedFactory.sol";
 
@@ -95,7 +96,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         feeRecipient = _feeRecipient;
 
         // create a new deployer to use when deploying markets
-        deployer = new OverlayV1Deployer{salt: keccak256(abi.encode(_ovl))}();
+        deployer = new OverlayV1Deployer(_ovl);
     }
 
     /// @dev adds a supported feed factory
@@ -119,7 +120,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _checkRiskParams(params);
 
         // deploy the new market
-        market_ = deployer.deploy(address(ovl), feed, params);
+        market_ = deployer.deploy(feed);
+
+        // initialize the new market
+        IOverlayV1Market(market_).initialize(params);
 
         // grant market mint and burn priveleges on ovl
         ovl.grantRole(MINTER_ROLE, market_);

@@ -74,6 +74,9 @@ interface IOverlayV1Market {
     // cached risk calcs
     function dpUpperLimit() external view returns (uint256);
 
+    // initializes market
+    function initialize(uint256[15] memory params) external;
+
     // position altering functions
     function build(
         uint256 collateral,

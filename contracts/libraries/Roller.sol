@@ -29,7 +29,9 @@ library Roller {
         uint32 timestamp32 = uint32(timestamp); // truncated by compiler
 
         // int/uint256 values to use in calculations
-        uint256 dt = uint256(timestamp32 - self.timestamp);
+        uint256 dt = timestamp32 >= self.timestamp
+            ? uint256(timestamp32 - self.timestamp)
+            : uint256(2**32) + uint256(timestamp32) - uint256(self.timestamp);
         uint256 snapWindow = uint256(self.window);
         int256 snapAccumulator = cumulative(self);
 

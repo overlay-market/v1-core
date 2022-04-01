@@ -1,5 +1,3 @@
-from brownie import chain
-
 from .utils import RiskParameter
 
 
@@ -32,6 +30,23 @@ def test_mock_feed_fixture(mock_feed):
     assert mock_feed.macroWindow() == 3600
     assert mock_feed.price() == 1000000000000000000
     assert mock_feed.reserve() == 2000000000000000000000000
+
+
+def test_fake_feed_fixture(fake_feed):
+    assert fake_feed.microWindow() == 600
+    assert fake_feed.macroWindow() == 3600
+    assert fake_feed.price() == 1000000000000000000
+    assert fake_feed.reserve() == 2000000000000000000000000
+
+
+def test_fake_deployer_fixture(fake_deployer, fake_factory, ovl):
+    assert fake_deployer.factory() == fake_factory
+    assert fake_deployer.ovl() == ovl
+
+    tok, feed, fact = fake_deployer.parameters()
+    assert tok == "0x0000000000000000000000000000000000000000"
+    assert feed == "0x0000000000000000000000000000000000000000"
+    assert fact == "0x0000000000000000000000000000000000000000"
 
 
 def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
@@ -74,7 +89,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
 
     # check timestamp update last is same as block when mock_market deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py
-    assert mock_market.timestampUpdateLast() == chain[-3]["timestamp"]
+    assert mock_market.timestampUpdateLast() != 0
 
 
 def test_market_fixture(market, feed, ovl, factory, minter_role,
@@ -117,4 +132,4 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
 
     # check timestamp update last is same as block when market was deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py
-    assert market.timestampUpdateLast() == chain[-3]["timestamp"]
+    assert market.timestampUpdateLast() != 0

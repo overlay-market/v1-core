@@ -11,6 +11,12 @@ abstract contract OverlayV1Feed is IOverlayV1Feed {
     uint256 public immutable macroWindow;
 
     constructor(uint256 _microWindow, uint256 _macroWindow) {
+        // sanity checks on micro and macroWindow
+        require(_microWindow > 0, "OVLV1Feed: microWindow == 0");
+        require(_macroWindow >= _microWindow, "OVLV1Feed: macroWindow < microWindow");
+        require(_macroWindow <= 86400, "OVLV1Feed: macroWindow > 1 day");
+
+        // set the immutables
         microWindow = _microWindow;
         macroWindow = _macroWindow;
     }

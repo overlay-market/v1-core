@@ -99,7 +99,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
     assert int(actual_entry_price) == approx(expect_entry_price)
-    assert actual_mid_ratio == expect_mid_ratio
+    assert int(actual_mid_ratio) == approx(expect_mid_ratio)
     assert int(actual_notional_initial) == approx(expect_notional_initial)
     assert int(actual_oi_initial) == approx(expect_oi_initial)
     assert int(actual_debt) == approx(expect_debt)
@@ -657,7 +657,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     # notional / price rounds down to zero
     price = int(Decimal(input_collateral)
                 * Decimal(input_leverage) * Decimal(1 + tol))
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(price, {"from": bob})
 
     with reverts("OVLV1:oi==0"):
         _ = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -667,7 +667,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     price = int(Decimal(input_collateral)
                 * Decimal(input_leverage) * Decimal(1 - tol))
 
-    mock_feed.setPrice(price)
+    mock_feed.setPrice(price, {"from": bob})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
 
