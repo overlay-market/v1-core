@@ -8,6 +8,25 @@ def test_ovl_fixture(ovl):
     assert ovl.totalSupply() == 8000000000000000000000000
 
 
+def test_token_fixtures(dai, weth, uni):
+    assert dai.name() == "Dai Stablecoin"
+    assert weth.name() == "Wrapped Ether"
+    assert uni.name() == "Uniswap"
+
+
+def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
+                       pool_uniweth_30bps):
+    assert pool_daiweth_30bps.fee() == 3000
+    assert pool_daiweth_30bps.token0() == dai
+    assert pool_daiweth_30bps.token1() == weth
+    assert pool_daiweth_30bps == uni_factory.getPool(dai, weth, 3000)
+
+    assert pool_uniweth_30bps.fee() == 3000
+    assert pool_uniweth_30bps.token0() == uni
+    assert pool_uniweth_30bps.token1() == weth
+    assert pool_uniweth_30bps == uni_factory.getPool(uni, weth, 3000)
+
+
 def test_factory_fixture(factory, ovl, fee_recipient):
     assert factory.ovl() == ovl
     assert factory.feeRecipient() == fee_recipient

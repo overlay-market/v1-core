@@ -7,6 +7,7 @@ import "../libraries/Oracle.sol";
 abstract contract OverlayV1Feed is IOverlayV1Feed {
     using Oracle for Oracle.Data;
 
+    address public immutable feedFactory;
     uint256 public immutable microWindow;
     uint256 public immutable macroWindow;
 
@@ -19,6 +20,7 @@ abstract contract OverlayV1Feed is IOverlayV1Feed {
         // set the immutables
         microWindow = _microWindow;
         macroWindow = _macroWindow;
+        feedFactory = msg.sender;
     }
 
     /// @dev returns freshest possible data from oracle

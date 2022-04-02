@@ -107,6 +107,11 @@ def uni():
 
 
 @pytest.fixture(scope="module")
+def uni_factory():
+    yield Contract.from_explorer("0x1F98431c8aD98523631AE4a59f267346ea31F984")
+
+
+@pytest.fixture(scope="module")
 def pool_daiweth_30bps():
     yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
 
@@ -118,15 +123,15 @@ def pool_uniweth_30bps():
 
 
 @pytest.fixture(scope="module", params=[(600, 3600)])
-def create_feed_factory(gov, pool_uniweth_30bps, weth, uni, request):
+def create_feed_factory(gov, uni_factory, weth, uni, request):
     micro, macro = request.param
-    oe_pool = pool_uniweth_30bps.address
     tok = uni.address
+    uni_fact = uni_factory
 
-    def create_feed_factory(ovlweth_pool=oe_pool, ovl=tok, micro_window=micro,
-                            macro_window=macro):
-        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovlweth_pool, ovl,
-                                  micro_window, macro_window)
+    def create_feed_factory(univ3_factory=uni_fact, ovl=tok,
+                            micro_window=micro, macro_window=macro):
+        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovl,
+                                  univ3_factory, micro_window, macro_window)
         return feed_factory
 
     yield create_feed_factory
@@ -140,20 +145,28 @@ def feed_factory(create_feed_factory):
 # TODO: params for different OverlayV1Feed types ... (to test BalancerV2
 # and UniswapV3 in same test run)
 @pytest.fixture(scope="module")
-def create_feed(gov, feed_factory, pool_daiweth_30bps, dai, weth, request):
+def create_feed(gov, feed_factory, pool_daiweth_30bps, pool_uniweth_30bps,
+                uni, dai, weth, request):
     # ovlweth treated as uniweth for test purposes, feed ovl treated as uni
-    mkt_pool = pool_daiweth_30bps.address
+    mkt_fee = pool_daiweth_30bps.fee()
     mkt_base_tok = weth.address
     mkt_quote_tok = dai.address
     mkt_base_amt = 1 * 10 ** weth.decimals()
 
-    def create_feed(market_pool=mkt_pool,
-                    market_base_token=mkt_base_tok,
+    ovlweth_base_tok = weth.address
+    ovlweth_quote_tok = uni.address
+    ovlweth_fee = pool_uniweth_30bps.fee()
+
+    def create_feed(market_base_token=mkt_base_tok,
                     market_quote_token=mkt_quote_tok,
-                    market_base_amount=mkt_base_amt):
+                    market_fee=mkt_fee,
+                    market_base_amount=mkt_base_amt,
+                    ovlx_base_token=ovlweth_base_tok,
+                    ovlx_quote_token=ovlweth_quote_tok,
+                    ovlx_fee=ovlweth_fee):
         tx = feed_factory.deployFeed(
-            market_pool, market_base_token, market_quote_token,
-            market_base_amount)
+            market_base_token, market_quote_token, market_fee,
+            market_base_amount, ovlx_base_token, ovlx_quote_token, ovlx_fee)
         feed_addr = tx.return_value
         feed = OverlayV1UniswapV3Feed.at(feed_addr)
         return feed
