@@ -539,8 +539,9 @@ contract OverlayV1Market is IOverlayV1Market {
         //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - e**(-4*k*t)) )
 
         // Guaranteed 0 <= underRoot <= 1
+        uint256 oiImbFraction = oiImbalance.divDown(oiTotal);
         uint256 underRoot = ONE -
-            oiImbalance.divDown(oiTotal).mulDown(oiImbalance.divDown(oiTotal)).mulDown(
+            oiImbFraction.mulDown(oiImbFraction).mulDown(
                 ONE - fundingFactor.mulDown(fundingFactor)
             );
 
