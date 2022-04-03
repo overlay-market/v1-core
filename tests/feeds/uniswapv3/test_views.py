@@ -46,7 +46,7 @@ def test_get_reserve_in_weth_for_daiweth(weth, quanto_feed):
     expect_y = int(liquidity * sqrt_price)
 
     expect_reserve = expect_x if quanto_feed.marketToken0 == weth else expect_y
-    actual_reserve = quanto_feed.getReserveInWeth(tick, liquidity)
+    actual_reserve = quanto_feed.getReserveInX(tick, liquidity)
     assert approx(expect_reserve) == actual_reserve
 
 
@@ -62,7 +62,7 @@ def test_get_reserve_in_weth_for_uniweth(weth, inverse_feed):
 
     expect_reserve = expect_x if inverse_feed.marketToken0 == weth \
         else expect_y
-    actual_reserve = inverse_feed.getReserveInWeth(tick, liquidity)
+    actual_reserve = inverse_feed.getReserveInX(tick, liquidity)
     assert approx(expect_reserve) == actual_reserve
 
 
@@ -90,8 +90,8 @@ def test_get_reserve_in_ovl(uni, weth, quanto_feed):
     # num of WETH / num of UNI
     price_ovlweth = int(base_amount_ovlweth * 1.0001 ** (sign * tick_ovlweth))
 
-    expect_reserve_in_ovl = int(expect_reserve *
-                                base_amount_ovlweth / price_ovlweth)
+    expect_reserve_in_ovl = int(expect_reserve
+                                * base_amount_ovlweth / price_ovlweth)
     actual_reserve_in_ovl = quanto_feed.getReserveInOvl(tick_market, liquidity,
                                                         tick_ovlweth)
     assert approx(expect_reserve_in_ovl) == actual_reserve_in_ovl

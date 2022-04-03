@@ -6,23 +6,22 @@ import "../IOverlayV1Feed.sol";
 interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
     function marketPool() external view returns (address);
 
-    function ovlWethPool() external view returns (address);
-
-    function ovl() external view returns (address);
+    function ovlXPool() external view returns (address);
 
     function marketToken0() external view returns (address);
 
     function marketToken1() external view returns (address);
-
-    function ovlWethToken0() external view returns (address);
-
-    function ovlWethToken1() external view returns (address);
 
     function marketBaseToken() external view returns (address);
 
     function marketQuoteToken() external view returns (address);
 
     function marketBaseAmount() external view returns (uint128);
+
+    function ovl() external view returns (address);
+
+    // @dev X is the common token between marketPool and ovlXPool
+    function x() external view returns (address);
 
     // COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
     function consult(
@@ -43,16 +42,16 @@ interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
         address quoteToken
     ) external view returns (uint256 quoteAmount_);
 
-    // virtual balance of WETH in the pool in OVL terms
+    // virtual balance of X in the pool in OVL terms
     function getReserveInOvl(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
-        int24 arithmeticMeanTickOvlWeth
+        int24 arithmeticMeanTickOvlX
     ) external view returns (uint256 reserveInOvl_);
 
-    // virtual balance of WETH in the pool
-    function getReserveInWeth(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
+    // virtual balance of X in the pool
+    function getReserveInX(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
         external
         view
-        returns (uint256 reserveInWeth_);
+        returns (uint256 reserveInX_);
 }

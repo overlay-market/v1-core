@@ -5,6 +5,8 @@ import "../../libraries/Oracle.sol";
 
 interface IOverlayV1Feed {
     // immutables
+    function feedFactory() external view returns (address);
+
     function microWindow() external view returns (uint256);
 
     function macroWindow() external view returns (uint256);

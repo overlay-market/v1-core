@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "@openzeppelin/contracts/utils/math/SignedMath.sol";
+
 import "./Cast.sol";
+import "./FixedPoint.sol";
 
 library Roller {
     using Cast for uint256;
     using Cast for int256;
+    using FixedPoint for uint256;
+    using SignedMath for int256;
 
     struct Snapshot {
         uint32 timestamp; // time last snapshot was taken
@@ -48,7 +53,12 @@ library Roller {
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        snapAccumulator -= (snapAccumulator * int256(dt)) / int256(snapWindow);
+        uint256 windowFraction = dt.divDown(snapWindow);
+        uint256 absSnapAccumulator = snapAccumulator.abs();
+        int256 dSnapAccumulator = snapAccumulator >= 0
+            ? int256(windowFraction.mulDown(absSnapAccumulator))
+            : -int256(windowFraction.mulDown(absSnapAccumulator));
+        snapAccumulator -= dSnapAccumulator;
 
         // add in the new value for accumulator now
         int256 accumulatorNow = snapAccumulator + value;
@@ -66,9 +76,8 @@ library Roller {
         // of time left in windowLast for accumulatorLast and window for value
         // vwat = (|accumulatorLastWithDecay| * (windowLast - dt) + |value| * window) /
         //        (|accumulatorLastWithDecay| + |value|)
-        // TODO: Use SignedMath in next open zeppelin release 4.5.0
-        uint256 w1 = uint256(snapAccumulator >= 0 ? snapAccumulator : -snapAccumulator);
-        uint256 w2 = uint256(value >= 0 ? value : -value);
+        uint256 w1 = snapAccumulator.abs();
+        uint256 w2 = value.abs();
         uint256 windowNow = (w1 * (snapWindow - dt) + w2 * window) / (w1 + w2);
         return
             Snapshot({

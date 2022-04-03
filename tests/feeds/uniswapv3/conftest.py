@@ -39,6 +39,11 @@ def uni():
 
 
 @pytest.fixture(scope="module")
+def uni_factory():
+    yield Contract.from_explorer("0x1F98431c8aD98523631AE4a59f267346ea31F984")
+
+
+@pytest.fixture(scope="module")
 def pool_daiweth_30bps():
     yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
 
@@ -49,10 +54,10 @@ def pool_uniweth_30bps():
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+@pytest.fixture(scope="module", params=[(600, 3600, 200)])
 def create_quanto_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps,
                        dai, weth, uni, request):
-    micro, macro = request.param
+    micro, macro, cardinality = request.param
 
     mkt_pool = pool_daiweth_30bps.address
     oe_pool = pool_uniweth_30bps.address
@@ -65,10 +70,12 @@ def create_quanto_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps,
                            market_base_token=mkt_base_tok,
                            market_quote_token=mkt_quote_tok,
                            market_base_amount=mkt_base_amt, micro_window=micro,
-                           macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool,
-                          ovl, market_base_token, market_quote_token,
-                          market_base_amount, micro_window, macro_window)
+                           macro_window=macro, cardinality_min=cardinality):
+        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool,
+                          market_base_token, market_quote_token,
+                          market_base_amount, ovlweth_pool,
+                          ovl, micro_window, macro_window,
+                          cardinality_min, cardinality_min)
         return feed
 
     yield create_quanto_feed
@@ -79,9 +86,9 @@ def quanto_feed(create_quanto_feed):
     yield create_quanto_feed()
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+@pytest.fixture(scope="module", params=[(600, 3600, 200)])
 def create_inverse_feed(gov, pool_uniweth_30bps, weth, uni, request):
-    micro, macro = request.param
+    micro, macro, cardinality = request.param
 
     # treating uni as ovl for testing
     mkt_pool = pool_uniweth_30bps.address
@@ -95,10 +102,13 @@ def create_inverse_feed(gov, pool_uniweth_30bps, weth, uni, request):
                             ovl=tok, market_base_token=mkt_base_tok,
                             market_quote_token=mkt_quote_tok,
                             market_base_amount=mkt_base_amt,
-                            micro_window=micro, macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool,
-                          ovl, market_base_token, market_quote_token,
-                          market_base_amount, micro_window, macro_window)
+                            micro_window=micro, macro_window=macro,
+                            cardinality_min=cardinality):
+        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool,
+                          market_base_token, market_quote_token,
+                          market_base_amount, ovlweth_pool,
+                          ovl, micro_window, macro_window,
+                          cardinality_min, cardinality_min)
         return feed
 
     yield create_inverse_feed
