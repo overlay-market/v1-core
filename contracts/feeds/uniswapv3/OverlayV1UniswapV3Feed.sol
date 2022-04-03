@@ -218,8 +218,8 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         //  1: priceOverMacroWindow
         //  2: priceOverMicroWindow
         nowIdxs[0] = 1;
-        nowIdxs[1] = secondsAgos.length - 1;
-        nowIdxs[2] = secondsAgos.length - 1;
+        nowIdxs[1] = 3;
+        nowIdxs[2] = 3;
 
         return (secondsAgos, windows, nowIdxs);
     }
@@ -252,7 +252,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // index in secondsAgos which we treat as current time when differencing
         // for mean calcs
-        nowIdxs[0] = secondsAgos.length - 1;
+        nowIdxs[0] = 1;
 
         return (secondsAgos, windows, nowIdxs);
     }
@@ -289,20 +289,22 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
                 nowIdx
             ] - secondsPerLiquidityCumulativeX128s[i];
 
-            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(int32(window)));
+            int24 arithmeticMeanTick = int24(tickCumulativesDelta / int56(uint56(window)));
             // Always round to negative infinity
-            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(int32(window)) != 0))
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(uint56(window)) != 0))
                 arithmeticMeanTick--;
 
-            // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity
-            // doesn't overflow uint128
-            uint192 windowX160 = uint192(window) * type(uint160).max;
-            uint128 harmonicMeanLiquidity = uint128(
-                windowX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
-            );
+            unchecked {
+                // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity
+                // doesn't overflow uint128
+                uint192 windowX160 = uint192(window) * type(uint160).max;
+                uint128 harmonicMeanLiquidity = uint128(
+                    windowX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32)
+                );
 
-            arithmeticMeanTicks_[i] = arithmeticMeanTick;
-            harmonicMeanLiquidities_[i] = harmonicMeanLiquidity;
+                arithmeticMeanTicks_[i] = arithmeticMeanTick;
+                harmonicMeanLiquidities_[i] = harmonicMeanLiquidity;
+            }
         }
     }
 
