@@ -13,6 +13,9 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
     address public immutable ovl;
     address public immutable uniV3Factory;
 
+    // @dev required minimum observationCardinality for market and ovlX pools
+    // TODO: uint16 public immutable minCardinality;
+
     // registry of feeds; for a given (pool, base, amount, ovlX) pair,
     // returns associated feed
     mapping(address => mapping(address => mapping(uint128 => mapping(address => address))))
@@ -29,6 +32,7 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
     }
 
     /// @dev deploys a new feed contract
+    /// @dev X is the common currency between market and ovl pools
     /// @return feed_ address of the new feed
     function deployFeed(
         address marketBaseToken,
@@ -65,11 +69,11 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         feed_ = address(
             new OverlayV1UniswapV3Feed(
                 marketPool,
-                ovlXPool,
-                ovl,
                 marketBaseToken,
                 marketQuoteToken,
                 marketBaseAmount,
+                ovlXPool,
+                ovl,
                 microWindow,
                 macroWindow
             )

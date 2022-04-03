@@ -71,9 +71,10 @@ def create_quanto_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps,
                            market_quote_token=mkt_quote_tok,
                            market_base_amount=mkt_base_amt, micro_window=micro,
                            macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool,
-                          ovl, market_base_token, market_quote_token,
-                          market_base_amount, micro_window, macro_window)
+        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool,
+                          market_base_token, market_quote_token,
+                          market_base_amount, ovlweth_pool,
+                          ovl, micro_window, macro_window)
         return feed
 
     yield create_quanto_feed
@@ -101,9 +102,10 @@ def create_inverse_feed(gov, pool_uniweth_30bps, weth, uni, request):
                             market_quote_token=mkt_quote_tok,
                             market_base_amount=mkt_base_amt,
                             micro_window=micro, macro_window=macro):
-        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool,
-                          ovl, market_base_token, market_quote_token,
-                          market_base_amount, micro_window, macro_window)
+        feed = gov.deploy(OverlayV1UniswapV3Feed, market_pool,
+                          market_base_token, market_quote_token,
+                          market_base_amount, ovlweth_pool,
+                          ovl, micro_window, macro_window)
         return feed
 
     yield create_inverse_feed

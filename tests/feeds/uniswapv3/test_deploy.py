@@ -24,10 +24,11 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, dai, usdc, uni,
     micro_window = 600
     macro_window = 3600
 
-    with reverts("OVLV1Feed: marketToken != WETH"):
-        gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool, ovl,
+    with reverts("OVLV1Feed: marketToken != X"):
+        gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, micro_window, macro_window)
+                   market_base_amount, ovlweth_pool, ovl,
+                   micro_window, macro_window)
 
 
 def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
@@ -44,9 +45,10 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
     macro_window = 3600
 
     with reverts("OVLV1Feed: marketToken != marketBaseToken"):
-        gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool, ovl,
+        gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, micro_window, macro_window)
+                   market_base_amount, ovlweth_pool, ovl,
+                   micro_window, macro_window)
 
 
 def test_deploy_feed_reverts_on_market_token_not_quote(gov, dai, rando, uni,
@@ -62,9 +64,10 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, dai, rando, uni,
     macro_window = 3600
 
     with reverts("OVLV1Feed: marketToken != marketQuoteToken"):
-        gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool, ovl,
+        gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, micro_window, macro_window)
+                   market_base_amount, ovlweth_pool, ovl,
+                   micro_window, macro_window)
 
 
 def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai,
@@ -79,10 +82,11 @@ def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai,
     micro_window = 600
     macro_window = 3600
 
-    with reverts("OVLV1Feed: ovlWethToken != WETH"):
-        gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool, ovl,
+    with reverts("OVLV1Feed: marketToken != X"):
+        gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, micro_window, macro_window)
+                   market_base_amount, ovlweth_pool, ovl,
+                   micro_window, macro_window)
 
 
 def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
@@ -97,7 +101,8 @@ def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
     micro_window = 600
     macro_window = 3600
 
-    with reverts("OVLV1Feed: ovlWethToken != OVL"):
-        gov.deploy(OverlayV1UniswapV3Feed, market_pool, ovlweth_pool, ovl,
+    with reverts("OVLV1Feed: ovlXToken != OVL"):
+        gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, micro_window, macro_window)
+                   market_base_amount, ovlweth_pool, ovl,
+                   micro_window, macro_window)

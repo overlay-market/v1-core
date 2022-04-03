@@ -35,8 +35,9 @@ def test_factory_fixture(factory, ovl, fee_recipient):
 def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
                       uni):
     assert feed.marketPool() == pool_daiweth_30bps
-    assert feed.ovlWethPool() == pool_uniweth_30bps
+    assert feed.ovlXPool() == pool_uniweth_30bps
     assert feed.ovl() == uni
+    assert feed.x() == weth
     assert feed.marketBaseAmount() == 1000000000000000000
     assert feed.marketBaseToken() == weth
     assert feed.marketQuoteToken() == dai

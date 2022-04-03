@@ -36,8 +36,9 @@ def test_deploy_feed_creates_quanto_feed(factory, pool_uniweth_30bps, uni,
     feed_contract = OverlayV1UniswapV3Feed.at(actual_feed)
     assert feed_contract.feedFactory() == factory
     assert feed_contract.marketPool() == market_pool
-    assert feed_contract.ovlWethPool() == ovlweth_pool
+    assert feed_contract.ovlXPool() == ovlweth_pool
     assert feed_contract.ovl() == ovl
+    assert feed_contract.x() == weth
     assert feed_contract.marketBaseToken() == market_base_token
     assert feed_contract.marketQuoteToken() == market_quote_token
     assert feed_contract.marketBaseAmount() == market_base_amount
@@ -76,8 +77,9 @@ def test_deploy_feed_creates_inverse_feed(factory, pool_uniweth_30bps, uni,
     feed_contract = OverlayV1UniswapV3Feed.at(actual_feed)
     assert feed_contract.feedFactory() == factory
     assert feed_contract.marketPool() == market_pool
-    assert feed_contract.ovlWethPool() == ovlweth_pool
+    assert feed_contract.ovlXPool() == ovlweth_pool
     assert feed_contract.ovl() == ovl
+    assert feed_contract.x() == weth
     assert feed_contract.marketBaseToken() == market_base_token
     assert feed_contract.marketQuoteToken() == market_quote_token
     assert feed_contract.marketBaseAmount() == market_base_amount
