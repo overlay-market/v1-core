@@ -45,10 +45,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         // need OVL/X pool for ovl vs X price to make reserve conversion from X => OVL
         address _ovlXToken0 = IUniswapV3Pool(_ovlXPool).token0();
         address _ovlXToken1 = IUniswapV3Pool(_ovlXPool).token1();
-        require(
-            _ovlXToken0 == _ovl || _ovlXToken1 == _ovl,
-            "OVLV1Feed: ovlXToken != OVL"
-        );
+        require(_ovlXToken0 == _ovl || _ovlXToken1 == _ovl, "OVLV1Feed: ovlXToken != OVL");
         x = _ovlXToken0 == _ovl ? _ovlXToken1 : _ovlXToken0;
 
         // check observation cardinality large enough
@@ -317,10 +314,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         uint128 harmonicMeanLiquidityMarket,
         int24 arithmeticMeanTickOvlX
     ) public view returns (uint256 reserveInOvl_) {
-        uint256 reserveInX = getReserveInX(
-            arithmeticMeanTickMarket,
-            harmonicMeanLiquidityMarket
-        );
+        uint256 reserveInX = getReserveInX(arithmeticMeanTickMarket, harmonicMeanLiquidityMarket);
         uint256 amountOfXPerOvl = getQuoteAtTick(arithmeticMeanTickOvlX, ONE, ovl, x);
         reserveInOvl_ = FullMath.mulDiv(reserveInX, uint256(ONE), amountOfXPerOvl);
     }
