@@ -5,10 +5,13 @@ pragma solidity ^0.8.0;
 /// https://github.com/Uniswap/v3-core/blob/0.8/contracts/libraries/FullMath.sol
 
 /// @title Contains 512-bit math functions
-/// @notice Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
-/// @dev Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
+/// @notice Facilitates multiplication and division that can have overflow of
+/// @notice an intermediate value without any loss of precision
+/// @dev Handles "phantom overflow" i.e., allows multiplication and division
+/// @dev where an intermediate value overflows 256 bits
 library FullMath {
-    /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @notice Calculates floor(a×b÷denominator) with full precision.
+    /// @notice Throws if result overflows a uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
     /// @param denominator The divisor
@@ -110,7 +113,8 @@ library FullMath {
         }
     }
 
-    /// @notice Calculates ceil(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
+    /// @notice Calculates ceil(a×b÷denominator) with full precision.
+    /// @notice Throws if result overflows a uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
     /// @param denominator The divisor
