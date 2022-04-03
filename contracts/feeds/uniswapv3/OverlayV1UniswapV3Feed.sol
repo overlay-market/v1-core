@@ -106,60 +106,73 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
             uint128[] memory harmonicMeanLiquiditiesMarket
         ) = consult(marketPool, secondsAgos, windows, nowIdxs);
 
-        // consult to ovlX pool
-        // secondsAgo.length = 2; twaps.length = liqs.length = 1
-        (
-            uint32[] memory secondsAgosOvlX,
-            uint32[] memory windowsOvlX,
-            uint256[] memory nowIdxsOvlX
-        ) = _inputsToConsultOvlXPool(microWindow, macroWindow);
-        (int24[] memory arithmeticMeanTicksOvlX, ) = consult(
-            ovlXPool,
-            secondsAgosOvlX,
-            windowsOvlX,
-            nowIdxsOvlX
-        );
-        int24 arithmeticMeanTickOvlX = arithmeticMeanTicksOvlX[0];
-
         // in terms of prices, will use for indexes
-        //  0: priceOneMacroWindowAgo
-        //  1: priceOverMacroWindow
-        //  2: priceOverMicroWindow
-        uint256[] memory prices = new uint256[](nowIdxs.length);
+        //  0: priceOneMacroWindowAgo: prices[0]
+        //  1: priceOverMacroWindow: prices[1]
+        //  2: priceOverMicroWindow: prices[2]
+        // window: [now - macroWindow * 2, now - macroWindow]
+        uint256 priceOneMacroWindowAgo = getQuoteAtTick(
+            arithmeticMeanTicksMarket[0],
+            marketBaseAmount,
+            marketBaseToken,
+            marketQuoteToken
+        );
+        // window: [now - macroWindow, now]
+        uint256 priceOverMacroWindow = getQuoteAtTick(
+            arithmeticMeanTicksMarket[1],
+            marketBaseAmount,
+            marketBaseToken,
+            marketQuoteToken
+        );
+        // window: [now - microWindow, now]
+        uint256 priceOverMicroWindow = getQuoteAtTick(
+            arithmeticMeanTicksMarket[2],
+            marketBaseAmount,
+            marketBaseToken,
+            marketQuoteToken
+        );
+
+        // reserve calculation done over window: [now - microWindow, now]
+        // needs ovlX price over micro to convert into OVL terms from X
+        // get mean ticks of X in OVL to convert reserveInX to reserveInOvl
+        int24 arithmeticMeanTickOvlX;
+        if (marketPool == ovlXPool) {
+            // simply mean ticks over the micro window of market pool
+            // NOTE: saves the additional consult call to ovlXPool
+            arithmeticMeanTickOvlX = arithmeticMeanTicksMarket[2];
+        } else {
+            // consult to ovlX pool
+            // secondsAgo.length = 2; twaps.length = liqs.length = 1
+            (
+                uint32[] memory secondsAgosOvlX,
+                uint32[] memory windowsOvlX,
+                uint256[] memory nowIdxsOvlX
+            ) = _inputsToConsultOvlXPool(microWindow, macroWindow);
+            (int24[] memory arithmeticMeanTicksOvlX, ) = consult(
+                ovlXPool,
+                secondsAgosOvlX,
+                windowsOvlX,
+                nowIdxsOvlX
+            );
+            arithmeticMeanTickOvlX = arithmeticMeanTicksOvlX[0];
+        }
 
         // reserve is the reserve in marketPool over micro window
-        // needs ovlX price over micro to convert into OVL terms from X
-        uint256 reserve;
-        for (uint256 i = 0; i < nowIdxs.length; i++) {
-            uint256 price = getQuoteAtTick(
-                arithmeticMeanTicksMarket[i],
-                marketBaseAmount,
-                marketBaseToken,
-                marketQuoteToken
-            );
-            prices[i] = price;
-
-            // if calculating priceOverMicroWindow in this loop,
-            // then calculate the reserve as well
-            if (i == 2) {
-                // TODO: pertaining to `arithmeticMeanTicksOvlX[i]`: use micro ovl/x twap for
-                // conversion? (safe?)
-                reserve = getReserveInOvl(
-                    arithmeticMeanTicksMarket[i],
-                    harmonicMeanLiquiditiesMarket[i],
-                    arithmeticMeanTickOvlX
-                );
-            }
-        }
+        // window: [now - microWindow, now]
+        uint256 reserve = getReserveInOvl(
+            arithmeticMeanTicksMarket[2],
+            harmonicMeanLiquiditiesMarket[2],
+            arithmeticMeanTickOvlX
+        );
 
         return
             Oracle.Data({
                 timestamp: block.timestamp,
                 microWindow: microWindow,
                 macroWindow: macroWindow,
-                priceOverMicroWindow: prices[2], // secondsAgos = microWindow
-                priceOverMacroWindow: prices[1], // secondsAgos = macroWindow
-                priceOneMacroWindowAgo: prices[0], // secondsAgos = macroWindow * 2
+                priceOverMicroWindow: priceOverMicroWindow,
+                priceOverMacroWindow: priceOverMacroWindow,
+                priceOneMacroWindowAgo: priceOneMacroWindowAgo,
                 reserveOverMicroWindow: reserve,
                 hasReserve: true
             });
@@ -181,10 +194,10 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // number of seconds in past for which we want accumulator snapshot
         // for Oracle.Data, need:
-        //  1. now (0 s ago)
-        //  2. now - microWindow (microWindow seconds ago)
-        //  3. now - macroWindow (macroWindow seconds ago)
-        //  4. now - 2 * macroWindow (2 * macroWindow seconds ago)
+        //  0: now - 2 * macroWindow (2 * macroWindow seconds ago)
+        //  1: now - macroWindow (macroWindow seconds ago)
+        //  2: now - microWindow (microWindow seconds ago)
+        //  3: now (0 seconds ago)
         secondsAgos[0] = uint32(_macroWindow * 2);
         secondsAgos[1] = uint32(_macroWindow);
         secondsAgos[2] = uint32(_microWindow);
@@ -199,8 +212,11 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         windows[1] = uint32(_macroWindow);
         windows[2] = uint32(_microWindow);
 
-        // index in secondsAgos which we treat as current time when differencing
+        // index of secondsAgos which we treat as current time when differencing
         // for mean calcs
+        //  0: priceOneMacroWindowAgo
+        //  1: priceOverMacroWindow
+        //  2: priceOverMicroWindow
         nowIdxs[0] = 1;
         nowIdxs[1] = secondsAgos.length - 1;
         nowIdxs[2] = secondsAgos.length - 1;
@@ -224,8 +240,8 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // number of seconds in past for which we want accumulator snapshot
         // for Oracle.Data, need:
-        //  1. now (0 s ago)
-        //  2. now - microWindow (microWindow seconds ago)
+        //  0: now - microWindow (microWindow seconds ago)
+        //  1: now (0 seconds ago)
         secondsAgos[0] = uint32(_microWindow);
         secondsAgos[1] = 0;
 
@@ -259,10 +275,11 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
             uint160[] memory secondsPerLiquidityCumulativeX128s
         ) = IUniswapV3Pool(pool).observe(secondsAgos);
 
-        arithmeticMeanTicks_ = new int24[](nowIdxs.length);
-        harmonicMeanLiquidities_ = new uint128[](nowIdxs.length);
+        uint256 nowIdxsLength = nowIdxs.length;
+        arithmeticMeanTicks_ = new int24[](nowIdxsLength);
+        harmonicMeanLiquidities_ = new uint128[](nowIdxsLength);
 
-        for (uint256 i = 0; i < nowIdxs.length; i++) {
+        for (uint256 i = 0; i < nowIdxsLength; i++) {
             uint32 secondsAgo = secondsAgos[i];
             uint256 nowIdx = nowIdxs[i];
             uint32 window = windows[i];
