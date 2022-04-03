@@ -39,45 +39,50 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         address _ovlXPool,
         address _ovl,
         uint256 _microWindow,
-        uint256 _macroWindow
+        uint256 _macroWindow,
+        uint256 _cardinalityMarketMinimum,
+        uint256 _cardinalityOvlXMinimum
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         // determine X token
         // need OVL/X pool for ovl vs X price to make reserve conversion from X => OVL
         address _ovlXToken0 = IUniswapV3Pool(_ovlXPool).token0();
         address _ovlXToken1 = IUniswapV3Pool(_ovlXPool).token1();
-        require(_ovlXToken0 == _ovl || _ovlXToken1 == _ovl, "OVLV1Feed: ovlXToken != OVL");
+        require(_ovlXToken0 == _ovl || _ovlXToken1 == _ovl, "OVLV1: ovlXToken != OVL");
         x = _ovlXToken0 == _ovl ? _ovlXToken1 : _ovlXToken0;
-
-        // check observation cardinality large enough
-        // TODO: add min cardinality params on factory to be fed in
-        // for market and ovl pool on deploy
-        // can use microWindow and macroWindow even tho that would imply block time of 1s
-        // () = IUniswapV3Pool(_ovlXPool).slot0();
 
         // need X in market pool to make reserve conversion from X => OVL
         address _marketToken0 = IUniswapV3Pool(_marketPool).token0();
         address _marketToken1 = IUniswapV3Pool(_marketPool).token1();
 
-        require(_marketToken0 == x || _marketToken1 == x, "OVLV1Feed: marketToken != X");
+        require(_marketToken0 == x || _marketToken1 == x, "OVLV1: marketToken != X");
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
 
         require(
             _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1Feed: marketToken != marketBaseToken"
+            "OVLV1: marketToken != marketBaseToken"
         );
         require(
             _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-            "OVLV1Feed: marketToken != marketQuoteToken"
+            "OVLV1: marketToken != marketQuoteToken"
         );
         marketBaseToken = _marketBaseToken;
         marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
 
-        // check observation cardinality large enough
-        // TODO: add min cardinality params for market and ovl pool on deploy
-        // can use microWindow and macroWindow even tho that would imply block time of 1s
-        // () = IUniswapV3Pool(_marketPool).slot0();
+        // check observation cardinality large enough for market and
+        // ovl pool on deploy
+        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_ovlXPool).slot0();
+        require(
+            observationCardinalityOvlX >= _cardinalityOvlXMinimum,
+            "OVLV1: ovlXCardinality < min"
+        );
+
+        (, , , uint16 observationCardinalityMarket, , , ) = IUniswapV3Pool(_marketPool).slot0();
+        require(
+            observationCardinalityMarket >= _cardinalityMarketMinimum,
+            "OVLV1: marketCardinality < min"
+        );
 
         marketPool = _marketPool;
         ovlXPool = _ovlXPool;

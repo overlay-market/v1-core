@@ -49,16 +49,19 @@ def pool_uniweth_30bps():
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+# TODO: change params to (600, 3600, 300, 14)
+@pytest.fixture(scope="module", params=[(600, 3000, 200, 15)])
 def create_factory(gov, uni_factory, weth, uni, request):
-    micro, macro = request.param
+    micro, macro, cardinality, block_time = request.param
     uni_fact = uni_factory.address
     tok = uni.address
 
     def create_factory(univ3_factory=uni_fact, ovl=tok, micro_window=micro,
-                       macro_window=macro):
+                       macro_window=macro, cardinality_min=cardinality,
+                       avg_block_time=block_time):
         factory = gov.deploy(OverlayV1UniswapV3Factory, ovl, univ3_factory,
-                             micro_window, macro_window)
+                             micro_window, macro_window, cardinality_min,
+                             avg_block_time)
         return factory
 
     yield create_factory

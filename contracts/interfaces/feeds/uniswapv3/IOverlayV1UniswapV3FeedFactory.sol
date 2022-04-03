@@ -9,8 +9,8 @@ interface IOverlayV1UniswapV3FeedFactory is IOverlayV1FeedFactory {
 
     function uniV3Factory() external view returns (address);
 
-    // @dev required minimum observationCardinality for market and ovlX pools
-    // TODO: function minCardinality() external view returns (uint16);
+    // @dev minimum observationCardinality needed for micro and macro windows
+    function observationCardinalityMinimum() external view returns (uint16);
 
     // registry of feeds; for a given (pool, base, quote, amount) pair, returns associated feed
     function getFeed(

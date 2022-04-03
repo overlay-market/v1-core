@@ -71,7 +71,7 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 2000000000000000000000000)
+    (600, 3000, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_fake_feed(gov, request):
     micro, macro, p, r = request.param
@@ -122,16 +122,20 @@ def pool_uniweth_30bps():
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+# TODO: change params to (600, 3600, 300, 14)
+@pytest.fixture(scope="module", params=[(600, 3000, 200, 15)])
 def create_feed_factory(gov, uni_factory, weth, uni, request):
-    micro, macro = request.param
+    micro, macro, cardinality, block_time = request.param
     tok = uni.address
     uni_fact = uni_factory
 
     def create_feed_factory(univ3_factory=uni_fact, ovl=tok,
-                            micro_window=micro, macro_window=macro):
+                            micro_window=micro, macro_window=macro,
+                            cardinality_min=cardinality,
+                            avg_block_time=block_time):
         feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovl,
-                                  univ3_factory, micro_window, macro_window)
+                                  univ3_factory, micro_window, macro_window,
+                                  cardinality_min, avg_block_time)
         return feed_factory
 
     yield create_feed_factory
@@ -179,7 +183,7 @@ def feed(create_feed):
     yield create_feed()
 
 
-@pytest.fixture(scope="module", params=[(600, 3600)])
+@pytest.fixture(scope="module", params=[(600, 3000)])
 def create_mock_feed_factory(gov, request):
     micro, macro = request.param
 

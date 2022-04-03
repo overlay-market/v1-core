@@ -13,8 +13,8 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
     address public immutable ovl;
     address public immutable uniV3Factory;
 
-    // @dev required minimum observationCardinality for market and ovlX pools
-    // TODO: uint16 public immutable minCardinality;
+    // @dev minimum observationCardinality needed for micro and macro windows
+    uint16 public immutable observationCardinalityMinimum;
 
     // registry of feeds; for a given (pool, base, amount, ovlX) pair,
     // returns associated feed
@@ -25,10 +25,21 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         address _ovl,
         address _uniV3Factory,
         uint256 _microWindow,
-        uint256 _macroWindow
+        uint256 _macroWindow,
+        uint16 _observationCardinalityMinimum,
+        uint256 _averageBlockTime
     ) OverlayV1FeedFactory(_microWindow, _macroWindow) {
         ovl = _ovl;
         uniV3Factory = _uniV3Factory;
+
+        // sanity check on cardinality, given writes happen max once per block
+        // SEE: Uniswap/v3-core/blob/main/contracts/libraries/Oracle.sol#L90
+        // TODO: test
+        require(
+            _averageBlockTime * uint256(_observationCardinalityMinimum) >= _macroWindow,
+            "OVLV1: cardinality < macroWindow"
+        );
+        observationCardinalityMinimum = _observationCardinalityMinimum;
     }
 
     /// @dev deploys a new feed contract
@@ -75,7 +86,9 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
                 ovlXPool,
                 ovl,
                 microWindow,
-                macroWindow
+                macroWindow,
+                observationCardinalityMinimum,
+                observationCardinalityMinimum
             )
         );
 
