@@ -1752,18 +1752,21 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
     # NOTE: p_liq = p_entry * ( MM * Q(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * Q(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     idx_delta = RiskParameter.DELTA.value
     delta = Decimal(mock_market.params(idx_delta)) / Decimal(1e18)
     if is_long:
         expect_liquidation_price = Decimal(expect_entry_price) * \
             (maintenance_fraction * Decimal(expect_notional)
-             + Decimal(expect_debt)) / expect_oi_current
+             / (1 - liq_fee_rate) + Decimal(expect_debt)) / expect_oi_current
     else:
         expect_liquidation_price = expect_entry_price * \
             (2 - (maintenance_fraction * Decimal(expect_notional)
+                  / (1 - liq_fee_rate)
                   + Decimal(expect_debt)) / expect_oi_current)
 
     # change price by factor so position becomes liquidatable

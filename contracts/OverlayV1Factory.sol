@@ -44,7 +44,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         8_000_000e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OVL
         0.2e18, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
         0.5e18, // MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
-        0.1e18, // MAX_LIQUIDATION_FEE_RATE = 10.00% (1000 bps)
+        0.2e18, // MAX_LIQUIDATION_FEE_RATE = 20.00% (2000 bps)
         50e14, // MAX_TRADING_FEE_RATE = 0.50% (50 bps)
         1e18, // MAX_MINIMUM_COLLATERAL = 1 OVL
         1e14, // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
