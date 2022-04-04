@@ -110,9 +110,12 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 _maintenanceMarginFraction = _params[
             uint256(Risk.Parameters.MaintenanceMarginFraction)
         ];
-        // TODO: update for liq fee
+        uint256 _liquidationFeeRate = _params[uint256(Risk.Parameters.LiquidationFeeRate)];
         require(
-            _capLeverage <= ONE.divDown(2 * _delta + _maintenanceMarginFraction),
+            _capLeverage <=
+                ONE.divDown(
+                    2 * _delta + _maintenanceMarginFraction.divDown(ONE - _liquidationFeeRate)
+                ),
             "OVLV1: max lev immediately liquidatable"
         );
 
@@ -766,10 +769,10 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @notice Checks the governance per-market risk parameter is valid
-    // TODO: update liquidatable conditions for liq fees
     function _checkRiskParam(Risk.Parameters name, uint256 value) private {
         // checks delta won't cause position to be immediately
-        // liquidatable given current leverage cap (capLeverage) and
+        // liquidatable given current leverage cap (capLeverage),
+        // liquidation fee rate (liquidationFeeRate), and
         // maintenance margin fraction (maintenanceMarginFraction)
         if (name == Risk.Parameters.Delta) {
             uint256 _delta = value;
@@ -777,14 +780,19 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 maintenanceMarginFraction = params.get(
                 Risk.Parameters.MaintenanceMarginFraction
             );
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction),
+                capLeverage <=
+                    ONE.divDown(
+                        2 * _delta + maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }
 
         // checks capLeverage won't cause position to be immediately
-        // liquidatable given current spread (delta) and
+        // liquidatable given current spread (delta),
+        // liquidation fee rate (liquidationFeeRate), and
         // maintenance margin fraction (maintenanceMarginFraction)
         if (name == Risk.Parameters.CapLeverage) {
             uint256 _capLeverage = value;
@@ -792,21 +800,50 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 maintenanceMarginFraction = params.get(
                 Risk.Parameters.MaintenanceMarginFraction
             );
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                _capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction),
+                _capLeverage <=
+                    ONE.divDown(
+                        2 * delta + maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }
 
         // checks maintenanceMarginFraction won't cause position
-        // to be immediately liquidatable given current spread (delta)
+        // to be immediately liquidatable given current spread (delta),
+        // liquidation fee rate (liquidationFeeRate),
         // and leverage cap (capLeverage)
         if (name == Risk.Parameters.MaintenanceMarginFraction) {
             uint256 _maintenanceMarginFraction = value;
             uint256 delta = params.get(Risk.Parameters.Delta);
             uint256 capLeverage = params.get(Risk.Parameters.CapLeverage);
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction),
+                capLeverage <=
+                    ONE.divDown(
+                        2 * delta + _maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
+                "OVLV1: max lev immediately liquidatable"
+            );
+        }
+
+        // checks liquidationFeeRate won't cause position
+        // to be immediately liquidatable given current spread (delta),
+        // leverage cap (capLeverage), and
+        // maintenance margin fraction (maintenanceMarginFraction)
+        if (name == Risk.Parameters.LiquidationFeeRate) {
+            uint256 _liquidationFeeRate = value;
+            uint256 delta = params.get(Risk.Parameters.Delta);
+            uint256 capLeverage = params.get(Risk.Parameters.CapLeverage);
+            uint256 maintenanceMarginFraction = params.get(
+                Risk.Parameters.MaintenanceMarginFraction
+            );
+            require(
+                capLeverage <=
+                    ONE.divDown(
+                        2 * delta + maintenanceMarginFraction.divDown(ONE - _liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }

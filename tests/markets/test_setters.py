@@ -74,24 +74,27 @@ def test_set_risk_param_reverts_when_not_factory(market, alice):
 
 
 def test_set_delta_reverts_when_max_lev_liquidatable(market, factory):
-    # idx for delta, cap_leverage, maintenance are, respectively: 2, 5, 8
-    # in enum Risk.Parameters
+    # idx for delta, cap_leverage, maintenance, liquidation fee rate
     idx_delta = RiskParameter.DELTA.value
     idx_cap_leverage = RiskParameter.CAP_LEVERAGE.value
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_lfr = RiskParameter.LIQUIDATION_FEE_RATE.value
+
+    tol = 1e-4
 
     # get other relevant risk params
     cap_leverage = Decimal(market.params(idx_cap_leverage)) / Decimal(1e18)
     mmf = Decimal(market.params(idx_mmf)) / Decimal(1e18)
-    max_delta = (1/cap_leverage - mmf) / Decimal(2.0)
+    lfr = Decimal(market.params(idx_lfr)) / Decimal(1e18)
+    max_delta = (1/cap_leverage - mmf/(1-lfr)) / Decimal(2.0)
 
-    # check reverts when one more than max
-    input_delta = int(max_delta * Decimal(1e18)) + 1
+    # check reverts when delta just above max
+    input_delta = int(max_delta * Decimal(1e18) * Decimal(1 + tol))
     with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_delta, input_delta, {"from": factory})
 
-    # check doesn't revert when delta equal to max
-    input_delta -= 1
+    # check doesn't revert when delta just below max
+    input_delta = int(max_delta * Decimal(1e18) * Decimal(1 - tol))
     market.setRiskParam(idx_delta, input_delta, {"from": factory})
 
     expect = input_delta
@@ -100,25 +103,28 @@ def test_set_delta_reverts_when_max_lev_liquidatable(market, factory):
 
 
 def test_set_cap_leverage_reverts_when_max_lev_liquidatable(market, factory):
-    # idx for delta, cap_leverage, maintenance are, respectively: 2, 5, 8
-    # in enum Risk.Parameters
+    # idx for delta, cap_leverage, maintenance, liquidation fee rate
     idx_delta = RiskParameter.DELTA.value
     idx_cap_leverage = RiskParameter.CAP_LEVERAGE.value
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_lfr = RiskParameter.LIQUIDATION_FEE_RATE.value
+
+    tol = 1e-4
 
     # get other relevant risk params
     delta = Decimal(market.params(idx_delta)) / Decimal(1e18)
     mmf = Decimal(market.params(idx_mmf)) / Decimal(1e18)
-    max_cap_leverage = 1/(mmf + 2 * delta)
+    lfr = Decimal(market.params(idx_lfr)) / Decimal(1e18)
+    max_cap_leverage = 1/(mmf/(1-lfr) + 2 * delta)
 
-    # check reverts when one more than max
-    input_cap_leverage = int(max_cap_leverage * Decimal(1e18)) + 1
+    # check reverts when one cap leverage greater than max
+    input_cap_leverage = int(max_cap_leverage * Decimal(1e18) * Decimal(1+tol))
     with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_cap_leverage, input_cap_leverage,
                             {"from": factory})
 
-    # check doesn't revert when cap leverage equal to max
-    input_cap_leverage -= 1
+    # check doesn't revert when cap leverage less than max
+    input_cap_leverage = int(max_cap_leverage * Decimal(1e18) * Decimal(1-tol))
     market.setRiskParam(idx_cap_leverage, input_cap_leverage,
                         {"from": factory})
 
@@ -130,28 +136,62 @@ def test_set_cap_leverage_reverts_when_max_lev_liquidatable(market, factory):
 def test_set_maintenance_margin_fraction_reverts_when_max_lev_liquidatable(
     market, factory
 ):
-    # idx for delta, cap_leverage, maintenance are, respectively: 2, 5, 8
-    # in enum Risk.Parameters
+    # idx for delta, cap_leverage, maintenance, liquidation fee rate
     idx_delta = RiskParameter.DELTA.value
     idx_cap_leverage = RiskParameter.CAP_LEVERAGE.value
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_lfr = RiskParameter.LIQUIDATION_FEE_RATE.value
+
+    tol = 1e-4
 
     # get other relevant risk params
     cap_leverage = Decimal(market.params(idx_cap_leverage)) / Decimal(1e18)
     delta = Decimal(market.params(idx_delta)) / Decimal(1e18)
-    max_mmf = 1 / cap_leverage - 2 * delta
+    lfr = Decimal(market.params(idx_lfr)) / Decimal(1e18)
+    max_mmf = (1 / cap_leverage - 2 * delta) * (1-lfr)
 
-    # check reverts when one more than max
-    input_mmf = int(max_mmf * Decimal(1e18)) + 1
+    # check reverts when mmf greater than max
+    input_mmf = int(max_mmf * Decimal(1e18) * Decimal(1 + tol))
     with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_mmf, input_mmf, {"from": factory})
 
-    # check doesn't revert when maitenance margin fraction equal to max
-    input_mmf -= 1
+    # check doesn't revert when maitenance margin fraction less than max
+    input_mmf = int(max_mmf * Decimal(1e18) * Decimal(1 - tol))
     market.setRiskParam(idx_mmf, input_mmf, {"from": factory})
 
     expect = input_mmf
     actual = market.params(idx_mmf)
+    assert expect == actual
+
+
+def test_set_liquidation_fee_rate_reverts_when_max_lev_liquidatable(
+    market, factory
+):
+    # idx for delta, cap_leverage, maintenance, liquidation fee rate
+    idx_delta = RiskParameter.DELTA.value
+    idx_cap_leverage = RiskParameter.CAP_LEVERAGE.value
+    idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_lfr = RiskParameter.LIQUIDATION_FEE_RATE.value
+
+    tol = 1e-4
+
+    # get other relevant risk params
+    cap_leverage = Decimal(market.params(idx_cap_leverage)) / Decimal(1e18)
+    delta = Decimal(market.params(idx_delta)) / Decimal(1e18)
+    mmf = Decimal(market.params(idx_mmf)) / Decimal(1e18)
+    max_lfr = 1 - mmf / (1 / cap_leverage - 2 * delta)
+
+    # check reverts when greater than liquidationFeeRate max
+    input_lfr = int(max_lfr * Decimal(1e18) * Decimal(1 + tol))
+    with reverts("OVLV1: max lev immediately liquidatable"):
+        market.setRiskParam(idx_lfr, input_lfr, {"from": factory})
+
+    # check doesn't revert when liquidation fee rate less than max
+    input_lfr = int(max_lfr * Decimal(1e18) * Decimal(1 - tol))
+    market.setRiskParam(idx_lfr, input_lfr, {"from": factory})
+
+    expect = input_lfr
+    actual = market.params(idx_lfr)
     assert expect == actual
 
 
