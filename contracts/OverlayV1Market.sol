@@ -110,8 +110,12 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 _maintenanceMarginFraction = _params[
             uint256(Risk.Parameters.MaintenanceMarginFraction)
         ];
+        uint256 _liquidationFeeRate = _params[uint256(Risk.Parameters.LiquidationFeeRate)];
         require(
-            _capLeverage <= ONE.divDown(2 * _delta + _maintenanceMarginFraction),
+            _capLeverage <=
+                ONE.divDown(
+                    2 * _delta + _maintenanceMarginFraction.divDown(ONE - _liquidationFeeRate)
+                ),
             "OVLV1: max lev immediately liquidatable"
         );
 
@@ -219,7 +223,8 @@ contract OverlayV1Market is IOverlayV1Market {
                     oiTotalSharesOnSide,
                     midPrice, // mid price used on liquidations
                     params.get(Risk.Parameters.CapPayoff),
-                    params.get(Risk.Parameters.MaintenanceMarginFraction)
+                    params.get(Risk.Parameters.MaintenanceMarginFraction),
+                    params.get(Risk.Parameters.LiquidationFeeRate)
                 ),
                 "OVLV1:liquidatable"
             );
@@ -274,7 +279,8 @@ contract OverlayV1Market is IOverlayV1Market {
                     oiTotalSharesOnSide,
                     _midFromFeed(data), // mid price used on liquidations
                     params.get(Risk.Parameters.CapPayoff),
-                    params.get(Risk.Parameters.MaintenanceMarginFraction)
+                    params.get(Risk.Parameters.MaintenanceMarginFraction),
+                    params.get(Risk.Parameters.LiquidationFeeRate)
                 ),
                 "OVLV1:liquidatable"
             );
@@ -372,84 +378,107 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev liquidates a liquidatable position
     function liquidate(address owner, uint256 positionId) external {
-        // check position exists
-        Position.Info memory pos = positions.get(owner, positionId);
-        require(pos.exists(), "OVLV1:!position");
+        uint256 value;
+        uint256 cost;
+        uint256 price;
+        uint256 liquidationFee;
+        uint256 marginToBurn;
+        uint256 marginRemaining;
+        // avoids stack too deep
+        {
+            // check position exists
+            Position.Info memory pos = positions.get(owner, positionId);
+            require(pos.exists(), "OVLV1:!position");
 
-        // call to update before any effects
-        Oracle.Data memory data = update();
+            // call to update before any effects
+            Oracle.Data memory data = update();
 
-        // cache for gas savings
-        uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
-        uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
-        uint256 capPayoff = params.get(Risk.Parameters.CapPayoff);
+            // cache for gas savings
+            uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
+            uint256 oiTotalSharesOnSide = pos.isLong ? oiLongShares : oiShortShares;
+            uint256 capPayoff = params.get(Risk.Parameters.CapPayoff);
 
-        // entire position should be liquidated
-        uint256 fraction = ONE;
+            // entire position should be liquidated
+            uint256 fraction = ONE;
 
-        // Use mid price without volume for liquidation (oracle price effectively) to
-        // prevent market impact manipulation from causing unneccessary liquidations
-        uint256 price = _midFromFeed(data);
+            // Use mid price without volume for liquidation (oracle price effectively) to
+            // prevent market impact manipulation from causing unneccessary liquidations
+            price = _midFromFeed(data);
 
-        // check position is liquidatable
-        require(
-            pos.liquidatable(
-                oiTotalOnSide,
-                oiTotalSharesOnSide,
-                price,
-                capPayoff,
-                params.get(Risk.Parameters.MaintenanceMarginFraction)
-            ),
-            "OVLV1:!liquidatable"
-        );
-
-        // calculate the value and cost of the position for pnl determinations
-        // and amount to transfer
-        uint256 value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
-        uint256 cost = pos.cost(fraction);
-
-        // value is the remaining position margin. reduce value further by
-        // the mm burn rate, as insurance for cases when not liquidated in time
-        value -= value.mulDown(params.get(Risk.Parameters.MaintenanceMarginBurnRate));
-
-        // calculate the liquidation fee as % on remaining value
-        uint256 liquidationFee = value.mulDown(params.get(Risk.Parameters.LiquidationFeeRate));
-
-        // subtract liquidated open interest from the side's aggregate oi value
-        // and decrease number of oi shares issued
-        // use subFloor to avoid reverts with rounding issues
-        if (pos.isLong) {
-            oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide));
-            oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
-        } else {
-            oiShort = oiShort.subFloor(
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+            // check position is liquidatable
+            require(
+                pos.liquidatable(
+                    oiTotalOnSide,
+                    oiTotalSharesOnSide,
+                    price,
+                    capPayoff,
+                    params.get(Risk.Parameters.MaintenanceMarginFraction),
+                    params.get(Risk.Parameters.LiquidationFeeRate)
+                ),
+                "OVLV1:!liquidatable"
             );
-            oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+
+            // calculate the value and cost of the position for pnl determinations
+            // and amount to transfer
+            value = pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, price, capPayoff);
+            cost = pos.cost(fraction);
+
+            // calculate the liquidation fee as % on remaining value
+            // sent as reward to liquidator
+            liquidationFee = value.mulDown(params.get(Risk.Parameters.LiquidationFeeRate));
+            marginRemaining = value - liquidationFee;
+
+            // Reduce burn amount further by the mm burn rate, as insurance
+            // for cases when not liquidated in time
+            marginToBurn = marginRemaining.mulDown(
+                params.get(Risk.Parameters.MaintenanceMarginBurnRate)
+            );
+            marginRemaining -= marginToBurn;
+
+            // subtract liquidated open interest from the side's aggregate oi value
+            // and decrease number of oi shares issued
+            // use subFloor to avoid reverts with rounding issues
+            if (pos.isLong) {
+                oiLong = oiLong.subFloor(
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+                );
+                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
+            } else {
+                oiShort = oiShort.subFloor(
+                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+                );
+                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+            }
+
+            // register the amount to be burned
+            _registerMintOrBurn(int256(value) - int256(cost) - int256(marginToBurn));
+
+            // store the updated position info data. mark as liquidated
+            pos.notional = 0;
+            pos.debt = 0;
+            pos.oiShares = 0;
+            pos.liquidated = true;
+            pos.entryToMidRatio = 0;
+            positions.set(owner, positionId, pos);
         }
 
-        // register the amount to be burned
-        _registerMintOrBurn(int256(value) - int256(cost));
-
-        // store the updated position info data. mark as liquidated
-        pos.notional = 0;
-        pos.debt = 0;
-        pos.oiShares = 0;
-        pos.liquidated = true;
-        pos.entryToMidRatio = 0;
-        positions.set(owner, positionId, pos);
-
         // emit liquidate event
-        emit Liquidate(msg.sender, owner, positionId, int256(value) - int256(cost), price);
+        emit Liquidate(
+            msg.sender,
+            owner,
+            positionId,
+            int256(value) - int256(cost) - int256(marginToBurn),
+            price
+        );
 
-        // burn the pnl for the position
-        ovl.burn(cost - value);
+        // burn the pnl for the position + insurance margin
+        ovl.burn(cost - value + marginToBurn);
 
-        // transfer out the remaining position value less fees to liquidator for reward
-        ovl.transfer(msg.sender, value - liquidationFee);
+        // transfer out the liquidation fee to liquidator for reward
+        ovl.transfer(msg.sender, liquidationFee);
 
-        // send liquidation fees to trading fee recipient
-        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), liquidationFee);
+        // send remaining margin to trading fee recipient
+        ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), marginRemaining);
     }
 
     /// @dev updates market: pays funding and fetches freshest data from feed
@@ -742,7 +771,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @notice Checks the governance per-market risk parameter is valid
     function _checkRiskParam(Risk.Parameters name, uint256 value) private {
         // checks delta won't cause position to be immediately
-        // liquidatable given current leverage cap (capLeverage) and
+        // liquidatable given current leverage cap (capLeverage),
+        // liquidation fee rate (liquidationFeeRate), and
         // maintenance margin fraction (maintenanceMarginFraction)
         if (name == Risk.Parameters.Delta) {
             uint256 _delta = value;
@@ -750,14 +780,19 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 maintenanceMarginFraction = params.get(
                 Risk.Parameters.MaintenanceMarginFraction
             );
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                capLeverage <= ONE.divDown(2 * _delta + maintenanceMarginFraction),
+                capLeverage <=
+                    ONE.divDown(
+                        2 * _delta + maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }
 
         // checks capLeverage won't cause position to be immediately
-        // liquidatable given current spread (delta) and
+        // liquidatable given current spread (delta),
+        // liquidation fee rate (liquidationFeeRate), and
         // maintenance margin fraction (maintenanceMarginFraction)
         if (name == Risk.Parameters.CapLeverage) {
             uint256 _capLeverage = value;
@@ -765,21 +800,50 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 maintenanceMarginFraction = params.get(
                 Risk.Parameters.MaintenanceMarginFraction
             );
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                _capLeverage <= ONE.divDown(2 * delta + maintenanceMarginFraction),
+                _capLeverage <=
+                    ONE.divDown(
+                        2 * delta + maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }
 
         // checks maintenanceMarginFraction won't cause position
-        // to be immediately liquidatable given current spread (delta)
+        // to be immediately liquidatable given current spread (delta),
+        // liquidation fee rate (liquidationFeeRate),
         // and leverage cap (capLeverage)
         if (name == Risk.Parameters.MaintenanceMarginFraction) {
             uint256 _maintenanceMarginFraction = value;
             uint256 delta = params.get(Risk.Parameters.Delta);
             uint256 capLeverage = params.get(Risk.Parameters.CapLeverage);
+            uint256 liquidationFeeRate = params.get(Risk.Parameters.LiquidationFeeRate);
             require(
-                capLeverage <= ONE.divDown(2 * delta + _maintenanceMarginFraction),
+                capLeverage <=
+                    ONE.divDown(
+                        2 * delta + _maintenanceMarginFraction.divDown(ONE - liquidationFeeRate)
+                    ),
+                "OVLV1: max lev immediately liquidatable"
+            );
+        }
+
+        // checks liquidationFeeRate won't cause position
+        // to be immediately liquidatable given current spread (delta),
+        // leverage cap (capLeverage), and
+        // maintenance margin fraction (maintenanceMarginFraction)
+        if (name == Risk.Parameters.LiquidationFeeRate) {
+            uint256 _liquidationFeeRate = value;
+            uint256 delta = params.get(Risk.Parameters.Delta);
+            uint256 capLeverage = params.get(Risk.Parameters.CapLeverage);
+            uint256 maintenanceMarginFraction = params.get(
+                Risk.Parameters.MaintenanceMarginFraction
+            );
+            require(
+                capLeverage <=
+                    ONE.divDown(
+                        2 * delta + maintenanceMarginFraction.divDown(ONE - _liquidationFeeRate)
+                    ),
                 "OVLV1: max lev immediately liquidatable"
             );
         }

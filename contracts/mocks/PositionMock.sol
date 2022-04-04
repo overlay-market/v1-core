@@ -38,12 +38,12 @@ contract PositionMock {
                     POSITION ENTRY PRICE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function calcEntryToMidRatio(uint256 entryPrice, uint256 midPrice)
+    function calcEntryToMidRatio(uint256 _entryPrice, uint256 _midPrice)
         external
         view
         returns (uint48)
     {
-        return Position.calcEntryToMidRatio(entryPrice, midPrice);
+        return Position.calcEntryToMidRatio(_entryPrice, _midPrice);
     }
 
     function getEntryToMidRatio(Position.Info memory pos) external view returns (uint256) {
@@ -158,7 +158,8 @@ contract PositionMock {
         uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
-        uint256 maintenanceMarginFraction
+        uint256 maintenanceMarginFraction,
+        uint256 liquidationFeeRate
     ) external view returns (bool) {
         return
             pos.liquidatable(
@@ -166,7 +167,8 @@ contract PositionMock {
                 oiTotalSharesOnSide,
                 currentPrice,
                 capPayoff,
-                maintenanceMarginFraction
+                maintenanceMarginFraction,
+                liquidationFeeRate
             );
     }
 }

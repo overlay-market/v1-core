@@ -568,6 +568,7 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
 
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
@@ -579,6 +580,7 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     delta = Decimal(mock_market.params(idx_delta)) / Decimal(1e18)
     lmbda = Decimal(mock_market.params(idx_lmbda)) / Decimal(1e18)
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # Use mid price to calculate liquidation price
     data = feed.latest()
@@ -590,10 +592,12 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     # bid = mid * (1 + mm) - 1/L
     if is_long:
         entry_price = mid_price \
-            * (1 - maintenance_fraction + Decimal(1)/leverage)
+            * (1 - maintenance_fraction / (1 - liq_fee_rate)
+               + Decimal(1)/leverage)
     else:
         entry_price = mid_price \
-            * (1 + maintenance_fraction - Decimal(1)/leverage)
+            * (1 + maintenance_fraction / (1 - liq_fee_rate)
+               - Decimal(1)/leverage)
 
     # will be liquidatable already when
     # ask = mid * e **(delta + lmbda * volume)

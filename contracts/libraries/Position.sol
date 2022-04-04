@@ -254,14 +254,16 @@ library Position {
     }
 
     /// @notice Whether a position can be liquidated
-    /// @dev is true when value < maintenance margin
+    /// @dev is true when value * (1 - liq fee rate) < maintenance margin
+    /// @dev liq fees are reward given to liquidator
     function liquidatable(
         Info memory self,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff,
-        uint256 maintenanceMarginFraction
+        uint256 maintenanceMarginFraction,
+        uint256 liquidationFeeRate
     ) internal pure returns (bool can_) {
         uint256 fraction = ONE;
         uint256 posNotionalInitial = notionalInitial(self, fraction);
@@ -280,6 +282,7 @@ library Position {
             capPayoff
         );
         uint256 maintenanceMargin = posNotionalInitial.mulUp(maintenanceMarginFraction);
-        can_ = val < maintenanceMargin;
+        uint256 liquidationFee = val.mulDown(liquidationFeeRate);
+        can_ = val < maintenanceMargin + liquidationFee;
     }
 }

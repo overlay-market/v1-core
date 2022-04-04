@@ -283,7 +283,7 @@ def create_market(gov, ovl):
     66670000000000000000000,  # circuitBreakerMintTarget
     100000000000000000,  # maintenanceMargin
     100000000000000000,  # maintenanceMarginBurnRate
-    10000000000000000,  # liquidationFeeRate
+    50000000000000000,  # liquidationFeeRate
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
@@ -308,7 +308,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
     66670000000000000000000,  # circuitBreakerMintTarget
     100000000000000000,  # maintenanceMarginFraction
     100000000000000000,  # maintenanceMarginBurnRate
-    10000000000000000,  # liquidationFeeRate
+    50000000000000000,  # liquidationFeeRate
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit

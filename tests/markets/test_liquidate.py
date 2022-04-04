@@ -94,8 +94,10 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -106,12 +108,14 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -181,7 +185,11 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     maintenance_burn = Decimal(mock_market.params(idx_mmbr)) \
         / Decimal(1e18)
 
-    expect_value -= int(expect_value * maintenance_burn)
+    # remove liquiation fee from remaining margin
+    liq_fee = int(expect_value * liq_fee_rate)
+    margin_remaining = expect_value - liq_fee
+
+    expect_value -= int(margin_remaining * maintenance_burn)
     expect_mint = expect_value - expect_cost
     actual_mint = int(tx.events["Liquidate"]["mint"])
     assert actual_mint == approx(expect_mint, rel=1e-4)
@@ -259,8 +267,11 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
+
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
     # liq_price = entry_price - notional_initial / oi_initial
@@ -270,12 +281,14 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1 - liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1 - liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -378,17 +391,22 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     # liq_price = entry_price + notional_initial / oi_initial
     #             - (mm * notional_initial + debt) / oi_current
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
+
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     mock_feed.setPrice(liq_price, {"from": rando})
@@ -486,8 +504,10 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -498,12 +518,14 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -612,8 +634,10 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -624,12 +648,14 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -755,8 +781,10 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -767,12 +795,14 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -801,19 +831,20 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     liq_value = int(liq_collateral + liq_pnl)
     liq_cost = int(liq_cost)
 
-    # adjusted liq value downward for mm burn
+    # remove liquiation fee from remaining margin
+    liq_fee = int(liq_value * liq_fee_rate)
+    margin_remaining = liq_value - liq_fee
+
+    # adjust value for maintenance burn
     idx_mmbr = RiskParameter.MAINTENANCE_MARGIN_BURN_RATE.value
     maintenance_burn = Decimal(mock_market.params(idx_mmbr)) \
         / Decimal(1e18)
-    liq_value -= liq_value * maintenance_burn
-
-    # calculate liquidation fee
-    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
-    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
-    liq_fee = liq_value * liq_fee_rate
+    margin_burned = int(margin_remaining * maintenance_burn)
+    margin_remaining -= margin_burned
 
     # calculate expected values
-    expect_mint = int(liq_value - liq_cost)
+    # expect_value -= int(remaining_margin * maintenance_burn)
+    expect_mint = int(liq_value - liq_cost - margin_burned)
 
     # check expected pnl in line with Liquidate event first
     assert int(tx.events["Liquidate"]["mint"]) == approx(expect_mint, rel=1e-4)
@@ -827,7 +858,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     expect_liq_fee = int(liq_fee)
 
     # value less fees expected
-    expect_value_out = int(liq_value - liq_fee)
+    expect_value_out = int(margin_remaining)
 
     # check Transfer events for:
     # 1. burn pnl; 2. value less liq fees out for reward; 3. liq fees out
@@ -840,26 +871,27 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     assert int(tx.events["Transfer"][0]["value"]) == approx(expect_mint_mag,
                                                             rel=1e-4)
 
-    # check liquidate event has same value for pnl as transfer event (1)
+    # check liquidate event has same value for burn as transfer event (1)
     actual_transfer_mint = -tx.events["Transfer"][0]["value"]
     assert tx.events["Liquidate"]["mint"] == actual_transfer_mint
 
-    # check value less fees in event (2)
+    # check liquidation fee paid to liquidator in event (2)
     assert tx.events['Transfer'][1]['from'] == mock_market.address
     assert tx.events['Transfer'][1]['to'] == rando.address
     assert int(tx.events['Transfer'][1]['value']) == \
-        approx(expect_value_out, rel=1e-4)
+        approx(expect_liq_fee, rel=1e-4)
 
-    # check value less trade fees out (3)
+    # check remaining margin sent to fee recipient (3)
     assert tx.events['Transfer'][2]['from'] == mock_market.address
     assert tx.events['Transfer'][2]['to'] == factory.feeRecipient()
-    assert int(tx.events['Transfer'][2]['value']) == approx(expect_liq_fee,
+    assert int(tx.events['Transfer'][2]['value']) == approx(expect_value_out,
                                                             rel=1e-4)
 
 
+# TODO: check for correctness again
 @given(is_long=strategy('bool'))
-def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
-                                                 rando, ovl, is_long):
+def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
+                                               rando, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -926,13 +958,16 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
+    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -943,12 +978,14 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -974,26 +1011,41 @@ def test_liquidate_transfers_value_to_liquidator(mock_market, mock_feed, alice,
     expect_balance_market += actual_mint
 
     # calculate expected values
-    expect_value = int(liq_cost + actual_mint)
+    expect_cost_plus_mint = int(liq_cost + actual_mint)
 
-    # adjust value for liquidation fee
-    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
-    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
-    expect_liq_fee = int(Decimal(expect_value) * liq_fee_rate)
-    expect_value_out = expect_value - expect_liq_fee  # value less fees
+    # get expected exit price
+    price = tx.events["Liquidate"]["price"]
 
-    expect_balance_rando += expect_value_out
-    expect_balance_market -= expect_value
+    # calculate expected values for burn comparison
+    if is_long:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(price) - Decimal(expect_entry_price)) \
+            / Decimal(1e18)
+    else:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(expect_entry_price) - Decimal(price)) \
+            / Decimal(1e18)
+
+    liq_value = int(liq_collateral + liq_pnl)
+    liq_cost = int(liq_cost)
+
+    # get the liquidation fee
+    expect_liq_fee = int(liq_value * liq_fee_rate)
+
+    expect_balance_rando += expect_liq_fee
+    expect_balance_market -= expect_cost_plus_mint
 
     actual_balance_rando = ovl.balanceOf(rando)
     actual_balance_market = ovl.balanceOf(mock_market)
 
-    assert int(actual_balance_rando) == approx(expect_balance_rando)
-    assert int(actual_balance_market) == approx(expect_balance_market)
+    assert int(actual_balance_rando) == approx(expect_balance_rando, rel=1e-4)
+    assert int(actual_balance_market) == approx(
+        expect_balance_market, rel=1e-4)
 
 
+# TODO: check for correctness again
 @given(is_long=strategy('bool'))
-def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
+def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
                                               factory, rando, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -1061,13 +1113,16 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
+    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -1078,12 +1133,14 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -1093,10 +1150,6 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     recipient = factory.feeRecipient()
     expect_balance_recipient = ovl.balanceOf(recipient)
     expect_balance_market = ovl.balanceOf(mock_market)
-
-    # calculate position attributes at the current time
-    # ignore payoff cap
-    liq_cost = Decimal(expect_oi_shares - expect_debt)
 
     # input values for liquidate
     input_owner = alice.address
@@ -1110,21 +1163,47 @@ def test_liquidate_transfers_liquidation_fees(mock_market, mock_feed, alice,
     expect_balance_market += actual_mint
 
     # calculate expected values
-    expect_value = int(liq_cost + actual_mint)
+    expect_cost_plus_mint = int(liq_cost + actual_mint)
 
-    # adjust value for liquidation fee
-    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
-    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
-    expect_liq_fee = int(Decimal(expect_value) * liq_fee_rate)
+    # get expected exit price
+    price = tx.events["Liquidate"]["price"]
 
-    expect_balance_recipient += expect_liq_fee
-    expect_balance_market -= expect_value
+    # calculate expected values for burn comparison
+    if is_long:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(price) - Decimal(expect_entry_price)) \
+            / Decimal(1e18)
+    else:
+        liq_pnl = Decimal(expect_oi_current) * \
+            (Decimal(expect_entry_price) - Decimal(price)) \
+            / Decimal(1e18)
+
+    liq_value = int(liq_collateral + liq_pnl)
+    liq_cost = int(liq_cost)
+
+    # remove liquiation fee from remaining margin
+    liq_fee = int(liq_value * liq_fee_rate)
+    margin_remaining = liq_value - liq_fee
+
+    # adjust value for maintenance burn
+    idx_mmbr = RiskParameter.MAINTENANCE_MARGIN_BURN_RATE.value
+    maintenance_burn = Decimal(mock_market.params(idx_mmbr)) \
+        / Decimal(1e18)
+    margin_burned = int(margin_remaining * maintenance_burn)
+    margin_remaining -= margin_burned
+
+    expect_margin_remaining = int(margin_remaining)
+
+    expect_balance_recipient += expect_margin_remaining
+    expect_balance_market -= expect_cost_plus_mint
 
     actual_balance_recipient = ovl.balanceOf(recipient)
     actual_balance_market = ovl.balanceOf(mock_market)
 
-    assert int(actual_balance_recipient) == approx(expect_balance_recipient)
-    assert int(actual_balance_market) == approx(expect_balance_market)
+    assert int(actual_balance_recipient) == approx(
+        expect_balance_recipient, rel=1e-4)
+    assert int(actual_balance_market) == approx(
+        expect_balance_market, rel=1e-4)
 
 
 def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
@@ -1319,8 +1398,10 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -1331,12 +1412,14 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -1437,8 +1520,10 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -1449,12 +1534,14 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     # change price to liq_price so position becomes liquidatable
@@ -1545,8 +1632,10 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
     # NOTE:       = p_entry * ( 2 - ( MM * OI(0) + D ) / OI ) if short
     idx_mmf = RiskParameter.MAINTENANCE_MARGIN_FRACTION.value
+    idx_liq = RiskParameter.LIQUIDATION_FEE_RATE.value
     maintenance_fraction = Decimal(mock_market.params(idx_mmf)) \
         / Decimal(1e18)
+    liq_fee_rate = Decimal(mock_market.params(idx_liq)) / Decimal(1e18)
 
     # calculate the liquidation price factor
     # then infer market impact required to slip to this price
@@ -1557,12 +1646,14 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
 
     mock_feed.setPrice(liq_price, {"from": rando})
@@ -1584,12 +1675,14 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             - liq_notional / liq_oi_shares \
-            + (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
             + liq_notional / liq_oi_shares \
-            - (maintenance_fraction * liq_notional + liq_debt) / liq_oi
+            - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
+               + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
 
     mock_feed.setPrice(liq_price, {"from": rando})
