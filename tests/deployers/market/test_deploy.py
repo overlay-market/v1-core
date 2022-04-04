@@ -12,6 +12,12 @@ def test_deploy_creates_market(deployer, ovl, feed, factory):
     assert market.feed() == feed
     assert market.factory() == factory
 
+    # test parameters reverts back to zero address
+    tok, feed, fact = deployer.parameters()
+    assert tok == ovl
+    assert feed == "0x0000000000000000000000000000000000000000"
+    assert fact == factory
+
 
 def test_deploy_reverts_when_not_factory(deployer, ovl, feed, rando):
     # check attempting to deploy

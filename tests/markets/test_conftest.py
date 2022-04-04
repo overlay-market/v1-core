@@ -64,9 +64,9 @@ def test_fake_deployer_fixture(fake_deployer, fake_factory, ovl):
     assert fake_deployer.ovl() == ovl
 
     tok, feed, fact = fake_deployer.parameters()
-    assert tok == "0x0000000000000000000000000000000000000000"
+    assert tok == ovl
     assert feed == "0x0000000000000000000000000000000000000000"
-    assert fact == "0x0000000000000000000000000000000000000000"
+    assert fact == fake_factory
 
 
 def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
