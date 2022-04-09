@@ -118,33 +118,34 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         return IBalancerV2PriceOracle.OracleAverageQuery(variable, secs, ago);
     }
 
-    /// @notice Returns the time average weighted price corresponding to each of queries.
+    /// @notice Returns the time average weighted price corresponding to each of queries
     /// @dev Prices are represented as 18 decimal fixed point values.
     /// @dev Interfaces with the WeightedPool2Tokens contract and calls getTimeWeightedAverage
     /// @param pool Pool address
     /// @param queries Information for a time weighted average query
-    /// @return Time weighted average price corresponding to each query
+    /// @return twaps_ Time weighted average price corresponding to each query
     function getTimeWeightedAverage(
         address pool,
         IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
-    ) public view returns (uint256[] memory) {
+    ) public view returns (uint256[] memory twaps_) {
         IBalancerV2PriceOracle priceOracle = IBalancerV2PriceOracle(pool);
-        return priceOracle.getTimeWeightedAverage(queries);
+        twaps_ = priceOracle.getTimeWeightedAverage(queries);
     }
 
     /// @notice Returns the TWAP corresponding to a single query for the price of the tokens in the
     /// @notice pool, expressed as the price of the second token in units of the first token
+    /// @dev SN TODO: NOT USED
     /// @dev Prices are dev represented as 18 decimal fixed point values
     /// @dev Variable.PAIR_PRICE is used to construct OracleAverageQuery struct
     /// @param pool Pool address
     /// @param secs Duration of TWAP in seconds
     /// @param ago End of TWAP in seconds
-    /// @return result TWAP of tokens in the pool
+    /// @return result_ TWAP of tokens in the pool
     function getTimeWeightedAveragePairPrice(
         address pool,
         uint256 secs,
         uint256 ago
-    ) public view returns (uint256 result) {
+    ) public view returns (uint256 result_) {
         IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
 
         IBalancerV2PriceOracle.OracleAverageQuery[]
@@ -154,7 +155,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         queries[0] = query;
 
         uint256[] memory results = getTimeWeightedAverage(pool, queries);
-        uint256 result = results[0];
+        result_ = results[0];
     }
 
     /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query
@@ -205,9 +206,9 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     /// @notice Returns the pool id corresponding to the given pool address
     /// @dev Interfaces with WeightedPool2Tokens contract and calls getPoolId
     /// @param pool Pool address
-    /// @return pool id corresponding to the given pool address
-    function getPoolId(address pool) public view returns (bytes32) {
-        return IBalancerV2Pool(pool).getPoolId();
+    /// @return poolId_ pool id corresponding to the given pool address
+    function getPoolId(address pool) public view returns (bytes32 poolId_) {
+        poolId_ = IBalancerV2Pool(pool).getPoolId();
     }
 
     /// @notice Returns the normalized weight of the token
@@ -215,9 +216,9 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     /// @dev Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
     /// @dev Interfaces with the WeightedPool2Tokens contract and calls getNormalizedWeights
     /// @param pool Pool address
-    /// @return Normalized pool weights
-    function getNormalizedWeights(address pool) public view returns (uint256[] memory) {
-        return IBalancerV2Pool(pool).getNormalizedWeights();
+    /// @return weights_ Normalized pool weights
+    function getNormalizedWeights(address pool) public view returns (uint256[] memory weights_) {
+        weights_ = IBalancerV2Pool(pool).getNormalizedWeights();
     }
 
     /// @dev V = B1 ** w1 * B2 ** w2
