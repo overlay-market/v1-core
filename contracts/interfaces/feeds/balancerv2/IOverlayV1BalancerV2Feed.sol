@@ -26,34 +26,10 @@ interface IOverlayV1BalancerV2Feed is IOverlayV1Feed {
 
     function marketBaseAmount() external view returns (uint128);
 
-    /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
-    function consult(
-        address pool,
-        uint32[] memory secondsAgos,
-        uint32[] memory windows,
-        uint256[] memory nowIdxs
-    )
-        external
-        view
-        returns (int24[] memory arithmeticMeanTicks_, uint128[] memory harmonicMeanLiquidities_);
-
-    /// @dev COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
-    function getQuoteAtTick(
-        int24 tick,
-        uint128 baseAmount,
-        address baseToken,
-        address quoteToken
-    ) external view returns (uint256 quoteAmount_);
-
-    /// @notice Virtual balance of WETH in the pool in OVL terms
-    function getReserveInOvl(
-        int24 arithmeticMeanTickMarket,
-        uint128 harmonicMeanLiquidityMarket,
-        int24 arithmeticMeanTickOvlWeth
-    ) external view returns (uint256 reserveInOvl_);
+    function ovlWethPoolId() external view returns (bytes32);
 
     /// @notice Virtual balance of WETH in the pool
-    function getReserveInWeth(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
+    function getReserveInWeth(uint256 twav, uint256 priceOverMicroWindow)
         external
         view
         returns (uint256 reserveInWeth_);

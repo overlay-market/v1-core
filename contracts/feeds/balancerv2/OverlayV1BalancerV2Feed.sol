@@ -6,11 +6,12 @@ import "../OverlayV1Feed.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Vault.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2PriceOracle.sol";
+import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2Feed.sol";
 import "../../libraries/balancerv2/BalancerV2Tokens.sol";
 import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
 import "../../libraries/FixedPoint.sol";
 
-contract OverlayV1BalancerV2Feed is OverlayV1Feed {
+contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     using FixedPoint for uint256;
 
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
