@@ -31,7 +31,7 @@ interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
         uint256[] memory nowIdxs
     )
         external
-       view
+        view
         returns (int24[] memory arithmeticMeanTicks_, uint128[] memory harmonicMeanLiquidities_);
 
     // COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
