@@ -38,10 +38,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         VAULT = balancerV2Tokens.vault;
-        // SN TODO: Check if gas cost is reduced by storing vault in memory
-        // IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
-        // SN TODO: check gas if vault is not a global but we pass it in here as getPoolTokens is
-        // the only place where VAULT is used and is only called in the constructor
         (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Tokens.marketPoolId);
 
         require(
@@ -54,10 +50,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
             "OVLV1Feed: ovlWethPoolId mismatch"
         );
 
-        // SN TODO: verified the order is token0=dai, token1=weth: now make sure code reflects this
-        // specifically when we calculate the reserve in getReserve where we query for the weights
-        // we get back [token0 weight, token1 weight]
-        // need WETH in market pool to make reserve conversion from ETH => OVL
         address _marketToken0 = address(marketTokens[0]); // DAI
         address _marketToken1 = address(marketTokens[1]); // WETH
 
@@ -212,7 +204,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     /// @notice Returns the normalized weight of the token
     /// @dev Weights are fixed point numbers that sum to FixedPoint.ONE
-    /// @dev Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
+    /// @dev Ex: a 60 WETH/40 BAL pool returns [400000000000000000 BAL, 600000000000000000 WETH]
     /// @dev Interfaces with the WeightedPool2Tokens contract and calls getNormalizedWeights
     /// @param pool Pool address
     /// @return weights_ Normalized pool weights
@@ -242,12 +234,8 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     {
         address _marketPool = marketPool;
         // Retrieve pool weights
-        // Ex: a 60 WETH/40 BAL pool returns 400000000000000000, 600000000000000000
+        // Ex: a 60 WETH/40 BAL pool returns [400000000000000000 , 600000000000000000
         uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
-
-        // SN TODO: sanity check that the order the normalized weights are returned are NOT the
-        // same order as the return of getPoolId for the market pool. does not impact this code,
-        // but still something to note I think
 
         // WeightedPool2Tokens contract only ever has two pools
         uint256 weightToken0 = normalizedWeights[0]; // DAI
@@ -296,7 +284,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
             .Variable
             .PAIR_PRICE;
 
-        // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
         IBalancerV2PriceOracle.OracleAverageQuery[]
             memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](3);
 
