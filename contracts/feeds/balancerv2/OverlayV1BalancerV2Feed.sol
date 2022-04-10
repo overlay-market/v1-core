@@ -178,7 +178,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     /// @notice Returns the normalized weight of the token
     /// @dev Weights are fixed point numbers that sum to FixedPoint.ONE
-    /// @dev Ex: a 60 WETH/40 BAL pool returns [400000000000000000 BAL, 600000000000000000 WETH]
+    /// @dev Ex: a 60 WETH/40 DAI pool returns [400000000000000000 DAI, 600000000000000000 WETH]
     /// @dev Interfaces with the WeightedPool2Tokens contract and calls getNormalizedWeights
     /// @param pool Pool address
     /// @return weights_ Normalized pool weights
@@ -195,9 +195,16 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _microWindow = microWindow;
 
         uint256 twav = getTimeWeightedAverageInvariant(_marketPool, _microWindow, 0);
-        uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow);
+        uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow); // units WETH
 
         uint256 ovlWethPairPrice = getPairPriceOvlWeth();
+        // for gas: do them all in the constructor
+        // can store marketToken0/1, and ovlWethToken0
+        // /then pull from storage if ovWethToken0 == WETH
+        // could store bool and have check in constuctor
+        // if OVL is base (token1) then OVL/WETH price is #weth/#ovl
+        // reserve_ = reserveInWeth.divUp(ovlWethPairPrice);
+        // if OVL is quote (token0) then OVL/WETH price is #ovl/#weth
         reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
     }
 
@@ -208,13 +215,16 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     {
         address _marketPool = marketPool;
         // Retrieve pool weights
-        // Ex: a 60 WETH/40 BAL pool returns [400000000000000000 , 600000000000000000
+        // Ex: a 60 WETH/40 DAI pool returns [400000000000000000 DAI, 600000000000000000 WETH]
         uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
 
         // WeightedPool2Tokens contract only ever has two pools
         uint256 weightToken0 = normalizedWeights[0]; // DAI
         uint256 weightToken1 = normalizedWeights[1]; // WETH
 
+        // if token0 is WETH (like for WETH/UNI), WETH is the base, we solve for B0
+        // if token1 is WETH (like for WETH/DAI), WETH is the quote, we solve for B1
+        // SN TODO: short cut: assume w0 + w1 = 1
         // ((priceOverMicroWindow * weightToken1) / weightToken0) ** weightToken1;
         uint256 denominator = (priceOverMicroWindow.mulUp(weightToken1).divUp(weightToken0)).powUp(
             weightToken1
