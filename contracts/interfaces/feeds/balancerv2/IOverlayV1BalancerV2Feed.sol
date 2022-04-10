@@ -39,15 +39,6 @@ interface IOverlayV1BalancerV2Feed is IOverlayV1Feed {
         IBalancerV2PriceOracle.OracleAverageQuery[] memory queries
     ) external view returns (uint256[] memory twaps_);
 
-    /// @notice Returns the TWAP corresponding to a single query for the price of the tokens in the
-    /// @notice pool, expressed as the price of the second token in units of the first token
-    /// @dev SN TODO: NOT USED
-    function getTimeWeightedAveragePairPrice(
-        address pool,
-        uint256 secs,
-        uint256 ago
-    ) external view returns (uint256 result);
-
     /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query
     /// @notice for the value of the pool's
     /// @notice invariant, which is a measure of its liquidity

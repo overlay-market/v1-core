@@ -123,32 +123,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         twaps_ = priceOracle.getTimeWeightedAverage(queries);
     }
 
-    /// @notice Returns the TWAP corresponding to a single query for the price of the tokens in the
-    /// @notice pool, expressed as the price of the second token in units of the first token
-    /// @dev SN TODO: NOT USED
-    /// @dev Prices are dev represented as 18 decimal fixed point values
-    /// @dev Variable.PAIR_PRICE is used to construct OracleAverageQuery struct
-    /// @param pool Pool address
-    /// @param secs Duration of TWAP in seconds
-    /// @param ago End of TWAP in seconds
-    /// @return result_ TWAP of tokens in the pool
-    function getTimeWeightedAveragePairPrice(
-        address pool,
-        uint256 secs,
-        uint256 ago
-    ) public view returns (uint256 result_) {
-        IBalancerV2PriceOracle.Variable variable = IBalancerV2PriceOracle.Variable.PAIR_PRICE;
-
-        IBalancerV2PriceOracle.OracleAverageQuery[]
-            memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
-        IBalancerV2PriceOracle.OracleAverageQuery memory query = IBalancerV2PriceOracle
-            .OracleAverageQuery(variable, secs, ago);
-        queries[0] = query;
-
-        uint256[] memory results = getTimeWeightedAverage(pool, queries);
-        result_ = results[0];
-    }
-
     /// @notice Returns the TWAI (time weighted average invariant) corresponding to a single query
     /// @notice for the value of the pool's
     /// @notice invariant, which is a measure of its liquidity
