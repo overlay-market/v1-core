@@ -124,6 +124,7 @@ def pool_parusdc():
 @pytest.fixture(scope="module")
 def balweth_poolid():
     '''
+    SN TODO: change this name to daiweth_poolid
     Output:
       [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool contract pool id
     '''

@@ -31,6 +31,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
+    // SN TODO: do i need this as a global? if so, should I add marketPoolId as global too?
     bytes32 public immutable ovlWethPoolId;
 
     constructor(
@@ -39,10 +40,12 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
-        ovlWethPoolId = balancerV2Tokens.ovlWethPoolId;
         VAULT = balancerV2Tokens.vault;
+        ovlWethPoolId = balancerV2Tokens.ovlWethPoolId;
         // SN TODO: Check if gas cost is reduced by storing vault in memory
-        IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
+        // IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
+        // SN TODO: check gas if vault is not a global but we pass it in here as getPoolTokens is
+        // the only place where VAULT is used and is only called in the constructor
         (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Tokens.marketPoolId);
 
         require(
@@ -251,8 +254,8 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         // but still something to note I think
 
         // WeightedPool2Tokens contract only ever has two pools
-        uint256 weightToken0 = normalizedWeights[0]; // WETH
-        uint256 weightToken1 = normalizedWeights[1]; // DAI
+        uint256 weightToken0 = normalizedWeights[0]; // DAI
+        uint256 weightToken1 = normalizedWeights[1]; // WETH
 
         // ((priceOverMicroWindow * weightToken1) / weightToken0) ** weightToken1;
         uint256 denominator = (priceOverMicroWindow.mulUp(weightToken1).divUp(weightToken0)).powUp(
@@ -271,12 +274,10 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _microWindow = microWindow;
 
         /* Pair Price Calculations */
-        // SN LEFT OFF HERE
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
             .Variable
             .PAIR_PRICE;
 
-        // SN TODO: CHECK: Has this arr initialized at 4, but changed to 3
         IBalancerV2PriceOracle.OracleAverageQuery[]
             memory queries = new IBalancerV2PriceOracle.OracleAverageQuery[](1);
 
@@ -295,7 +296,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _macroWindow = macroWindow;
 
         /* Pair Price Calculations */
-        // SN LEFT OFF HERE
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
             .Variable
             .PAIR_PRICE;
