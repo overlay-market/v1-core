@@ -31,9 +31,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
-    // SN TODO: do i need this as a global? if so, should I add marketPoolId as global too?
-    bytes32 public immutable ovlWethPoolId;
-
     constructor(
         BalancerV2PoolInfo.Pool memory balancerV2Pool,
         BalancerV2Tokens.Info memory balancerV2Tokens,
@@ -41,7 +38,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         VAULT = balancerV2Tokens.vault;
-        ovlWethPoolId = balancerV2Tokens.ovlWethPoolId;
         // SN TODO: Check if gas cost is reduced by storing vault in memory
         // IBalancerV2Vault vault = IBalancerV2Vault(balancerV2Tokens.vault);
         // SN TODO: check gas if vault is not a global but we pass it in here as getPoolTokens is

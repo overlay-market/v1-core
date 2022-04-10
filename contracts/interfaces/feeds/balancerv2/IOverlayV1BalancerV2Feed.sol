@@ -26,8 +26,6 @@ interface IOverlayV1BalancerV2Feed is IOverlayV1Feed {
 
     function marketBaseAmount() external view returns (uint128);
 
-    function ovlWethPoolId() external view returns (bytes32);
-
     /// @notice Returns the OracleAverageQuery struct containing information for a TWAP query
     function getOracleAverageQuery(
         IBalancerV2PriceOracle.Variable variable,
