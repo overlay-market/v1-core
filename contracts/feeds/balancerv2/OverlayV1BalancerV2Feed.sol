@@ -236,7 +236,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow);
 
         uint256 ovlWethPairPrice = getPairPriceOvlWeth();
-        reserve_ = reserveInWeth * ovlWethPairPrice;
+        reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
     }
 
     function getReserveInWeth(uint256 twav, uint256 priceOverMicroWindow)
