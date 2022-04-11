@@ -189,7 +189,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
     function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve_) {
-
         uint256 twav = getTimeWeightedAverageInvariant(marketPool, microWindow, 0);
         uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow); // units WETH
 
@@ -258,7 +257,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     /// @notice Market pool only (not reserve)
     function getPairPriceOvlWeth() public view returns (uint256 twap_) {
-
         /* Pair Price Calculations */
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
             .Variable
