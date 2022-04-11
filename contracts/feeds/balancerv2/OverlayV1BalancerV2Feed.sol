@@ -208,30 +208,54 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
     }
 
+    /// @notice Gets reserve in WETH
+    /// @dev https://oips.overlay.market/notes/note-10
+    /// @dev k: token index, only two-token pools are used in the Balancer V2 WeightedPool2Tokens
+    /// @dev contract
+    /// @dev B_k: number of k type tokens in the pool
+    /// @dev w_k: weight for k type tokens in the pool, Σ_k w_k = 1
+    /// @dev Invariant for the spot pool for a two token pool: V = (B_0 ** w_0) * (B_1 ** w_1)
+    /// @dev Spot price inferred from the relative number of tokens in pool:
+    /// @dev P = (B_1 / B_0) * (w_0 / w_1)
+    /// @dev Assume: (w_0 + w_1) = 1 => so (1 / (w_0 + w_1)) = 1
+    /// @dev If the base token (marketToken0) is WETH, solve for B_0 using equations V and P:
+    /// @dev B_0 = [ twav * (priceOverMicroWindow * w_0 / w_1) ** w_1 ] ** (1 / (w_0 + w_1))
+    /// @dev B_0 = [ twav * (priceOverMicroWindow * w_0 / w_1) ** w_1 ] ** (1 / 1)
+    /// @dev If the quote token (marketToken1) is WETH, solve for B_1 using equations V and P
+    /// @dev B_1 = [ twav / (priceOverMicroWindow * w_1 / w_0) ** w_1 ] ** (1 / (w_0 + w_1))
+    /// @dev B_1 = [ twav / (priceOverMicroWindow * w_1 / w_0) ** w_1 ] ** (1 / 1)
+    /// @param twav Time weighted average invariant
+    /// @param priceOverMicroWindow TWAP over last micro window
+    /// @return reserveInWeth_ reserve in WETH
     function getReserveInWeth(uint256 twav, uint256 priceOverMicroWindow)
         public
         view
         returns (uint256 reserveInWeth_)
     {
-        address _marketPool = marketPool;
         // Retrieve pool weights
         // Ex: a 60 WETH/40 DAI pool returns [400000000000000000 DAI, 600000000000000000 WETH]
-        uint256[] memory normalizedWeights = getNormalizedWeights(_marketPool);
+        uint256[] memory normalizedWeights = getNormalizedWeights(marketPool);
 
         // WeightedPool2Tokens contract only ever has two pools
         uint256 weightToken0 = normalizedWeights[0]; // DAI
         uint256 weightToken1 = normalizedWeights[1]; // WETH
-
-        // if token0 is WETH (like for WETH/UNI), WETH is the base, we solve for B0
-        // if token1 is WETH (like for WETH/DAI), WETH is the quote, we solve for B1
-        // SN TODO: short cut: assume w0 + w1 = 1
-        // ((priceOverMicroWindow * weightToken1) / weightToken0) ** weightToken1;
-        uint256 denominator = (priceOverMicroWindow.mulUp(weightToken1).divUp(weightToken0)).powUp(
-            weightToken1
-        );
-        // 1 / (weightToken0 + weightToken1);
+        uint256 denominator;
+        // If marketToken0 (the base token) is WETH, solve for B0
+        // If marketToken1 (the quote token) is WETH, solve for B1
+        if (marketToken0 == WETH) {
+            /// B_0 = [ twav * (priceOverMicroWindow * w_0 / w_1) ** w_0 ]
+            denominator = (priceOverMicroWindow.mulUp(weightToken0).divUp(weightToken1)).powUp(
+                weightToken0
+            );
+        } else if (marketToken1 == WETH) {
+            /// B_1 = [ twav / (priceOverMicroWindow * w_1 / w_0) ** w_1 ]
+            denominator = (priceOverMicroWindow.mulUp(weightToken1).divUp(weightToken0)).powUp(
+                weightToken1
+            );
+        } else {
+            revert("OVLV!: WETH not a market token");
+        }
         uint256 power = uint256(1).divUp(weightToken0.add(weightToken1));
-        // B1 = reserveInWeth_ = (twav / denominator) ** power;
         reserveInWeth_ = twav.divUp(denominator).powUp(power);
     }
 
