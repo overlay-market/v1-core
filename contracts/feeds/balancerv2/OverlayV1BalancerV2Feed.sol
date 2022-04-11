@@ -189,23 +189,20 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     /// @dev V = B1 ** w1 * B2 ** w2
     /// @param priceOverMicroWindow price TWAP, P = (B2 / B1) * (w1 / w2)
     function getReserve(uint256 priceOverMicroWindow) public view returns (uint256 reserve_) {
-        // Cache globals for gas savings, SN TODO: verify that this makes a diff here
-        address _marketPool = marketPool;
-        address _ovlWethPool = ovlWethPool;
-        uint256 _microWindow = microWindow;
 
-        uint256 twav = getTimeWeightedAverageInvariant(_marketPool, _microWindow, 0);
+        uint256 twav = getTimeWeightedAverageInvariant(marketPool, microWindow, 0);
         uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow); // units WETH
 
         uint256 ovlWethPairPrice = getPairPriceOvlWeth();
-        // for gas: do them all in the constructor
-        // can store marketToken0/1, and ovlWethToken0
-        // /then pull from storage if ovWethToken0 == WETH
-        // could store bool and have check in constuctor
-        // if OVL is base (token1) then OVL/WETH price is #weth/#ovl
-        // reserve_ = reserveInWeth.divUp(ovlWethPairPrice);
-        // if OVL is quote (token0) then OVL/WETH price is #ovl/#weth
-        reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
+        if (marketQuoteToken == WETH) {
+            // if OVL is base (token1) then OVL/WETH price is #weth/#ovl
+            reserve_ = reserveInWeth.divUp(ovlWethPairPrice);
+        } else if (marketBaseToken == WETH) {
+            // if OVL is quote (token0) then OVL/WETH price is #ovl/#weth
+            reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
+        } else {
+            revert("OVLV1Feed: WETH not quote or base token");
+        }
     }
 
     /// @notice Gets reserve in WETH
@@ -253,7 +250,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
                 weightToken1
             );
         } else {
-            revert("OVLV!: WETH not a market token");
+            revert("OVLV1Feed: WETH not a market token");
         }
         uint256 power = uint256(1).divUp(weightToken0.add(weightToken1));
         reserveInWeth_ = twav.divUp(denominator).powUp(power);
@@ -261,9 +258,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     /// @notice Market pool only (not reserve)
     function getPairPriceOvlWeth() public view returns (uint256 twap_) {
-        // cache globals for gas savings, SN TODO: verify that this makes a diff here
-        address _ovlWethPool = ovlWethPool;
-        uint256 _microWindow = microWindow;
 
         /* Pair Price Calculations */
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
@@ -276,17 +270,12 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         // [Variable enum, seconds, ago]
         queries[0] = getOracleAverageQuery(variablePairPrice, microWindow, 0);
 
-        uint256[] memory twaps = getTimeWeightedAverage(_ovlWethPool, queries);
+        uint256[] memory twaps = getTimeWeightedAverage(ovlWethPool, queries);
         twap_ = twaps[0];
     }
 
     /// @notice Market pool only (not reserve)
     function getPairPrices() public view returns (uint256[] memory twaps_) {
-        // cache globals for gas savings, SN TODO: verify that this makes a diff here
-        address _marketPool = marketPool;
-        uint256 _microWindow = microWindow;
-        uint256 _macroWindow = macroWindow;
-
         /* Pair Price Calculations */
         IBalancerV2PriceOracle.Variable variablePairPrice = IBalancerV2PriceOracle
             .Variable
@@ -300,17 +289,10 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         queries[1] = getOracleAverageQuery(variablePairPrice, macroWindow, 0);
         queries[2] = getOracleAverageQuery(variablePairPrice, macroWindow, macroWindow);
 
-        twaps_ = getTimeWeightedAverage(_marketPool, queries);
+        twaps_ = getTimeWeightedAverage(marketPool, queries);
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        // SN TODO - put just enough code in to get this compiling
-        // cache globals for gas savings
-        uint256 _microWindow = microWindow;
-        uint256 _macroWindow = macroWindow;
-        address _marketPool = marketPool;
-        address _ovlWethPool = ovlWethPool;
-
         /* Pair Price Calculations */
         uint256[] memory twaps = getPairPrices();
         uint256 priceOverMicroWindow = twaps[0];
@@ -323,8 +305,8 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         return
             Oracle.Data({
                 timestamp: block.timestamp,
-                microWindow: _microWindow,
-                macroWindow: _macroWindow,
+                microWindow: microWindow,
+                macroWindow: macroWindow,
                 priceOverMicroWindow: priceOverMicroWindow, // secondsAgos = _microWindow
                 priceOverMacroWindow: priceOverMacroWindow, // secondsAgos = _macroWindow
                 priceOneMacroWindowAgo: priceOneMacroWindowAgo, // secondsAgos = _macroWindow * 2
