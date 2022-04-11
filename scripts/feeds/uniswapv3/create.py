@@ -19,7 +19,7 @@ def main():
     # instantiate the feed factory contract
     feed_factory = OverlayV1UniswapV3Factory.at(UNIV3_FEED_FACTORY)
 
-    # assemble constructor params
+    # assemble params for deployFeed
     params = ["marketBaseToken (address)", "marketQuoteToken (address)",
               "marketFee (uint24)", "marketBaseAmount (uint128)",
               "ovlXBaseToken (address)", "ovlXQuoteToken (address)",
