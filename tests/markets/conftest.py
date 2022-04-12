@@ -148,6 +148,7 @@ def feed_factory(create_feed_factory):
 
 # TODO: params for different OverlayV1Feed types ... (to test BalancerV2
 # and UniswapV3 in same test run)
+# hardcoded so no flexibility in flexing variable feed -> modify to test against all the feeds
 @pytest.fixture(scope="module")
 def create_feed(gov, feed_factory, pool_daiweth_30bps, pool_uniweth_30bps,
                 uni, dai, weth, request):
