@@ -116,4 +116,3 @@ The process to add a new market is as follows:
 2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
 3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OVL token prior to any markets being deployed, otherwise `deployMarket()` will revert.
-small change

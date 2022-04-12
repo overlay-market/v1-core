@@ -3,7 +3,7 @@ name: Overlay V1 Core Test Python
 on:
   push:
     branches: [ main, dev ]
-  pull_request:
+  pull_request_target:
     branches: [ main, dev ]
 
 jobs:
