@@ -2,11 +2,9 @@ name: Overlay V1 Core Test Python
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request_target:
+    branches: [ main ]
 
 env:
     # increasing available memory for node reduces issues with ganache crashing
