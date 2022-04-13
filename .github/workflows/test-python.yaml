@@ -30,31 +30,3 @@ jobs:
           echo WEB3_INFURA_PROJECT_ID=${{ secrets.WEB3_INFURA_PROJECT_ID }} >> .env
           echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
           cat .env
-
-      - name: Cache Compiler Installations
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.solcx
-            ~/.vvm
-          key: compiler-cache
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v1
-
-      - name: Install Ganache
-        run: npm install -g ganache-cli@6.12.1
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Requirements
-        run: pip install -r requirements.txt
-
-      - name: Compile Code
-        run: brownie compile --size
-
-      - name: Run Tests
-        run: brownie test -vv -s --gas
