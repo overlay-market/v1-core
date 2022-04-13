@@ -2,33 +2,45 @@ name: Overlay V1 Core Test Python
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-env:
-    # increasing available memory for node reduces issues with ganache crashing
-    # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
-  NODE_OPTIONS: --max_old_space_size=4096
+    branches: [ main, dev ]
+  pull_request_target:
+    branches: [ main, dev ]
 
 jobs:
-  core:
+  tests:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-
     steps:
       - uses: actions/checkout@v2
+
+      - name: Get base branch name
+        shell: bash
+        run: echo "${{ github.base_ref }}"
+
+      - name: Get source branch name
+        shell: bash
+        run: echo "${{ github.head_ref }}"
+
+      - name: If base branch is main and source is NOT dev, fail action
+        shell: bash
+        if: ${{ github.base_ref == 'main' && github.head_ref != 'dev' }}
+        run: exit 1
+
+      - name: Set env MAX_EXAMPLES to 50 if base branch is main and source is dev
+        shell: bash
+        if: ${{ github.base_ref == 'main' && github.head_ref == 'dev' }}
+        run: echo "MAX_EXAMPLES=50" >> "$GITHUB_ENV"
+
+      - name: Set env MAX_EXAMPLES to 3 if base branch is NOT main
+        shell: bash
+        if: github.base_ref != 'main'
+        run: echo "MAX_EXAMPLES=3" >> "$GITHUB_ENV"
 
       - name: Create env file
         run: |
           touch .env
           echo WEB3_INFURA_PROJECT_ID=${{ secrets.WEB3_INFURA_PROJECT_ID }} >> .env
           echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
+          echo MAX_EXAMPLES=${{env.MAX_EXAMPLES}} >> .env
           cat .env
 
       - name: Cache Compiler Installations
