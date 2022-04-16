@@ -30,10 +30,10 @@ jobs:
         if: ${{ github.base_ref == 'main' && github.head_ref == 'dev' }}
         run: echo "MAX_EXAMPLES=50" >> "$GITHUB_ENV"
 
-      - name: Set env MAX_EXAMPLES to 3 if base branch is NOT main
+      - name: Set env MAX_EXAMPLES to 1 if base branch is NOT main
         shell: bash
         if: github.base_ref != 'main'
-        run: echo "MAX_EXAMPLES=3" >> "$GITHUB_ENV"
+        run: echo "MAX_EXAMPLES=1" >> "$GITHUB_ENV"
 
       - name: Create env file
         run: |
