@@ -7,8 +7,8 @@ import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Vault.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2PriceOracle.sol";
 import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2Feed.sol";
-import "../../libraries/balancerv2/BalancerV2Tokens.sol";
-import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
+import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
+import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2PoolInfo.sol";
 import "../../libraries/FixedPoint.sol";
 
 contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {

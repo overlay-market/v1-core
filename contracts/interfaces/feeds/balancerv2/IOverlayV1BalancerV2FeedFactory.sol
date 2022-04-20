@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import "../IOverlayV1FeedFactory.sol";
-import "../../../libraries/balancerv2/BalancerV2Tokens.sol";
+import "../../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
 
 interface IOverlayV1BalancerV2FeedFactory is IOverlayV1FeedFactory {
     // immutables

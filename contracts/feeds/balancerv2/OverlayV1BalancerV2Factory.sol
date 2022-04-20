@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2FeedFactory.sol";
 
-import "../../libraries/balancerv2/BalancerV2Tokens.sol";
-import "../../libraries/balancerv2/BalancerV2PoolInfo.sol";
+import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
+import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2PoolInfo.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1BalancerV2Feed.sol";
 
