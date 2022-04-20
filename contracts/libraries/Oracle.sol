@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 library Oracle {
-    /// @notice Past snapshot values.
+    /// @notice Formatted price and liquidity data fetched from the oracle provider
     /// @dev Every Oracle's data must be formatted to conform to this struct.
     struct Data {
         uint256 timestamp;
