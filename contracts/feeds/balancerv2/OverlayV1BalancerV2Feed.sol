@@ -14,6 +14,7 @@ import "../../libraries/FixedPoint.sol";
 contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     using FixedPoint for uint256;
 
+    // TODO: Do not hardcode. Follow `ovlXPool` implementation in UniswapV3 feed
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address private immutable VAULT;
 
