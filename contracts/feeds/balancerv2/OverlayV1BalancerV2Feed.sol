@@ -194,11 +194,11 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         uint256 reserveInWeth = getReserveInWeth(twav, priceOverMicroWindow); // units WETH
 
         uint256 ovlWethPairPrice = getPairPriceOvlWeth();
-        if (marketQuoteToken == WETH) {
-            // if OVL is base (token1) then OVL/WETH price is #weth/#ovl
+        if (ovlWethToken0 == WETH) {
+            // if OVL is base (token0) then OVL/WETH price is #weth/#ovl
             reserve_ = reserveInWeth.divUp(ovlWethPairPrice);
-        } else if (marketBaseToken == WETH) {
-            // if OVL is quote (token0) then OVL/WETH price is #ovl/#weth
+        } else if (ovlWethToken1 == WETH) {
+            // if OVL is quote (token1) then OVL/WETH price is #ovl/#weth
             reserve_ = reserveInWeth.mulUp(ovlWethPairPrice);
         } else {
             revert("OVLV1Feed: WETH not quote or base token");

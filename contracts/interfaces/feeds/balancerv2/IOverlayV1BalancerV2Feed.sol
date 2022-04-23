@@ -72,7 +72,7 @@ interface IOverlayV1BalancerV2Feed is IOverlayV1Feed {
         view
         returns (uint256 reserveInWeth_);
 
-    /// @notice Market pool only (not reserve)
+    /// @notice ovlWeth pool only (not reserve)
     function getPairPriceOvlWeth() external view returns (uint256 twap_);
 
     /// @notice Market pool only (not reserve)
