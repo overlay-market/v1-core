@@ -157,36 +157,43 @@ def test_get_normalized_weights(feed, pool_balweth, pool_daiweth):
     assert expect == actual
 
 
-def test_get_pool_tokens(feed, weth, balancer, dai, balv2_tokens):
+def test_get_pool_tokens(feed, vault, weth, balancer, dai, balweth_poolid,
+                         daiweth_poolid):
     '''
     Tests that the OverlayV1BalancerV2Feed contract getPoolTokens function
     returns the expected token pair when given the associated pool id.
 
     Two pool ids are tested:
-      1. The OVL/WETH pool id which is often simulated by BAL/WETH for testing
+      1. The OVL/WETH pool id which is simulated by BAL/WETH for testing
       2. The DAI/WETH pool id which often represents the market token pair for
          testing
 
     Inputs:
-      feed         [Contract]: OverlayV1BalancerV2Feed contract instance
-      weth         [Contract]: WETH token contract instance
-      balancer     [Contract]: BalancerGovernanceToken token contract instance
-      dai          [Contract]: DAI token contract instance
-      balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
+      feed           [Contract]: OverlayV1BalancerV2Feed contract instance
+      vault          [Contract]: BalancerV2Vault contract instance
+      weth           [Contract]: WETH token contract instance
+      balancer       [Contract]: BalancerGovernanceToken token contract
+                                 instance
+      dai            [Contract]: DAI token contract instance
+      balweth_poolid [bytes32]:  BAL/WETH Balancer V2 OracleWeightedPool
+                                 contract pool id
+      daiweth_poolid [bytes32]:  DAI/WETH Balancer V2 OracleWeightedPool
+                                 contract pool id
     '''
     # OVL/WETH (represented by BAL/WETH)
-    actual = feed.getPoolTokens(balv2_tokens[1].hex())
+    actual = feed.getPoolTokens(vault, balweth_poolid.hex())
     actual_tokens = actual[0]
     expect_tokens = (balancer, weth)
 
     # DAI/WETH (the market pool)
-    actual = feed.getPoolTokens(balv2_tokens[2].hex())
+    actual = feed.getPoolTokens(vault, daiweth_poolid.hex())
     actual_tokens = actual[0]
     expect_tokens = (dai, weth)
     assert expect_tokens == actual_tokens
 
 
-def test_get_pool_id(feed, balv2_tokens, pool_balweth, pool_daiweth):
+def test_get_pool_id(feed, pool_balweth, pool_daiweth, balweth_poolid,
+                     daiweth_poolid):
     '''
     Test when given a valid pool address, the getPoolId function in
     OverlayV1BalancerV2Feed contract returns the expected pool id.
@@ -197,20 +204,23 @@ def test_get_pool_id(feed, balv2_tokens, pool_balweth, pool_daiweth):
          testing
 
     Inputs:
-      feed         [Contract]: OverlayV1BalancerV2Feed contract instance
-      balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
-      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the OVL/WETH
-                               token pair
-      pool_daiweth [Contract]: Balancer V2 WeightedPool2Tokens contract
-                               instance for the DAI/WETH pool
+      feed           [Contract]: OverlayV1BalancerV2Feed contract instance
+      pool_balweth   [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
+                                 contract instance representing the OVL/WETH
+                                 token pair
+      pool_daiweth   [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                 instance for the DAI/WETH pool
+      balweth_poolid [bytes32]:  BAL/WETH Balancer V2 OracleWeightedPool
+                                 contract pool id
+      daiweth_poolid [bytes32]:  DAI/WETH Balancer V2 OracleWeightedPool
+                                 contract pool id
     '''
     # OVL/WETH (represented by BAL/WETH)
-    expect = balv2_tokens[1].hex()
+    expect = balweth_poolid.hex()
     actual = feed.getPoolId(pool_balweth).hex()
     assert expect == actual
 
     # DAI/WETH (the market pool)
-    expect = balv2_tokens[2].hex()
+    expect = daiweth_poolid.hex()
     actual = feed.getPoolId(pool_daiweth).hex()
     assert expect == actual

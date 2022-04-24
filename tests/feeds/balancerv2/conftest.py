@@ -115,7 +115,6 @@ def pool_parusdc():
 
 
     https://etherscan.io/address/0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b
-    https://app.balancer.fi/#/pool/0x5d6e3d7632d6719e04ca162be652164bec1eaa6b000200000000000000000048  # noqa: E501
     '''
     yield Contract.from_explorer("0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b")
 
@@ -123,26 +122,29 @@ def pool_parusdc():
 @pytest.fixture(scope="module")
 def balweth_poolid():
     '''
-    SN TODO: change this name to daiweth_poolid
+    80% BAL/ 20% WETH Oracle Weighted Pool contract pool id. Used to simulate
+    the OVL/WETH pair.
+    https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
+
+    Output:
+      [bytes32]: BAL/WETH Balancer V2 OracleWeightedPool contract pool id
+    '''
+    yield convert.to_bytes(
+        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
+        'bytes32')
+
+
+@pytest.fixture(scope="module")
+def daiweth_poolid():
+    '''
+    40% DAI/60% WETH Oracle Weighted Pool contract pool id.
+    https://app.balancer.fi/#/pool/0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a  # noqa: E501
+
     Output:
       [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool contract pool id
     '''
     yield convert.to_bytes(
         '0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a',
-        'bytes32')
-
-
-@pytest.fixture(scope="module")
-def parusdc_poolid():
-    '''
-    This pool is used for testing the require statements in the
-    OverlayV1BalancerV2Feed contract constructor function.
-
-    Output:
-      [bytes32]: PAR/USDC Balancer V2 OracleWeightedPool contract pool id
-    '''
-    yield convert.to_bytes(
-        '0x5d6e3d7632d6719e04ca162be652164bec1eaa6b000200000000000000000048',
         'bytes32')
 
 
