@@ -7,7 +7,6 @@ import "../../interfaces/feeds/balancerv2/IBalancerV2Pool.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2Vault.sol";
 import "../../interfaces/feeds/balancerv2/IBalancerV2PriceOracle.sol";
 import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2Feed.sol";
-import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
 import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2PoolInfo.sol";
 import "../../libraries/FixedPoint.sol";
 
@@ -16,7 +15,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     // TODO: Do not hardcode. Follow `ovlXPool` implementation in UniswapV3 feed
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address private immutable VAULT;
 
     address public immutable marketPool;
     address public immutable ovlWethPool;
@@ -34,22 +32,13 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     constructor(
         BalancerV2PoolInfo.Pool memory balancerV2Pool,
-        BalancerV2Tokens.Info memory balancerV2Tokens,
         uint256 _microWindow,
         uint256 _macroWindow
     ) OverlayV1Feed(_microWindow, _macroWindow) {
-        VAULT = balancerV2Tokens.vault;
-        (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Tokens.marketPoolId);
-
-        require(
-            getPoolId(balancerV2Pool.marketPool) == balancerV2Tokens.marketPoolId,
-            "OVLV1Feed: marketPoolId mismatch"
-        );
-
-        require(
-            getPoolId(balancerV2Pool.ovlWethPool) == balancerV2Tokens.ovlWethPoolId,
-            "OVLV1Feed: ovlWethPoolId mismatch"
-        );
+        bytes32 marketPoolId = getPoolId(balancerV2Pool.marketPool);
+        bytes32 ovlWethPoolId = getPoolId(balancerV2Pool.ovlWethPool);
+        (IERC20[] memory marketTokens, , ) = getPoolTokens(balancerV2Pool.vault, marketPoolId);
+        (IERC20[] memory ovlWethTokens, , ) = getPoolTokens(balancerV2Pool.vault, ovlWethPoolId);
 
         address _marketToken0 = address(marketTokens[0]); // DAI
         address _marketToken1 = address(marketTokens[1]); // WETH
@@ -72,8 +61,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
         marketBaseToken = balancerV2Pool.marketBaseToken;
         marketQuoteToken = balancerV2Pool.marketQuoteToken;
         marketBaseAmount = balancerV2Pool.marketBaseAmount;
-
-        (IERC20[] memory ovlWethTokens, , ) = getPoolTokens(balancerV2Tokens.ovlWethPoolId);
 
         // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = address(ovlWethTokens[0]);
@@ -156,7 +143,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
     /// @return The pool's registered tokens
     /// @return Total balances of each token in the pool
     /// @return Most recent block in which any of the pool tokens were updated (never used)
-    function getPoolTokens(bytes32 balancerV2PoolId)
+    function getPoolTokens(address vault, bytes32 balancerV2PoolId)
         public
         view
         returns (
@@ -165,7 +152,7 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
             uint256
         )
     {
-        IBalancerV2Vault vault = IBalancerV2Vault(VAULT);
+        IBalancerV2Vault vault = IBalancerV2Vault(vault);
         return vault.getPoolTokens(balancerV2PoolId);
     }
 

@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 import "../IOverlayV1FeedFactory.sol";
-import "../../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
 
 interface IOverlayV1BalancerV2FeedFactory is IOverlayV1FeedFactory {
     // immutables
@@ -21,10 +20,10 @@ interface IOverlayV1BalancerV2FeedFactory is IOverlayV1FeedFactory {
     /// @dev deploys a new feed contract
     /// @return feed_ address of the new feed
     function deployFeed(
+        address vault,
         address marketPool,
         address marketBaseToken,
         address marketQuoteToken,
-        uint128 marketBaseAmount,
-        BalancerV2Tokens.Info memory balancerV2Tokens
+        uint128 marketBaseAmount
     ) external returns (address feed_);
 }

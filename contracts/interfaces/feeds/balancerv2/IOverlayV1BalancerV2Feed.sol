@@ -49,7 +49,7 @@ interface IOverlayV1BalancerV2Feed is IOverlayV1Feed {
     ) external view returns (uint256 result_);
 
     /// @notice Returns pool token information given a pool id
-    function getPoolTokens(bytes32 balancerV2PoolId)
+    function getPoolTokens(address vault, bytes32 balancerV2PoolId)
         external
         view
         returns (

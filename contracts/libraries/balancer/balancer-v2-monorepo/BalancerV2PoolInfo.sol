@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 library BalancerV2PoolInfo {
     struct Pool {
+        address vault;
         address marketPool;
         address ovlWethPool;
         address ovl;

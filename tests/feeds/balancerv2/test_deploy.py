@@ -33,111 +33,9 @@ def pool_usdcbal():
     yield Contract.from_explorer("0x9c08C7a7a89cfD671c79eacdc6F07c1996277eD5")
 
 
-def test_deploy_feed_reverts_on_market_pool_id_mismatch(gov, balancer, dai,
-                                                        weth, balv2_tokens,
-                                                        pool_daiweth,
-                                                        pool_balweth):
-    '''
-    Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
-    when the market pool address does not yield the same pool id provided by
-    the BalancerV2Tokens struct marketPoolId passed into the constructor of the
-    OverlayV1BalancerV2Feed contract.
-
-    To generate the expected failure, the marketPoolId field in the
-    BalancerV2Tokens struct is set to a pool id that is not the pool id
-    associated with the market pool WeightedPool2Tokens contract.
-
-    Inputs:
-      gov          [Account]:  Governor role account deploys the
-                               OverlayV1BalancerV2Feed contract
-      balancer     [Contract]: BAL token contract instance representing the OVL
-                               token
-      weth         [Contract]: WETH token contract instance
-      dai          [Contract]: DAI token contract instance
-      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the OVL/WETH
-                               token pair
-      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the market token
-                               pair
-    '''
-    market_pool = pool_daiweth
-    ovlweth_pool = pool_balweth
-    ovl = balancer
-    market_base_token = weth
-    market_quote_token = dai
-    market_base_amount = 1 * 10 ** weth.decimals()
-
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
-                  market_quote_token,  market_base_amount)
-
-    micro_window = 600
-    macro_window = 3600
-
-    # Set the BalancerV2Tokens marketPoolId field to the BAL/WETH instead of
-    # DAI/WETH to trigger the expected failure.
-    balv2_tokens = (balv2_tokens[0], balv2_tokens[1], balv2_tokens[1])
-
-    with reverts("OVLV1Feed: marketPoolId mismatch"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
-                   micro_window, macro_window)
-
-
-def test_deploy_feed_reverts_on_ovlweth_pool_id_mismatch(gov, balancer, weth,
-                                                         dai, balv2_tokens,
-                                                         pool_daiweth,
-                                                         pool_balweth):
-    '''
-    Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
-    when the ovlweth pool address does not yield the same pool id provided by
-    the BalancerV2Tokens struct ovlWethPoolId passed into the constructor of
-    the OverlayV1BalancerV2Feed contract.
-
-    To generate the expected failure, the ovlWethPoolId field in the
-    BalancerV2Tokens struct is set to a pool id that is not the pool id
-    associated with the ovlWeth pool WeightedPool2Tokens contract.
-
-    Inputs:
-      gov          [Account]:  Governor role account deploys the
-                                  OverlayV1BalancerV2Feed contract
-      balancer     [Contract]: BAL token contract instance representing the OVL
-                               token
-      weth         [Contract]: WETH token contract instance
-      dai          [Contract]: DAI token contract instance
-      pool_balweth [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the OVL/WETH
-                               token pair
-      pool_daiweth [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
-                               contract instance representing the market token
-                               pair
-    '''
-    market_pool = pool_daiweth
-    ovlweth_pool = pool_balweth
-    ovl = balancer
-    market_base_token = weth
-    market_quote_token = dai
-
-    market_base_amount = 1 * 10 ** weth.decimals()
-    micro_window = 600
-    macro_window = 3600
-
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
-                  market_quote_token,  market_base_amount)
-
-    # Set the BalancerV2Tokens ovlWethPoolId field to the DAI/WETH instead of
-    # BAL/WETH to trigger the expected failure.
-    balv2_tokens = (balv2_tokens[0], balv2_tokens[2], balv2_tokens[2])
-
-    with reverts("OVLV1Feed: ovlWethPoolId mismatch"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
-                   micro_window, macro_window)
-
-
-def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, par, usdc,
-                                                      pool_parusdc,
-                                                      pool_balweth,
-                                                      balv2_tokens,
-                                                      parusdc_poolid):
+def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, vault,
+                                                      par, usdc, pool_parusdc,
+                                                      pool_balweth):
     '''
     Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
     when the market token pair does NOT include WETH. To generate the expected
@@ -159,7 +57,6 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, par, usdc,
       pool_balweth  [Contract]: BAL/WETH Balancer V2 WeightedPool2Tokens
                                 contract instance representing the OVL/WETH
                                 token pair
-     parusdc_poolid [bytes32]:  PAR/USDC Balancer V2 pool id
     '''
     # Market token pair does NOT contain WETH which causes the constructor to
     # revert
@@ -170,27 +67,19 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, balancer, par, usdc,
     market_quote_token = usdc
     market_base_amount = 1000000000000000000
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+    balv2_pool = (vault, market_pool, ovlweth_pool, ovl, market_base_token,
                   market_quote_token,  market_base_amount)
 
     micro_window = 600
     macro_window = 3600
 
-    # Set the BalancerV2Tokens marketPoolId field to the PAR/USDC pool id to
-    # trigger the expected failure.
-    balv2_tokens = (balv2_tokens[0], balv2_tokens[1], parusdc_poolid)
-
     with reverts("OVLV1Feed: marketToken != WETH"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool,
                    micro_window, macro_window)
 
-#  def test_reverts_on_balancer_pool_id_mismatch():
-#      # SN TODO
 
-
-def test_deploy_feed_reverts_on_market_token_not_base(gov, weth, rando,
-                                                      balancer, balv2_tokens,
-                                                      pool_daiweth,
+def test_deploy_feed_reverts_on_market_token_not_base(gov, vault, weth, rando,
+                                                      balancer, pool_daiweth,
                                                       pool_balweth):
     '''
     Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
@@ -223,20 +112,19 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth, rando,
     market_quote_token = weth
     market_base_amount = 1000000
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+    balv2_pool = (vault, market_pool, ovlweth_pool, ovl, market_base_token,
                   market_quote_token,  market_base_amount)
 
     micro_window = 600
     macro_window = 3600
 
     with reverts("OVLV1Feed: marketToken != marketBaseToken"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool,
                    micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_market_token_not_quote(gov, rando, dai,
-                                                       balancer, balv2_tokens,
-                                                       pool_daiweth,
+def test_deploy_feed_reverts_on_market_token_not_quote(gov, rando, dai, vault,
+                                                       balancer, pool_daiweth,
                                                        pool_balweth):
     '''
     Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
@@ -268,21 +156,19 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, rando, dai,
     market_quote_token = rando
     market_base_amount = 1000000
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+    balv2_pool = (vault, market_pool, ovlweth_pool, ovl, market_base_token,
                   market_quote_token,  market_base_amount)
 
     micro_window = 600
     macro_window = 3600
 
     with reverts("OVLV1Feed: marketToken != marketQuoteToken"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool,
                    micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai, par,
-                                                         balv2_tokens,
-                                                         parusdc_poolid,
-                                                         pool_daiweth,
+def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, vault, dai,
+                                                         par, pool_daiweth,
                                                          pool_parusdc):
     '''
     Tests that the OverlayV1BalancerV2Feed contract deploy function reverts
@@ -313,24 +199,18 @@ def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai, par,
     market_quote_token = weth
     market_base_amount = 1000000
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+    balv2_pool = (vault, market_pool, ovlweth_pool, ovl, market_base_token,
                   market_quote_token,  market_base_amount)
 
     micro_window = 600
     macro_window = 3600
 
-    # Set the BalancerV2Tokens ovlWethPoolId field to the PAR/USDC pool id to
-    # trigger the expected failure.
-    balv2_tokens = (balv2_tokens[0], parusdc_poolid, balv2_tokens[2])
-
     with reverts("OVLV1Feed: ovlWethToken != WETH"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool,
                    micro_window, macro_window)
 
 
-def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
-                                                        balv2_tokens,
-                                                        balweth_poolid,
+def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, vault, dai,
                                                         pool_daiweth,
                                                         pool_balweth):
     '''
@@ -347,7 +227,6 @@ def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
       weth           [Contract]: WETH token contract instance
       dai            [Contract]: DAI token contract instance
       balv2_tokens   [tuple]:    BalancerV2Tokens struct field variables
-      balweth_poolid [bytes32]:  DAI/WETH Balancer V2 pool id
       pool_daiweth   [Contract]: DAI/WETH Balancer V2 WeightedPool2Tokens
                                  contract instance representing the market
                                  token pair
@@ -362,12 +241,12 @@ def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
     market_quote_token = weth
     market_base_amount = 1000000
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
+    balv2_pool = (vault, market_pool, ovlweth_pool, ovl, market_base_token,
                   market_quote_token,  market_base_amount)
 
     micro_window = 600
     macro_window = 3600
 
     with reverts("OVLV1Feed: ovlWethToken != OVL"):
-        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
+        gov.deploy(OverlayV1BalancerV2Feed, balv2_pool,
                    micro_window, macro_window)

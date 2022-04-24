@@ -5,13 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../../interfaces/feeds/balancerv2/IOverlayV1BalancerV2FeedFactory.sol";
 
-import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2Tokens.sol";
 import "../../libraries/balancer/balancer-v2-monorepo/BalancerV2PoolInfo.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1BalancerV2Feed.sol";
 
 contract OverlayV1BalancerV2Factory is IOverlayV1BalancerV2FeedFactory, OverlayV1FeedFactory {
-    using BalancerV2Tokens for BalancerV2Tokens.Info;
     using BalancerV2PoolInfo for BalancerV2PoolInfo.Pool;
     address public immutable ovlWethPool;
     address public immutable ovl;
@@ -42,11 +40,11 @@ contract OverlayV1BalancerV2Factory is IOverlayV1BalancerV2FeedFactory, OverlayV
     /// @param marketQuoteToken The quote token address of the pool
     /// @param marketBaseAmount TODO
     function deployFeed(
+        address vault,
         address marketPool,
         address marketBaseToken,
         address marketQuoteToken,
-        uint128 marketBaseAmount,
-        BalancerV2Tokens.Info memory balancerV2Tokens
+        uint128 marketBaseAmount
     ) external returns (address feed_) {
         require(
             getFeed[marketPool][marketBaseToken][marketQuoteToken][marketBaseAmount] == address(0),
@@ -54,6 +52,7 @@ contract OverlayV1BalancerV2Factory is IOverlayV1BalancerV2FeedFactory, OverlayV
         );
 
         BalancerV2PoolInfo.Pool memory balancerV2Pool = BalancerV2PoolInfo.Pool(
+            vault,
             marketPool,
             ovlWethPool,
             ovl,
@@ -71,7 +70,7 @@ contract OverlayV1BalancerV2Factory is IOverlayV1BalancerV2FeedFactory, OverlayV
                 salt: keccak256(
                     abi.encode(marketPool, marketBaseToken, marketQuoteToken, marketBaseAmount)
                 )
-            }(balancerV2Pool, balancerV2Tokens, microWindow, macroWindow)
+            }(balancerV2Pool, microWindow, macroWindow)
         );
 
         // store feed registry record for (marketPool, marketBaseToken, marketQuoteToken) combo

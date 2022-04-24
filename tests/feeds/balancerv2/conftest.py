@@ -109,7 +109,6 @@ def pool_balweth():
 @pytest.fixture(scope="module")
 def pool_parusdc():
     '''
-
     Outputs:
       [Contract] Balancer V2 WeightedPool2Tokens contract instance for the
                  PAR/USDC pool
@@ -148,57 +147,48 @@ def parusdc_poolid():
 
 
 @pytest.fixture(scope="module")
-def balv2_tokens(balweth_poolid):
+def vault():
     '''
-    Returns the BalancerV2Tokens struct fields for a DAI/WETH market token pair
-    using the BAL/WETH token pair to simulate the OVL/WETH token pair for
-    testing. The BalancerV2Tokens struct is an input argument to the
-    constructor of the OverlayV1BalancerV2Feed contract so that token addresses
-    can be retrieved from the BalancerV2 Vault contract.
-
-    Inputs:
-      balweth_poolid [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool
-                                contract pool id, representing the market token
-                                pair
     Outputs:
-      (
-         [Contract]: BalancerV2Vault contract instance
-         [bytes32]:  BAL/WETH Balancer V2 OracleWeighted contract pool id,
-                     representing the OVL/WETH token pair
-         [bytes32]:  DAI/WETH Balancer V2 OracleWeightedPool contract pool id,
-                     representing the market token pair
-      )
-    '''
-    # BalancerV2Vault contract address is BalancerV2Tokens.vault
-    # https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
-    vault = Contract.from_explorer(
-            '0xBA12222222228d8Ba445958a75a0704d566BF2C8')
+      [Contract]: BalancerV2Vault contract instance
 
-    ovlweth_poolid = convert.to_bytes(
-        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
-        'bytes32')
-    yield (vault, ovlweth_poolid, balweth_poolid)
+    https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+    '''
+    return Contract.from_explorer('0xBA12222222228d8Ba445958a75a0704d566BF2C8')
 
 
 @pytest.fixture(scope="module")
-def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
+def balv2_pool(vault, balancer, weth, dai, pool_daiweth, pool_balweth):
     '''
-    Successfully deploys the OverlayV1BalancerV2Feed contract for a DAI/WETH
-    market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
+    Returns the BalancerV2PoolInfo struct fields for a DAI/WETH market token
+    pair using the BAL/WETH token pair to simulate the OVL/WETH token pair for
+    testing. The BalancerV2PoolInfo struct is an input argument to the
+    constructor of the OverlayV1BalancerV2Feed contract that passes in the
+    relevant market and OvlWeth data.
 
     Inputs:
-      gov          [Account]:  Governor role account deploys the
-                               OverlayV1BalancerV2Feed contract
-      dai          [Contract]: DAI token contract instance
-      weth         [Contract]: WETH token contract instance
-      balancer     [Contract]: BAL token contract instance representing the OVL
-                               token
-      balv2_tokens [tuple]:    BalancerV2Tokens struct field variables
-      pool_daiweth [Contract]: Balancer V2 WeightedPool2Tokens contract
-                               instance for the DAI/WETH pool
-      pool_balweth [Contract]: Balancer V2 WeightedPool2Tokens contract
-                               instance for the BAL/WETH pool, representing the
-                               OVL/WETH token pair
+      vault          [Contract]: BalancerV2Vault contract instance
+      balancer       [Contract]: BalancerGovernanceToken token contract
+                                 instance
+      weth           [Contract]: WETH token contract instance
+      dai            [Contract]: DAI token contract instance
+      pool_balweth   [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                 instance for the BAL/WETH pool, representing
+                                 the OVL/WETH token pair
+      pool_balweth   [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                 instance for the DAI/WETH pool
+    Outputs:
+      (
+         vault            [Contract]: BalancerV2Vault contract instance
+         marketPool       [Contract]: Market pool (DAI/WETH) contract instance
+         ovlWethPool      [Contract]: OvlWeth pool (BAL/WETH) contract instance
+         ovl              [Contract]: OVL (BAL) token contract instance
+         marketBaseToken  [Contract]: Market base token (WETH) contract
+                                      instance
+         marketQuoteToken [Contract]: Market quote token (DAI) contract
+                                      instance
+         marketBaseAmount [uint128]:  Market base amount
+      )
     '''
     market_pool = pool_daiweth
     ovlweth_pool = pool_balweth
@@ -207,11 +197,23 @@ def feed(gov, balancer, weth, dai, balv2_tokens, pool_daiweth, pool_balweth):
     market_quote_token = dai
     market_base_amount = 1 * 10 ** weth.decimals()
 
-    balv2_pool = (market_pool, ovlweth_pool, ovl, market_base_token,
-                  market_quote_token,  market_base_amount)
+    return (vault, market_pool, ovlweth_pool, ovl, market_base_token,
+            market_quote_token,  market_base_amount)
 
+
+@pytest.fixture(scope="module")
+def feed(gov, balv2_pool):
+    '''
+    Successfully deploys the OverlayV1BalancerV2Feed contract for a DAI/WETH
+    market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
+
+    Inputs:
+      gov          [Account]:            Governor role account deploys the
+                                         OverlayV1BalancerV2Feed contract
+      balv2_pool   (BalancerV2PoolInfo): BalancerV2PoolInfo struct
+    '''
     micro_window = 600
     macro_window = 3600
 
-    yield gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, balv2_tokens,
-                     micro_window, macro_window)
+    yield gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, micro_window,
+                     macro_window)
