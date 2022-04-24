@@ -28,7 +28,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
     address public immutable marketBaseToken;
     address public immutable marketQuoteToken;
-    uint128 public immutable marketBaseAmount;
 
     constructor(
         BalancerV2PoolInfo.Pool memory balancerV2Pool,
@@ -60,7 +59,6 @@ contract OverlayV1BalancerV2Feed is IOverlayV1BalancerV2Feed, OverlayV1Feed {
 
         marketBaseToken = balancerV2Pool.marketBaseToken;
         marketQuoteToken = balancerV2Pool.marketQuoteToken;
-        marketBaseAmount = balancerV2Pool.marketBaseAmount;
 
         // need OVL/WETH pool for ovl vs ETH price to make reserve conversion from ETH => OVL
         address _ovlWethToken0 = address(ovlWethTokens[0]);
