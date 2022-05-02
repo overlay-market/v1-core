@@ -7,6 +7,10 @@ UNIV3_FACTORY = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 
 
 def main():
+    """
+    Deploys a new OverlayV1UniswapV3Factory contract, which allows for
+    permissionless deployment of OverlayV1UniswapV3Feed feeds.
+    """
     click.echo(f"You are using the '{network.show_active()}' network")
     dev = accounts.load(click.prompt(
         "Account", type=click.Choice(accounts.load())))
