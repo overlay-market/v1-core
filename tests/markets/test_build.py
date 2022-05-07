@@ -688,9 +688,6 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     total_notional_long = Decimal(10000)
     total_notional_short = Decimal(7500)
 
-    # set k to zero to avoid funding calcs
-    market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
-
     # alice goes long and bob goes short n times
     input_total_notional_long = total_notional_long * Decimal(1e18)
     input_total_notional_short = total_notional_short * Decimal(1e18)
@@ -721,7 +718,8 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     is_long_bob = False
 
     for i in range(n):
-        chain.mine(timedelta=60)
+        # mine chain for funding to occur over timedelta
+        chain.mine(timedelta=600)
 
         # choose a random leverage
         leverage_alice = randint(1, leverage_cap)
@@ -744,11 +742,14 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         input_price_limit_bob = 2**256-1 if is_long_bob else 0
 
         # cache price, liquidity data from feed
-        data = feed.latest()
+        # NOTE: updating market to avoid doing funding calcs for expects
+        tx_update_alice = market.update({"from": alice})
+        data = tx_update_alice.return_value
         mid_price = mid_from_feed(data)
 
         # cache current aggregate long oi for comparison later
         expect_oi_long = market.oiLong()
+        expect_oi_long_shares = market.oiLongShares()
 
         # build position for alice
         tx_alice = market.build(input_collateral_alice, input_leverage_alice,
@@ -763,39 +764,54 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         # check position info for alice for everything
         # except price to avoid impact calcs
         expect_notional_alice = int(notional_alice * Decimal(1e18))
-        expect_oi_alice = int(Decimal(expect_notional_alice) * Decimal(1e18)
-                              / Decimal(mid_price))
         expect_debt_alice = int(debt_alice * Decimal(1e18))
         expect_is_long_alice = is_long_alice
         expect_liquidated_alice = False
+        expect_oi_alice = int(Decimal(expect_notional_alice) * Decimal(1e18)
+                              / Decimal(mid_price))
+        expect_oi_shares_alice = expect_oi_alice if expect_oi_long == 0 \
+            else int((Decimal(expect_oi_alice)/Decimal(expect_oi_long))
+                     * Decimal(expect_oi_long_shares))
+
         actual_pos_alice = market.positions(
             get_position_key(alice.address, expect_pos_id_alice))
 
         (actual_notional_alice, actual_debt_alice, actual_mid_ratio_alice,
          actual_is_long_alice, actual_liquidated_alice,
-         actual_oi_alice) = actual_pos_alice
+         actual_oi_alice, actual_oi_shares_alice) = actual_pos_alice
 
+        assert int(actual_notional_alice) == approx(expect_notional_alice)
+        assert int(actual_debt_alice) == approx(expect_debt_alice)
         assert actual_is_long_alice == expect_is_long_alice
         assert actual_liquidated_alice == expect_liquidated_alice
-        assert int(actual_notional_alice) == approx(expect_notional_alice)
-        assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1e-3)
-        assert int(actual_debt_alice) == approx(expect_debt_alice)
+        assert int(actual_oi_alice) == approx(expect_oi_alice)
+        assert int(actual_oi_shares_alice) == approx(expect_oi_shares_alice)
 
         # check oi added to long side by alice
         expect_oi_long += expect_oi_alice
         actual_oi_long = market.oiLong()
+        assert int(actual_oi_long) == approx(expect_oi_long)
 
-        assert int(actual_oi_long) == approx(expect_oi_long, rel=1e-3)
+        # check oi shares added to long side by alice
+        expect_oi_long_shares += expect_oi_shares_alice
+        actual_oi_long_shares = market.oiLongShares()
+        assert int(actual_oi_long_shares) == approx(expect_oi_long_shares)
 
         # increment expect position id
         expect_pos_id += 1
 
+        # mine chain another timedelta
+        chain.mine(timedelta=600)
+
         # cache price, liquidity data from feed
-        data = feed.latest()
+        # NOTE: updating market to avoid doing funding calcs for expects
+        tx_update_bob = market.update({"from": bob})
+        data = tx_update_bob.return_value
         mid_price = mid_from_feed(data)
 
         # cache current aggregate short oi for comparison later
         expect_oi_short = market.oiShort()
+        expect_oi_short_shares = market.oiShortShares()
 
         # build position for bob
         tx_bob = market.build(input_collateral_bob, input_leverage_bob,
@@ -809,29 +825,38 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         # check position info for bob for everything
         # except price to avoid impact calcs
         expect_notional_bob = int(notional_bob * Decimal(1e18))
-        expect_oi_bob = int(Decimal(expect_notional_bob) * Decimal(1e18)
-                            / Decimal(mid_price))
         expect_debt_bob = int(debt_bob * Decimal(1e18))
         expect_is_long_bob = is_long_bob
         expect_liquidated_bob = False
+        expect_oi_bob = int(Decimal(expect_notional_bob) * Decimal(1e18)
+                            / Decimal(mid_price))
+        expect_oi_shares_bob = expect_oi_bob if expect_oi_short == 0 \
+            else int((Decimal(expect_oi_bob)/Decimal(expect_oi_short))
+                     * Decimal(expect_oi_short_shares))
+
         actual_pos_bob = market.positions(
             get_position_key(bob.address, expect_pos_id_bob))
 
         (actual_notional_bob, actual_debt_bob, actual_mid_ratio_bob,
          actual_is_long_bob, actual_liquidated_bob,
-         actual_oi_bob) = actual_pos_bob
+         actual_oi_bob, actual_oi_shares_bob) = actual_pos_bob
 
+        assert int(actual_notional_bob) == approx(expect_notional_bob)
+        assert int(actual_debt_bob) == approx(expect_debt_bob)
         assert actual_is_long_bob == expect_is_long_bob
         assert actual_liquidated_bob is expect_liquidated_bob
-        assert int(actual_notional_bob) == approx(expect_notional_bob)
-        assert int(actual_oi_bob) == approx(expect_oi_bob, rel=1e-3)
-        assert int(actual_debt_bob) == approx(expect_debt_bob)
+        assert int(actual_oi_bob) == approx(expect_oi_bob)
+        assert int(actual_oi_shares_bob) == approx(expect_oi_shares_bob)
 
         # check oi added to short side by bob
         expect_oi_short += expect_oi_bob
         actual_oi_short = market.oiShort()
+        assert int(actual_oi_short) == approx(expect_oi_short)
 
-        assert int(actual_oi_short) == approx(expect_oi_short, rel=1e-3)
+        # check oi shares added to short side by bob
+        expect_oi_short_shares += expect_oi_shares_bob
+        actual_oi_short_shares = market.oiShortShares()
+        assert int(actual_oi_short_shares) == approx(expect_oi_short_shares)
 
         # increment expect position id
         expect_pos_id += 1

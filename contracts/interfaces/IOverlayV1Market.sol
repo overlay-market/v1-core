@@ -65,6 +65,7 @@ interface IOverlayV1Market {
             uint48 entryToMidRatio_,
             bool isLong_,
             bool liquidated_,
+            uint256 oi_,
             uint256 oiShares_
         );
 
