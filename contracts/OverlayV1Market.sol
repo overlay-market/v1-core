@@ -187,25 +187,9 @@ contract OverlayV1Market is IOverlayV1Market {
             require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
             // add new position's open interest to the side's aggregate oi value
-            // and increase number of oi shares issued. assemble position for storage
-
-            // cache for gas savings
-            uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
-            uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
-
-            // check new total oi on side does not exceed capOi
-            oiTotalOnSide += oi;
-            oiTotalSharesOnSide += oi;
-            require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
-
-            // update total aggregate oi and oi shares
-            if (isLong) {
-                oiLong = oiTotalOnSide;
-                oiLongShares = oiTotalSharesOnSide;
-            } else {
-                oiShort = oiTotalOnSide;
-                oiShortShares = oiTotalSharesOnSide;
-            }
+            // and increase number of oi shares issued
+            // TODO: test
+            uint256 oiShares = _addToOiAggregates(oi, capOi, isLong);
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing
@@ -215,12 +199,12 @@ contract OverlayV1Market is IOverlayV1Market {
                 isLong: isLong,
                 entryToMidRatio: Position.calcEntryToMidRatio(price, midPrice),
                 liquidated: false,
-                oiShares: oi
+                oiShares: oiShares
             });
             require(
                 !pos.liquidatable(
-                    oiTotalOnSide,
-                    oiTotalSharesOnSide,
+                    isLong ? oiLong : oiShort,
+                    isLong ? oiLongShares : oiShortShares,
                     midPrice, // mid price used on liquidations
                     params.get(Risk.Parameters.CapPayoff),
                     params.get(Risk.Parameters.MaintenanceMarginFraction),
@@ -759,6 +743,42 @@ contract OverlayV1Market is IOverlayV1Market {
         // return the cumulative mint amount
         int256 minted = snapshot.cumulative();
         return minted;
+    }
+
+    /// @notice Adds open interest and open interest shares to aggregate storage
+    /// @notice pairs (oiLong, oiLongShares) or (oiShort, oiShortShares)
+    /// @return oiShares_ as the new position's shares of aggregate open interest
+    // TODO: test
+    function _addToOiAggregates(
+        uint256 oi,
+        uint256 capOi,
+        bool isLong
+    ) private returns (uint256 oiShares_) {
+        // cache for gas savings
+        uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
+        uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
+
+        // calculate oi shares
+        uint256 oiShares = Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
+
+        // add oi and oi shares to temp aggregate values
+        oiTotalOnSide += oi;
+        oiTotalSharesOnSide += oiShares;
+
+        // check new total oi on side does not exceed capOi
+        require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
+
+        // update total aggregate oi and oi shares storage vars
+        if (isLong) {
+            oiLong = oiTotalOnSide;
+            oiLongShares = oiTotalSharesOnSide;
+        } else {
+            oiShort = oiTotalOnSide;
+            oiShortShares = oiTotalSharesOnSide;
+        }
+
+        // return new position's oi shares
+        oiShares_ = oiShares;
     }
 
     /// @notice Sets the governance per-market risk parameter
