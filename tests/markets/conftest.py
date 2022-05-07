@@ -278,7 +278,7 @@ def create_market(gov, ovl):
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
@@ -303,7 +303,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff

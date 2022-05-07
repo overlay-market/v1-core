@@ -78,7 +78,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
 
     # risk params
     expect_params = [
-        1220000000000,
+        122000000000,
         500000000000000000,
         2500000000000000,
         5000000000000000000,
@@ -121,7 +121,7 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
 
     # risk params
     expect_params = [
-        1220000000000,
+        122000000000,
         500000000000000000,
         2500000000000000,
         5000000000000000000,

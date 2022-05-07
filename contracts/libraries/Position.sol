@@ -9,13 +9,15 @@ library Position {
     uint256 internal constant ONE = 1e18;
     uint256 internal constant RATIO_PRECISION_SHIFT = 1e4; // RATIO_PRECISION = 1e14
 
-    // TODO: update for an oiSharesToOiRatio and associated oiInitial() fn
+    // TODO: pack better
+    // TODO: sharesToOiRatio so dont need to decrement oi and oiShares on unwind (?)
     struct Info {
         uint96 notional; // initial notional = collateral * leverage
         uint96 debt; // debt
         uint48 entryToMidRatio; // ratio of entryPrice / _midFromFeed() at build
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated
+        uint256 oi; // initial open interest at build
         uint256 oiShares; // shares of aggregate open interest on side
     }
 
@@ -51,20 +53,43 @@ library Position {
         return uint256(self.notional);
     }
 
-    /// @notice Computes the position's initial open interest cast to uint256
-    function _oiShares(Info memory self) private pure returns (uint256) {
-        return uint256(self.oiShares);
-    }
-
     /// @notice Computes the position's debt cast to uint256
     function _debt(Info memory self) private pure returns (uint256) {
         return uint256(self.debt);
+    }
+
+    /// @notice Computes the position's initial open interest cast to uint256
+    // TODO: fix
+    function _oiInitial(Info memory self) private pure returns (uint256) {
+        return uint256(self.oi);
+    }
+
+    /// @notice Computes the position's shares of open interest cast to uint256
+    function _oiShares(Info memory self) private pure returns (uint256) {
+        return uint256(self.oiShares);
     }
 
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or has zero oi
     function exists(Info memory self) internal pure returns (bool exists_) {
         return (!self.liquidated && self.notional > 0);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    POSITION OI SHARE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Computes the amount of shares of open interest to issue
+    /// @notice a newly built position
+    /// @dev use mulDown, divDown to avoid more oi than initial on build
+    function calcOiShares(
+        uint256 oi,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide
+    ) internal pure returns (uint256 oiShares_) {
+        oiShares_ = oiTotalOnSide == 0
+            ? oi
+            : oi.divDown(oiTotalOnSide).mulDown(oiTotalSharesOnSide);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -92,7 +117,7 @@ library Position {
     /// @dev entryPrice = entryToMidRatio * midPrice (at build)
     function entryPrice(Info memory self) internal pure returns (uint256 entryPrice_) {
         uint256 priceRatio = getEntryToMidRatio(self);
-        uint256 oi = _oiShares(self);
+        uint256 oi = _oiInitial(self);
         uint256 q = _notional(self);
 
         // will only be zero if all oi shares unwound; handles 0/0 case
@@ -103,20 +128,6 @@ library Position {
 
         // entry = ratio * mid = ratio * (notional / oi)
         entryPrice_ = priceRatio.mulUp(q).divUp(oi);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                    POSITION OI SHARE FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    function calcOiShares(
-        uint256 oi,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide
-    ) internal pure returns (uint256 oiShares_) {
-        oiShares_ = oiTotalOnSide == 0
-            ? oi
-            : oi.divDown(oiTotalOnSide).mulDown(oiTotalSharesOnSide);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -132,7 +143,7 @@ library Position {
     /// @notice Computes the initial open interest of position when built
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function oiInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        return _oiShares(self).mulUp(fraction);
+        return _oiInitial(self).mulUp(fraction);
     }
 
     /// @notice Computes the current shares of open interest position holds

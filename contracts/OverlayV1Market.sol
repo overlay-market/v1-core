@@ -199,6 +199,7 @@ contract OverlayV1Market is IOverlayV1Market {
                 isLong: isLong,
                 entryToMidRatio: Position.calcEntryToMidRatio(price, midPrice),
                 liquidated: false,
+                oi: oi,
                 oiShares: oiShares
             });
             require(
@@ -339,6 +340,8 @@ contract OverlayV1Market is IOverlayV1Market {
             // use subFloor to avoid reverts with rounding issues
             pos.notional = uint96(uint256(pos.notional).subFloor(pos.notionalInitial(fraction)));
             pos.debt = uint96(uint256(pos.debt).subFloor(pos.debtCurrent(fraction)));
+            // TODO: test
+            pos.oi = pos.oi.subFloor(pos.oiInitial(fraction));
             pos.oiShares = pos.oiShares.subFloor(pos.oiSharesCurrent(fraction));
             positions.set(msg.sender, positionId, pos);
         }
@@ -440,6 +443,8 @@ contract OverlayV1Market is IOverlayV1Market {
             // store the updated position info data. mark as liquidated
             pos.notional = 0;
             pos.debt = 0;
+            // TODO: test
+            pos.oi = 0;
             pos.oiShares = 0;
             pos.liquidated = true;
             pos.entryToMidRatio = 0;
@@ -759,6 +764,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
 
         // calculate oi shares
+        // TODO: require for oiTotalOnSide / oiTotalSharesOnSide ratio extremes
         uint256 oiShares = Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
 
         // add oi and oi shares to temp aggregate values
