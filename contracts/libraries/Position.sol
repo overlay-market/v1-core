@@ -9,6 +9,7 @@ library Position {
     uint256 internal constant ONE = 1e18;
     uint256 internal constant RATIO_PRECISION_SHIFT = 1e4; // RATIO_PRECISION = 1e14
 
+    // TODO: update for an oiSharesToOiRatio and associated oiInitial() fn
     struct Info {
         uint96 notional; // initial notional = collateral * leverage
         uint96 debt; // debt
@@ -102,6 +103,20 @@ library Position {
 
         // entry = ratio * mid = ratio * (notional / oi)
         entryPrice_ = priceRatio.mulUp(q).divUp(oi);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    POSITION OI SHARE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function calcOiShares(
+        uint256 oi,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide
+    ) internal pure returns (uint256 oiShares_) {
+        oiShares_ = oiTotalOnSide == 0
+            ? oi
+            : oi.divDown(oiTotalOnSide).mulDown(oiTotalSharesOnSide);
     }
 
     /*///////////////////////////////////////////////////////////////

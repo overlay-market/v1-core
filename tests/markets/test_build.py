@@ -680,6 +680,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     assert expect_pos_id == actual_pos_id
 
 
+# TODO: fix for oiShares fix in core. rel should be smaller than 1e-3
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                                    feed, alice, bob):
     # loop through 10 times
@@ -834,3 +835,6 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         # increment expect position id
         expect_pos_id += 1
+
+
+# TODO: test_sequential_builds_with_funding_drawdowns_for_oi_shares
