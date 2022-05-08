@@ -10,14 +10,13 @@ library Position {
     uint256 internal constant RATIO_PRECISION_SHIFT = 1e4; // RATIO_PRECISION = 1e14
 
     // TODO: pack better
-    // TODO: sharesToOiRatio so dont need to decrement oi and oiShares on unwind (?)
     struct Info {
         uint96 notional; // initial notional = collateral * leverage
         uint96 debt; // debt
         uint48 entryToMidRatio; // ratio of entryPrice / _midFromFeed() at build
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated
-        uint256 oi; // initial open interest at build
+        uint256 oiToSharesRatio; // ratio of oi / oiShares at build
         uint256 oiShares; // shares of aggregate open interest on side
     }
 
@@ -58,12 +57,6 @@ library Position {
         return uint256(self.debt);
     }
 
-    /// @notice Computes the position's initial open interest cast to uint256
-    // TODO: fix
-    function _oiInitial(Info memory self) private pure returns (uint256) {
-        return uint256(self.oi);
-    }
-
     /// @notice Computes the position's shares of open interest cast to uint256
     function _oiShares(Info memory self) private pure returns (uint256) {
         return uint256(self.oiShares);
@@ -82,6 +75,7 @@ library Position {
     /// @notice Computes the amount of shares of open interest to issue
     /// @notice a newly built position
     /// @dev use mulDown, divDown to avoid more oi than initial on build
+    // TODO: test
     function calcOiShares(
         uint256 oi,
         uint256 oiTotalOnSide,
@@ -90,6 +84,28 @@ library Position {
         oiShares_ = oiTotalOnSide == 0
             ? oi
             : oi.divDown(oiTotalOnSide).mulDown(oiTotalSharesOnSide);
+    }
+
+    /// @notice Computes the ratio of oi / oiShares for given (oi, oiShares)
+    /// @dev use mulDown, divDown to avoid more oi than initial on build
+    // TODO: test
+    function calcOiToSharesRatio(uint256 oi, uint256 oiShares) internal pure returns (uint256) {
+        require(oiShares > 0, "OVLV1: oishares == 0 at entry");
+        return oi.divDown(oiShares);
+    }
+
+    /// @notice Computes the ratio of position's oi / oiShares at build
+    /// @notice cast to uint256
+    // TODO: fix and test if set self.oiToSharesRatio != uint256
+    function getOiToSharesRatio(Info memory self) internal pure returns (uint256) {
+        return uint256(self.oiToSharesRatio);
+    }
+
+    /// @notice Computes the position's initial open interest cast to uint256
+    // TODO: test
+    function _oiInitial(Info memory self) private pure returns (uint256) {
+        uint256 oiToSharesRatio = getOiToSharesRatio(self);
+        return _oiShares(self).mulDown(oiToSharesRatio);
     }
 
     /*///////////////////////////////////////////////////////////////

@@ -76,3 +76,21 @@ def calculate_mid_ratio(entry_price: int, mid_price: int) -> int:
     # NOTE: mid_ratio "ONE" is 1e14 given uint48
     mid_ratio = int(Decimal(entry_price) * Decimal(1e14) / Decimal(mid_price))
     return mid_ratio
+
+
+def oi_from_oi_ratio(oi_ratio: int, oi_shares: int) -> int:
+    """
+    Returns oi associated with position from oi_ratio and oi_shares
+    """
+    # NOTE: oi_ratio "ONE" is 1e18 given uint256
+    oi = int(Decimal(oi_shares) * Decimal(oi_ratio) / Decimal(1e18))
+    return oi
+
+
+def calculate_oi_ratio(oi: int, oi_shares: int) -> int:
+    """
+    Returns oi ratio from oi and oi_shares
+    """
+    # NOTE: "ONE" is 1e18 given uint256
+    oi_ratio = int(Decimal(oi) * Decimal(1e18)) / Decimal(oi_shares)
+    return oi_ratio
