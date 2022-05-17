@@ -194,6 +194,52 @@ library FixedPoint {
     }
 
     /**
+     * @dev Returns log_b(a), assuming a, b are fixed point numbers, rounding down.
+     * The result is guaranteed to not be above the true value (that is,
+     * the error function expected - actual is always positive).
+     * XXX: logDown implementation
+     */
+    function logDown(uint256 a, uint256 b) internal pure returns (int256) {
+        require(a > 0 && a < 2**255, "FixedPoint: a out of bounds");
+        require(b > 0 && b < 2**255, "FixedPoint: b out of bounds");
+
+        int256 arg = int256(a);
+        int256 base = int256(b);
+        int256 raw = LogExpMath.log(arg, base);
+
+        // NOTE: see @openzeppelin/contracts/utils/math/SignedMath.sol#L37
+        uint256 rawAbs;
+        unchecked {
+            rawAbs = uint256(raw >= 0 ? raw : -raw);
+        }
+        uint256 maxError = add(mulUp(rawAbs, MAX_POW_RELATIVE_ERROR), 1);
+        return raw - int256(maxError);
+    }
+
+    /**
+     * @dev Returns log_b(a), assuming a, b are fixed point numbers, rounding up.
+     * The result is guaranteed to not be below the true value (that is,
+     * the error function expected - actual is always negative).
+     * XXX: logUp implementation
+     */
+    function logUp(uint256 a, uint256 b) internal pure returns (int256) {
+        require(a > 0 && a < 2**255, "FixedPoint: a out of bounds");
+        require(b > 0 && b < 2**255, "FixedPoint: b out of bounds");
+
+        int256 arg = int256(a);
+        int256 base = int256(b);
+        int256 raw = LogExpMath.log(arg, base);
+
+        // NOTE: see @openzeppelin/contracts/utils/math/SignedMath.sol#L37
+        uint256 rawAbs;
+        unchecked {
+            rawAbs = uint256(raw >= 0 ? raw : -raw);
+        }
+        uint256 maxError = add(mulUp(rawAbs, MAX_POW_RELATIVE_ERROR), 1);
+        return raw + int256(maxError);
+    }
+
+    /**
      * @dev Returns the complement of a value (1 - x), capped to 0 if x is larger than 1.
      *
      * Useful when computing the complement for values with some level of relative error,

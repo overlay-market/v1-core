@@ -264,7 +264,8 @@ def fake_deployer(create_fake_deployer):
 def create_market(gov, ovl):
     def create_market(feed, factory, feed_factory, risk_params,
                       governance=gov, ovl=ovl):
-        tx = factory.deployMarket(feed_factory, feed, risk_params)
+        tx = factory.deployMarket(
+            feed_factory, feed, risk_params, {"from": gov})
         market_addr = tx.return_value
         market = OverlayV1Market.at(market_addr)
         return market
