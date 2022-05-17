@@ -58,4 +58,3 @@ def main():
 
     # renounce admin rights so only gov has roles
     ovl.renounceRole(_role(ADMIN), dev, {"from": dev})
-    ovl.renounceRole(_role(MINTER), dev, {"from": dev})
