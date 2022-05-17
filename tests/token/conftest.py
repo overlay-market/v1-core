@@ -85,10 +85,24 @@ def burner(create_burner):
 
 
 @pytest.fixture(scope="module")
+def create_governor(token, gov, accounts, governor_role):
+    def create_governor(tok=token, governance=gov):
+        tok.grantRole(governor_role, accounts[6], {"from": gov})
+        return accounts[6]
+
+    yield create_governor
+
+
+@pytest.fixture(scope="module")
+def governor(create_governor):
+    yield create_governor()
+
+
+@pytest.fixture(scope="module")
 def create_admin(token, gov, accounts):
     def create_admin(tok=token, governance=gov):
-        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), accounts[6], {"from": gov})
-        return accounts[6]
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), accounts[7], {"from": gov})
+        return accounts[7]
 
     yield create_admin
 
@@ -101,9 +115,9 @@ def admin(create_admin):
 @pytest.fixture(scope="module")
 def create_market(token, admin, accounts, minter_role, burner_role):
     def create_market(tok=token, adm=admin):
-        tok.grantRole(minter_role, accounts[7], {"from": adm})
-        tok.grantRole(burner_role, accounts[7], {"from": adm})
-        return accounts[7]
+        tok.grantRole(minter_role, accounts[8], {"from": adm})
+        tok.grantRole(burner_role, accounts[8], {"from": adm})
+        return accounts[8]
 
     yield create_market
 

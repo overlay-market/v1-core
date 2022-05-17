@@ -1,3 +1,5 @@
+from brownie import reverts
+
 
 def test_admin_grant_mint_role_then_revoke(token, admin, rando, minter_role):
     token.grantRole(minter_role, rando, {"from": admin})
@@ -22,3 +24,12 @@ def test_admin_grant_governor_role_then_revoke(token, admin, rando,
 
     token.revokeRole(governor_role, rando, {"from": admin})
     assert token.hasRole(governor_role, rando) is False
+
+
+def test_grant_roles_reverts_when_not_admin(token, rando, minter_role,
+                                            burner_role, governor_role):
+    admin_role = token.DEFAULT_ADMIN_ROLE()
+    roles = [minter_role, burner_role, governor_role, admin_role]
+    for role in roles:
+        with reverts():
+            token.grantRole(role, rando, {"from": rando})
