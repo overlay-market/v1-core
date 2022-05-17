@@ -27,7 +27,7 @@ contract PositionMock {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    POSITION GETTER FUNCTIONS
+                     POSITION EXISTENCE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     function exists(Position.Info memory pos) external view returns (bool) {
@@ -35,19 +35,28 @@ contract PositionMock {
     }
 
     /*///////////////////////////////////////////////////////////////
-                    POSITION ENTRY PRICE FUNCTIONS
+                 POSITION FRACTION REMAINING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function calcEntryToMidRatio(uint256 _entryPrice, uint256 _midPrice)
-        external
-        view
-        returns (uint48)
-    {
-        return Position.calcEntryToMidRatio(_entryPrice, _midPrice);
+    function getFractionRemaining(Position.Info memory pos) external view returns (uint256) {
+        return pos.getFractionRemaining();
     }
 
-    function getEntryToMidRatio(Position.Info memory pos) external view returns (uint256) {
-        return pos.getEntryToMidRatio();
+    // TODO: test
+    function updatedFractionRemaining(Position.Info memory pos, uint256 fractionRemoved)
+        external
+        view
+        returns (uint16)
+    {
+        return pos.updatedFractionRemaining(fractionRemoved);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                    POSITION PRICE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    function midPriceAtEntry(Position.Info memory pos) external view returns (uint256) {
+        return pos.midPriceAtEntry();
     }
 
     function entryPrice(Position.Info memory pos) external view returns (uint256) {
@@ -55,17 +64,31 @@ contract PositionMock {
     }
 
     /*///////////////////////////////////////////////////////////////
-                        POSITION CALC FUNCTIONS
+                        POSITION OI FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    function calcOiShares(
+        uint256 oi,
+        uint256 oiTotalOnSide,
+        uint256 oiTotalSharesOnSide
+    ) external view returns (uint256) {
+        return Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                  POSITION FRACTIONAL GETTER FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    // TODO: test
     function notionalInitial(Position.Info memory pos, uint256 fraction)
         external
         view
         returns (uint256)
     {
-        return pos.notionalInitial(fraction);
+        return Position.notionalInitial(pos, fraction);
     }
 
+    // TODO: test
     function oiInitial(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -74,6 +97,7 @@ contract PositionMock {
         return pos.oiInitial(fraction);
     }
 
+    // TODO: test
     function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -82,6 +106,20 @@ contract PositionMock {
         return pos.oiSharesCurrent(fraction);
     }
 
+    // TODO: test
+    function debtInitial(Position.Info memory pos, uint256 fraction)
+        external
+        view
+        returns (uint256)
+    {
+        return Position.debtInitial(pos, fraction);
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                        POSITION CALC FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    // TODO: test
     function oiCurrent(
         Position.Info memory pos,
         uint256 fraction,
@@ -91,18 +129,12 @@ contract PositionMock {
         return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
-    function debtCurrent(Position.Info memory pos, uint256 fraction)
-        external
-        view
-        returns (uint256)
-    {
-        return pos.debtCurrent(fraction);
-    }
-
+    // TODO: test
     function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
         return pos.cost(fraction);
     }
 
+    // TODO: test
     function value(
         Position.Info memory pos,
         uint256 fraction,
@@ -114,6 +146,7 @@ contract PositionMock {
         return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
+    // TODO: test
     function notionalWithPnl(
         Position.Info memory pos,
         uint256 fraction,
@@ -132,6 +165,7 @@ contract PositionMock {
             );
     }
 
+    // TODO: test
     function tradingFee(
         Position.Info memory pos,
         uint256 fraction,
@@ -152,6 +186,7 @@ contract PositionMock {
             );
     }
 
+    // TODO: test
     function liquidatable(
         Position.Info memory pos,
         uint256 oiTotalOnSide,

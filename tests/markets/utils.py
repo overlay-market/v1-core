@@ -2,6 +2,7 @@ from brownie import web3
 from decimal import Decimal
 from enum import Enum
 from hexbytes import HexBytes
+from math import log
 from typing import Any
 
 
@@ -55,42 +56,17 @@ def mid_from_feed(data: Any) -> float:
     return mid
 
 
-def entry_from_mid_ratio(mid_ratio: int, mid: int) -> int:
+def tick_to_price(tick: int) -> int:
     """
-    Returns entry price from mid ratio and mid price
-
-    NOTE: mid_ratio is uint48 format and mid price is int FixedPoint format
+    Returns the price associated with a given tick
+    price = 1.0001 ** tick
     """
-    # NOTE: mid_ratio "ONE" is 1e14 given uint48
-    entry_price = int((Decimal(mid_ratio) / Decimal(1e14)) * mid)
-    return entry_price
+    return int((Decimal(1.0001) ** Decimal(tick)) * Decimal(1e18))
 
 
-def calculate_mid_ratio(entry_price: int, mid_price: int) -> int:
+def price_to_tick(price: int) -> int:
     """
-    Returns mid ratio from entry price and mid price
-
-    NOTE: mid_ratio is uint48 format and mid, entry prices
-    are int FixedPoint format
+    Returns the tick associated with a given price
+    price = 1.0001 ** tick
     """
-    # NOTE: mid_ratio "ONE" is 1e14 given uint48
-    mid_ratio = int(Decimal(entry_price) * Decimal(1e14) / Decimal(mid_price))
-    return mid_ratio
-
-
-def oi_from_oi_ratio(oi_ratio: int, oi_shares: int) -> int:
-    """
-    Returns oi associated with position from oi_ratio and oi_shares
-    """
-    # NOTE: oi_ratio "ONE" is 1e18 given uint256
-    oi = int(Decimal(oi_shares) * Decimal(oi_ratio) / Decimal(1e18))
-    return oi
-
-
-def calculate_oi_ratio(oi: int, oi_shares: int) -> int:
-    """
-    Returns oi ratio from oi and oi_shares
-    """
-    # NOTE: "ONE" is 1e18 given uint256
-    oi_ratio = int(Decimal(oi) * Decimal(1e18)) / Decimal(oi_shares)
-    return oi_ratio
+    return int(log(Decimal(price) / Decimal(1e18)) / log(Decimal(1.0001)))
