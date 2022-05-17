@@ -52,12 +52,17 @@ def governor_role():
 
 
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, request):
+def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        # mint the token then renounce minter role
+        tok.grantRole(minter_role, gov, {"from": gov})
         tok.mint(gov, supply * 10 ** tok.decimals(), {"from": gov})
+        tok.renounceRole(minter_role, gov, {"from": gov})
+
         tok.transfer(alice, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         tok.transfer(bob, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         return tok

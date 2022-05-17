@@ -280,7 +280,6 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         harmonicMeanLiquidities_ = new uint128[](nowIdxsLength);
 
         for (uint256 i = 0; i < nowIdxsLength; i++) {
-            uint32 secondsAgo = secondsAgos[i];
             uint256 nowIdx = nowIdxs[i];
             uint32 window = windows[i];
 
