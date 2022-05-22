@@ -1,0 +1,221 @@
+import pytest
+from brownie import Contract, convert, OverlayV1BalancerV2Feed
+
+
+@pytest.fixture(scope="module")
+def gov(accounts):
+    '''
+    Inputs:
+      accounts [Accounts]: List of brownie provided eth account addresses
+    Outputs:
+      [Account]: Brownie provided eth account address for the Governor Role
+    '''
+    yield accounts[0]
+
+
+@pytest.fixture(scope="module")
+def alice(accounts):
+    '''
+    Inputs:
+      accounts [Accounts]: List of brownie provided eth account addresses
+    Outputs:
+      [Account]: Brownie provided eth account address for Alice the trader
+    '''
+    yield accounts[1]
+
+
+@pytest.fixture(scope="module")
+def bob(accounts):
+    '''
+    Inputs:
+      accounts [Accounts]: List of brownie provided eth account addresses
+    Outputs:
+      [Account]: Brownie provided eth account address for Bob the trader
+    '''
+    yield accounts[2]
+
+
+@pytest.fixture(scope="module")
+def rando(accounts):
+    '''
+    Inputs:
+      accounts [Accounts]: List of brownie provided eth account addresses
+    Outputs:
+      [Account]: Brownie provided eth account address for a random account
+    '''
+    yield accounts[3]
+
+
+@pytest.fixture(scope="module")
+def dai():
+    '''
+    Outputs:
+      [Contract]: DAI token contract instance
+
+    https://etherscan.io/address/0x6B175474E89094C44Da98b954EedeAC495271d0F
+    '''
+    yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
+
+
+@pytest.fixture(scope="module")
+def weth():
+    '''
+    Outputs:
+      [Contract]: WETH token contract instance
+
+    https://etherscan.io/address/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2
+    '''
+    yield Contract.from_explorer("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+
+
+@pytest.fixture(scope="module")
+def balancer():
+    '''
+    Outputs:
+      [Contract]: BalancerGovernanceToken token contract instance
+
+    https://etherscan.io/address/0xba100000625a3754423978a60c9317c58a424e3D
+    '''
+    yield Contract.from_explorer("0xba100000625a3754423978a60c9317c58a424e3D")
+
+
+@pytest.fixture(scope="module")
+def pool_daiweth():
+    '''
+    Outputs:
+      [Contract]: Balancer V2 WeightedPool2Tokens contract instance for the
+                  DAI/WETH pool
+
+
+    https://etherscan.io/address/0x0b09deA16768f0799065C475bE02919503cB2a35
+    https://app.balancer.fi/#/pool/0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a  # noqa: E501
+    '''
+    yield Contract.from_explorer("0x0b09deA16768f0799065C475bE02919503cB2a35")
+
+
+@pytest.fixture(scope="module")
+def pool_balweth():
+    '''
+    Outputs:
+      [Contract]: Balancer V2 WeightedPool2Tokens contract instance for the
+                  BAL/WETH pool, representing the OVL/WETH token pair
+
+    https://etherscan.io/address/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56
+    https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
+    '''
+    yield Contract.from_explorer("0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56")
+
+
+@pytest.fixture(scope="module")
+def pool_parusdc():
+    '''
+    Outputs:
+      [Contract] Balancer V2 WeightedPool2Tokens contract instance for the
+                 PAR/USDC pool
+
+
+    https://etherscan.io/address/0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b
+    '''
+    yield Contract.from_explorer("0x5d6e3d7632D6719e04cA162be652164Bec1EaA6b")
+
+
+@pytest.fixture(scope="module")
+def balweth_poolid():
+    '''
+    80% BAL/ 20% WETH Oracle Weighted Pool contract pool id. Used to simulate
+    the OVL/WETH pair.
+    https://app.balancer.fi/#/pool/0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014  # noqa: E501
+
+    Output:
+      [bytes32]: BAL/WETH Balancer V2 OracleWeightedPool contract pool id
+    '''
+    yield convert.to_bytes(
+        '0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014',
+        'bytes32')
+
+
+@pytest.fixture(scope="module")
+def daiweth_poolid():
+    '''
+    40% DAI/60% WETH Oracle Weighted Pool contract pool id.
+    https://app.balancer.fi/#/pool/0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a  # noqa: E501
+
+    Output:
+      [bytes32]: DAI/WETH Balancer V2 OracleWeightedPool contract pool id
+    '''
+    yield convert.to_bytes(
+        '0x0b09dea16768f0799065c475be02919503cb2a3500020000000000000000001a',
+        'bytes32')
+
+
+@pytest.fixture(scope="module")
+def vault():
+    '''
+    Outputs:
+      [Contract]: BalancerV2Vault contract instance
+
+    https://etherscan.io/address/0xBA12222222228d8Ba445958a75a0704d566BF2C8
+    '''
+    return Contract.from_explorer('0xBA12222222228d8Ba445958a75a0704d566BF2C8')
+
+
+@pytest.fixture(scope="module")
+def balv2_pool(vault, balancer, weth, dai, pool_daiweth, pool_balweth):
+    '''
+    Returns the BalancerV2PoolInfo struct fields for a DAI/WETH market token
+    pair using the BAL/WETH token pair to simulate the OVL/WETH token pair for
+    testing. The BalancerV2PoolInfo struct is an input argument to the
+    constructor of the OverlayV1BalancerV2Feed contract that passes in the
+    relevant market and OvlWeth data.
+
+    Inputs:
+      vault          [Contract]: BalancerV2Vault contract instance
+      balancer       [Contract]: BalancerGovernanceToken token contract
+                                 instance
+      weth           [Contract]: WETH token contract instance
+      dai            [Contract]: DAI token contract instance
+      pool_balweth   [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                 instance for the BAL/WETH pool, representing
+                                 the OVL/WETH token pair
+      pool_balweth   [Contract]: Balancer V2 WeightedPool2Tokens contract
+                                 instance for the DAI/WETH pool
+    Outputs:
+      (
+         vault            [Contract]: BalancerV2Vault contract instance
+         marketPool       [Contract]: Market pool (DAI/WETH) contract instance
+         ovlWethPool      [Contract]: OvlWeth pool (BAL/WETH) contract instance
+         ovl              [Contract]: OVL (BAL) token contract instance
+         marketBaseToken  [Contract]: Market base token (WETH) contract
+                                      instance
+         marketQuoteToken [Contract]: Market quote token (DAI) contract
+                                      instance
+         marketBaseAmount [uint128]:  Market base amount
+      )
+    '''
+    market_pool = pool_daiweth
+    ovlweth_pool = pool_balweth
+    ovl = balancer
+    market_base_token = weth
+    market_quote_token = dai
+    market_base_amount = 1 * 10 ** weth.decimals()
+
+    return (vault, market_pool, ovlweth_pool, ovl, market_base_token,
+            market_quote_token,  market_base_amount)
+
+
+@pytest.fixture(scope="module")
+def feed(gov, balv2_pool):
+    '''
+    Successfully deploys the OverlayV1BalancerV2Feed contract for a DAI/WETH
+    market pool. The OVL/WETH pool is simulated using the BAL/WETH pool.
+
+    Inputs:
+      gov          [Account]:            Governor role account deploys the
+                                         OverlayV1BalancerV2Feed contract
+      balv2_pool   (BalancerV2PoolInfo): BalancerV2PoolInfo struct
+    '''
+    micro_window = 600
+    macro_window = 3600
+
+    yield gov.deploy(OverlayV1BalancerV2Feed, balv2_pool, micro_window,
+                     macro_window)

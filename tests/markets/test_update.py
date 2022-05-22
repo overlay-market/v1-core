@@ -5,6 +5,8 @@ from decimal import Decimal
 from .utils import RiskParameter
 
 
+# SN TODO: copy this w balancerv2 feed to get latest gas estimates
+#
 def test_update_fetches_from_feed(market, feed, rando):
     # call update
     tx = market.update({"from": rando})
