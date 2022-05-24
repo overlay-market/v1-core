@@ -319,7 +319,6 @@ library Position {
     /// @notice Whether a position can be liquidated
     /// @dev is true when value * (1 - liq fee rate) < maintenance margin
     /// @dev liq fees are reward given to liquidator
-    // TODO: test
     function liquidatable(
         Info memory self,
         uint256 oiTotalOnSide,

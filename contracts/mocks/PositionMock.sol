@@ -176,7 +176,6 @@ contract PositionMock {
             );
     }
 
-    // TODO: test
     function liquidatable(
         Position.Info memory pos,
         uint256 oiTotalOnSide,
