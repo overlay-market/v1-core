@@ -113,11 +113,17 @@ library Position {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Computes the entryPrice of the position cast to uint256
+    /// @dev Will be slightly different (tol of 1bps) vs actual
+    /// @dev midPrice at build given tick resolution limited to 1bps
+    /// @dev Only affects value() calc below and thus PnL slightly
     function midPriceAtEntry(Info memory self) internal pure returns (uint256 midPrice_) {
         midPrice_ = Tick.tickToPrice(self.midTick);
     }
 
     /// @notice Computes the entryPrice of the position cast to uint256
+    /// @dev Will be slightly different (tol of 1bps) vs actual
+    /// @dev entryPrice at build given tick resolution limited to 1bps
+    /// @dev Only affects value() calc below and thus PnL slightly
     function entryPrice(Info memory self) internal pure returns (uint256 entryPrice_) {
         entryPrice_ = Tick.tickToPrice(self.entryTick);
     }
@@ -141,6 +147,9 @@ library Position {
 
     /// @notice Computes the position's initial open interest cast to uint256
     /// @dev oiInitial = Q / midPriceAtEntry
+    /// @dev Will be slightly different (tol of 1bps) vs actual oi at build
+    /// @dev given midTick resolution limited to 1bps
+    /// @dev Only affects value() calc below and thus PnL slightly
     function _oiInitial(Info memory self) private pure returns (uint256) {
         uint256 q = _notionalInitial(self);
         uint256 mid = midPriceAtEntry(self);
@@ -187,10 +196,6 @@ library Position {
         return debtForRemaining.mulUp(fraction);
     }
 
-    /*///////////////////////////////////////////////////////////////
-                        POSITION CALC FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
     /// @notice Computes the current open interest of remaining position accounting for
     /// @notice potential funding payments between long/short sides
     /// @dev returns zero when oiShares = oiTotalOnSide = oiTotalSharesOnSide = 0 to avoid
@@ -203,7 +208,7 @@ library Position {
         uint256 oiTotalSharesOnSide
     ) internal pure returns (uint256) {
         uint256 oiShares = oiSharesCurrent(self, fraction);
-        if (oiShares == 0 || oiTotalOnSide == 0) return 0;
+        if (oiShares == 0 || oiTotalOnSide == 0 || oiTotalSharesOnSide == 0) return 0;
         return FullMath.mulDiv(oiShares, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
@@ -217,6 +222,10 @@ library Position {
         posCost = posCost.subFloor(posDebt);
         return posCost;
     }
+
+    /*///////////////////////////////////////////////////////////////
+                        POSITION CALC FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /// @notice Computes the value of remaining position
     /// @dev Floors to zero, so won't properly compute if self is underwater
@@ -266,6 +275,7 @@ library Position {
 
     /// @notice Computes the current notional of remaining position including PnL
     /// @dev Floors to debt if value <= 0
+    // TODO: test
     function notionalWithPnl(
         Info memory self,
         uint256 fraction,

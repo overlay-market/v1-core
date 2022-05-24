@@ -42,7 +42,6 @@ contract PositionMock {
         return pos.getFractionRemaining();
     }
 
-    // TODO: test
     function updatedFractionRemaining(Position.Info memory pos, uint256 fractionRemoved)
         external
         view
@@ -79,7 +78,6 @@ contract PositionMock {
                   POSITION FRACTIONAL GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // TODO: test
     function notionalInitial(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -88,7 +86,6 @@ contract PositionMock {
         return Position.notionalInitial(pos, fraction);
     }
 
-    // TODO: test
     function oiInitial(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -97,7 +94,6 @@ contract PositionMock {
         return pos.oiInitial(fraction);
     }
 
-    // TODO: test
     function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -106,7 +102,6 @@ contract PositionMock {
         return pos.oiSharesCurrent(fraction);
     }
 
-    // TODO: test
     function debtInitial(Position.Info memory pos, uint256 fraction)
         external
         view
@@ -115,11 +110,6 @@ contract PositionMock {
         return Position.debtInitial(pos, fraction);
     }
 
-    /*///////////////////////////////////////////////////////////////
-                        POSITION CALC FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    // TODO: test
     function oiCurrent(
         Position.Info memory pos,
         uint256 fraction,
@@ -129,10 +119,13 @@ contract PositionMock {
         return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
-    // TODO: test
     function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
         return pos.cost(fraction);
     }
+
+    /*///////////////////////////////////////////////////////////////
+                        POSITION CALC FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     // TODO: test
     function value(
