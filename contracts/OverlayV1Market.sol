@@ -330,10 +330,7 @@ contract OverlayV1Market is IOverlayV1Market {
             // subtract unwound open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
             // use subFloor to avoid reverts with rounding issues
-            // TODO: are there issues with oiSharesCurrent subfloor and
-            // TODO: fractionRemaining update in terms of removing
-            // TODO: fewer shares from oiTotalShares than what's removed from
-            // TODO: individual position?
+            // TODO: think thru rounding possiblities with subFloor and fracRemain
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
