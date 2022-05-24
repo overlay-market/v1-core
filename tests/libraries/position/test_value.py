@@ -161,44 +161,66 @@ def test_value_when_fraction_less_than_one(position):
 
 
 def test_value_when_payoff_greater_than_cap(position):
-    entry_price = 100000000000000000000  # 100
-    current_price = 800000000000000000000  # 800
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 10000  # 1.0
 
-    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    entry_price = 101000000000000000000  # 101
+    mid_price = 100000000000000000000  # 100
+    current_price = 800000000000000000000  # 800
+
+    mid_tick = price_to_tick(mid_price)
+    entry_tick = price_to_tick(entry_price)
+
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    shares_to_oi_ratio = 800000000000000000  # 0.8
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.08
+
+    # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    # check value is oi * entry_price * (1 + cap_payoff) - debt
+    # check value is
+    # oi * entry_price * (1 + cap_payoff) - debt + q - oi * entry_price
     # when long
-    is_long = True
-    # NOTE: mid_ratio tests in test_entry_price.py
-    mid_ratio = position.calcEntryToMidRatio(entry_price, entry_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    expect = 58500000000000000000
+    actual = position.value(pos, fraction, oi, oi_shares,
+                            current_price, cap_payoff)
 
-    expect = 58000000000000000000
-    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
-    assert expect == actual
+    # NOTE: rel tol of 1.00e-4 given tick has precision to 1bps
+    assert expect == approx(actual, rel=1e-4)
 
 
 def test_value_when_underwater(position):
-    entry_price = 100000000000000000000  # 100
     notional = 10000000000000000000  # 10
     debt = 8000000000000000000  # 8
     liquidated = False
+    fraction_remaining = 10000  # 1.0
 
-    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
+    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    shares_to_oi_ratio = 800000000000000000  # 0.8
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.08
+
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
 
     # check value returns zero when long is underwater
     is_long = True
+    entry_price = 101000000000000000000  # 101
+    entry_tick = price_to_tick(entry_price)
     current_price = 75000000000000000000  # 75
-    # NOTE: mid_ratio tests in test_entry_price.py
-    mid_ratio = position.calcEntryToMidRatio(entry_price, entry_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
     expect = 0
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
@@ -206,10 +228,12 @@ def test_value_when_underwater(position):
 
     # check value returns zero when short is underwater
     is_long = False
+    entry_price = 99000000000000000000  # 99
+    entry_tick = price_to_tick(entry_price)
     current_price = 125000000000000000000  # 125
-    # NOTE: mid_ratio tests in test_entry_price.py
-    mid_ratio = position.calcEntryToMidRatio(entry_price, entry_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
     expect = 0
     actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)

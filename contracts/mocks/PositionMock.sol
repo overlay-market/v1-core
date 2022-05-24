@@ -127,7 +127,6 @@ contract PositionMock {
                         POSITION CALC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    // TODO: test
     function value(
         Position.Info memory pos,
         uint256 fraction,
@@ -139,7 +138,6 @@ contract PositionMock {
         return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
-    // TODO: test
     function notionalWithPnl(
         Position.Info memory pos,
         uint256 fraction,

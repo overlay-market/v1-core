@@ -229,7 +229,6 @@ library Position {
 
     /// @notice Computes the value of remaining position
     /// @dev Floors to zero, so won't properly compute if self is underwater
-    // TODO: test
     function value(
         Info memory self,
         uint256 fraction,
@@ -275,7 +274,6 @@ library Position {
 
     /// @notice Computes the current notional of remaining position including PnL
     /// @dev Floors to debt if value <= 0
-    // TODO: test
     function notionalWithPnl(
         Info memory self,
         uint256 fraction,

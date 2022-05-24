@@ -1958,3 +1958,6 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
 
 # TODO: test_unwind when remove 99% of oi shares for attributes
+# TODO: test_unwind updates fraction remaining properly
+# TODO: test_unwind multiple unwinds in a row with small
+# TODO: fractions (for fractionRemaining updates => check can't get free OI)
