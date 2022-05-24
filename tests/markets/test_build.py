@@ -108,7 +108,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
 
     # calculate the actual entry and mid prices
     expect_mid_price = mid_price
-    actual_mid_price = tick_to_price(actual_entry_tick)
+    actual_mid_price = tick_to_price(actual_mid_tick)
     actual_entry_price = tick_to_price(actual_entry_tick)
     assert actual_mid_price == approx(expect_mid_price, rel=1e-4)
     assert actual_entry_price == approx(expect_entry_price, rel=1e-4)
@@ -120,7 +120,8 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     assert tx.events["Build"]["oi"] == actual_oi
     assert tx.events["Build"]["debt"] == actual_debt
     assert tx.events["Build"]["isLong"] == actual_is_long
-    assert int(tx.events["Build"]["price"]) == approx(actual_entry_price)
+    assert int(tx.events["Build"]["price"]) == approx(
+        actual_entry_price, rel=1e-4)
 
 
 @given(
@@ -161,18 +162,57 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     # calculate oi
     data = feed.latest()
     mid = Decimal(mid_from_feed(data)) / Decimal(1e18)
+
     oi = notional / mid
+    oi_shares = oi  # should be == oi when 0 shares prior
 
     # calculate expected oi info data
     expect_oi += int(oi * Decimal(1e18))
-    expect_oi_shares += int(oi * Decimal(1e18))
+    expect_oi_shares += int(oi_shares * Decimal(1e18))
 
     # compare with actual aggregate oi values
     actual_oi = market.oiLong() if is_long else market.oiShort()
-    actual_oi_shares = market.oiLongShares() if is_long else market.oiShort()
+    actual_oi_shares = market.oiLongShares() \
+        if is_long else market.oiShortShares()
 
-    assert int(actual_oi) == approx(expect_oi)
-    assert int(actual_oi_shares) == approx(expect_oi_shares)
+    # NOTE: rel tol of 1e-4 given tick has precision to 1bps
+    assert int(actual_oi) == approx(expect_oi, rel=1e-4)
+    assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
+
+    # pass some time for funding to have oi deviate from oiShares
+    chain.mine(timedelta=604800)
+    _ = market.update({"from": alice})
+
+    # cache prior oi and oiShares aggregate values after update
+    expect_oi = market.oiLong() if is_long else market.oiShort()
+    expect_oi_shares = market.oiLongShares() \
+        if is_long else market.oiShortShares()
+
+    # approve market for spending then build again
+    ovl.approve(market, approve_collateral, {"from": alice})
+    _ = market.build(input_collateral, input_leverage, input_is_long,
+                     input_price_limit, {"from": alice})
+
+    # recalculate oi
+    data = feed.latest()
+    mid = Decimal(mid_from_feed(data)) / Decimal(1e18)
+
+    # mulDiv shares when prior oi exists
+    oi = notional / mid
+    oi_shares = oi * (Decimal(expect_oi_shares) / Decimal(expect_oi))
+
+    # calculate expected oi info data on second build
+    expect_oi += int(oi * Decimal(1e18))
+    expect_oi_shares += int(oi_shares * Decimal(1e18))
+
+    # compare with actual aggregate oi values
+    actual_oi = market.oiLong() if is_long else market.oiShort()
+    actual_oi_shares = market.oiLongShares() \
+        if is_long else market.oiShortShares()
+
+    # NOTE: rel tol of 1e-4 given tick has precision to 1bps
+    assert int(actual_oi) == approx(expect_oi, rel=1e-4)
+    assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
 
 
 def test_build_updates_market(market, ovl, alice):
@@ -727,7 +767,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
     for i in range(n):
         # mine chain for funding to occur over timedelta
-        chain.mine(timedelta=3600)
+        chain.mine(timedelta=86400)
 
         # choose a random leverage
         leverage_alice = randint(1, leverage_cap)
@@ -777,7 +817,6 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         expect_mid_price_alice = int(mid_price)
         expect_mid_tick_alice = price_to_tick(mid_price)
-        # TODO: expect_entry_price, expect_entry_tick (?)
 
         expect_is_long_alice = is_long_alice
         expect_liquidated_alice = False
@@ -798,7 +837,6 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
          actual_fraction_remaining_alice) = actual_pos_alice
 
         actual_mid_price_alice = tick_to_price(actual_mid_tick_alice)
-        actual_entry_price_alice = tick_to_price(actual_entry_tick_alice)
         actual_oi_alice = int(Decimal(actual_notional_alice)
                               * Decimal(1e18)/Decimal(actual_mid_price_alice))
 
@@ -811,6 +849,11 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         assert int(actual_oi_alice) == approx(expect_oi_alice, rel=1.25e-4)
         assert int(actual_fraction_remaining_alice) == approx(
             expect_fraction_remaining_alice)
+
+        assert int(actual_mid_price_alice) == approx(
+            expect_mid_price_alice, rel=1.25e-4)
+        assert int(actual_mid_tick_alice) == approx(
+            expect_mid_tick_alice, abs=1)
 
         # check oi added to long side by alice
         expect_oi_long += expect_oi_alice
@@ -826,7 +869,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         expect_pos_id += 1
 
         # mine chain another timedelta
-        chain.mine(timedelta=600)
+        chain.mine(timedelta=86400)
 
         # NOTE: updating market to avoid doing funding calcs for expects
         market.update({"from": bob})
@@ -853,10 +896,11 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         expect_notional_bob = int(notional_bob * Decimal(1e18))
         expect_debt_bob = int(debt_bob * Decimal(1e18))
 
+        expect_mid_price_bob = int(mid_price)
+        expect_mid_tick_bob = price_to_tick(mid_price)
+
         expect_is_long_bob = is_long_bob
         expect_liquidated_bob = False
-
-        # TODO: expect_entry_price, expect_entry_tick (?)
 
         expect_oi_bob = int(Decimal(expect_notional_bob) * Decimal(1e18)
                             / Decimal(mid_price))
@@ -887,6 +931,10 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         assert int(actual_fraction_remaining_bob) == approx(
             expect_fraction_remaining_bob)
 
+        assert int(actual_mid_price_bob) == approx(
+            expect_mid_price_bob, rel=1.25e-4)
+        assert int(actual_mid_tick_bob) == approx(expect_mid_tick_bob, abs=1)
+
         # check oi added to short side by bob
         expect_oi_short += expect_oi_bob
         actual_oi_short = market.oiShort()
@@ -902,3 +950,5 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
 
 # TODO: test_sequential_builds_with_funding_drawdowns_for_oi_shares
+# TODO: move sequential/multiple tests into separate file
+# TODO: include in sequential builds volume registry for multiple sequentials

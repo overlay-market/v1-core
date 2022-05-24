@@ -192,12 +192,10 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // add new position's open interest to the side's aggregate oi value
             // and increase number of oi shares issued
-            // TODO: test
             uint256 oiShares = _addToOiAggregates(oi, capOi, isLong);
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing
-            // TODO: test
             Position.Info memory pos = Position.Info({
                 notionalInitial: uint96(notional), // won't overflow as capNotional max is 8e24
                 debtInitial: uint96(debt),
@@ -761,7 +759,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @notice Adds open interest and open interest shares to aggregate storage
     /// @notice pairs (oiLong, oiLongShares) or (oiShort, oiShortShares)
     /// @return oiShares_ as the new position's shares of aggregate open interest
-    // TODO: test
     function _addToOiAggregates(
         uint256 oi,
         uint256 capOi,
@@ -772,7 +769,6 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
 
         // calculate oi shares
-        // TODO: require for oiTotalOnSide / oiTotalSharesOnSide ratio extremes
         uint256 oiShares = Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
 
         // add oi and oi shares to temp aggregate values
