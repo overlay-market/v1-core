@@ -156,7 +156,6 @@ contract PositionMock {
             );
     }
 
-    // TODO: test
     function tradingFee(
         Position.Info memory pos,
         uint256 fraction,

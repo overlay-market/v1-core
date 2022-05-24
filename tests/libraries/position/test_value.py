@@ -223,7 +223,8 @@ def test_value_when_underwater(position):
            liquidated, oi_shares, fraction_remaining)
 
     expect = 0
-    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
+    actual = position.value(pos, fraction, oi, oi_shares,
+                            current_price, cap_payoff)
     assert expect == actual
 
     # check value returns zero when short is underwater
@@ -236,7 +237,8 @@ def test_value_when_underwater(position):
            liquidated, oi_shares, fraction_remaining)
 
     expect = 0
-    actual = position.value(pos, fraction, oi, oi, current_price, cap_payoff)
+    actual = position.value(pos, fraction, oi, oi_shares,
+                            current_price, cap_payoff)
     assert expect == actual
 
 

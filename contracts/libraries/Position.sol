@@ -296,7 +296,6 @@ library Position {
 
     /// @notice Computes the trading fees to be imposed on remaining position
     /// @notice for build/unwind
-    // TODO: test
     function tradingFee(
         Info memory self,
         uint256 fraction,
