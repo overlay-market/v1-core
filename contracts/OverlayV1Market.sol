@@ -449,9 +449,6 @@ contract OverlayV1Market is IOverlayV1Market {
             _registerMintOrBurn(int256(value) - int256(cost) - int256(marginToBurn));
 
             // store the updated position info data. mark as liquidated
-            // TODO: test
-            // TODO: particularly test fraction setting works and changes position
-            // TODO: value, cost, etc. returned by Position lib
             pos.liquidated = true;
             pos.fractionRemaining = 0;
             positions.set(owner, positionId, pos);
