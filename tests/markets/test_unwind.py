@@ -10,7 +10,7 @@ from .utils import (
     calculate_position_info,
     get_position_key,
     mid_from_feed,
-    entry_from_mid_ratio,
+    tick_to_price,
     RiskParameter
 )
 
@@ -23,8 +23,8 @@ def isolation(fn_isolation):
 
 
 @given(
-    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
-                      places=3),
+    fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
+                      places=4),
     is_long=strategy('bool'))
 def test_unwind_updates_position(market, feed, alice, rando, ovl,
                                  fraction, is_long):
@@ -59,21 +59,20 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = market.positions(pos_key)
 
-    # calculate the entry price
-    data = feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -81,13 +80,15 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
         else market.oiShort()
     expect_total_oi_shares = market.oiLongShares() if is_long \
         else market.oiShortShares()
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_oi_initial = fraction * expect_oi_initial
     unwound_notional = fraction * Decimal(expect_notional)
     unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
@@ -113,22 +114,22 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     expect_exit_price = market.bid(data, volume) if is_long \
         else market.ask(data, volume)
 
-    # adjust oi shares, debt position expected attributes downward for unwind
-    expect_oi_shares = int(expect_oi_shares * (1 - fraction))
-    expect_notional = int(expect_notional * (1 - fraction))
-    expect_debt = int(expect_debt * (1 - fraction))
+    # adjust fractionRemaining downward based on fraction unwound
+    expect_fraction_remaining = int(expect_fraction_remaining * (1 - fraction))
 
     # check expected pos attributes match actual after unwind
-    (actual_notional, actual_debt, actual_mid_ratio,
-     actual_is_long, actual_liquidated,
-     actual_oi_shares) = market.positions(pos_key)
+    (actual_notional, actual_debt, actual_mid_tick, actual_entry_tick,
+     actual_is_long, actual_liquidated, actual_oi_shares,
+     actual_fraction_remaining) = market.positions(pos_key)
 
-    assert int(actual_oi_shares) == approx(expect_oi_shares)
     assert int(actual_notional) == approx(expect_notional)
     assert int(actual_debt) == approx(expect_debt)
+    assert actual_mid_tick == expect_mid_tick
+    assert actual_entry_tick == expect_entry_tick
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
-    assert actual_mid_ratio == expect_mid_ratio
+    assert int(actual_oi_shares) == approx(expect_oi_shares)
+    assert int(actual_fraction_remaining) == approx(expect_fraction_remaining)
 
     # check unwind event with expected values
     assert "Unwind" in tx.events
@@ -137,27 +138,49 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     assert tx.events["Unwind"]["fraction"] == input_fraction
 
     actual_exit_price = int(tx.events["Unwind"]["price"])
-    assert actual_exit_price == approx(expect_exit_price, rel=1e-3)
+    assert actual_exit_price == approx(expect_exit_price)
 
     # calculate expected values for mint comparison
     unwound_pnl = (unwound_oi / Decimal(1e18)) * \
         (Decimal(actual_exit_price) - Decimal(expect_entry_price))
     if not is_long:
         unwound_pnl *= -1
-    unwound_funding = unwound_notional * (unwound_oi/unwound_oi_shares - 1)
+    unwound_funding = unwound_notional * (unwound_oi/unwound_oi_initial - 1)
 
     expect_value = int(unwound_cost + unwound_pnl + unwound_funding)
     expect_cost = int(unwound_cost)
     expect_mint = expect_value - expect_cost
-
-    # TODO: why do we need 1e-3 for tolerance here? Uniswap mainnet-fork moves?
     actual_mint = int(tx.events["Unwind"]["mint"])
-    assert actual_mint == approx(expect_mint, rel=1e-3)
+
+    # TODO: why 1e-5 needed for ~ 1bps fraction? however, larger fraction
+    # values do seem to agree to much smaller tolerance levels, which is good
+    assert actual_mint == approx(expect_mint, rel=1e-5)
+
+    # unwind fraction of shares again
+    # check remaining fraction is (1 - fraction)**2
+    if fraction == int(1e18):
+        with reverts("OVLV1:!position"):
+            _ = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                              {"from": alice})
+    else:
+        _ = market.unwind(input_pos_id, input_fraction, input_price_limit,
+                          {"from": alice})
+        # adjust fractionRemaining downward based on fraction unwound
+        expect_fraction_remaining = int(
+            expect_fraction_remaining * (1 - fraction))
+
+        # check frac remaining matches with position's current state
+        (actual_notional, actual_debt, actual_mid_tick, actual_entry_tick,
+         actual_is_long, actual_liquidated, actual_oi_shares,
+         actual_fraction_remaining) = market.positions(pos_key)
+
+        assert int(actual_fraction_remaining) == approx(
+            expect_fraction_remaining)
 
 
 @given(
-    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
-                      places=3),
+    fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
+                      places=4),
     is_long=strategy('bool'))
 def test_unwind_removes_oi(market, feed, alice, rando, ovl,
                            fraction, is_long):
@@ -192,16 +215,16 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -236,9 +259,8 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     actual_total_oi_shares = market.oiLongShares() \
         if is_long else market.oiShortShares()
 
-    assert int(actual_total_oi) == approx(expect_total_oi, rel=1e-4)
-    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares,
-                                                 rel=1e-4)
+    assert int(actual_total_oi) == approx(expect_total_oi)
+    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares)
 
 
 def test_unwind_updates_market(market, alice, ovl):
@@ -278,7 +300,7 @@ def test_unwind_updates_market(market, alice, ovl):
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
 
     # input values for unwind
     input_pos_id = pos_id
@@ -1815,14 +1837,11 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
 
 
 def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
-                                                    alice, bob):
+                                                    alice, bob, rando):
     # loop through 10 times
     n = 10
     total_notional_long = Decimal(10000)
     total_notional_short = Decimal(7500)
-
-    # set k to zero to avoid funding calcs
-    market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
 
     # alice goes long and bob goes short n times
     input_total_notional_long = total_notional_long * Decimal(1e18)
@@ -1853,7 +1872,7 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
     actual_pos_ids = []
     for i in range(n):
-        chain.mine(timedelta=60)
+        chain.mine(timedelta=86400)
 
         # choose a random leverage
         leverage_alice = randint(1, leverage_cap)
@@ -1895,30 +1914,38 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
     # unwind fractions of each position
     for id in actual_pos_ids:
-        chain.mine(timedelta=60)
+        # mine the chain forward for some time difference with build and unwind
+        # more funding should occur within this interval.
+        # Use update() to update state to query values for checks vs expected
+        # after unwind.
+        # NOTE: update() tests in test_update.py
+        chain.mine(timedelta=86400)
+        _ = market.update({"from": rando})
 
         # alice is even ids, bob is odd
         is_alice = (id % 2 == 0)
         trader = alice if is_alice else bob
 
         # choose a random fraction of pos to unwind
-        input_fraction = randint(1, 1e18)
-        fraction = Decimal(input_fraction) / Decimal(1e18)
+        fraction = randint(1, 1e4)  # fraction is only to 1bps precision
+        fraction = Decimal(fraction) / Decimal(1e4)
+        input_fraction = int(fraction * Decimal(1e18))
 
         # NOTE: slippage tests in test_slippage.py
         # NOTE: setting to min/max here, so never reverts with slippage>max
         input_price_limit_trader = 0 if is_alice else 2**256-1
 
         # cache current aggregate oi and oi shares for comparison later
-        total_oi = market.oiLong() if is_alice else market.oiShort()
-        total_oi_shares = market.oiLongShares() if is_alice \
+        expect_total_oi = market.oiLong() if is_alice else market.oiShort()
+        expect_total_oi_shares = market.oiLongShares() if is_alice \
             else market.oiShortShares()
 
         # cache position attributes for everything for later comparison
         pos_key = get_position_key(trader.address, id)
         expect_pos = market.positions(pos_key)
-        (expect_notional, expect_debt, expect_mid_ratio,
-         expect_is_long, expect_liquidated, expect_oi_shares) = expect_pos
+        (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+         expect_is_long, expect_liquidated, expect_oi_shares,
+         expect_fraction_remaining) = expect_pos
 
         # unwind fraction of position for trader
         _ = market.unwind(id, input_fraction, input_price_limit_trader,
@@ -1926,28 +1953,25 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
 
         # get updated actual position attributes
         actual_pos = market.positions(pos_key)
-        (actual_notional, actual_debt, actual_mid_ratio,
-         actual_is_long, actual_liquidated, actual_oi_shares) = actual_pos
+        (actual_notional, actual_debt, actual_mid_tick, actual_entry_tick,
+         actual_is_long, actual_liquidated, actual_oi_shares,
+         actual_fraction_remaining) = actual_pos
 
-        # check position info for id has decreased position oi, debt
-        expect_oi_shares_unwound = int(expect_oi_shares * fraction)
-        expect_oi_unwound = int(expect_oi_shares_unwound * total_oi
-                                / total_oi_shares)
+        # check position info for id has decreased position fraction remaining
+        expect_oi_shares_unwound = int(
+            Decimal(expect_oi_shares) * Decimal(fraction))
+        expect_oi_unwound = int(
+            Decimal(expect_oi_shares_unwound) * Decimal(expect_total_oi)
+            / Decimal(expect_total_oi_shares))
+        expect_fraction_remaining = int(
+            Decimal(expect_fraction_remaining) * Decimal(1 - fraction))
 
-        expect_notional = int(expect_notional * (1 - fraction))
-        expect_oi_shares = int(expect_oi_shares * (1 - fraction))
-        expect_debt = int(expect_debt * (1 - fraction))
-
-        assert int(actual_notional) == approx(expect_notional)
-        assert int(actual_oi_shares) == approx(expect_oi_shares)
-        assert int(actual_debt) == approx(expect_debt)
-        assert actual_is_long == expect_is_long
-        assert actual_liquidated == expect_liquidated
-        assert actual_mid_ratio == expect_mid_ratio
+        assert int(actual_fraction_remaining) == approx(
+            expect_fraction_remaining)
 
         # check aggregate oi and oi shares on side have decreased
-        expect_total_oi = total_oi - expect_oi_unwound
-        expect_total_oi_shares = total_oi_shares - expect_oi_shares_unwound
+        expect_total_oi -= expect_oi_unwound
+        expect_total_oi_shares -= expect_oi_shares_unwound
 
         actual_total_oi = market.oiLong() if is_alice else market.oiShort()
         actual_total_oi_shares = market.oiLongShares() if is_alice \
