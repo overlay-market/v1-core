@@ -347,9 +347,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // store the updated position info data by reducing the
             // fraction remaining of initial position
-            // TODO: test
-            // TODO: particularly test fraction setting works and changes position
-            // TODO: value, cost, etc. returned by Position lib
             pos.fractionRemaining = pos.updatedFractionRemaining(fraction);
             positions.set(msg.sender, positionId, pos);
         }

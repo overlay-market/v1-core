@@ -323,8 +323,8 @@ def test_unwind_updates_market(market, alice, ovl):
 
 
 @given(
-    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
-                      places=3),
+    fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
+                      places=4),
     is_long=strategy('bool'))
 def test_unwind_registers_volume(market, feed, alice, rando, ovl,
                                  fraction, is_long):
@@ -359,16 +359,16 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=60)
     _ = market.update({"from": rando})
 
     # priors actual values. longs get the bid, shorts get the ask on unwind
@@ -432,15 +432,15 @@ def test_unwind_registers_volume(market, feed, alice, rando, ovl,
 
     assert actual_timestamp == expect_timestamp
     assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
-    assert int(actual_volume) == approx(expect_volume, rel=1e-4)
+    assert int(actual_volume) == approx(expect_volume)
 
 
 @given(
-    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
-                      places=3),
+    fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
+                      places=4),
     is_long=strategy('bool'))
-def test_unwind_registers_mint(market, feed, alice, rando, ovl,
-                               fraction, is_long):
+def test_unwind_registers_mint_or_burn(market, feed, alice, rando, ovl,
+                                       fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -475,7 +475,7 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
 
     # priors actual values for snapshot of minted roller
@@ -525,12 +525,12 @@ def test_unwind_registers_mint(market, feed, alice, rando, ovl,
 
     assert actual_timestamp == expect_timestamp
     assert int(actual_window) == approx(expect_window, abs=1)  # tol to 1s
-    assert int(actual_minted) == approx(expect_minted, rel=1e-4)
+    assert int(actual_minted) == approx(expect_minted)
 
 
 @given(
-    fraction=strategy('decimal', min_value='0.001', max_value='1.000',
-                      places=3),
+    fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
+                      places=4),
     is_long=strategy('bool'))
 def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
                                    factory, fraction, is_long):
@@ -565,27 +565,28 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = market.positions(pos_key)
 
     # calculate the entry price
-    data = feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and unwind
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
 
     # calculate current oi, debt values of position
     expect_total_oi = market.oiLong() if is_long else market.oiShort()
     expect_total_oi_shares = market.oiLongShares() if is_long \
         else market.oiShortShares()
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
@@ -607,13 +608,13 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
-    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_oi_initial = fraction * expect_oi_initial
     unwound_notional = fraction * expect_notional
     unwound_debt = fraction * Decimal(expect_debt)
     unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
     # unwound collateral here includes adjustments due to funding payments
-    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_shares) \
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
         - unwound_debt
     unwound_pnl = unwound_oi * \
         (Decimal(price) - Decimal(expect_entry_price)) / Decimal(1e18)
@@ -630,7 +631,10 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     expect_mint = int(unwound_value - unwound_cost)
 
     # check expected pnl in line with Unwind event first
-    assert int(tx.events["Unwind"]["mint"]) == approx(expect_mint, rel=1e-3)
+    actual_mint = tx.events["Unwind"]["mint"]
+
+    # TODO: why 1e-5 needed for ~ 1bps fraction?
+    assert int(actual_mint) == approx(expect_mint, rel=1e-5)
 
     # Examine transfer event to verify mint or burn happened
     # if expect_mint > 0, should have a mint with Transfer event
@@ -656,8 +660,8 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # check actual amount minted or burned is in line with expected (1)
     assert tx.events["Transfer"][0]["from"] == expect_mint_from
     assert tx.events["Transfer"][0]["to"] == expect_mint_to
-    assert int(tx.events["Transfer"][0]["value"]) == approx(expect_mint_mag,
-                                                            rel=1e-2)
+    assert int(tx.events["Transfer"][0]["value"]
+               ) == approx(expect_mint_mag, rel=1e-5)
 
     # check unwind event has same value for pnl as transfer event (1)
     actual_transfer_mint = tx.events["Transfer"][0]["value"] if minted \
@@ -667,14 +671,12 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # check value less fees in event (2)
     assert tx.events['Transfer'][1]['from'] == market.address
     assert tx.events['Transfer'][1]['to'] == alice.address
-    assert int(tx.events['Transfer'][1]['value']) == \
-        approx(expect_value_out, rel=1e-4)
+    assert int(tx.events['Transfer'][1]['value']) == approx(expect_value_out)
 
     # check value less trade fees out (3)
     assert tx.events['Transfer'][2]['from'] == market.address
     assert tx.events['Transfer'][2]['to'] == factory.feeRecipient()
-    assert int(tx.events['Transfer'][2]['value']) == approx(expect_trade_fee,
-                                                            rel=1e-4)
+    assert int(tx.events['Transfer'][2]['value']) == approx(expect_trade_fee)
 
 
 @given(
