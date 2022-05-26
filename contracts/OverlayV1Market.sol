@@ -242,7 +242,6 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 priceLimit
     ) external {
         require(fraction <= ONE, "OVLV1:fraction>max");
-        // TODO: test, particularly with revert on fraction < 1e14
         // only keep 4 decimal precision (1 bps) for fraction given
         // pos.fractionRemaining only to 4 decimals
         fraction = fraction.toUint16Fixed().toUint256Fixed();
@@ -326,9 +325,8 @@ contract OverlayV1Market is IOverlayV1Market {
             tradingFee = Math.min(tradingFee, value); // if value < tradingFee
 
             // subtract unwound open interest from the side's aggregate oi value
-            // and decrease number of oi shares issued
-            // use subFloor to avoid reverts with rounding issues
-            // TODO: think thru rounding possiblities with subFloor and fracRemain
+            // and decrease number of oi shares issued use subFloor to
+            // avoid reverts with rounding issues
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)

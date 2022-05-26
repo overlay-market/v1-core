@@ -1604,6 +1604,8 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
 
+    # TODO: expect_oi_initial
+
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
     liq_oi_shares = Decimal(expect_oi_shares)
