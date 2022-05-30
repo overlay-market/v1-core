@@ -12,6 +12,8 @@ from .utils import (
     RiskParameter
 )
 
+# TODO: fix to use liq_oi_initial instead of oi shares
+
 
 # NOTE: Tests passing with isolation fixture
 # TODO: Fix tests to pass even without isolation fixture (?)

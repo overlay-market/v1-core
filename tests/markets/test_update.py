@@ -47,7 +47,7 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     timestamp_last = market.timestampUpdateLast()
 
     # mine chain into the future
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
 
     # call update
     tx = market.update({"from": rando})
@@ -74,8 +74,8 @@ def test_update_sets_last_timestamp(market, rando):
     # prior is timestamp is timestamp when deployed in conftest.py
     prior = market.timestampUpdateLast()
 
-    # mine the chain 60s into the future
-    chain.mine(timedelta=60)
+    # mine the chain 3600s into the future
+    chain.mine(timedelta=3600)
 
     # call update
     tx = market.update({"from": rando})

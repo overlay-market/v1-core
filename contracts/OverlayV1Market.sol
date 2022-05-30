@@ -471,26 +471,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
-        // apply funding if at least one block has passed
-        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
-        if (timeElapsed > 0) {
-            // calculate adjustments to oi due to funding
-            bool isLongOverweight = oiLong > oiShort;
-            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
-            (oiOverweight, oiUnderweight) = oiAfterFunding(
-                oiOverweight,
-                oiUnderweight,
-                timeElapsed
-            );
-
-            // pay funding
-            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-
-            // refresh last update data
-            timestampUpdateLast = block.timestamp;
-        }
+        // pay funding for time elasped since last interaction w market
+        _payFunding();
 
         // fetch new oracle data from feed
         // applies sanity check in case of data manipulation
@@ -748,6 +730,31 @@ contract OverlayV1Market is IOverlayV1Market {
         return minted;
     }
 
+    /// @notice Updates the market for funding changes to open interest
+    /// @notice since last time market was interacted with
+    function _payFunding() private {
+        // apply funding if at least one block has passed
+        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
+        if (timeElapsed > 0) {
+            // calculate adjustments to oi due to funding
+            bool isLongOverweight = oiLong > oiShort;
+            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+            (oiOverweight, oiUnderweight) = oiAfterFunding(
+                oiOverweight,
+                oiUnderweight,
+                timeElapsed
+            );
+
+            // pay funding
+            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+
+            // set last time market was updated
+            timestampUpdateLast = block.timestamp;
+        }
+    }
+
     /// @notice Adds open interest and open interest shares to aggregate storage
     /// @notice pairs (oiLong, oiLongShares) or (oiShort, oiShortShares)
     /// @return oiShares_ as the new position's shares of aggregate open interest
@@ -784,7 +791,13 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @notice Sets the governance per-market risk parameter
+    /// @dev updates funding state of market but does not fetch from oracle
+    /// @dev to avoid edge cases when dataIsValid is false
     function setRiskParam(Risk.Parameters name, uint256 value) external onlyFactory {
+        // pay funding to update state of market since last interaction
+        _payFunding();
+
+        // check then set risk param
         _checkRiskParam(name, value);
         _cacheRiskCalc(name, value);
         params.set(name, value);
