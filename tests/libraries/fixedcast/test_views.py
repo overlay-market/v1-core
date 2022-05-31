@@ -21,6 +21,16 @@ def test_to_uint16_fixed(fixed_cast, value):
     assert expect == actual
 
 
+@given(value=strategy('decimal', min_value="0.000001", max_value="6.5535",
+                      places=6))
+def test_to_uint16_to_uint256_fixed(fixed_cast, value):
+    # convert 18 places to 4 places back to 18 places rounded down
+    value = value * Decimal(1e18)
+    expect = int(Decimal(int(Decimal(value) / Decimal(1e14))) * Decimal(1e14))
+    actual = fixed_cast.toUint256Fixed(fixed_cast.toUint16Fixed(value))
+    assert expect == actual
+
+
 def test_to_uint16_fixed_reverts_when_gt_max(fixed_cast):
     # should pass for type(uint16).max
     value = 2**16 - 1
