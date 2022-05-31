@@ -140,7 +140,7 @@ library Position {
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide
     ) internal pure returns (uint256 oiShares_) {
-        oiShares_ = oiTotalOnSide == 0
+        oiShares_ = (oiTotalOnSide == 0 || oiTotalSharesOnSide == 0)
             ? oi
             : FullMath.mulDiv(oi, oiTotalSharesOnSide, oiTotalOnSide);
     }

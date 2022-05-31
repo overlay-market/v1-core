@@ -19,3 +19,29 @@ def test_calc_oi_shares_when_oi_total_zero(position):
     expect = oi
     actual = position.calcOiShares(oi, oi_total, oi_total_shares)
     assert expect == actual
+
+    # try with rounding issue remaining
+    oi_total = 0
+    oi_total_shares = 1
+
+    expect = oi
+    actual = position.calcOiShares(oi, oi_total, oi_total_shares)
+    assert expect == actual
+
+
+def test_calc_oi_shares_when_oi_total_shares_zero(position):
+    oi = 10000000000000000000  # 10
+    oi_total = 0
+    oi_total_shares = 0
+
+    expect = oi
+    actual = position.calcOiShares(oi, oi_total, oi_total_shares)
+    assert expect == actual
+
+    # try with rounding issue remaining
+    oi_total = 1
+    oi_total_shares = 0
+
+    expect = oi
+    actual = position.calcOiShares(oi, oi_total, oi_total_shares)
+    assert expect == actual
