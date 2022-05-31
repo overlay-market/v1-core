@@ -61,7 +61,7 @@ interface IOverlayV1Market {
         view
         returns (
             uint96 notionalInitial_,
-            uint96 debt_,
+            uint96 debtInitial_,
             int24 midTick_,
             int24 entryTick_,
             bool isLong_,

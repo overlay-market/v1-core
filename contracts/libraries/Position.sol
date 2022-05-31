@@ -112,7 +112,7 @@ library Position {
                       POSITION PRICE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Computes the entryPrice of the position cast to uint256
+    /// @notice Computes the midPrice of the position at entry cast to uint256
     /// @dev Will be slightly different (tol of 1bps) vs actual
     /// @dev midPrice at build given tick resolution limited to 1bps
     /// @dev Only affects value() calc below and thus PnL slightly
