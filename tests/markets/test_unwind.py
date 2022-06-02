@@ -249,17 +249,31 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
                        {"from": alice})
 
-    # adjust total oi and total oi shares downward for unwind
-    expect_total_oi -= unwound_oi
-    expect_total_oi_shares -= unwound_oi_shares
-
-    # check expected total oi and oi shares on side match actual
+    # get actual oi values after unwind
     actual_total_oi = market.oiLong() if is_long else market.oiShort()
     actual_total_oi_shares = market.oiLongShares() \
         if is_long else market.oiShortShares()
 
+    # calculate actual unwound oi shares from aggregate changes
+    actual_unwound_oi_shares = expect_total_oi_shares - actual_total_oi_shares
+
+    # calculate actual unwound oi shares from position
+    (_, _, _, _, _, _, _,
+     actual_fraction_remaining) = market.positions(pos_key)
+    actual_unwound_pos_oi_shares = int(Decimal(expect_oi_shares) * (Decimal(
+        expect_fraction_remaining) - Decimal(actual_fraction_remaining))
+        / Decimal(1e4))
+
+    # adjust total oi and total oi shares downward for unwind
+    expect_total_oi -= unwound_oi
+    expect_total_oi_shares -= unwound_oi_shares
+
+    # check actual oi aggregates matches expected
     assert int(actual_total_oi) == approx(expect_total_oi)
-    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares)
+    assert actual_total_oi_shares == expect_total_oi_shares
+
+    # check actual unwound aggregate oi shares matches pos oi shares unwound
+    assert actual_unwound_oi_shares == actual_unwound_pos_oi_shares
 
 
 def test_unwind_updates_market(market, alice, ovl):

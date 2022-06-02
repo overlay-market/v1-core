@@ -303,17 +303,31 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     # liquidate alice's position by rando
     _ = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
-    # adjust total oi and total oi shares downward for liquidate
-    expect_total_oi -= int(liq_oi)
-    expect_total_oi_shares -= int(liq_oi_shares)
-
+    # get actual oi values after liquidate
     actual_total_oi = mock_market.oiLong() if is_long \
         else mock_market.oiShort()
     actual_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
 
+    # calculate actual liquidated oi shares from aggregate changes
+    actual_liq_oi_shares = expect_total_oi_shares - actual_total_oi_shares
+
+    # calculate actual liq oi shares from position
+    (_, _, _, _, _, _, _,
+     actual_fraction_remaining) = mock_market.positions(pos_key)
+    actual_liq_pos_oi_shares = int(Decimal(expect_oi_shares) * (Decimal(
+        expect_fraction_remaining)) / Decimal(1e4))
+
+    # adjust total oi and total oi shares downward for liquidate
+    expect_total_oi -= int(liq_oi)
+    expect_total_oi_shares -= int(liq_oi_shares)
+
+    # check actual oi aggregates matches expected
     assert int(actual_total_oi) == approx(expect_total_oi)
-    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares)
+    assert actual_total_oi_shares == expect_total_oi_shares
+
+    # check actual liq aggregate oi shares matches pos oi shares liquidated
+    assert actual_liq_oi_shares == actual_liq_pos_oi_shares
 
 
 def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):

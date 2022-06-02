@@ -17,6 +17,7 @@ library Position {
 
     /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong, oiSharesInitial
     /// @dev mutables: liquidated, fractionRemaining
+    // TODO: change oiShares to mutable given rounding issues
     struct Info {
         uint96 notionalInitial; // initial notional = collateral * leverage
         uint96 debtInitial; // initial debt = notional - collateral

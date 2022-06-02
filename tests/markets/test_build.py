@@ -156,8 +156,8 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
 
     # approve market for spending then build
     ovl.approve(market, approve_collateral, {"from": alice})
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
     # calculate oi
     data = feed.latest()
@@ -179,6 +179,16 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     assert int(actual_oi) == approx(expect_oi, rel=1e-4)
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
 
+    # check oi shares given to position matches oi shares added to aggregates
+    actual_pos_id = tx.return_value
+    actual_pos_key = get_position_key(alice.address, actual_pos_id)
+    actual_pos = market.positions(actual_pos_key)
+    (_, _, _, _, _, _, actual_pos_oi_shares, _) = actual_pos
+
+    # only one position so aggregate should equal individual pos shares
+    actual_total_pos_oi_shares = actual_pos_oi_shares
+    assert actual_oi_shares == actual_total_pos_oi_shares
+
     # pass some time for funding to have oi deviate from oiShares
     chain.mine(timedelta=604800)
     _ = market.update({"from": alice})
@@ -190,8 +200,8 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
 
     # approve market for spending then build again
     ovl.approve(market, approve_collateral, {"from": alice})
-    _ = market.build(input_collateral, input_leverage, input_is_long,
-                     input_price_limit, {"from": alice})
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
 
     # recalculate oi
     data = feed.latest()
@@ -213,6 +223,16 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     # NOTE: rel tol of 1e-4 given tick has precision to 1bps
     assert int(actual_oi) == approx(expect_oi, rel=1e-4)
     assert int(actual_oi_shares) == approx(expect_oi_shares, rel=1e-4)
+
+    # check new pos oi shares created matches oi shares added to aggregates
+    actual_pos_id = tx.return_value
+    actual_pos_key = get_position_key(alice.address, actual_pos_id)
+    actual_pos = market.positions(actual_pos_key)
+    (_, _, _, _, _, _, actual_pos_oi_shares, _) = actual_pos
+
+    # only one position so aggregate should equal individual pos shares
+    actual_total_pos_oi_shares += actual_pos_oi_shares
+    assert actual_oi_shares == actual_total_pos_oi_shares
 
 
 def test_build_updates_market(market, ovl, alice):
