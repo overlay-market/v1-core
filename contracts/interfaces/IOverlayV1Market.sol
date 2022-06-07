@@ -66,7 +66,7 @@ interface IOverlayV1Market {
             int24 entryTick_,
             bool isLong_,
             bool liquidated_,
-            uint240 oiSharesInitial_,
+            uint240 oiShares_,
             uint16 fractionRemaining_
         );
 
