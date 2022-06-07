@@ -269,7 +269,8 @@ def fake_deployer(create_fake_deployer):
 def create_market(gov, ovl):
     def create_market(feed, factory, feed_factory, risk_params,
                       governance=gov, ovl=ovl):
-        tx = factory.deployMarket(feed_factory, feed, risk_params)
+        tx = factory.deployMarket(
+            feed_factory, feed, risk_params, {"from": gov})
         market_addr = tx.return_value
         market = OverlayV1Market.at(market_addr)
         return market
@@ -278,7 +279,7 @@ def create_market(gov, ovl):
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
@@ -303,7 +304,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff

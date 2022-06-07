@@ -60,12 +60,14 @@ interface IOverlayV1Market {
         external
         view
         returns (
-            uint96 notional_,
-            uint96 debt_,
-            uint48 entryToMidRatio_,
+            uint96 notionalInitial_,
+            uint96 debtInitial_,
+            int24 midTick_,
+            int24 entryTick_,
             bool isLong_,
             bool liquidated_,
-            uint256 oiShares_
+            uint240 oiShares_,
+            uint16 fractionRemaining_
         );
 
     // update related quantities

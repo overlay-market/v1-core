@@ -1,5 +1,5 @@
 import pytest
-from brownie import PositionMock
+from brownie import FixedCastMock
 
 
 @pytest.fixture(scope="module")
@@ -23,13 +23,13 @@ def rando(accounts):
 
 
 @pytest.fixture(scope="module")
-def create_position(alice):
-    def create_position():
-        position = alice.deploy(PositionMock)
-        return position
-    yield create_position
+def create_fixed_cast(alice):
+    def create_fixed_cast():
+        fixed_cast = alice.deploy(FixedCastMock)
+        return fixed_cast
+    yield create_fixed_cast
 
 
 @pytest.fixture(scope="module")
-def position(create_position):
-    yield create_position()
+def fixed_cast(create_fixed_cast):
+    yield create_fixed_cast()

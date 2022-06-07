@@ -8,13 +8,17 @@ import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1Feed.sol";
 
+import "./libraries/FixedCast.sol";
 import "./libraries/FixedPoint.sol";
 import "./libraries/Oracle.sol";
 import "./libraries/Position.sol";
 import "./libraries/Risk.sol";
 import "./libraries/Roller.sol";
+import "./libraries/Tick.sol";
 
 contract OverlayV1Market is IOverlayV1Market {
+    using FixedCast for uint16;
+    using FixedCast for uint256;
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
     using Position for mapping(bytes32 => Position.Info);
@@ -187,40 +191,25 @@ contract OverlayV1Market is IOverlayV1Market {
             require(isLong ? price <= priceLimit : price >= priceLimit, "OVLV1:slippage>max");
 
             // add new position's open interest to the side's aggregate oi value
-            // and increase number of oi shares issued. assemble position for storage
-
-            // cache for gas savings
-            uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
-            uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
-
-            // check new total oi on side does not exceed capOi
-            oiTotalOnSide += oi;
-            oiTotalSharesOnSide += oi;
-            require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
-
-            // update total aggregate oi and oi shares
-            if (isLong) {
-                oiLong = oiTotalOnSide;
-                oiLongShares = oiTotalSharesOnSide;
-            } else {
-                oiShort = oiTotalOnSide;
-                oiShortShares = oiTotalSharesOnSide;
-            }
+            // and increase number of oi shares issued
+            uint256 oiShares = _addToOiAggregates(oi, capOi, isLong);
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing
             Position.Info memory pos = Position.Info({
-                notional: uint96(notional), // won't overflow as capNotional max is 8e24
-                debt: uint96(debt),
+                notionalInitial: uint96(notional), // won't overflow as capNotional max is 8e24
+                debtInitial: uint96(debt),
+                midTick: Tick.priceToTick(midPrice),
+                entryTick: Tick.priceToTick(price),
                 isLong: isLong,
-                entryToMidRatio: Position.calcEntryToMidRatio(price, midPrice),
                 liquidated: false,
-                oiShares: oi
+                oiShares: uint240(oiShares), // won't overflow as oiShares ~ notional/mid
+                fractionRemaining: ONE.toUint16Fixed()
             });
             require(
                 !pos.liquidatable(
-                    oiTotalOnSide,
-                    oiTotalSharesOnSide,
+                    isLong ? oiLong : oiShort,
+                    isLong ? oiLongShares : oiShortShares,
                     midPrice, // mid price used on liquidations
                     params.get(Risk.Parameters.CapPayoff),
                     params.get(Risk.Parameters.MaintenanceMarginFraction),
@@ -252,8 +241,11 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 fraction,
         uint256 priceLimit
     ) external {
-        require(fraction > 0, "OVLV1:fraction<min");
         require(fraction <= ONE, "OVLV1:fraction>max");
+        // only keep 4 decimal precision (1 bps) for fraction given
+        // pos.fractionRemaining only to 4 decimals
+        fraction = fraction.toUint16Fixed().toUint256Fixed();
+        require(fraction > 0, "OVLV1:fraction<min");
 
         uint256 value;
         uint256 cost;
@@ -334,28 +326,27 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract unwound open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // use subFloor to avoid reverts with rounding issues
+            // NOTE: use subFloor to avoid reverts with oi rounding issues
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiLongShares -= pos.oiSharesCurrent(fraction);
             } else {
                 oiShort = oiShort.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiShortShares -= pos.oiSharesCurrent(fraction);
             }
 
             // register the amount to be minted/burned
             // capPayoff prevents overflow reverts with int256 cast
             _registerMintOrBurn(int256(value) - int256(cost));
 
-            // store the updated position info data
-            // use subFloor to avoid reverts with rounding issues
-            pos.notional = uint96(uint256(pos.notional).subFloor(pos.notionalInitial(fraction)));
-            pos.debt = uint96(uint256(pos.debt).subFloor(pos.debtCurrent(fraction)));
-            pos.oiShares = pos.oiShares.subFloor(pos.oiSharesCurrent(fraction));
+            // store the updated position info data by reducing the
+            // oiShares and fraction remaining of initial position
+            pos.oiShares -= uint240(pos.oiSharesCurrent(fraction));
+            pos.fractionRemaining = pos.updatedFractionRemaining(fraction);
             positions.set(msg.sender, positionId, pos);
         }
 
@@ -437,28 +428,26 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract liquidated open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // use subFloor to avoid reverts with rounding issues
+            // NOTE: use subFloor to avoid reverts with oi rounding issues
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiLongShares -= pos.oiSharesCurrent(fraction);
             } else {
                 oiShort = oiShort.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiShortShares -= pos.oiSharesCurrent(fraction);
             }
 
             // register the amount to be burned
             _registerMintOrBurn(int256(value) - int256(cost) - int256(marginToBurn));
 
             // store the updated position info data. mark as liquidated
-            pos.notional = 0;
-            pos.debt = 0;
-            pos.oiShares = 0;
             pos.liquidated = true;
-            pos.entryToMidRatio = 0;
+            pos.oiShares = 0;
+            pos.fractionRemaining = 0;
             positions.set(owner, positionId, pos);
         }
 
@@ -484,26 +473,8 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
-        // apply funding if at least one block has passed
-        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
-        if (timeElapsed > 0) {
-            // calculate adjustments to oi due to funding
-            bool isLongOverweight = oiLong > oiShort;
-            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
-            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
-            (oiOverweight, oiUnderweight) = oiAfterFunding(
-                oiOverweight,
-                oiUnderweight,
-                timeElapsed
-            );
-
-            // pay funding
-            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
-            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-
-            // refresh last update data
-            timestampUpdateLast = block.timestamp;
-        }
+        // pay funding for time elasped since last interaction w market
+        _payFunding();
 
         // fetch new oracle data from feed
         // applies sanity check in case of data manipulation
@@ -761,8 +732,74 @@ contract OverlayV1Market is IOverlayV1Market {
         return minted;
     }
 
+    /// @notice Updates the market for funding changes to open interest
+    /// @notice since last time market was interacted with
+    function _payFunding() private {
+        // apply funding if at least one block has passed
+        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
+        if (timeElapsed > 0) {
+            // calculate adjustments to oi due to funding
+            bool isLongOverweight = oiLong > oiShort;
+            uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+            uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+            (oiOverweight, oiUnderweight) = oiAfterFunding(
+                oiOverweight,
+                oiUnderweight,
+                timeElapsed
+            );
+
+            // pay funding
+            oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+            oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+
+            // set last time market was updated
+            timestampUpdateLast = block.timestamp;
+        }
+    }
+
+    /// @notice Adds open interest and open interest shares to aggregate storage
+    /// @notice pairs (oiLong, oiLongShares) or (oiShort, oiShortShares)
+    /// @return oiShares_ as the new position's shares of aggregate open interest
+    function _addToOiAggregates(
+        uint256 oi,
+        uint256 capOi,
+        bool isLong
+    ) private returns (uint256 oiShares_) {
+        // cache for gas savings
+        uint256 oiTotalOnSide = isLong ? oiLong : oiShort;
+        uint256 oiTotalSharesOnSide = isLong ? oiLongShares : oiShortShares;
+
+        // calculate oi shares
+        uint256 oiShares = Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
+
+        // add oi and oi shares to temp aggregate values
+        oiTotalOnSide += oi;
+        oiTotalSharesOnSide += oiShares;
+
+        // check new total oi on side does not exceed capOi
+        require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
+
+        // update total aggregate oi and oi shares storage vars
+        if (isLong) {
+            oiLong = oiTotalOnSide;
+            oiLongShares = oiTotalSharesOnSide;
+        } else {
+            oiShort = oiTotalOnSide;
+            oiShortShares = oiTotalSharesOnSide;
+        }
+
+        // return new position's oi shares
+        oiShares_ = oiShares;
+    }
+
     /// @notice Sets the governance per-market risk parameter
+    /// @dev updates funding state of market but does not fetch from oracle
+    /// @dev to avoid edge cases when dataIsValid is false
     function setRiskParam(Risk.Parameters name, uint256 value) external onlyFactory {
+        // pay funding to update state of market since last interaction
+        _payFunding();
+
+        // check then set risk param
         _checkRiskParam(name, value);
         _cacheRiskCalc(name, value);
         params.set(name, value);

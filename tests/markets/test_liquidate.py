@@ -8,7 +8,7 @@ from .utils import (
     calculate_position_info,
     get_position_key,
     mid_from_feed,
-    entry_from_mid_ratio,
+    tick_to_price,
     RiskParameter
 )
 
@@ -57,21 +57,20 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -81,14 +80,16 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
+    liq_collateral = liq_notional * (liq_oi / liq_oi_initial) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
@@ -107,13 +108,13 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -137,25 +138,24 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     # cache entry price at build for mint calcs later
     entry_price = expect_entry_price
 
-    # adjust oi shares, debt position attributes to zero
-    # liquidated flips to true and sets mid ratio to zero
-    expect_notional = 0
-    expect_oi_shares = 0
-    expect_debt = 0
+    # liquidated flips to true and sets fractionRemaining to zero
     expect_liquidated = True
-    expect_mid_ratio = 0
+    expect_oi_shares = 0
+    expect_fraction_remaining = 0
 
     # check expected pos attributes match actual after liquidate
-    (actual_notional, actual_debt, actual_mid_ratio,
-     actual_is_long, actual_liquidated,
-     actual_oi_shares) = mock_market.positions(pos_key)
+    (actual_notional, actual_debt, actual_mid_tick, actual_entry_tick,
+     actual_is_long, actual_liquidated, actual_oi_shares,
+     actual_fraction_remaining) = mock_market.positions(pos_key)
 
     assert actual_notional == expect_notional
-    assert actual_oi_shares == expect_oi_shares
     assert actual_debt == expect_debt
+    assert actual_mid_tick == expect_mid_tick
+    assert actual_entry_tick == expect_entry_tick
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
-    assert actual_mid_ratio == expect_mid_ratio
+    assert actual_oi_shares == expect_oi_shares
+    assert actual_fraction_remaining == expect_fraction_remaining
 
     # check liquidate event with expected values
     assert "Liquidate" in tx.events
@@ -165,7 +165,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # check expected liquidate price matches actual
     actual_liq_price = int(tx.events["Liquidate"]["price"])
-    assert actual_liq_price == approx(expect_liq_price, rel=1e-4)
+    assert actual_liq_price == approx(expect_liq_price)
 
     # calculate expected values for burn comparison
     if is_long:
@@ -192,7 +192,8 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
     expect_value -= int(margin_remaining * maintenance_burn)
     expect_mint = expect_value - expect_cost
     actual_mint = int(tx.events["Liquidate"]["mint"])
-    assert actual_mint == approx(expect_mint, rel=1e-4)
+
+    assert actual_mint == approx(expect_mint)
 
 
 @given(is_long=strategy('bool'))
@@ -232,21 +233,20 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -256,9 +256,12 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
+    liq_oi_initial = expect_oi_initial
     liq_oi_shares = Decimal(expect_oi_shares)
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
@@ -280,13 +283,13 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1 - liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1 - liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -301,17 +304,30 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     # liquidate alice's position by rando
     _ = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
-    # adjust total oi and total oi shares downward for liquidate
-    expect_total_oi -= int(liq_oi)
-    expect_total_oi_shares -= int(liq_oi_shares)
-
+    # get actual oi values after liquidate
     actual_total_oi = mock_market.oiLong() if is_long \
         else mock_market.oiShort()
     actual_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
-    assert int(actual_total_oi) == approx(expect_total_oi, rel=1e-4)
-    assert int(actual_total_oi_shares) == approx(expect_total_oi_shares,
-                                                 rel=1e-4)
+
+    # calculate actual liquidated oi shares from aggregate changes
+    actual_liq_oi_shares = expect_total_oi_shares - actual_total_oi_shares
+
+    # calculate actual liq oi shares from position
+    (_, _, _, _, _, _, actual_oi_shares,
+     actual_fraction_remaining) = mock_market.positions(pos_key)
+    actual_liq_pos_oi_shares = expect_oi_shares - actual_oi_shares
+
+    # adjust total oi and total oi shares downward for liquidate
+    expect_total_oi -= int(liq_oi)
+    expect_total_oi_shares -= int(liq_oi_shares)
+
+    # check actual oi aggregates matches expected
+    assert int(actual_total_oi) == approx(expect_total_oi)
+    assert actual_total_oi_shares == expect_total_oi_shares
+
+    # check actual liq aggregate oi shares matches pos oi shares liquidated
+    assert actual_liq_oi_shares == actual_liq_pos_oi_shares
 
 
 def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
@@ -350,14 +366,13 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # cache prior timestamp update last value
     prior_timestamp_update_last = mock_market.timestampUpdateLast()
@@ -367,7 +382,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -377,10 +392,12 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -398,13 +415,13 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
 
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -464,21 +481,20 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # priors actual values. longs get the bid, shorts get the ask on liquidate
@@ -493,10 +509,12 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -517,13 +535,13 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -543,6 +561,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
     tx = mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # calculate expect values for snapshot
+    # NOTE: should be zeros across the board since no positions built on opp
+    # side to initial build
     expect_timestamp = 0
     expect_window = 0
     expect_volume = last_volume
@@ -558,8 +578,8 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
 
 @given(is_long=strategy('bool'))
-def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
-                                  is_long):
+def test_liquidate_registers_mint_or_burn(mock_market, mock_feed, alice, rando,
+                                          ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -595,21 +615,20 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # priors actual values for snapshot of minted roller
@@ -623,10 +642,12 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -647,13 +668,13 @@ def test_liquidate_registers_mint(mock_market, mock_feed, alice, rando, ovl,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -744,21 +765,20 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -768,14 +788,16 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
+    liq_collateral = liq_notional * (liq_oi / liq_oi_initial) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
@@ -794,13 +816,13 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -847,7 +869,8 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     expect_mint = int(liq_value - liq_cost - margin_burned)
 
     # check expected pnl in line with Liquidate event first
-    assert int(tx.events["Liquidate"]["mint"]) == approx(expect_mint, rel=1e-4)
+    actual_mint = tx.events["Liquidate"]["mint"]
+    assert int(actual_mint) == approx(expect_mint)
 
     # Examine transfer event to verify burn happened
     expect_mint_from = mock_market.address
@@ -868,8 +891,8 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # check actual amount burned is in line with expected (1)
     assert tx.events["Transfer"][0]["from"] == expect_mint_from
     assert tx.events["Transfer"][0]["to"] == expect_mint_to
-    assert int(tx.events["Transfer"][0]["value"]) == approx(expect_mint_mag,
-                                                            rel=1e-4)
+    assert int(tx.events["Transfer"][0]["value"]) == approx(
+        expect_mint_mag, rel=1.05e-6)
 
     # check liquidate event has same value for burn as transfer event (1)
     actual_transfer_mint = -tx.events["Transfer"][0]["value"]
@@ -878,14 +901,14 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
     # check liquidation fee paid to liquidator in event (2)
     assert tx.events['Transfer'][1]['from'] == mock_market.address
     assert tx.events['Transfer'][1]['to'] == rando.address
-    assert int(tx.events['Transfer'][1]['value']) == \
-        approx(expect_liq_fee, rel=1e-4)
+    assert int(tx.events['Transfer'][1]['value']) == approx(
+        expect_liq_fee, rel=1.05e-6)
 
     # check remaining margin sent to fee recipient (3)
     assert tx.events['Transfer'][2]['from'] == mock_market.address
     assert tx.events['Transfer'][2]['to'] == factory.feeRecipient()
-    assert int(tx.events['Transfer'][2]['value']) == approx(expect_value_out,
-                                                            rel=1e-4)
+    assert int(tx.events['Transfer'][2]['value']) == approx(
+        expect_value_out, rel=1.05e-6)
 
 
 # TODO: check for correctness again
@@ -927,21 +950,20 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -951,14 +973,16 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
+    liq_collateral = liq_notional * (liq_oi / liq_oi_initial) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
@@ -977,13 +1001,13 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -997,7 +1021,7 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
 
     # calculate position attributes at the current time
     # ignore payoff cap
-    liq_cost = Decimal(expect_oi_shares - expect_debt)
+    liq_cost = Decimal(expect_notional - expect_debt)
 
     # input values for liquidate
     input_owner = alice.address
@@ -1038,9 +1062,10 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
     actual_balance_rando = ovl.balanceOf(rando)
     actual_balance_market = ovl.balanceOf(mock_market)
 
-    assert int(actual_balance_rando) == approx(expect_balance_rando, rel=1e-4)
+    assert int(actual_balance_rando) == approx(
+        expect_balance_rando, rel=1.05e-6)
     assert int(actual_balance_market) == approx(
-        expect_balance_market, rel=1e-4)
+        expect_balance_market, rel=1.05e-6)
 
 
 # TODO: check for correctness again
@@ -1082,21 +1107,20 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -1106,14 +1130,16 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_cost = Decimal(expect_notional - expect_debt)
     liq_debt = Decimal(expect_debt)
-    liq_collateral = liq_notional * (liq_oi / liq_oi_shares) - liq_debt
+    liq_collateral = liq_notional * (liq_oi / liq_oi_initial) - liq_debt
 
     # calculate expected liquidation price
     # NOTE: p_liq = p_entry * ( MM * OI(0) + D ) / OI if long
@@ -1132,13 +1158,13 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -1201,9 +1227,9 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
     actual_balance_market = ovl.balanceOf(mock_market)
 
     assert int(actual_balance_recipient) == approx(
-        expect_balance_recipient, rel=1e-4)
+        expect_balance_recipient, rel=1.05e-6)
     assert int(actual_balance_market) == approx(
-        expect_balance_market, rel=1e-4)
+        expect_balance_market, rel=1.05e-6)
 
 
 def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
@@ -1249,16 +1275,16 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate price to set for liquidation
@@ -1285,7 +1311,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # calculate position attributes at the current time
     # ignore payoff cap
-    liq_cost = Decimal(expect_oi_shares - expect_debt)
+    liq_cost = Decimal(expect_notional - expect_debt)
 
     # input values for liquidate
     input_owner = alice.address
@@ -1363,21 +1389,20 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -1387,10 +1412,12 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -1411,13 +1438,13 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -1485,21 +1512,20 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -1509,10 +1535,12 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -1533,13 +1561,13 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -1597,21 +1625,20 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
-    (expect_notional, expect_debt, expect_mid_ratio,
-     expect_is_long, expect_liquidated,
-     expect_oi_shares) = mock_market.positions(pos_key)
+    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
+     expect_is_long, expect_liquidated, expect_oi_shares,
+     expect_fraction_remaining) = mock_market.positions(pos_key)
 
-    # calculate the entry price
-    data = mock_feed.latest()
-    mid_price = int(mid_from_feed(data))
-    expect_entry_price = entry_from_mid_ratio(expect_mid_ratio, mid_price)
+    # calculate the entry and mid prices
+    expect_mid_price = tick_to_price(expect_mid_tick)
+    expect_entry_price = tick_to_price(expect_entry_tick)
 
     # mine the chain forward for some time difference with build and liquidate
     # funding should occur within this interval.
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=3600)
     tx = mock_market.update({"from": rando})
 
     # calculate current oi, debt values of position
@@ -1621,10 +1648,12 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
 
     # calculate position attributes at current time, ignore payoff cap
     liq_oi = expect_oi_current
-    liq_oi_shares = Decimal(expect_oi_shares)
+    liq_oi_initial = expect_oi_initial
     liq_notional = Decimal(expect_notional)
     liq_debt = Decimal(expect_debt)
 
@@ -1645,13 +1674,13 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
@@ -1674,13 +1703,13 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     #             - (mm * notional_initial + debt) / oi_current
     if is_long:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            - liq_notional / liq_oi_shares \
+            - liq_notional / liq_oi_initial \
             + (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 - tol)
     else:
         liq_price = Decimal(expect_entry_price) / Decimal(1e18) \
-            + liq_notional / liq_oi_shares \
+            + liq_notional / liq_oi_initial \
             - (maintenance_fraction * liq_notional / (1-liq_fee_rate)
                + liq_debt) / liq_oi
         liq_price = liq_price * Decimal(1e18) * Decimal(1 + tol)
@@ -1691,5 +1720,11 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # check position has been liquidated
-    (_, _, _, actual_liquidated, _, _) = mock_market.positions(pos_key)
+    (_, _, _, _, _, actual_liquidated, actual_oi_shares,
+     actual_fraction_remaining) = mock_market.positions(pos_key)
     assert actual_liquidated is True
+    assert actual_oi_shares == 0
+    assert actual_fraction_remaining == 0
+
+
+# TODO: add tests with multiple positions and only one liquidated

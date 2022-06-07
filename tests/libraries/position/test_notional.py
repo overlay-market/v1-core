@@ -1,79 +1,32 @@
-def test_notional_initial(position):
-    mid_price = 100000000000000000000  # 100
-    notional = 10000000000000000000  # 10
-    debt = 2000000000000000000  # 2
-    liquidated = False
+from pytest import approx
+from decimal import Decimal
 
-    # NOTE: mid_ratio tests in test_entry_price.py
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
-    fraction = 1000000000000000000  # 1
-
-    # check initial notional is oi * entry_price = notional
-    # when long
-    is_long = True
-    entry_price = 101000000000000000000  # 101
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-
-    expect = notional
-    actual = position.notionalInitial(pos, fraction)
-    assert expect == actual
-
-    # check initial notional is oi * entry_price = notional
-    # when short
-    is_long = False
-    entry_price = 99000000000000000000  # 99
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-
-    expect = notional
-    actual = position.notionalInitial(pos, fraction)
-    assert expect == actual
-
-
-def test_notional_initial_when_fraction_less_than_one(position):
-    mid_price = 100000000000000000000  # 100
-    entry_price = 101000000000000000000  # 101
-    notional = 10000000000000000000  # 10
-    debt = 2000000000000000000  # 2
-    liquidated = False
-
-    # NOTE: mid_ratio tests in test_entry_price.py
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
-    fraction = 250000000000000000  # 0.25
-
-    # check initial notional is oi * entry_price = notional
-    # when long
-    is_long = True
-    entry_price = 101000000000000000000  # 101
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-
-    expect = 2500000000000000000
-    actual = position.notionalInitial(pos, fraction)
-    assert expect == actual
-
-    # check initial notional is oi * entry_price = notional
-    # when short
-    is_long = False
-    entry_price = 99000000000000000000  # 99
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-
-    expect = 2500000000000000000
-    actual = position.notionalInitial(pos, fraction)
-    assert expect == actual
+from .utils import price_to_tick
 
 
 def test_notional_with_pnl(position):
-    mid_price = 100000000000000000000  # 100
-    current_price = 150000000000000000000  # 150
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 8000  # 0.8
 
-    # NOTE: mid_ratio tests in test_entry_price.py
+    current_price = 150000000000000000000  # 150
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.095
+
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.076
+
+    # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
 
@@ -81,98 +34,140 @@ def test_notional_with_pnl(position):
     # when long
     is_long = True
     entry_price = 101000000000000000000  # 101
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    entry_tick = price_to_tick(entry_price)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    expect = 14900000000000000000
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
+    expect = 11920000000000000000
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
+
+    # NOTE: rel tol of 1.05e-4 given tick has precision to 1bps and rounding
+    assert expect == approx(actual, rel=1.05e-4)
 
     # check current notional is 2 * oi * entry_price - oi * current_price
     # when short
     is_long = False
     entry_price = 99000000000000000000  # 99
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    entry_tick = price_to_tick(entry_price)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    expect = 4900000000000000000
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
+    expect = 3920000000000000000
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
+
+    # NOTE: rel tol of 1.05e-4 given tick has precision to 1bps and rounding
+    assert expect == approx(actual, rel=1.05e-4)
 
 
 def test_notional_with_pnl_when_fraction_less_than_one(position):
-    mid_price = 100000000000000000000  # 100
-    current_price = 150000000000000000000  # 150
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 8000  # 0.8
 
-    # NOTE: mid_ratio tests in test_entry_price.py
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    current_price = 150000000000000000000  # 150
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.076
+
+    # inputs for position function
     fraction = 250000000000000000  # 0.25
     cap_payoff = 5000000000000000000  # 5
 
-    # check notional is oi * current_price
+    # check current notional is oi * current_price
     # when long
     is_long = True
     entry_price = 101000000000000000000  # 101
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    entry_tick = price_to_tick(entry_price)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    expect = 3725000000000000000
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
+    expect = 2980000000000000000
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
 
-    # check notional is 2 * oi * entry_price - oi * current_price
+    # NOTE: rel tol of 1.05e-4 given tick has precision to 1bps and rounding
+    assert expect == approx(actual, rel=1.05e-4)
+
+    # check current notional is 2 * oi * entry_price - oi * current_price
     # when short
     is_long = False
     entry_price = 99000000000000000000  # 99
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    entry_tick = price_to_tick(entry_price)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    expect = 1225000000000000000
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
+    expect = 980000000000000000
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
+
+    # NOTE: rel tol of 1.05e-4 given tick has precision to 1bps and rounding
+    assert expect == approx(actual, rel=1.05e-4)
 
 
 def test_notional_with_pnl_when_payoff_greater_than_cap(position):
-    mid_price = 100000000000000000000  # 100
-    entry_price = 101000000000000000000  # 101
-    current_price = 800000000000000000000  # 800
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 10000  # 1.0
 
-    # NOTE: mid_ratio tests in test_entry_price.py
+    current_price = 800000000000000000000  # 800
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.095
+
+    # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
 
-    # check notional is oi * entry_price * (1 + cap_payoff)
+    # check current notional is oi * current_price
     # when long
     is_long = True
+    entry_price = 101000000000000000000  # 101
+    entry_tick = price_to_tick(entry_price)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
+
     expect = 60500000000000000000
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
+
+    # NOTE: rel tol of 1.05e-4 given tick has precision to 1bps and rounding
+    assert expect == approx(actual, rel=1.05e-4)
 
 
 def test_notional_with_pnl_when_underwater(position):
-    mid_price = 100000000000000000000  # 100
-    entry_price = 99000000000000000000  # 99
     notional = 10000000000000000000  # 10
-    debt = 8000000000000000000  # 8
+    debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 10000  # 1.0
 
-    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
+    entry_price = 99000000000000000000  # 99
+    entry_tick = price_to_tick(entry_price)
+
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.095
+
+    # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
 
@@ -180,42 +175,42 @@ def test_notional_with_pnl_when_underwater(position):
     is_long = False
     current_price = 225000000000000000000  # 225
     expect = debt
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
     assert expect == actual
 
 
-def test_notional_with_pnl_when_oi_zero(position):
-    current_price = 75000000000000000000  # 75
-    mid_price = 100000000000000000000  # 100
-    notional = 0  # 0
+def test_notional_with_pnl_when_fraction_remaining_zero(position):
+    notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
+    is_long = True
     liquidated = False
+    fraction_remaining = 0  # 0
 
-    # NOTE: mid_ratio tests in test_entry_price.py
+    mid_price = 100000000000000000000  # 100
+    mid_tick = price_to_tick(mid_price)
+
+    entry_price = 99000000000000000000  # 99
+    entry_tick = price_to_tick(entry_price)
+
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.095
+
+    # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
 
-    # check notional returns debt when oi is zero and is long
-    is_long = True
-    entry_price = 101000000000000000000  # 101
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
-
-    expect = debt
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
-    assert expect == actual
-
-    # check notional returns the debt when oi is zero and is short
+    # check notional returns the debt (floors to debt) when short is underwater
     is_long = False
-    entry_price = 99000000000000000000  # 99
-    mid_ratio = position.calcEntryToMidRatio(entry_price, mid_price)
-    pos = (notional, debt, mid_ratio, is_long, liquidated, oi)
+    current_price = 225000000000000000000  # 225
+    pos = (notional, debt, mid_tick, entry_tick, is_long,
+           liquidated, oi_shares, fraction_remaining)
 
-    expect = debt
-    actual = position.notionalWithPnl(pos, fraction, oi, oi, current_price,
-                                      cap_payoff)
+    expect = 0
+    actual = position.notionalWithPnl(pos, fraction, oi, oi_shares,
+                                      current_price, cap_payoff)
     assert expect == actual

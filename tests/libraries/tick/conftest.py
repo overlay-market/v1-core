@@ -1,5 +1,5 @@
 import pytest
-from brownie import PositionMock
+from brownie import TickMock
 
 
 @pytest.fixture(scope="module")
@@ -23,13 +23,13 @@ def rando(accounts):
 
 
 @pytest.fixture(scope="module")
-def create_position(alice):
-    def create_position():
-        position = alice.deploy(PositionMock)
-        return position
-    yield create_position
+def create_tick_mock(alice):
+    def create_tick_mock():
+        tick_mock = alice.deploy(TickMock)
+        return tick_mock
+    yield create_tick_mock
 
 
 @pytest.fixture(scope="module")
-def position(create_position):
-    yield create_position()
+def tick_mock(create_tick_mock):
+    yield create_tick_mock()

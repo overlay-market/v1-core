@@ -16,6 +16,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+// COPIED AND MODIFIED FROM:
+// @balancer-v2-monorepo/pkg/solidity-utils/contracts/math/LogExpMath.sol
 // XXX for changes
 
 // XXX: 0.8.10; unchecked functions
