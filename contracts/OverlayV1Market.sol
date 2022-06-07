@@ -325,18 +325,18 @@ contract OverlayV1Market is IOverlayV1Market {
             tradingFee = Math.min(tradingFee, value); // if value < tradingFee
 
             // subtract unwound open interest from the side's aggregate oi value
-            // and decrease number of oi shares issued use subFloor to
-            // avoid reverts with rounding issues
+            // and decrease number of oi shares issued
+            // NOTE: use subFloor to avoid reverts with oi rounding issues
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiLongShares -= pos.oiSharesCurrent(fraction);
             } else {
                 oiShort = oiShort.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiShortShares -= pos.oiSharesCurrent(fraction);
             }
 
             // register the amount to be minted/burned
@@ -428,17 +428,17 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract liquidated open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // use subFloor to avoid reverts with rounding issues
+            // NOTE: use subFloor to avoid reverts with oi rounding issues
             if (pos.isLong) {
                 oiLong = oiLong.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiLongShares = oiLongShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiLongShares -= pos.oiSharesCurrent(fraction);
             } else {
                 oiShort = oiShort.subFloor(
                     pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
                 );
-                oiShortShares = oiShortShares.subFloor(pos.oiSharesCurrent(fraction));
+                oiShortShares -= pos.oiSharesCurrent(fraction);
             }
 
             // register the amount to be burned
