@@ -140,6 +140,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # liquidated flips to true and sets fractionRemaining to zero
     expect_liquidated = True
+    expect_oi_shares = 0
     expect_fraction_remaining = 0
 
     # check expected pos attributes match actual after liquidate
@@ -313,10 +314,9 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
     actual_liq_oi_shares = expect_total_oi_shares - actual_total_oi_shares
 
     # calculate actual liq oi shares from position
-    (_, _, _, _, _, _, _,
+    (_, _, _, _, _, _, actual_oi_shares,
      actual_fraction_remaining) = mock_market.positions(pos_key)
-    actual_liq_pos_oi_shares = int(Decimal(expect_oi_shares) * (Decimal(
-        expect_fraction_remaining)) / Decimal(1e4))
+    actual_liq_pos_oi_shares = expect_oi_shares - actual_oi_shares
 
     # adjust total oi and total oi shares downward for liquidate
     expect_total_oi -= int(liq_oi)
@@ -1719,13 +1719,12 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     # check can liquidate position when liquidatable
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
-    (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
-     expect_is_long, expect_liquidated, expect_oi_shares,
-     expect_fraction_remaining) = mock_market.positions(pos_key)
-
     # check position has been liquidated
-    (_, _, _, _, _, actual_liquidated, _, _) = mock_market.positions(pos_key)
+    (_, _, _, _, _, actual_liquidated, actual_oi_shares,
+     actual_fraction_remaining) = mock_market.positions(pos_key)
     assert actual_liquidated is True
+    assert actual_oi_shares == 0
+    assert actual_fraction_remaining == 0
 
 
 # TODO: add tests with multiple positions and only one liquidated

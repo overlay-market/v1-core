@@ -154,10 +154,11 @@ def test_trading_fee_when_fraction_less_than_one(position):
     current_price = 150000000000000000000  # 150
 
     # oi and oi shares
-    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(entry_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * (Decimal(shares_to_oi_ratio) / Decimal(1e18)))  # 0.064
 
     # position fn inputs
     fraction = 250000000000000000  # 0.25

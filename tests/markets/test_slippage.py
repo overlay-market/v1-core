@@ -143,8 +143,10 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
 
     # check all oi shares removed
     expect_pos_key = get_position_key(alice.address, input_pos_id)
+    expect_oi_shares = 0
     expect_fraction = 0
 
     actual_pos = market.positions(expect_pos_key)
-    (_, _, _, _, _, _, _, actual_fraction) = actual_pos
+    (_, _, _, _, _, _, actual_oi_shares, actual_fraction) = actual_pos
     assert expect_fraction == actual_fraction
+    assert expect_oi_shares == actual_oi_shares

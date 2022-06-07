@@ -203,7 +203,7 @@ contract OverlayV1Market is IOverlayV1Market {
                 entryTick: Tick.priceToTick(price),
                 isLong: isLong,
                 liquidated: false,
-                oiSharesInitial: uint240(oiShares), // won't overflow as oiShares ~ notional/mid
+                oiShares: uint240(oiShares), // won't overflow as oiShares ~ notional/mid
                 fractionRemaining: ONE.toUint16Fixed()
             });
             require(
@@ -344,7 +344,8 @@ contract OverlayV1Market is IOverlayV1Market {
             _registerMintOrBurn(int256(value) - int256(cost));
 
             // store the updated position info data by reducing the
-            // fraction remaining of initial position
+            // oiShares and fraction remaining of initial position
+            pos.oiShares -= uint240(pos.oiSharesCurrent(fraction));
             pos.fractionRemaining = pos.updatedFractionRemaining(fraction);
             positions.set(msg.sender, positionId, pos);
         }
@@ -445,6 +446,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // store the updated position info data. mark as liquidated
             pos.liquidated = true;
+            pos.oiShares = 0;
             pos.fractionRemaining = 0;
             positions.set(owner, positionId, pos);
         }

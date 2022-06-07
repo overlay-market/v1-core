@@ -15,9 +15,8 @@ library Position {
 
     uint256 internal constant ONE = 1e18;
 
-    /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong, oiSharesInitial
-    /// @dev mutables: liquidated, fractionRemaining
-    // TODO: change oiShares to mutable given rounding issues
+    /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong
+    /// @dev mutables: liquidated, oiShares, fractionRemaining
     struct Info {
         uint96 notionalInitial; // initial notional = collateral * leverage
         uint96 debtInitial; // initial debt = notional - collateral
@@ -25,7 +24,7 @@ library Position {
         int24 entryTick; // entryPrice = 1.0001 ** entryTick at build
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated (mutable)
-        uint240 oiSharesInitial; // initial shares of aggregate open interest on side
+        uint240 oiShares; // current shares of aggregate open interest on side (mutable)
         uint16 fractionRemaining; // fraction of initial position remaining (mutable)
     }
 
@@ -66,10 +65,10 @@ library Position {
         return uint256(self.debtInitial);
     }
 
-    /// @notice Computes the position's initial shares of open interest
+    /// @notice Computes the position's current shares of open interest
     /// @notice cast to uint256
-    function _oiSharesInitial(Info memory self) private pure returns (uint256) {
-        return uint256(self.oiSharesInitial);
+    function _oiShares(Info memory self) private pure returns (uint256) {
+        return uint256(self.oiShares);
     }
 
     /// @notice Computes the fraction remaining of the position cast to uint256
@@ -97,8 +96,7 @@ library Position {
     }
 
     /// @notice Computes an updated fraction remaining of the initial position
-    /// @notice given fractionRemoved unwound/liquidated from remaining
-    /// @notice position
+    /// @notice given fractionRemoved unwound/liquidated from remaining position
     function updatedFractionRemaining(Info memory self, uint256 fractionRemoved)
         internal
         pure
@@ -181,11 +179,11 @@ library Position {
 
     /// @notice Computes the current shares of open interest position holds
     /// @notice on pos.isLong side of the market
-    /// @dev use mulUp to avoid rounding leftovers on unwind
+    /// @dev use mulDown to avoid giving excess shares to pos owner on unwind
     function oiSharesCurrent(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 oiSharesForRemaining = _oiSharesInitial(self).mulUp(fractionRemaining);
-        return oiSharesForRemaining.mulUp(fraction);
+        uint256 oiSharesForRemaining = _oiShares(self);
+        // WARNING: must mulDown to avoid giving excess oi shares
+        return oiSharesForRemaining.mulDown(fraction);
     }
 
     /// @notice Computes the current debt position holds accounting

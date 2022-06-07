@@ -87,6 +87,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
     unwound_oi = fraction * expect_oi_current
+    unwound_oi_shares = fraction * expect_oi_shares
     unwound_oi_initial = fraction * expect_oi_initial
     unwound_notional = fraction * Decimal(expect_notional)
     unwound_cost = fraction * Decimal(expect_notional - expect_debt)
@@ -113,6 +114,9 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     expect_exit_price = market.bid(data, volume) if is_long \
         else market.ask(data, volume)
 
+    # adjust position oi shares downward based on fraction unwound
+    expect_oi_shares -= int(unwound_oi_shares)
+
     # adjust fractionRemaining downward based on fraction unwound
     expect_fraction_remaining = int(expect_fraction_remaining * (1 - fraction))
 
@@ -127,7 +131,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     assert actual_entry_tick == expect_entry_tick
     assert actual_is_long == expect_is_long
     assert actual_liquidated == expect_liquidated
-    assert int(actual_oi_shares) == approx(expect_oi_shares)
+    assert actual_oi_shares == expect_oi_shares
     assert int(actual_fraction_remaining) == approx(expect_fraction_remaining)
 
     # check unwind event with expected values
@@ -164,6 +168,10 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     else:
         _ = market.unwind(input_pos_id, input_fraction, input_price_limit,
                           {"from": alice})
+
+        # adjust position oi shares downward based on fraction unwound
+        expect_oi_shares -= int(fraction * expect_oi_shares)
+
         # adjust fractionRemaining downward based on fraction unwound
         expect_fraction_remaining = int(
             expect_fraction_remaining * (1 - fraction))
@@ -175,6 +183,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
 
         assert int(actual_fraction_remaining) == approx(
             expect_fraction_remaining)
+        assert actual_oi_shares == expect_oi_shares
 
 
 @given(
@@ -258,11 +267,9 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     actual_unwound_oi_shares = expect_total_oi_shares - actual_total_oi_shares
 
     # calculate actual unwound oi shares from position
-    (_, _, _, _, _, _, _,
+    (_, _, _, _, _, _, actual_oi_shares,
      actual_fraction_remaining) = market.positions(pos_key)
-    actual_unwound_pos_oi_shares = int(Decimal(expect_oi_shares) * (Decimal(
-        expect_fraction_remaining) - Decimal(actual_fraction_remaining))
-        / Decimal(1e4))
+    actual_unwound_pos_oi_shares = expect_oi_shares - actual_oi_shares
 
     # adjust total oi and total oi shares downward for unwind
     expect_total_oi -= unwound_oi
@@ -2131,19 +2138,26 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         expect_fraction_remaining = int(
             Decimal(expect_fraction_remaining) * Decimal(1 - fraction))
 
+        # check fraction remaining reduced
         assert int(actual_fraction_remaining) == approx(
             expect_fraction_remaining)
 
         # check aggregate oi and oi shares on side have decreased
-        expect_total_oi -= expect_oi_unwound
-        expect_total_oi_shares -= expect_oi_shares_unwound
-
         actual_total_oi = market.oiLong() if is_alice else market.oiShort()
         actual_total_oi_shares = market.oiLongShares() if is_alice \
             else market.oiShortShares()
+        actual_unwound_oi_shares = expect_total_oi_shares \
+            - actual_total_oi_shares
+
+        expect_total_oi -= expect_oi_unwound
+        expect_total_oi_shares -= expect_oi_shares_unwound
 
         assert int(actual_total_oi) == approx(expect_total_oi)
-        assert int(actual_total_oi_shares) == approx(expect_total_oi_shares)
+        assert actual_total_oi_shares == expect_total_oi_shares
+
+        # check position oi shares have decreased by same amount as aggregate
+        actual_pos_unwound_oi_shares = expect_oi_shares - actual_oi_shares
+        assert actual_pos_unwound_oi_shares == actual_unwound_oi_shares
 
 
 # TODO: test_unwind when remove 99% of oi shares for attributes

@@ -157,18 +157,18 @@ def test_oi_shares_current(position):
     mid_tick = price_to_tick(mid_price)
     entry_tick = price_to_tick(entry_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     pos = (notional, debt, mid_tick, entry_tick, is_long,
            liquidated, oi_shares, fraction_remaining)
 
     # check oiShares * fraction
     fraction = 1000000000000000000  # 1
-    expect = int(oi_shares * (fraction_remaining / 1e4)
-                 * (fraction / 1e18))  # 0.064
+    expect = int(oi_shares * (fraction / 1e18))  # 0.064
     actual = position.oiSharesCurrent(pos, fraction)
     assert expect == actual
 
@@ -186,18 +186,18 @@ def test_oi_shares_current_when_fraction_less_than_one(position):
     mid_tick = price_to_tick(mid_price)
     entry_tick = price_to_tick(entry_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     pos = (notional, debt, mid_tick, entry_tick, is_long,
            liquidated, oi_shares, fraction_remaining)
 
     # check oiShares * fraction
     fraction = 250000000000000000  # 0.25
-    expect = int(oi_shares * (fraction_remaining / 1e4)
-                 * (fraction / 1e18))  # 0.016
+    expect = int(oi_shares * (fraction / 1e18))  # 0.016
     actual = position.oiSharesCurrent(pos, fraction)
     assert expect == actual
 
@@ -275,10 +275,11 @@ def test_oi_current(position):
     mid_tick = price_to_tick(mid_price)
     entry_tick = price_to_tick(entry_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     pos = (notional, debt, mid_tick, entry_tick, is_long,
            liquidated, oi_shares, fraction_remaining)
@@ -291,7 +292,7 @@ def test_oi_current(position):
     fraction = 1000000000000000000  # 1
     expect_oi = total_oi * (oi_shares / total_oi_shares)
 
-    expect = int(expect_oi * (fraction_remaining / 1e4) * (fraction / 1e18))
+    expect = int(expect_oi * (fraction / 1e18))
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -352,11 +353,11 @@ def test_oi_current_when_fraction_less_than_one(position):
     mid_tick = price_to_tick(mid_price)
     entry_tick = price_to_tick(entry_price)
 
-    # NOTE: mid_ratio tests in test_entry_price.py
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     pos = (notional, debt, mid_tick, entry_tick, is_long,
            liquidated, oi_shares, fraction_remaining)
@@ -369,7 +370,7 @@ def test_oi_current_when_fraction_less_than_one(position):
     fraction = 250000000000000000  # 0.25
     expect_oi = total_oi * (oi_shares / total_oi_shares)
 
-    expect = int(expect_oi * (fraction_remaining / 1e4) * (fraction / 1e18))
+    expect = int(expect_oi * (fraction / 1e18))
     actual = position.oiCurrent(pos, fraction, total_oi, total_oi_shares)
     assert expect == actual
 
@@ -416,6 +417,7 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
 
     # 2. unwound all of position oi
     fraction_remaining = 0  # 0
+    oi_shares = 0  # 0
     total_oi = 4000000000000000000  # 4
     total_oi_shares = 5000000000000000000  # 5
 
@@ -427,6 +429,7 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     assert expect == actual
 
     # 3. all oi has been unwound
+    oi_shares = 0  # 0
     fraction_remaining = 0  # 0
     total_oi = 0  # 0
     total_oi_shares = 0  # 0
@@ -439,6 +442,7 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     assert expect == actual
 
     # 4. position has been liquidated
+    oi_shares = 0  # 0
     fraction_remaining = 0  # 0
     total_oi = 0  # 0
     total_oi_shares = 5000000000000000000  # 5
@@ -452,6 +456,7 @@ def test_oi_current_when_total_oi_or_oi_shares_zero(position):
     assert expect == actual
 
     # 5. rounding error of some fraction remaining but no oi shares total
+    oi_shares = 0  # 0
     fraction_remaining = 1  # 0.0001
     total_oi = 0  # 0
     total_oi_shares = 0  # 0

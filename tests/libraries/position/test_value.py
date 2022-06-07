@@ -18,10 +18,11 @@ def test_value(position):
     mid_tick = price_to_tick(mid_price)
     entry_tick = price_to_tick(entry_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.05
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.04
 
     # inputs for position function
     fraction = 1000000000000000000  # 1
@@ -119,10 +120,11 @@ def test_value_when_fraction_less_than_one(position):
     mid_price = 100000000000000000000  # 100
     mid_tick = price_to_tick(mid_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.05
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.04
 
     # inputs for position function
     fraction = 500000000000000000  # 0.5
@@ -253,10 +255,9 @@ def test_value_when_fraction_remaining_zero(position):
     mid_price = 100000000000000000000  # 100
     mid_tick = price_to_tick(mid_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
-    shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.05
+    oi_shares = 0  # 0
 
     # inputs for position function
     fraction = 500000000000000000  # 0.5

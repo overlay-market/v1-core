@@ -15,10 +15,11 @@ def test_liquidatable(position):
     entry_tick = price_to_tick(entry_price)
     mid_tick = entry_tick
 
-    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(entry_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     # inputs for position function
     cap_payoff = 5000000000000000000  # 5
@@ -83,10 +84,11 @@ def test_liquidatable_when_entry_not_equal_to_mid(position):
     mid_price = 100000000000000000000  # 100
     mid_tick = price_to_tick(mid_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     # inputs for position function
     cap_payoff = 5000000000000000000  # 5
@@ -241,10 +243,11 @@ def test_liquidatable_when_leverage_one(position):
     entry_tick = price_to_tick(entry_price)
     mid_tick = entry_tick
 
-    oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(entry_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+                    / Decimal(1e18))  # 0.064
 
     tol = 1e-4  # 1bps
 

@@ -20,6 +20,12 @@ def test_notional_with_pnl(position):
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
                     / Decimal(1e18))  # 0.095
 
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    shares_to_oi_ratio = 950000000000000000  # 0.95
+    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
+                    / Decimal(1e18))  # 0.076
+
     # inputs for position function
     fraction = 1000000000000000000  # 1
     cap_payoff = 5000000000000000000  # 5
@@ -66,10 +72,11 @@ def test_notional_with_pnl_when_fraction_less_than_one(position):
     mid_price = 100000000000000000000  # 100
     mid_tick = price_to_tick(mid_price)
 
-    oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
+    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
+             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
     shares_to_oi_ratio = 950000000000000000  # 0.95
     oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.095
+                    / Decimal(1e18))  # 0.076
 
     # inputs for position function
     fraction = 250000000000000000  # 0.25
