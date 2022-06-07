@@ -53,8 +53,8 @@ The market contract tracks the current open interest for all outstanding positio
 
 ```
 library Position {
-    /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong, oiSharesInitial
-    /// @dev mutables: liquidated, fractionRemaining
+    /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong
+    /// @dev mutables: liquidated, oiShares, fractionRemaining
     struct Info {
         uint96 notionalInitial; // initial notional = collateral * leverage
         uint96 debtInitial; // initial debt = notional - collateral
@@ -62,7 +62,7 @@ library Position {
         int24 entryTick; // entryPrice = 1.0001 ** entryTick at build
         bool isLong; // whether long or short
         bool liquidated; // whether has been liquidated (mutable)
-        uint240 oiSharesInitial; // initial shares of aggregate open interest on side
+        uint240 oiShares; // current shares of aggregate open interest on side (mutable)
         uint16 fractionRemaining; // fraction of initial position remaining (mutable)
     }
 }
