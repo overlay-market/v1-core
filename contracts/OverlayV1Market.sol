@@ -170,9 +170,8 @@ contract OverlayV1Market is IOverlayV1Market {
             debt = notional - collateral;
             tradingFee = notional.mulUp(params.get(Risk.Parameters.TradingFeeRate));
 
-            // calculate current notional cap adjusted for circuit breaker *then* adjust
-            // for front run and back run bounds (order matters)
-            // finally, transform into a cap on open interest
+            // calculate current notional cap adjusted for front run
+            // and back run bounds. transform into a cap on open interest
             uint256 capOi = oiFromNotional(
                 capNotionalAdjustedForBounds(data, params.get(Risk.Parameters.CapNotional)),
                 midPrice
@@ -773,7 +772,8 @@ contract OverlayV1Market is IOverlayV1Market {
         oiTotalOnSide += oi;
         oiTotalSharesOnSide += oiShares;
 
-        // check new total oi on side does not exceed capOi w circuit breaker
+        // check new total oi on side does not exceed capOi after
+        // adjusted for circuit breaker
         // TODO: test
         uint256 capOiCircuited = capOiAdjustedForCircuitBreaker(capOi);
         require(oiTotalOnSide <= capOiCircuited, "OVLV1:oi>cap");
