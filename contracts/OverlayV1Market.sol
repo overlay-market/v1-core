@@ -774,7 +774,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
         // check new total oi on side does not exceed capOi after
         // adjusted for circuit breaker
-        // TODO: test
         uint256 capOiCircuited = capOiAdjustedForCircuitBreaker(capOi);
         require(oiTotalOnSide <= capOiCircuited, "OVLV1:oi>cap");
 
