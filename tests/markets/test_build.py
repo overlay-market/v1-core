@@ -74,7 +74,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
         / Decimal(1e18)
     cap_oi = (Decimal(cap_notional) / mid)
 
-    volume = int((oi / cap_oi) * Decimal(1e18))  # TODO: circuit breaker adj
+    volume = int((oi / cap_oi) * Decimal(1e18))
     price = market.ask(data, volume) if is_long \
         else market.bid(data, volume)
 
@@ -972,3 +972,4 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 # TODO: test_sequential_builds_with_funding_drawdowns_for_oi_shares
 # TODO: move sequential/multiple tests into separate file
 # TODO: include in sequential builds volume registry for multiple sequentials
+# TODO: test build fails when circuit breaker lowered

@@ -108,9 +108,9 @@ interface IOverlayV1Market {
         uint256 timeElapsed
     ) external view returns (uint256 oiOverweight_, uint256 oiUnderweight_);
 
-    // current notional cap with adjustments for circuit breaker if market has
+    // current open interest cap with adjustments for circuit breaker if market has
     // printed a lot in recent past
-    function capNotionalAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
+    function capOiAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
 
     // bound on open interest cap from circuit breaker
     function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
