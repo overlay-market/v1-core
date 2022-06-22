@@ -571,7 +571,7 @@ contract OverlayV1Market is IOverlayV1Market {
         return cap;
     }
 
-    /// @dev bound on notional cap from circuit breaker
+    /// @dev bound on oi cap from circuit breaker
     /// @dev Three cases:
     /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return cap
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
