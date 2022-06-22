@@ -60,10 +60,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     );
 
     // event for emergency shutdown
-    event EmergencyShutdown(
-        address indexed user,
-        address indexed market
-    );
+    event EmergencyShutdown(address indexed user, address indexed market);
 
     // ovl token
     IOverlayV1Token public immutable ovl;
