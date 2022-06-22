@@ -11,7 +11,7 @@ def test_deploy_factory_reverts_when_cardinality_lt_macro(alice, uni,
     # check factory deploy reverts when cardinality too small given
     # micro and macro windows
     cardinality_min = 10
-    with reverts("OVLV1: cardinality < macroWindow"):
+    with reverts("OVLV1: cardinality < 2 * macroWindow"):
         _ = alice.deploy(OverlayV1UniswapV3Factory, ovl, uni_factory,
                          micro_window, macro_window, cardinality_min,
                          avg_block_time)

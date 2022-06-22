@@ -50,7 +50,7 @@ def pool_uniweth_30bps():
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 3000, 200, 15)])
+@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
 def create_factory(gov, uni_factory, weth, uni, request):
     micro, macro, cardinality, block_time = request.param
     uni_fact = uni_factory.address

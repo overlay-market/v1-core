@@ -33,10 +33,11 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         uniV3Factory = _uniV3Factory;
 
         // sanity check on cardinality, given writes happen max once per block
+        // NOTE: need > 2 * macroWindow b/c of priceOneMacroWindowAgo
         // SEE: Uniswap/v3-core/blob/main/contracts/libraries/Oracle.sol#L90
         require(
-            _averageBlockTime * uint256(_observationCardinalityMinimum) >= _macroWindow,
-            "OVLV1: cardinality < macroWindow"
+            _averageBlockTime * uint256(_observationCardinalityMinimum) >= 2 * _macroWindow,
+            "OVLV1: cardinality < 2 * macroWindow"
         );
         observationCardinalityMinimum = _observationCardinalityMinimum;
     }
