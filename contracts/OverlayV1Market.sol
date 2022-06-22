@@ -62,9 +62,26 @@ contract OverlayV1Market is IOverlayV1Market {
     // cached risk calcs
     uint256 public dpUpperLimit; // e**(+priceDriftUpperLimit * macroWindow)
 
+    // emergency shutdown
+    bool isShutdown;
+
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
         require(msg.sender == factory, "OVLV1: !factory");
+        _;
+    }
+
+    // not shutdown modifier for regular functionality
+    // TODO: test
+    modifier notShutdown() {
+        require(!isShutdown, "OVLV1: shutdown");
+        _;
+    }
+
+    // shutdown modifier for emergencies
+    // TODO: test
+    modifier hasShutdown() {
+        require(isShutdown, "OVLV1: !shutdown");
         _;
     }
 
@@ -90,6 +107,11 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 positionId, // id of the liquidated position
         int256 mint, // total amount burned (-) at liquidate
         uint256 price // liquidation price
+    );
+    event EmergencyWithdraw(
+        address indexed sender, // address that initiated withdraw (owns position)
+        uint256 positionId, // id of withdrawn position
+        uint256 collateral // total amount of collateral withdrawn
     );
 
     constructor() {
@@ -142,7 +164,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 leverage,
         bool isLong,
         uint256 priceLimit
-    ) external returns (uint256 positionId_) {
+    ) external notShutdown returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= params.get(Risk.Parameters.CapLeverage), "OVLV1:lev>max");
         require(collateral >= params.get(Risk.Parameters.MinCollateral), "OVLV1:collateral<min");
@@ -236,7 +258,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 positionId,
         uint256 fraction,
         uint256 priceLimit
-    ) external {
+    ) external notShutdown {
         require(fraction <= ONE, "OVLV1:fraction>max");
         // only keep 4 decimal precision (1 bps) for fraction given
         // pos.fractionRemaining only to 4 decimals
@@ -364,7 +386,7 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(address owner, uint256 positionId) external {
+    function liquidate(address owner, uint256 positionId) external notShutdown {
         uint256 value;
         uint256 cost;
         uint256 price;
@@ -906,5 +928,38 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
             dpUpperLimit = pow.expUp(); // e**(pow)
         }
+    }
+
+    /// @notice Irreversibly shuts down the market. Can be triggered by
+    /// @notice governance through factory contract in the event of an emergency
+    // TODO: test
+    function shutdown() external notShutdown onlyFactory {
+        isShutdown = true;
+    }
+
+    /// @notice Allows emergency withdrawal of remaining collateral
+    /// @notice associated with position. Ignores any outstanding PnL and
+    /// @notice funding considerations
+    // TODO: test
+    function emergencyWithdraw(uint256 positionId) external hasShutdown {
+        // check position exists
+        Position.Info memory pos = positions.get(msg.sender, positionId);
+        require(pos.exists(), "OVLV1:!position");
+
+        // calculate remaining collateral backing position
+        // TODO: test
+        uint256 fraction = ONE;
+        uint256 cost = pos.cost(fraction);
+        cost = Math.min(ovl.balanceOf(address(this)), cost); // if cost > balance
+
+        // set fraction remaining to zero so position no longer exists
+        pos.fractionRemaining = 0;
+        positions.set(msg.sender, positionId, pos);
+
+        // emit withdraw event
+        emit EmergencyWithdraw(msg.sender, positionId, cost);
+
+        // transfer available collateral out to position owner
+        ovl.transfer(msg.sender, cost);
     }
 }

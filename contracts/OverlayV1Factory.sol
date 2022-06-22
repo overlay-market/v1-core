@@ -59,6 +59,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         uint256 value
     );
 
+    // event for emergency shutdown
+    event EmergencyShutdown(
+        address indexed user,
+        address indexed market
+    );
+
     // ovl token
     IOverlayV1Token public immutable ovl;
 
@@ -175,5 +181,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
+    }
+
+    /// @notice Shuts down market by governance in the event of an emergency
+    // TODO: test
+    function shutdown(address feed) external onlyGovernor {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.shutdown();
+        emit EmergencyShutdown(msg.sender, address(market));
     }
 }
