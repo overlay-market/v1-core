@@ -170,14 +170,10 @@ contract OverlayV1Market is IOverlayV1Market {
             debt = notional - collateral;
             tradingFee = notional.mulUp(params.get(Risk.Parameters.TradingFeeRate));
 
-            // calculate current notional cap adjusted for circuit breaker *then* adjust
-            // for front run and back run bounds (order matters)
-            // finally, transform into a cap on open interest
+            // calculate current notional cap adjusted for front run
+            // and back run bounds. transform into a cap on open interest
             uint256 capOi = oiFromNotional(
-                capNotionalAdjustedForBounds(
-                    data,
-                    capNotionalAdjustedForCircuitBreaker(params.get(Risk.Parameters.CapNotional))
-                ),
+                capNotionalAdjustedForBounds(data, params.get(Risk.Parameters.CapNotional)),
                 midPrice
             );
 
@@ -562,9 +558,9 @@ contract OverlayV1Market is IOverlayV1Market {
         return (oiOverweight, oiUnderweight);
     }
 
-    /// @dev current notional cap with adjustments to lower
-    /// @dev cap in the event market has printed a lot in recent past
-    function capNotionalAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
+    /// @dev current oi cap with adjustments to lower in the event
+    /// @dev market has printed a lot in recent past
+    function capOiAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
         // last snapshot taken
@@ -575,7 +571,7 @@ contract OverlayV1Market is IOverlayV1Market {
         return cap;
     }
 
-    /// @dev bound on notional cap from circuit breaker
+    /// @dev bound on oi cap from circuit breaker
     /// @dev Three cases:
     /// @dev 1. minted < 1x target amount over circuitBreakerWindow: return cap
     /// @dev 2. minted > 2x target amount over last circuitBreakerWindow: return 0
@@ -776,8 +772,10 @@ contract OverlayV1Market is IOverlayV1Market {
         oiTotalOnSide += oi;
         oiTotalSharesOnSide += oiShares;
 
-        // check new total oi on side does not exceed capOi
-        require(oiTotalOnSide <= capOi, "OVLV1:oi>cap");
+        // check new total oi on side does not exceed capOi after
+        // adjusted for circuit breaker
+        uint256 capOiCircuited = capOiAdjustedForCircuitBreaker(capOi);
+        require(oiTotalOnSide <= capOiCircuited, "OVLV1:oi>cap");
 
         // update total aggregate oi and oi shares storage vars
         if (isLong) {

@@ -12,7 +12,7 @@ Below is a table of `v1-core` functions and the associated sections and equation
 | `update()` | `OverlayV1Market.sol#L482` |  | Updates market: pays funding and fetches freshest data from feed |
 | `dataIsValid()` | `OverlayV1Market.sol#L516` | Eqns. (58), (59), (60) | Sanity check on data fetched from oracle in case of manipulation |
 | `oiAfterFunding()` | `OverlayV1Market.sol#L539`  | Eqns. (26), (27), (28); Ref Eqns. (14), (24) | Current open interest after funding payments transferred |
-| `capNotionalAdjustedForCircuitBreaker()` | `OverlayV1Market.sol#L592` | Eqns. (75), (76); Ref Eqn. (72) | Current notional cap with adjustments lower in the event market has printed a lot in recent past |
+| `capOiAdjustedForCircuitBreaker()` | `OverlayV1Market.sol#L592` | Eqns. (75), (76); Ref Eqn. (72) | Current notional cap with adjustments lower in the event market has printed a lot in recent past |
 | `circuitBreaker()` | `OverlayV1Market.sol#L608` | Eqn. (75); Ref Eqn. (72) | Bound on notional cap from circuit breaker  |
 | `capNotionalAdjustedForBounds()` | `OverlayV1Market.sol#L628` | Eqns. (55), (56), (57) | Current notional cap with adjustments to prevent front-running trade and back-running trade |
 | `frontRunBound()` | `OverlayV1Market.sol#L645` | Eqn. (55) | Bound on notional cap to mitigate front-running attack |

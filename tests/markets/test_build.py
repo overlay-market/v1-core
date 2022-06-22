@@ -74,7 +74,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
         / Decimal(1e18)
     cap_oi = (Decimal(cap_notional) / mid)
 
-    volume = int((oi / cap_oi) * Decimal(1e18))  # TODO: circuit breaker adj
+    volume = int((oi / cap_oi) * Decimal(1e18))
     price = market.ask(data, volume) if is_long \
         else market.bid(data, volume)
 
@@ -628,6 +628,108 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     # check position id
     actual_pos_id = tx.return_value
     assert expect_pos_id == actual_pos_id
+
+
+def test_build_reverts_when_oi_greater_than_cap_w_circuit_breaker(
+        mock_market, mock_feed, factory, ovl, alice, rando, gov):
+    # set circuit breaker mint target much lower to see effects
+    idx_mint = RiskParameter.CIRCUIT_BREAKER_MINT_TARGET.value
+    mint_target = int(Decimal(1000) * Decimal(1e18))
+    factory.setRiskParam(mock_feed, idx_mint, mint_target, {"from": gov})
+
+    tol = 1e-4
+
+    # position build attributes
+    notional_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+
+    # calculate expected pos info data
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = True
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
+    pos_id = tx.return_value
+
+    # set price to something significantly larger
+    price_multiplier = Decimal(2.5)
+    price = Decimal(mock_feed.price()) * price_multiplier
+    mock_feed.setPrice(price, {"from": rando})
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(Decimal(1e18))
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0
+
+    # unwind fraction of shares
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
+
+    # Test cap oi circuit adjustment reverts build
+    data = mock_feed.latest()
+    snapshot = mock_market.snapshotMinted()
+    cap_notional = mock_market.params(RiskParameter.CAP_NOTIONAL.value)
+    cap_oi = mock_market.oiFromNotional(
+        mock_market.capNotionalAdjustedForBounds(data, cap_notional),
+        price
+    )
+    cap_oi_circuited = mock_market.circuitBreaker(snapshot, cap_oi)
+    notional_initial = Decimal(cap_oi_circuited) * price / Decimal(1e36)
+    leverage = Decimal(1)
+
+    # calculate expected pos info data
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(mock_market.params(idx_trade) / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1+tol) * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = True
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then test build fails when greater than circuited cap
+    # NOTE: build() tests in test_build.py
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    with reverts("OVLV1:oi>cap"):
+        _ = mock_market.build(input_collateral, input_leverage, input_is_long,
+                              input_price_limit, {"from": alice})
+
+    # change collateral to slightly less than circuited cap
+    # and check build succeeds
+    input_collateral = int(collateral * Decimal(1-tol) * Decimal(1e18))
+    tx = mock_market.build(input_collateral, input_leverage, input_is_long,
+                           input_price_limit, {"from": alice})
+    actual_pos_id = tx.return_value
+    expect_pos_id = 1
+    assert actual_pos_id == expect_pos_id
 
 
 # NOTE: use mock_market so price doesn't move during test
