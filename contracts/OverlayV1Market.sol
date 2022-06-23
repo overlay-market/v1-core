@@ -72,7 +72,6 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     // not shutdown modifier for regular functionality
-    // TODO: test
     modifier notShutdown() {
         require(!isShutdown, "OVLV1: shutdown");
         _;

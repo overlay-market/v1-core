@@ -1727,4 +1727,44 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     assert actual_fraction_remaining == 0
 
 
+def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
+                                             ovl, alice, gov, rando):
+    # build inputs
+    input_collateral = int(1e18)
+    input_leverage = int(2e18)
+    input_is_long = True
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve market for spending before build. use max
+    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+
+    # build two positions prior to shutdown
+    tx_0 = mock_market.build(input_collateral, input_leverage, input_is_long,
+                             input_price_limit, {"from": alice})
+    tx_1 = mock_market.build(input_collateral, input_leverage, input_is_long,
+                             input_price_limit, {"from": alice})
+
+    # cache the pos ids
+    input_pos_id_0 = tx_0.return_value
+    input_pos_id_1 = tx_1.return_value
+
+    # set price so liquidatable
+    liq_price = int(mock_feed.price() / 2.0)
+    mock_feed.setPrice(liq_price, {"from": rando})
+
+    # liquidate the first position to check works prior to shutdown
+    mock_market.liquidate(alice, input_pos_id_0, {"from": rando})
+
+    # shutdown market
+    # NOTE: factory.shutdown() tests in factories/market/test_setters.py
+    factory.shutdown(mock_feed, {"from": gov})
+
+    # attempt to liquidate
+    with reverts("OVLV1: shutdown"):
+        mock_market.liquidate(alice, input_pos_id_1, {"from": rando})
+
+
 # TODO: add tests with multiple positions and only one liquidated
