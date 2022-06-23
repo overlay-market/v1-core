@@ -931,7 +931,6 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice Irreversibly shuts down the market. Can be triggered by
     /// @notice governance through factory contract in the event of an emergency
-    // TODO: test
     function shutdown() external notShutdown onlyFactory {
         isShutdown = true;
     }
