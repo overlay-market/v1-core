@@ -47,6 +47,7 @@ def test_set_fee_recipient_reverts_when_zero_address(factory, gov):
         _ = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
 
 
+# risk param tests
 def test_set_risk_param(factory, market, gov):
     feed = market.feed()
 
@@ -140,3 +141,34 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
 
         # undo the tx so can start form conftest.py market state
         chain.undo()
+
+
+# shutdown tests
+def test_shutdown(factory, market, gov):
+    feed = market.feed()
+
+    # check hasn't been shut down yet
+    assert market.isShutdown() is False
+
+    # shut the market down
+    tx = factory.shutdown(feed, {"from": gov})
+
+    # check now set to shutdown
+    market.isShutdown() is True
+
+    # check event emitted
+    assert 'EmergencyShutdown' in tx.events
+    expect_event = OrderedDict({
+        "user": gov,
+        "market": market
+    })
+    actual_event = tx.events['EmergencyShutdown']
+    assert actual_event == expect_event
+
+
+def test_shutdown_reverts_when_not_gov(factory, market, rando):
+    feed = market.feed()
+
+    # can't shutdown when not a governor
+    with reverts("OVLV1: !governor"):
+        _ = factory.shutdown(feed, {"from": rando})

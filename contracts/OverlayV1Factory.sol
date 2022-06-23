@@ -180,8 +180,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
     }
 
-    /// @notice Shuts down market by governance in the event of an emergency
-    // TODO: test
+    /// @notice Shut down of market by governance in the event of an emergency
     function shutdown(address feed) external onlyGovernor {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.shutdown();

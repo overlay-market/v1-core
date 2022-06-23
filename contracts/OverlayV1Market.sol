@@ -63,7 +63,7 @@ contract OverlayV1Market is IOverlayV1Market {
     uint256 public dpUpperLimit; // e**(+priceDriftUpperLimit * macroWindow)
 
     // emergency shutdown
-    bool isShutdown;
+    bool public isShutdown;
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
