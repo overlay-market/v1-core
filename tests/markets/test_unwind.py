@@ -2008,6 +2008,41 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
                             {"from": alice})
 
 
+def test_unwind_reverts_when_has_shutdown(factory, feed, market, ovl,
+                                          alice, gov):
+    # build inputs
+    input_collateral = int(1e18)
+    input_leverage = int(1e18)
+    input_is_long = True
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve market for spending before build. use max
+    ovl.approve(market, 2**256 - 1, {"from": alice})
+
+    # build one position prior to shutdown
+    tx = market.build(input_collateral, input_leverage, input_is_long,
+                      input_price_limit, {"from": alice})
+
+    # unwind a fraction of the position to check works fine prior to shutdown
+    input_pos_id = tx.return_value
+    input_price_limit = 0
+    input_fraction = int(0.5e18)
+    market.unwind(input_pos_id, input_fraction, input_price_limit,
+                  {"from": alice})
+
+    # shutdown market
+    # NOTE: factory.shutdown() tests in factories/market/test_setters.py
+    factory.shutdown(feed, {"from": gov})
+
+    # attempt to unwind again
+    with reverts("OVLV1: shutdown"):
+        market.unwind(input_pos_id, input_fraction, input_price_limit,
+                      {"from": alice})
+
+
 def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
                                                     alice, bob, rando):
     # loop through 10 times

@@ -76,6 +76,9 @@ interface IOverlayV1Market {
     // cached risk calcs
     function dpUpperLimit() external view returns (uint256);
 
+    // emergency shutdown
+    function isShutdown() external view returns (bool);
+
     // initializes market
     function initialize(uint256[15] memory params) external;
 
@@ -142,4 +145,10 @@ interface IOverlayV1Market {
 
     // risk parameter setter
     function setRiskParam(Risk.Parameters name, uint256 value) external;
+
+    // emergency shutdown market
+    function shutdown() external;
+
+    // emergency withdraw collateral after shutdown
+    function emergencyWithdraw(uint256 positionId) external;
 }

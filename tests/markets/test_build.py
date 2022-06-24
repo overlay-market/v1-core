@@ -851,6 +851,34 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     assert expect_pos_id == actual_pos_id
 
 
+def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
+                                         alice, gov):
+    # build inputs
+    input_collateral = int(1e18)
+    input_leverage = int(1e18)
+    input_is_long = True
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1
+
+    # approve market for spending before build. use max
+    ovl.approve(market, 2**256 - 1, {"from": alice})
+
+    # build one position prior to shutdown
+    market.build(input_collateral, input_leverage, input_is_long,
+                 input_price_limit, {"from": alice})
+
+    # shutdown market
+    # NOTE: factory.shutdown() tests in factories/market/test_setters.py
+    factory.shutdown(feed, {"from": gov})
+
+    # attempt to build again
+    with reverts("OVLV1: shutdown"):
+        market.build(input_collateral, input_leverage, input_is_long,
+                     input_price_limit, {"from": alice})
+
+
 def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                                    feed, alice, bob):
     # loop through 10 times
