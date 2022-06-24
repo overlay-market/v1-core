@@ -944,7 +944,6 @@ contract OverlayV1Market is IOverlayV1Market {
         require(pos.exists(), "OVLV1:!position");
 
         // calculate remaining collateral backing position
-        // TODO: test
         uint256 fraction = ONE;
         uint256 cost = pos.cost(fraction);
         cost = Math.min(ovl.balanceOf(address(this)), cost); // if cost > balance
@@ -957,6 +956,7 @@ contract OverlayV1Market is IOverlayV1Market {
         emit EmergencyWithdraw(msg.sender, positionId, cost);
 
         // transfer available collateral out to position owner
+        // TODO: test
         ovl.transfer(msg.sender, cost);
     }
 }
