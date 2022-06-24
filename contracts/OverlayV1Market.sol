@@ -937,7 +937,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @notice Allows emergency withdrawal of remaining collateral
     /// @notice associated with position. Ignores any outstanding PnL and
     /// @notice funding considerations
-    // TODO: test
     function emergencyWithdraw(uint256 positionId) external hasShutdown {
         // check position exists
         Position.Info memory pos = positions.get(msg.sender, positionId);
@@ -956,7 +955,6 @@ contract OverlayV1Market is IOverlayV1Market {
         emit EmergencyWithdraw(msg.sender, positionId, cost);
 
         // transfer available collateral out to position owner
-        // TODO: test
         ovl.transfer(msg.sender, cost);
     }
 }
