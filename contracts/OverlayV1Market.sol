@@ -549,24 +549,25 @@ contract OverlayV1Market is IOverlayV1Market {
             fundingFactor = ONE.divDown(pow.expUp()); // e**(-pow)
         }
 
+        // Time decay imbalance: OI_imb(t) = OI_imb(0) * e**(-2*k*t)
+        // oiImbalanceNow guaranteed <= oiImbalanceBefore
+        // NOTE: cache oiImbalanceBefore to calculate oiTotalNow
+        uint256 oiImbalanceBefore = oiImbalance;
+        oiImbalance = oiImbalance.mulDown(fundingFactor);
+
         // Decrease total aggregate open interest (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
         // OI_tot(t) = OI_tot(0) * \
-        //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - e**(-4*k*t)) )
+        //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - (OI_imb(t)/OI_imb(0))**2) )
 
         // Guaranteed 0 <= underRoot <= 1
-        uint256 oiImbFraction = oiImbalance.divDown(oiTotal);
+        uint256 oiImbToTot = oiImbalanceBefore.divDown(oiTotal);
+        uint256 oiImbToImb = oiImbalance.divDown(oiImbalanceBefore);
         uint256 underRoot = ONE -
-            oiImbFraction.mulDown(oiImbFraction).mulDown(
-                ONE - fundingFactor.mulDown(fundingFactor)
-            );
+            oiImbToTot.mulDown(oiImbToTot).mulDown(ONE - oiImbToImb.mulDown(oiImbToImb));
 
         // oiTotalNow guaranteed <= oiTotalBefore (burn happens)
         oiTotal = oiTotal.mulDown(underRoot.powDown(ONE / 2));
-
-        // Time decay imbalance: OI_imb(t) = OI_imb(0) * e**(-2*k*t)
-        // oiImbalanceNow guaranteed <= oiImbalanceBefore
-        oiImbalance = oiImbalance.mulDown(fundingFactor);
 
         // overweight pays underweight
         // use oiOver * oiUnder = invariant for oiUnderNow to avoid any
