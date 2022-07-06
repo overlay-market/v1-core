@@ -110,9 +110,9 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     # check is shutdown set to false
     assert mock_market.isShutdown() is False
 
-    # check timestamp update last is same as block when mock_market deployed
-    # NOTE: -3 in index since had two grantRole txs after in conftest.py
+    # check update last quantities are not zero
     assert mock_market.timestampUpdateLast() != 0
+    assert mock_market.midPriceLast() != 0
 
 
 def test_market_fixture(market, feed, ovl, factory, minter_role,
@@ -156,6 +156,6 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
     # check is shutdown set to false
     assert market.isShutdown() is False
 
-    # check timestamp update last is same as block when market was deployed
-    # NOTE: -3 in index since had two grantRole txs after in conftest.py
+    # check update last quantities are not zero
     assert market.timestampUpdateLast() != 0
+    assert market.midPriceLast() != 0

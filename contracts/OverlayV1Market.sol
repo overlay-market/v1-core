@@ -58,6 +58,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     // data from last call to update
     uint256 public timestampUpdateLast;
+    uint256 public midPriceLast;
 
     // cached risk calcs
     uint256 public dpUpperLimit; // e**(+priceDriftUpperLimit * macroWindow)
@@ -127,6 +128,7 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(_midFromFeed(data) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
+        midPriceLast = _midFromFeed(data);
 
         // check risk params valid
         uint256 _capLeverage = _params[uint256(Risk.Parameters.CapLeverage)];
@@ -497,6 +499,11 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVLV1:!data");
 
+        // set last time market was updated *after* funding, since funding uses
+        // last timestamp and mid price for calculations
+        timestampUpdateLast = block.timestamp;
+        midPriceLast = _midFromFeed(data);
+
         // return the latest data from feed
         return data;
     }
@@ -526,11 +533,12 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice Current open interest after funding payments transferred
     /// @notice from overweight oi side to underweight oi side
-    /// @dev The value of oiOverweight must be >= oiUnderweight
+    /// @dev The value of oiOverweight must be >= oiUnderweight and midPrice > 0
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timeElapsed
+        uint256 timeElapsed,
+        uint256 midPrice
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiOverweight + oiUnderweight;
         uint256 oiImbalance = oiOverweight - oiUnderweight;
@@ -541,32 +549,33 @@ contract OverlayV1Market is IOverlayV1Market {
             return (oiOverweight, oiUnderweight);
         }
 
-        // draw down the imbalance by factor of e**(-2*k*t)
-        // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
-        uint256 fundingFactor;
-        uint256 pow = 2 * params.get(Risk.Parameters.K) * timeElapsed;
-        if (pow < MAX_NATURAL_EXPONENT) {
-            fundingFactor = ONE.divDown(pow.expUp()); // e**(-pow)
-        }
+        // draw down the imbalance by factor specified in funding curve
+        uint256 fundingFactor = oiFundingFactor(
+            oiOverweight,
+            oiUnderweight,
+            timeElapsed,
+            midPrice
+        );
+
+        // Time decay imbalance by funding factor
+        // oiImbalanceNow guaranteed <= oiImbalanceBefore
+        // NOTE: cache oiImbalanceBefore to calculate oiTotalNow
+        uint256 oiImbalanceBefore = oiImbalance;
+        oiImbalance = oiImbalance.mulDown(fundingFactor);
 
         // Decrease total aggregate open interest (i.e. oiLong + oiShort)
         // to compensate protocol for pro-rata share of imbalance liability
         // OI_tot(t) = OI_tot(0) * \
-        //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - e**(-4*k*t)) )
+        //  sqrt( 1 - (OI_imb(0)/OI_tot(0))**2 * (1 - (OI_imb(t)/OI_imb(0))**2) )
 
         // Guaranteed 0 <= underRoot <= 1
-        uint256 oiImbFraction = oiImbalance.divDown(oiTotal);
+        uint256 oiImbToTot = oiImbalanceBefore.divDown(oiTotal);
+        uint256 oiImbToImb = oiImbalance.divDown(oiImbalanceBefore);
         uint256 underRoot = ONE -
-            oiImbFraction.mulDown(oiImbFraction).mulDown(
-                ONE - fundingFactor.mulDown(fundingFactor)
-            );
+            oiImbToTot.mulDown(oiImbToTot).mulDown(ONE - oiImbToImb.mulDown(oiImbToImb));
 
         // oiTotalNow guaranteed <= oiTotalBefore (burn happens)
         oiTotal = oiTotal.mulDown(underRoot.powDown(ONE / 2));
-
-        // Time decay imbalance: OI_imb(t) = OI_imb(0) * e**(-2*k*t)
-        // oiImbalanceNow guaranteed <= oiImbalanceBefore
-        oiImbalance = oiImbalance.mulDown(fundingFactor);
 
         // overweight pays underweight
         // use oiOver * oiUnder = invariant for oiUnderNow to avoid any
@@ -576,6 +585,28 @@ contract OverlayV1Market is IOverlayV1Market {
             oiUnderweight = oiInvariant.divUp(oiOverweight);
         }
         return (oiOverweight, oiUnderweight);
+    }
+
+    /// @notice Current funding factor to use for imbalance draw down over time
+    /// @dev Implements the funding curve used: OI_imb(t) = OI_imb(0) / (1 + 2k*q*t)
+    /// @dev where the returned funding factor is 1/(1 + 2k*q*t)
+    /// @dev and q = oiImbalance / capOiLast (with max of ONE)
+    /// @dev The value of oiOverweight must be >= oiUnderweight and midPrice > 0
+    function oiFundingFactor(
+        uint256 oiOverweight,
+        uint256 oiUnderweight,
+        uint256 timeElapsed,
+        uint256 midPrice
+    ) public view returns (uint256) {
+        uint256 oiImbalance = oiOverweight - oiUnderweight;
+
+        // calculate the effective k
+        uint256 capOiLast = params.get(Risk.Parameters.CapNotional).divDown(midPrice);
+        uint256 q = oiImbalance < capOiLast ? oiImbalance.divDown(capOiLast) : ONE;
+        uint256 kEffective = params.get(Risk.Parameters.K).mulDown(q);
+
+        // return drawdown factor of 1/(1 + 2*k*q*t)
+        return ONE.divDown(ONE + 2 * kEffective * timeElapsed);
     }
 
     /// @dev current oi cap with adjustments to lower in the event
@@ -761,15 +792,13 @@ contract OverlayV1Market is IOverlayV1Market {
             (oiOverweight, oiUnderweight) = oiAfterFunding(
                 oiOverweight,
                 oiUnderweight,
-                timeElapsed
+                timeElapsed,
+                midPriceLast
             );
 
             // pay funding
             oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
             oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-
-            // set last time market was updated
-            timestampUpdateLast = block.timestamp;
         }
     }
 
@@ -811,11 +840,10 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @notice Sets the governance per-market risk parameter
-    /// @dev updates funding state of market but does not fetch from oracle
-    /// @dev to avoid edge cases when dataIsValid is false
+    /// @dev updates funding state of market
     function setRiskParam(Risk.Parameters name, uint256 value) external onlyFactory {
         // pay funding to update state of market since last interaction
-        _payFunding();
+        update();
 
         // check then set risk param
         _checkRiskParam(name, value);

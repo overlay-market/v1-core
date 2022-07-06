@@ -108,8 +108,17 @@ interface IOverlayV1Market {
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timeElapsed
+        uint256 timeElapsed,
+        uint256 midPrice
     ) external view returns (uint256 oiOverweight_, uint256 oiUnderweight_);
+
+    // funding factor to draw down open interest imbalance with
+    function oiFundingFactor(
+        uint256 oiOverweight,
+        uint256 oiUnderweight,
+        uint256 timeElapsed,
+        uint256 midPrice
+    ) external view returns (uint256 fundingFactor_);
 
     // current open interest cap with adjustments for circuit breaker if market has
     // printed a lot in recent past
