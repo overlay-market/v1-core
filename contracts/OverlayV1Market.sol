@@ -533,7 +533,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice Current open interest after funding payments transferred
     /// @notice from overweight oi side to underweight oi side
-    /// @dev The value of oiOverweight must be >= oiUnderweight
+    /// @dev The value of oiOverweight must be >= oiUnderweight and midPrice > 0
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
@@ -549,18 +549,15 @@ contract OverlayV1Market is IOverlayV1Market {
             return (oiOverweight, oiUnderweight);
         }
 
-        // draw down the imbalance by factor of 1/(1 + 2k*q*t)
-        // where q = oiImbalance / capOiLast (with max of ONE)
-        uint256 fundingFactor;
-        // avoids stack too deep
-        {
-            uint256 capOiLast = params.get(Risk.Parameters.CapNotional).divDown(midPrice);
-            uint256 q = oiImbalance < capOiLast ? oiImbalance.divDown(capOiLast) : ONE;
-            uint256 kEffective = params.get(Risk.Parameters.K).mulDown(q);
-            fundingFactor = ONE.divDown(ONE + 2 * kEffective * timeElapsed);
-        }
+        // draw down the imbalance by factor specified in funding curve
+        uint256 fundingFactor = oiFundingFactor(
+            oiOverweight,
+            oiUnderweight,
+            timeElapsed,
+            midPrice
+        );
 
-        // Time decay imbalance: OI_imb(t) = OI_imb(0) / (1 + 2k*q*t)
+        // Time decay imbalance by funding factor
         // oiImbalanceNow guaranteed <= oiImbalanceBefore
         // NOTE: cache oiImbalanceBefore to calculate oiTotalNow
         uint256 oiImbalanceBefore = oiImbalance;
@@ -588,6 +585,29 @@ contract OverlayV1Market is IOverlayV1Market {
             oiUnderweight = oiInvariant.divUp(oiOverweight);
         }
         return (oiOverweight, oiUnderweight);
+    }
+
+    /// @notice Current funding factor to use for imbalance draw down over time
+    /// @dev Implements the funding curve used: OI_imb(t) = OI_imb(0) / (1 + 2k*q*t)
+    /// @dev where the returned funding factor is 1/(1 + 2k*q*t)
+    /// @dev and q = oiImbalance / capOiLast (with max of ONE)
+    /// @dev The value of oiOverweight must be >= oiUnderweight and midPrice > 0
+    // TODO: test
+    function oiFundingFactor(
+        uint256 oiOverweight,
+        uint256 oiUnderweight,
+        uint256 timeElapsed,
+        uint256 midPrice
+    ) public view returns (uint256) {
+        uint256 oiImbalance = oiOverweight - oiUnderweight;
+
+        // calculate the effective k
+        uint256 capOiLast = params.get(Risk.Parameters.CapNotional).divDown(midPrice);
+        uint256 q = oiImbalance < capOiLast ? oiImbalance.divDown(capOiLast) : ONE;
+        uint256 kEffective = params.get(Risk.Parameters.K).mulDown(q);
+
+        // return drawdown factor of 1/(1 + 2*k*q*t)
+        return ONE.divDown(ONE + 2 * kEffective * timeElapsed);
     }
 
     /// @dev current oi cap with adjustments to lower in the event
