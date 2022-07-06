@@ -592,7 +592,6 @@ contract OverlayV1Market is IOverlayV1Market {
     /// @dev where the returned funding factor is 1/(1 + 2k*q*t)
     /// @dev and q = oiImbalance / capOiLast (with max of ONE)
     /// @dev The value of oiOverweight must be >= oiUnderweight and midPrice > 0
-    // TODO: test
     function oiFundingFactor(
         uint256 oiOverweight,
         uint256 oiUnderweight,

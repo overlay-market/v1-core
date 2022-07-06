@@ -199,3 +199,83 @@ def test_oi_after_funding_when_underweight_is_zero_dt_infinite(market):
 
     assert actual_oi_underweight == 0
     assert actual_oi_overweight > 0
+
+
+@given(
+    oi_long=strategy('decimal', min_value='0.001', max_value='800000',
+                     places=3),
+    oi_short=strategy('decimal', min_value='0.001', max_value='800000',
+                      places=3),
+    dt=strategy('uint256', min_value='0', max_value='2592000'),
+    mid=strategy('decimal', min_value='0.01', max_value='1000000',
+                 places=2))
+def test_oi_funding_factor(market, oi_long, oi_short, dt, mid):
+    mid = mid * Decimal(1e18)
+    oi_long = oi_long * Decimal(1e18)
+    oi_short = oi_short * Decimal(1e18)
+    oi_overweight = oi_long if oi_long >= oi_short else oi_short
+    oi_underweight = oi_short if oi_long >= oi_short else oi_long
+
+    oi_imb = oi_overweight - oi_underweight
+
+    # get effective k
+    k = Decimal(market.params(RiskParameter.K.value))
+    cap_notional = Decimal(market.params(RiskParameter.CAP_NOTIONAL.value))
+    cap_oi = Decimal(1e18) * cap_notional / mid
+    q = oi_imb / cap_oi if oi_imb < cap_oi else Decimal(1.0)
+    k_effective = k * q
+
+    # get funding factor to draw down imbalance by
+    k_effective = k_effective / Decimal(1e18)
+    expect_funding_factor = int(Decimal(1e18) / Decimal(1 + 2*k_effective*dt))
+    actual_funding_factor = int(market.oiFundingFactor(
+        oi_overweight, oi_underweight, dt, mid))
+
+    assert actual_funding_factor == approx(expect_funding_factor)
+
+
+def test_oi_funding_factor_when_imb_gt_cap(market):
+    oi_overweight = Decimal(100 * 1e18)
+    oi_underweight = Decimal(75 * 1e18)
+    oi_imb = oi_overweight - oi_underweight
+    dt = Decimal(2592000)
+
+    oi_imb = oi_overweight - oi_underweight
+
+    tol = 1e-2
+
+    # get mid needed to make cap_oi > oi_imb
+    k = Decimal(market.params(RiskParameter.K.value))
+    cap_notional = Decimal(market.params(RiskParameter.CAP_NOTIONAL.value))
+    mid = Decimal(1e18) * cap_notional / oi_imb
+
+    # check drawdown matches when greater than cap
+    mid_price = mid * Decimal(1 + tol)
+
+    # effective k is just k now
+    q = Decimal(1.0)
+    k_effective = k * q
+
+    # get funding factor to draw down imbalance by
+    k_effective = k_effective / Decimal(1e18)
+    expect_funding_factor = int(Decimal(1e18) / Decimal(1 + 2*k_effective*dt))
+    actual_funding_factor = int(market.oiFundingFactor(
+        oi_overweight, oi_underweight, dt, mid_price))
+
+    assert actual_funding_factor == approx(expect_funding_factor)
+
+    # check drawdown matches when less than cap
+    mid_price = mid * Decimal(1 - tol)
+
+    # get effective k
+    cap_oi = Decimal(1e18) * cap_notional / mid_price
+    q = oi_imb / cap_oi if oi_imb < cap_oi else Decimal(1.0)
+    k_effective = k * q
+
+    # get funding factor to draw down imbalance by
+    k_effective = k_effective / Decimal(1e18)
+    expect_funding_factor = int(Decimal(1e18) / Decimal(1 + 2*k_effective*dt))
+    actual_funding_factor = int(market.oiFundingFactor(
+        oi_overweight, oi_underweight, dt, mid_price))
+
+    assert actual_funding_factor == approx(expect_funding_factor)

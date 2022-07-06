@@ -145,7 +145,6 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
         assert actual_timestamp_update_last != prior_timestamp_update_last
 
         assert actual_mid_price_last == approx(expect_mid_price_last)
-        assert actual_mid_price_last != prior_mid_price_last
 
         assert int(expect_oi_long) == approx(int(actual_oi_long))
         assert int(expect_oi_short) == approx(int(actual_oi_short))
