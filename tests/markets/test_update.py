@@ -2,7 +2,7 @@ from brownie import chain
 from brownie.test import given, strategy
 from decimal import Decimal
 
-from .utils import RiskParameter
+from .utils import RiskParameter, mid_from_feed
 
 
 def test_update_fetches_from_feed(market, feed, rando):
@@ -97,4 +97,23 @@ def test_update_sets_last_timestamp(market, rando):
     assert prior != actual
 
 
-# TODO: test_update_sets_last_mid_price
+def test_update_sets_last_mid_price(mock_market, mock_feed, rando):
+    # prior is mid price when deployed in conftest.py
+    prior = int(mock_market.midPriceLast())
+
+    # mine the chain 86400s into the future
+    chain.mine(timedelta=86400)
+
+    # change price
+    price = int(mock_feed.price() * 1.5)
+    mock_feed.setPrice(price, {"from": rando})
+
+    # call update
+    tx = mock_market.update({"from": rando})
+    data = tx.return_value
+
+    # check mid price updated to newly set price
+    actual = int(mock_market.midPriceLast())
+    expect = int(mid_from_feed(data))
+    assert expect == actual
+    assert prior != actual

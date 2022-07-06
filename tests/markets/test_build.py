@@ -235,7 +235,7 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     assert actual_oi_shares == actual_total_pos_oi_shares
 
 
-def test_build_updates_market(market, ovl, alice):
+def test_build_updates_market(market, feed, ovl, alice):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -277,6 +277,12 @@ def test_build_updates_market(market, ovl, alice):
 
     assert actual_timestamp_update_last == expect_timestamp_update_last
     assert actual_timestamp_update_last != prior_timestamp_update_last
+
+    # get the expected mid price and check equal to actual
+    data = feed.latest()
+    expect_mid_update_last = int(mid_from_feed(data))
+    actual_mid_update_last = int(market.midPriceLast())
+    assert actual_mid_update_last == approx(expect_mid_update_last)
 
 
 @given(
