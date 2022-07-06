@@ -101,6 +101,7 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
     prior_oi_long = market.oiLong()
     prior_oi_short = market.oiShort()
     prior_timestamp_update_last = market.timestampUpdateLast()
+    prior_mid_last = market.midPriceLast()
 
     for i in range(len(RiskParameter)):
         # mine the chain forward for some funding
@@ -115,10 +116,10 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
         # NOTE: oiAfterFunding() tests in test_funding.py
         if (prior_oi_long > prior_oi_short):
             expect_oi_long, expect_oi_short = market.oiAfterFunding(
-                prior_oi_long, prior_oi_short, time_elapsed)
+                prior_oi_long, prior_oi_short, time_elapsed, prior_mid_last)
         else:
             expect_oi_short, expect_oi_long = market.oiAfterFunding(
-                prior_oi_short, prior_oi_long, time_elapsed)
+                prior_oi_short, prior_oi_long, time_elapsed, prior_mid_last)
 
         # set the risk param
         expect_param = expect_params[i]

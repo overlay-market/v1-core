@@ -58,6 +58,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     // data from last call to update
     uint256 public timestampUpdateLast;
+    uint256 public midPriceLast;
 
     // cached risk calcs
     uint256 public dpUpperLimit; // e**(+priceDriftUpperLimit * macroWindow)
@@ -127,6 +128,7 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(_midFromFeed(data) > 0, "OVLV1:!data");
         timestampUpdateLast = block.timestamp;
+        midPriceLast = _midFromFeed(data);
 
         // check risk params valid
         uint256 _capLeverage = _params[uint256(Risk.Parameters.CapLeverage)];
@@ -497,6 +499,11 @@ contract OverlayV1Market is IOverlayV1Market {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVLV1:!data");
 
+        // set last time market was updated *after* funding, since funding uses
+        // last timestamp and mid price for calculations
+        timestampUpdateLast = block.timestamp;
+        midPriceLast = _midFromFeed(data);
+
         // return the latest data from feed
         return data;
     }
@@ -530,7 +537,8 @@ contract OverlayV1Market is IOverlayV1Market {
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
-        uint256 timeElapsed
+        uint256 timeElapsed,
+        uint256 midPrice
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiOverweight + oiUnderweight;
         uint256 oiImbalance = oiOverweight - oiUnderweight;
@@ -541,15 +549,18 @@ contract OverlayV1Market is IOverlayV1Market {
             return (oiOverweight, oiUnderweight);
         }
 
-        // draw down the imbalance by factor of e**(-2*k*t)
-        // but min to zero if pow = 2*k*t exceeds MAX_NATURAL_EXPONENT
+        // draw down the imbalance by factor of 1/(1 + 2k*q*t)
+        // where q = oiImbalance / capOiLast (with max of ONE)
         uint256 fundingFactor;
-        uint256 pow = 2 * params.get(Risk.Parameters.K) * timeElapsed;
-        if (pow < MAX_NATURAL_EXPONENT) {
-            fundingFactor = ONE.divDown(pow.expUp()); // e**(-pow)
+        // avoids stack too deep
+        {
+            uint256 capOiLast = params.get(Risk.Parameters.CapNotional).divDown(midPrice);
+            uint256 q = oiImbalance < capOiLast ? oiImbalance.divDown(capOiLast) : ONE;
+            uint256 kEffective = params.get(Risk.Parameters.K).mulDown(q);
+            fundingFactor = ONE.divDown(ONE + 2 * kEffective * timeElapsed);
         }
 
-        // Time decay imbalance: OI_imb(t) = OI_imb(0) * e**(-2*k*t)
+        // Time decay imbalance: OI_imb(t) = OI_imb(0) / (1 + 2k*q*t)
         // oiImbalanceNow guaranteed <= oiImbalanceBefore
         // NOTE: cache oiImbalanceBefore to calculate oiTotalNow
         uint256 oiImbalanceBefore = oiImbalance;
@@ -762,15 +773,13 @@ contract OverlayV1Market is IOverlayV1Market {
             (oiOverweight, oiUnderweight) = oiAfterFunding(
                 oiOverweight,
                 oiUnderweight,
-                timeElapsed
+                timeElapsed,
+                midPriceLast
             );
 
             // pay funding
             oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
             oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
-
-            // set last time market was updated
-            timestampUpdateLast = block.timestamp;
         }
     }
 
@@ -812,11 +821,10 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @notice Sets the governance per-market risk parameter
-    /// @dev updates funding state of market but does not fetch from oracle
-    /// @dev to avoid edge cases when dataIsValid is false
+    /// @dev updates funding state of market
     function setRiskParam(Risk.Parameters name, uint256 value) external onlyFactory {
         // pay funding to update state of market since last interaction
-        _payFunding();
+        update();
 
         // check then set risk param
         _checkRiskParam(name, value);

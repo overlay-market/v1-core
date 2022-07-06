@@ -6,8 +6,11 @@ from pytest import approx
 
 from .utils import RiskParameter
 
+# TODO: check mid price last set
 
 # NOTE: Tests passing with isolation fixture
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass

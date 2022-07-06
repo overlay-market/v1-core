@@ -6,6 +6,9 @@ from math import exp, sqrt
 from .utils import RiskParameter
 
 
+# TODO: fix for mid_last input into oiAfterFunding
+# TODO: add test case for imbalance > capOiLast
+
 @given(
     oi_long=strategy('decimal', min_value='0.001', max_value='800000',
                      places=3),

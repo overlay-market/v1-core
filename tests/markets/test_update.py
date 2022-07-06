@@ -47,6 +47,7 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     expect_oi_long_shares = market.oiLongShares()
     expect_oi_short_shares = market.oiShortShares()
     timestamp_last = market.timestampUpdateLast()
+    mid_last = market.midPriceLast()
 
     # mine chain into the future
     chain.mine(timedelta=86400)
@@ -60,10 +61,10 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     # NOTE: oiShares aggregates shouldn't change
     if (expect_oi_long > expect_oi_short):
         expect_oi_long, expect_oi_short = market.oiAfterFunding(
-            expect_oi_long, expect_oi_short, time_elapsed)
+            expect_oi_long, expect_oi_short, time_elapsed, mid_last)
     else:
         expect_oi_short, expect_oi_long = market.oiAfterFunding(
-            expect_oi_short, expect_oi_long, time_elapsed)
+            expect_oi_short, expect_oi_long, time_elapsed, mid_last)
 
     actual_oi_long = market.oiLong()
     actual_oi_short = market.oiShort()
@@ -94,3 +95,6 @@ def test_update_sets_last_timestamp(market, rando):
     expect = chain[tx.block_number]['timestamp']
     assert expect == actual
     assert prior != actual
+
+
+# TODO: test_update_sets_last_mid_price
