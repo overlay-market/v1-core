@@ -4,7 +4,7 @@ from brownie import OverlayV1Factory, accounts, network
 
 
 # TODO: change
-FACTORY = "0x8cCD181113c7Ae40f31D5e8178a98A1A60B55c4C"
+FACTORY = "0xc10e8E06b1b8DADB8E94120650414AFfedD17aF9"
 
 
 def main():
