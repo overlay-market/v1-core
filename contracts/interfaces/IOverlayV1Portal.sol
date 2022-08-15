@@ -2,15 +2,13 @@
 pragma solidity 0.8.10;
 
 interface IOverlayV1Portal {
+
+  event Dispatched(address from, uint256 amount);
+  event Conjured(address to, uint256 amount);
   
   function dispatch(
     uint16 _chainId,
     address _portal,
-    uint256 _amount
-  ) external;
-
-  function conjure (
-    address _to,
     uint256 _amount
   ) external;
 
