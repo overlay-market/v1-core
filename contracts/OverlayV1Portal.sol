@@ -4,8 +4,11 @@ pragma solidity 0.8.10;
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/IOverlayV1Portal.sol";
 import "@layerzero/contracts/interfaces/ILayerZeroEndpoint.sol";
+import "@layerzero/contracts/interfaces/ILayerZeroReceiver.sol";
+import "@layerzero/contracts/interfaces/ILayerZeroUserApplicationConfig.sol";
 
-contract OverlayV1Portal is IOverlayV1Portal {
+
+contract OverlayV1Portal is IOverlayV1Portal, ILayerZeroReceiver, ILayerZeroUserApplicationConfig {
 
   event Dispatched(address from, uint256 amount);
   event Conjured(address to, uint256 amount);
@@ -27,15 +30,27 @@ contract OverlayV1Portal is IOverlayV1Portal {
 
   }
 
+
+  function forceResumeReceive(uint16 _srcChainId, 
+                              bytes calldata _srcAddress) public {}
+
+  function setReceiveVersion(uint16 _version) public {}
+  function setSendVersion(uint16 _version) public {}
+  function setConfig(uint16 _version, uint16 _chainId, 
+                     uint _configType, bytes calldata _config) public {}
+
+  function lzReceive(uint16 _srcChainId, bytes calldata _srcAddress,
+                     uint64 _nonce, bytes calldata _payload) public {}
+
   function dispatch (
     uint16 _chainId, 
     address _portal,
     uint256 _amount
   ) public {
 
-    ovl.transferFrom(msg.sender, address(this), _amount);
-
-    ovl.burn(_amount);
+    // ovl.transferFrom(msg.sender, address(this), _amount);
+    //
+    // ovl.burn(_amount);
 
     // @notice send a LayerZero message to the specified address at a LayerZero endpoint.
     // @param _dstChainId - the destination chain identifier
@@ -54,6 +69,10 @@ contract OverlayV1Portal is IOverlayV1Portal {
     );
 
     emit Dispatched(msg.sender, _amount);
+
+  }
+
+  function lzReceive () public {
 
   }
 
