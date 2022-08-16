@@ -23,11 +23,11 @@ contract OverlayV1Portal is Ownable, IOverlayV1Portal, ILayerZeroReceiver, ILaye
   mapping(uint16 => bytes) public trustedRemoteLookup;
 
   constructor(
-    address _ovl,
+    // address _ovl,
     address _lz
   ) {
 
-    ovl = IOverlayV1Token(_ovl);
+    // ovl = IOverlayV1Token(_ovl);
 
     lz = ILayerZeroEndpoint(_lz);
 
@@ -97,7 +97,7 @@ contract OverlayV1Portal is Ownable, IOverlayV1Portal, ILayerZeroReceiver, ILaye
 
   }
 
-  function conjure (address _to, uint256 _amount) internal {
+  function conjure (address _to, uint256 _amount) public {
 
     // ovl.mint(_to, _amount);
     emit Conjured(_to, _amount);
@@ -108,24 +108,36 @@ contract OverlayV1Portal is Ownable, IOverlayV1Portal, ILayerZeroReceiver, ILaye
     uint16 _chainId, 
     address _portal,
     uint256 _amount
-  ) public {
+  ) public payable {
 
-    // ovl.transferFrom(msg.sender, address(this), _amount);
-    // ovl.burn(_amount);
-
-    lz.send(
+    lz.send{ value: msg.value }(
       _chainId,
-      new bytes(uint256(uint160(_portal))),
-      abi.encode(msg.sender, _amount),
+      abi.encodePacked(_portal),
+      abi.encodePacked(msg.sender, _amount),
       payable(msg.sender),
       lzPayee,
-      new bytes(0)
+      bytes("")
     );
 
     emit Dispatched(msg.sender, _amount);
 
   }
 
+  function estimateFees(uint16 _dstChainId, address _userApplication, 
+                        bytes calldata _payload, bool _payInZRO, 
+                        bytes calldata _adapterParams) 
+                        external view returns (
+                        uint nativeFee, uint zeroFee
+                        ) {
 
+      ( nativeFee, zeroFee ) = lz.estimateFees(
+        _dstChainId, 
+        _userApplication,
+        _payload,
+        false, 
+        bytes("")
+      );
+
+  }
 
 }

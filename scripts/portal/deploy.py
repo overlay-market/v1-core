@@ -3,6 +3,7 @@ from brownie import \
     OverlayV1Token, \
     OverlayV1Portal, \
     accounts, \
+    interface, \
     network
 
 rinkeby_endp = "0x79a63d6d8BBD5c6dfc774dA79bCcD948EAcb53FA"
@@ -21,9 +22,7 @@ def main():
 
   defaults = {"from": dev}
 
-  ovl = OverlayV1Token.deploy(defaults)
-  print("OVL deployed at:", ovl.address)
-
-  portal = OverlayV1Portal.deploy(
-      ovl, layer_zero_endpoint, defaults);
+  portal = OverlayV1Portal.deploy(layer_zero_endpoint, defaults);
   print("Portal deployed at:", portal.address)
+
+  OverlayV1Portal.publish_source(portal)

@@ -10,6 +10,6 @@ interface IOverlayV1Portal {
     uint16 _chainId,
     address _portal,
     uint256 _amount
-  ) external;
+  ) external payable;
 
 }
