@@ -8,6 +8,7 @@ import "../../interfaces/feeds/uniswapv3/IOverlayV1UniswapV3FeedFactory.sol";
 
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1UniswapV3Feed.sol";
+import "./OverlayV1NoReserveUniswapV3Feed.sol";
 
 contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1FeedFactory {
     address public immutable ovl;
@@ -77,20 +78,28 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         );
 
         // Create a new Feed contract
-        feed_ = address(
-            new OverlayV1UniswapV3Feed(
-                marketPool,
-                marketBaseToken,
-                marketQuoteToken,
-                marketBaseAmount,
-                ovlXPool,
-                ovl,
-                microWindow,
-                macroWindow,
-                observationCardinalityMinimum,
-                observationCardinalityMinimum
-            )
-        );
+        feed_ = ovlXPool == address(0)
+            ? address(
+              new OverlayV1NoReserveUniswapV3Feed(
+                  marketPool,
+                  marketBaseToken,
+                  marketQuoteToken,
+                  marketBaseAmount,
+                  microWindow,
+                  macroWindow,
+                  observationCardinalityMinimum)) 
+            : address(
+              new OverlayV1UniswapV3Feed(
+                  marketPool,
+                  marketBaseToken,
+                  marketQuoteToken,
+                  marketBaseAmount,
+                  ovlXPool,
+                  ovl,
+                  microWindow,
+                  macroWindow,
+                  observationCardinalityMinimum,
+                  observationCardinalityMinimum));
 
         // store feed registry record for
         // (marketPool, marketBaseToken, marketBaseAmount, ovlXPool) combo
