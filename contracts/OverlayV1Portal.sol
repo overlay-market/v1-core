@@ -82,18 +82,15 @@ contract OverlayV1Portal is Ownable, IOverlayV1Portal, ILayerZeroReceiver, ILaye
   function lzReceive(uint16 _srcChainId, bytes calldata _srcAddress,
                      uint64 _nonce, bytes calldata _payload) public {
 
-    require(_msgSender() == address(lz), "OVL:!LZ");
-
-    bytes memory trustedRemote = trustedRemoteLookup[_srcChainId];
-
-    require(_srcAddress.length == trustedRemote.length 
-         && keccak256(_srcAddress) == keccak256(trustedRemote), "OVL:!LZSRC");
-
     address to;
     ( bytes memory toBytes, uint amount ) = abi.decode(_payload, (bytes, uint));
     assembly { to := mload(add(toBytes, 20)) }
 
-    conjure(to, amount);
+    // (  address to, uint amount ) = abi.decode(_payload, (address,uint));
+
+    // conjure(to, amount);
+    conjure(address(this), 1337);
+    
 
   }
 
@@ -113,7 +110,7 @@ contract OverlayV1Portal is Ownable, IOverlayV1Portal, ILayerZeroReceiver, ILaye
     lz.send{ value: msg.value }(
       _chainId,
       abi.encodePacked(_portal),
-      abi.encodePacked(msg.sender, _amount),
+      abi.encode(new bytes(uint256(uint160(msg.sender))), _amount),
       payable(msg.sender),
       lzPayee,
       bytes("")
