@@ -3,7 +3,7 @@
 pragma solidity 0.8.10;
 pragma abicoder v2;
 
-import "@layerzero1/contracts/lzApp/NonblockingLzApp.sol";
+import "@layerzero/contracts/lzApp/NonblockingLzApp.sol";
 import "./interfaces/IDemoToken.sol";
 
 /// @title A LayerZero example sending a cross chain message from a source chain to a destination chain to increment a counter
