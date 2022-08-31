@@ -13,11 +13,11 @@ contract DemoToken is ERC20 {
         _mint(msg.sender, initialSupply);
     }
 
-    function mint(address _addr, uint _amount) external {
-         _mint(_addr, _amount);
+    function mint(address _addr, uint256 _amount) external {
+        _mint(_addr, _amount);
     }
 
-    function burn(address _addr, uint _amount) external {
-         _burn(_addr, _amount);
+    function burn(address _addr, uint256 _amount) external {
+        _burn(_addr, _amount);
     }
 }

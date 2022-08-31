@@ -3,6 +3,7 @@
 pragma solidity 0.8.10;
 
 interface IDemoToken {
-    function mint(address _addr, uint _amount) external; 
-    function burn(address _addr, uint _amount) external;
+    function mint(address _addr, uint256 _amount) external;
+
+    function burn(address _addr, uint256 _amount) external;
 }
