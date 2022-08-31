@@ -1,0 +1,11 @@
+[profile.default]
+src = 'contracts'
+out = 'out'
+libs = ['lib']
+remappings = [
+    '@layerzero1/=lib/solidity-examples/',
+    '@openzeppelin/=lib/openzeppelin-contracts/',
+    '@uniswap/v3-core/=lib/v3-core/',
+]
+
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
