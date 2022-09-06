@@ -169,28 +169,32 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed_without_reserve(
     market_base_amount = quanto_feed_without_reserve.marketBaseAmount()
     market_base_token = quanto_feed_without_reserve.marketBaseToken()
     market_quote_token = quanto_feed_without_reserve.marketQuoteToken()
-    timestamp = chain[-1]['timestamp']
 
-    actual = quanto_feed_without_reserve.latest()
+    for i in range(3):
 
-    seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
-    windows = [macro_window, macro_window, micro_window]
-    now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
+        chain.mine(timedelta=60)
+        timestamp = chain[-1]['timestamp']
 
-    market_avg_ticks = quanto_feed_without_reserve.consult(
-        pool_daiweth_30bps, seconds_agos, windows, now_idxs)
+        actual = quanto_feed_without_reserve.latest()
 
-    prices = []
-    has_reserve = False
-    for i in range(len(now_idxs)):
-        prices.append( quanto_feed_without_reserve.getQuoteAtTick(
-            market_avg_ticks[i], market_base_amount,
-            market_base_token, market_quote_token))
+        seconds_agos = [2 * macro_window, macro_window, micro_window, 0]
+        windows = [macro_window, macro_window, micro_window]
+        now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
-    expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
-        prices[0], 0, has_reserve)
+        market_avg_ticks = quanto_feed_without_reserve.consult(
+            pool_daiweth_30bps, seconds_agos, windows, now_idxs)
 
-    assert expect == actual
+        prices = []
+        has_reserve = False
+        for i in range(len(now_idxs)):
+            prices.append( quanto_feed_without_reserve.getQuoteAtTick(
+                market_avg_ticks[i], market_base_amount,
+                market_base_token, market_quote_token))
+
+        expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
+            prices[0], 0, has_reserve)
+
+        assert expect == actual
 
 
 def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
