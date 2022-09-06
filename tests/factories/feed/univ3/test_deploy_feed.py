@@ -1,6 +1,36 @@
-from brownie import reverts, OverlayV1UniswapV3Feed
+from brownie import reverts, OverlayV1UniswapV3Feed, OverlayV1NoReserveUniswapV3Feed
 from collections import OrderedDict
 
+def test_deploy_feed_creates_quanto_feed_without_reserve(
+        factory_without_reserve, pool_daiweth_30bps, dai, weth, alice):
+
+  market_pool = pool_daiweth_30bps
+  market_fee = 3000
+
+  market_base_token = weth
+  market_quote_token = dai
+  market_base_amount = 1e18
+
+  tx = factory_without_reserve.deployFeed(market_base_token, market_quote_token, 
+      market_fee, market_base_amount, {'from': alice})
+
+  actual_feed = tx.return_value
+
+  assert factory_without_reserve.getFeed(
+      market_pool, market_base_token, market_base_amount) == actual_feed
+  assert factory_without_reserve.isFeed(actual_feed) is True
+
+  assert 'FeedDeployed' in tx.events
+  expect_event = OrderedDict({"user": alice.address, "feed": actual_feed})
+  actual_event = tx.events['FeedDeployed']
+  assert actual_event == expect_event
+
+  feed_contract = OverlayV1NoReserveUniswapV3Feed.at(actual_feed)
+  assert feed_contract.feedFactory() == factory_without_reserve
+  assert feed_contract.marketPool() == market_pool
+  assert feed_contract.marketBaseToken() == market_base_token
+  assert feed_contract.marketQuoteToken() == market_quote_token
+  assert feed_contract.marketBaseAmount() == market_base_amount
 
 def test_deploy_feed_creates_quanto_feed(factory, pool_uniweth_30bps, uni,
                                          pool_daiweth_30bps, dai, weth,
