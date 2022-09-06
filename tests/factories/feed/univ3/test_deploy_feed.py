@@ -115,6 +115,38 @@ def test_deploy_feed_creates_inverse_feed(factory, pool_uniweth_30bps, uni,
     assert feed_contract.marketBaseAmount() == market_base_amount
 
 
+def test_deploy_no_reserve_feed_reverts_when_market_pool_not_exists(
+        factory_without_reserve, alice, bob, pool_daiweth_30bps, dai, weth):
+
+    market_base_amount = 1000000000000000000  # 1e18
+
+    # check reverts when base token not in pool
+    market_fee = 3000
+    market_base_token = bob
+    market_quote_token = dai
+    with reverts("OVLV1: !marketPool"):
+        _ = factory_without_reserve.deployFeed(
+                market_base_token, market_quote_token,
+                market_fee, market_base_amount, {"from": alice})
+
+    # check reverts when quote token not in pool
+    market_fee = 3000
+    market_base_token = weth
+    market_quote_token = bob
+    with reverts("OVLV1: !marketPool"):
+        _ = factory_without_reserve.deployFeed(
+                market_base_token, market_quote_token,
+                market_fee, market_base_amount, {"from": alice})
+
+    # check reverts when fee not in pool
+    market_fee = 215
+    market_base_token = weth
+    market_quote_token = dai
+    with reverts("OVLV1: !marketPool"):
+        _ = factory_without_reserve.deployFeed(
+                market_base_token, market_quote_token,
+                market_fee, market_base_amount, {"from": alice})
+
 def test_deploy_feed_reverts_when_market_pool_not_exists(factory, alice, bob,
                                                          pool_daiweth_30bps,
                                                          pool_uniweth_30bps,
@@ -195,6 +227,24 @@ def test_deploy_feed_reverts_when_ovlx_pool_not_exists(factory, alice, bob,
                                ovlweth_base_token, ovlweth_quote_token,
                                ovlweth_fee, {"from": alice})
 
+def test_deploy_no_reserve_feed_reverts_when_feed_already_exists(
+        factory_without_reserve, dai, 
+        weth, pool_daiweth_30bps, alice):
+
+    market_pool = pool_daiweth_30bps
+    market_fee = 3000
+    market_base_token = weth
+    market_quote_token = dai
+    market_base_amount = 1000000000000000000  # 1e18
+
+    # Check feed already exists first from prior unit test above
+    feed = factory_without_reserve.getFeed(market_pool, market_base_token, market_base_amount)
+    assert factory_without_reserve.isFeed(feed) is True
+
+    # check reverts when attempt to deploy again
+    with reverts("OVLV1: feed already exists"):
+        _ = factory_without_reserve.deployFeed(market_base_token, market_quote_token,
+                               market_fee, market_base_amount, {"from": alice})
 
 def test_deploy_feed_reverts_when_feed_already_exists(factory, uni, dai, weth,
                                                       pool_daiweth_30bps,
