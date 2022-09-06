@@ -1,2 +1,4 @@
 eth-brownie>=1.16.3,<2.0.0
 python-dotenv
+gnosis-py==3.6.0
+ape_safe==0.5.0
