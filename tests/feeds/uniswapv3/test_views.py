@@ -18,6 +18,7 @@ def test_get_quote_at_tick_for_daiweth_without_reserve(
     )
     assert approx(expect_quote_amount) == actual_quote_amount
 
+
 def test_get_quote_at_tick_for_daiweth(dai, weth, quanto_feed):
     # from Uniswap whitepaper: price = 1.0001^tick
     tick = -82944  # num_dai / num_weth ~ 4000

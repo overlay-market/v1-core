@@ -1,5 +1,6 @@
 from brownie import chain
 
+
 def test_latest_updates_data_on_first_call_for_quanto_feed_without_reserve(
         pool_daiweth_30bps,
         quanto_feed_without_reserve):
@@ -22,14 +23,15 @@ def test_latest_updates_data_on_first_call_for_quanto_feed_without_reserve(
     prices = []
     has_reserve = False
     for i in range(len(now_idxs)):
-        prices.append( quanto_feed_without_reserve.getQuoteAtTick(
+        prices.append(quanto_feed_without_reserve.getQuoteAtTick(
             market_avg_ticks[i], market_base_amount,
             market_base_token, market_quote_token))
 
     expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
-        prices[0], 0, has_reserve)
+              prices[0], 0, has_reserve)
 
     assert expect == actual
+
 
 def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
                                                            pool_uniweth_30bps,
@@ -161,6 +163,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         assert expect == actual
 
+
 def test_latest_updates_data_on_many_calls_for_quanto_feed_without_reserve(
         pool_daiweth_30bps,
         quanto_feed_without_reserve):
@@ -187,12 +190,12 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed_without_reserve(
         prices = []
         has_reserve = False
         for i in range(len(now_idxs)):
-            prices.append( quanto_feed_without_reserve.getQuoteAtTick(
+            prices.append(quanto_feed_without_reserve.getQuoteAtTick(
                 market_avg_ticks[i], market_base_amount,
                 market_base_token, market_quote_token))
 
         expect = (timestamp, micro_window, macro_window, prices[2], prices[1],
-            prices[0], 0, has_reserve)
+                  prices[0], 0, has_reserve)
 
         assert expect == actual
 

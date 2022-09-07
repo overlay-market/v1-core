@@ -1,4 +1,6 @@
-from brownie import OverlayV1NoReserveUniswapV3Factory, OverlayV1UniswapV3Factory, reverts
+from brownie import (
+    OverlayV1NoReserveUniswapV3Factory, OverlayV1UniswapV3Factory, reverts
+)
 
 
 def test_deploy_factory_reverts_when_cardinality_lt_macro(alice, uni,
@@ -16,7 +18,10 @@ def test_deploy_factory_reverts_when_cardinality_lt_macro(alice, uni,
                          micro_window, macro_window, cardinality_min,
                          avg_block_time)
 
-def test_deploy_no_reserve_factory_reverts_when_cardinality_lt_macro(alice, uni_factory):
+
+def test_deploy_no_reserve_factory_reverts_when_cardinality_lt_macro(
+        alice,
+        uni_factory):
     micro_window = 600
     macro_window = 3600
     avg_block_time = 14

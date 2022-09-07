@@ -26,16 +26,17 @@ def test_consult_for_daiweth(pool_daiweth_30bps, quanto_feed):
         assert approx(expect_avg_tick, rel=1e-4) == actual_avg_ticks[i]
         assert approx(expect_avg_liq) == actual_avg_liqs[i]
 
+
 def test_consult_for_daiweth_without_reserve(pool_daiweth_30bps,
-      quanto_feed_without_reserve):
+                                             quanto_feed_without_reserve):
     seconds_agos = [7200, 3600, 600, 0]
     windows = [3600, 3600, 600]
     now_idxs = [1, len(seconds_agos)-1, len(seconds_agos)-1]
 
     tick_cums, _ = pool_daiweth_30bps.observe(seconds_agos)
-    actual_avg_ticks = quanto_feed_without_reserve.consult(pool_daiweth_30bps, 
-                                                           seconds_agos, 
-                                                           windows, 
+    actual_avg_ticks = quanto_feed_without_reserve.consult(pool_daiweth_30bps,
+                                                           seconds_agos,
+                                                           windows,
                                                            now_idxs)
     print("tick cums", tick_cums)
     print("actual avg ticks", actual_avg_ticks)
@@ -43,6 +44,7 @@ def test_consult_for_daiweth_without_reserve(pool_daiweth_30bps,
     for i in range(len(windows)):
         expect_avg_tick = int((tick_cums[now_idxs[i]]-tick_cums[i])/windows[i])
         assert approx(expect_avg_tick, rel=1e-4) == actual_avg_ticks[i]
+
 
 def test_consult_for_uniweth(pool_uniweth_30bps, inverse_feed):
     seconds_agos = [7200, 3600, 600, 0]
