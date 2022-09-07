@@ -11,7 +11,6 @@ import "../../interfaces/feeds/uniswapv3/IOverlayV1NoReserveUniswapV3Feed.sol";
 import "../OverlayV1Feed.sol";
 
 contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, OverlayV1Feed {
-
     // relevant pools for the feed
     address public immutable marketPool;
 
@@ -24,7 +23,6 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
-
     constructor(
         address _marketPool,
         address _marketBaseToken,
@@ -34,14 +32,17 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
         uint256 _macroWindow,
         uint256 _cardinalityMarketMinimum
     ) OverlayV1Feed(_microWindow, _macroWindow) {
-
         address _marketToken0 = IUniswapV3Pool(_marketPool).token0();
         address _marketToken1 = IUniswapV3Pool(_marketPool).token1();
 
-        require( _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1: marketToken != marketBaseToken");
-        require( _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-            "OVLV1: marketToken != marketQuoteToken");
+        require(
+            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
+            "OVLV1: marketToken != marketBaseToken"
+        );
+        require(
+            _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
+            "OVLV1: marketToken != marketQuoteToken"
+        );
 
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
@@ -64,13 +65,18 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
         // consult to market pool
         // secondsAgo.length = 4; twaps.length = liqs.length = 3
-        (   uint32[] memory secondsAgos,
+        (
+            uint32[] memory secondsAgos,
             uint32[] memory windows,
             uint256[] memory nowIdxs
         ) = _inputsToConsultMarketPool(microWindow, macroWindow);
 
         int24[] memory arithmeticMeanTicksMarket = consult(
-          marketPool, secondsAgos, windows, nowIdxs);
+            marketPool,
+            secondsAgos,
+            windows,
+            nowIdxs
+        );
 
         // in terms of prices, will use for indexes
         //  0: priceOneMacroWindowAgo: prices[0]
@@ -165,12 +171,9 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
         uint32[] memory secondsAgos,
         uint32[] memory windows,
         uint256[] memory nowIdxs
-    )
-        public
-        view
-        returns (int24[] memory arithmeticMeanTicks_)
-    {
-        (   int56[] memory tickCumulatives,
+    ) public view returns (int24[] memory arithmeticMeanTicks_) {
+        (
+            int56[] memory tickCumulatives,
             uint160[] memory secondsPerLiquidityCumulativeX128s
         ) = IUniswapV3Pool(pool).observe(secondsAgos);
 
@@ -215,5 +218,4 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
                 : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
         }
     }
-
 }

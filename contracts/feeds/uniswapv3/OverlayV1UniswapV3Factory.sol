@@ -77,17 +77,20 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         );
 
         // Create a new Feed contract
-        feed_ = address( new OverlayV1UniswapV3Feed(
-                  marketPool,
-                  marketBaseToken,
-                  marketQuoteToken,
-                  marketBaseAmount,
-                  ovlXPool,
-                  ovl,
-                  microWindow,
-                  macroWindow,
-                  observationCardinalityMinimum,
-                  observationCardinalityMinimum));
+        feed_ = address(
+            new OverlayV1UniswapV3Feed(
+                marketPool,
+                marketBaseToken,
+                marketQuoteToken,
+                marketBaseAmount,
+                ovlXPool,
+                ovl,
+                microWindow,
+                macroWindow,
+                observationCardinalityMinimum,
+                observationCardinalityMinimum
+            )
+        );
 
         // store feed registry record for
         // (marketPool, marketBaseToken, marketBaseAmount, ovlXPool) combo

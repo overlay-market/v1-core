@@ -22,10 +22,7 @@ interface IOverlayV1NoReserveUniswapV3Feed is IOverlayV1Feed {
         uint32[] memory secondsAgos,
         uint32[] memory windows,
         uint256[] memory nowIdxs
-    )
-        external
-        view
-        returns (int24[] memory arithmeticMeanTicks_);
+    ) external view returns (int24[] memory arithmeticMeanTicks_);
 
     // COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
     function getQuoteAtTick(
@@ -34,5 +31,4 @@ interface IOverlayV1NoReserveUniswapV3Feed is IOverlayV1Feed {
         address baseToken,
         address quoteToken
     ) external view returns (uint256 quoteAmount_);
-
 }

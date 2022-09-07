@@ -4,7 +4,6 @@ pragma solidity 0.8.10;
 import "../IOverlayV1FeedFactory.sol";
 
 interface IOverlayV1NoReserveUniswapV3FeedFactory is IOverlayV1FeedFactory {
-
     function uniV3Factory() external view returns (address);
 
     // @dev minimum observationCardinality needed for micro and macro windows

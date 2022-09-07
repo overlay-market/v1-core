@@ -9,7 +9,10 @@ import "../../interfaces/feeds/uniswapv3/IOverlayV1NoReserveUniswapV3FeedFactory
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1NoReserveUniswapV3Feed.sol";
 
-contract OverlayV1NoReserveUniswapV3Factory is IOverlayV1NoReserveUniswapV3FeedFactory, OverlayV1FeedFactory {
+contract OverlayV1NoReserveUniswapV3Factory is
+    IOverlayV1NoReserveUniswapV3FeedFactory,
+    OverlayV1FeedFactory
+{
     address public immutable uniV3Factory;
 
     // @dev minimum observationCardinality needed for micro and macro windows
@@ -61,14 +64,17 @@ contract OverlayV1NoReserveUniswapV3Factory is IOverlayV1NoReserveUniswapV3FeedF
         );
 
         // Create a new Feed contract
-        feed_ = address(new OverlayV1NoReserveUniswapV3Feed(
-            marketPool,
-            marketBaseToken,
-            marketQuoteToken,
-            marketBaseAmount,
-            microWindow,
-            macroWindow,
-            observationCardinalityMinimum));
+        feed_ = address(
+            new OverlayV1NoReserveUniswapV3Feed(
+                marketPool,
+                marketBaseToken,
+                marketQuoteToken,
+                marketBaseAmount,
+                microWindow,
+                macroWindow,
+                observationCardinalityMinimum
+            )
+        );
 
         // store feed registry record for
         // (marketPool, marketBaseToken, marketBaseAmount, ovlXPool) combo
