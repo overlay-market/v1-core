@@ -8,19 +8,21 @@ def main():
     """
         Deploys a vesting vault contract and create vesting for a address
     """
-    VestingVault = project.load(config["dependencies"][2]).VestingVault
-    IERC20 = project.load(config["dependencies"][0]).IERC20
+    VestingVaultProject = project.load(config["dependencies"][2])
+    VestingVault = VestingVaultProject.VestingVault
+    ERC20 = project.load(config["dependencies"][0]).ERC20
+
     account = accounts[0]
     vesting_vault = VestingVault.deploy(DAI_ADDRESS, 2, {"from": account}, publish_source=True)
 
-    vesting_vault.initalize(account.address, account.address)
+    vesting_vault.initialize(account.address, account.address, {"from": account})
 
-    DAI = IERC20.at(DAI_ADDRESS)
+    DAI = ERC20.at(DAI_ADDRESS)
 
     DAI.approve(vesting_vault.address, 1000000e18, {"from": account})
 
     vesting_vault.deposit(1000000e18, {"from": account})
 
-    vesting_vault.addGrantAndDelegate(account.address, 10000e18, 0, 7549180, 7549100, ZERO_ADDRESS)
+    vesting_vault.addGrantAndDelegate(account.address, 10000e18, 0, 7553250, 7553150, ZERO_ADDRESS, {"from": account})
 
 

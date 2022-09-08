@@ -12,7 +12,7 @@ dotenv: .env
 dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.5.0
   - Uniswap/v3-core@1.0.0
-  - overlay-market/council@1.0.2
+  - overlay-market/council@1.0.3
 
 wallets:
   from_key: ${PRIVATE_KEY}
@@ -26,4 +26,4 @@ compiler:
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.5.0"
       - "@uniswap/v3-core=Uniswap/v3-core@1.0.0"
-      - "@overlay/council=overlay-market/council@1.0.2"
+      - "@overlay/council=overlay-market/council@1.0.3"
