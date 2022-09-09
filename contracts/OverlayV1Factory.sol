@@ -83,6 +83,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // events for factory functions
     event MarketDeployed(address indexed user, address market, address feed);
     event FeedFactoryAdded(address indexed user, address feedFactory);
+    event FeedFactoryRemoved(address indexed user, address feedFactory);
     event FeeRecipientUpdated(address indexed user, address recipient);
 
     // governor modifier for governance sensitive functions
@@ -107,6 +108,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(!isFeedFactory[feedFactory], "OVLV1: feed factory already supported");
         isFeedFactory[feedFactory] = true;
         emit FeedFactoryAdded(msg.sender, feedFactory);
+    }
+
+    /// @dev adds a supported feed factory
+    function removeFeedFactory(address feedFactory) external onlyGovernor {
+        require(isFeedFactory[feedFactory], "OVLV1: address not feed factory");
+        isFeedFactory[feedFactory] = false;
+        emit FeedFactoryRemoved(msg.sender, feedFactory);
     }
 
     /// @dev deploys a new market contract
