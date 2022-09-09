@@ -35,9 +35,11 @@ def fee_recipient(accounts):
 def fake_factory(accounts):
     yield accounts[5]
 
+
 @pytest.fixture(scope="module")
 def guardian(accounts):
     yield accounts[6]
+
 
 @pytest.fixture(scope="module")
 def minter_role():
@@ -53,9 +55,11 @@ def burner_role():
 def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
+
 @pytest.fixture(scope="module")
 def guardian_role():
     yield web3.solidityKeccak(['string'], ["GUARDIAN"])
+
 
 @pytest.fixture(scope="module", params=[8000000])
 def create_token(gov, alice, bob, minter_role, request):
