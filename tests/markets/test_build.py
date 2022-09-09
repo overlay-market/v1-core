@@ -852,7 +852,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
 
 
 def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
-                                         alice, gov):
+                                         alice, guardian):
     # build inputs
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -871,7 +871,7 @@ def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(feed, {"from": gov})
+    factory.shutdown(feed, {"from": guardian})
 
     # attempt to build again
     with reverts("OVLV1: shutdown"):

@@ -92,6 +92,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _;
     }
 
+    // governor modifier for governance sensitive functions
+    modifier onlyGuardian() {
+        require(ovl.hasRole(GUARDIAN_ROLE, msg.sender), "OVLV1: !guardian");
+        _;
+    }
+
     constructor(address _ovl, address _feeRecipient) {
         // set ovl
         ovl = IOverlayV1Token(_ovl);
@@ -189,7 +195,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Shut down of market by governance in the event of an emergency
-    function shutdown(address feed) external onlyGovernor {
+    function shutdown(address feed) external onlyGuardian {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.shutdown();
         emit EmergencyShutdown(msg.sender, address(market));

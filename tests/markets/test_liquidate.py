@@ -1728,7 +1728,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
 
 def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
-                                             ovl, alice, gov, rando):
+                                             ovl, alice, guardian, rando):
     # build inputs
     input_collateral = int(1e18)
     input_leverage = int(2e18)
@@ -1760,7 +1760,7 @@ def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(mock_feed, {"from": gov})
+    factory.shutdown(mock_feed, {"from": guardian})
 
     # attempt to liquidate
     with reverts("OVLV1: shutdown"):
