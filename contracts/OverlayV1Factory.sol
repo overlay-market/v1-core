@@ -116,7 +116,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         emit FeedFactoryAdded(msg.sender, feedFactory);
     }
 
-    /// @dev adds a supported feed factory
+    /// @dev removes a supported feed factory
     function removeFeedFactory(address feedFactory) external onlyGovernor {
         require(isFeedFactory[feedFactory], "OVLV1: address not feed factory");
         isFeedFactory[feedFactory] = false;

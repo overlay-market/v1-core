@@ -49,3 +49,7 @@ def test_remove_feed_factory_reverts_when_not_gov(factory, rando, gov):
 
     with reverts("OVLV1: !governor"):
         _ = factory.removeFeedFactory(rando, {"from": rando})
+
+def test_remove_feed_factory_reverts_when_not_feed_factory(factory, alice, gov):
+    with reverts("OVLV1: address not feed factory"):
+        _ = factory.removeFeedFactory(alice, {"from": gov})
