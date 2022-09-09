@@ -27,4 +27,5 @@ def main():
     vesting_vault.deposit(1000000e18, {"from": account})
 
     vesting_vault.addGrantAndDelegate(
-        account.address, 10000e18, 0, 7553250, 7553150, ZERO_ADDRESS, {"from": account})
+        account.address, 10000e18, 0, 7553250, 7553150,
+        ZERO_ADDRESS, {"from": account})
