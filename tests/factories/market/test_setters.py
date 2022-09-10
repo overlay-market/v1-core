@@ -166,9 +166,9 @@ def test_shutdown(factory, market, guardian):
     assert actual_event == expect_event
 
 
-def test_shutdown_reverts_when_not_gov(factory, market, rando):
+def test_shutdown_reverts_when_not_guardian(factory, market, rando):
     feed = market.feed()
 
-    # can't shutdown when not a governor
+    # can't shutdown when not a guardian
     with reverts("OVLV1: !guardian"):
         _ = factory.shutdown(feed, {"from": rando})
