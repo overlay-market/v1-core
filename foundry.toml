@@ -1,0 +1,7 @@
+[default]
+script = 'scripts'
+src = 'contracts'
+out = 'build'
+test = 'tests'
+libs = ['lib']
+# See more config options https://github.com/foundry-rs/foundry/tree/master/config
