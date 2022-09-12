@@ -2,6 +2,7 @@ __pycache__/
 node_modules/
 .history
 .hypothesis/
+broadcast/
 build/
 reports/
 cache/
