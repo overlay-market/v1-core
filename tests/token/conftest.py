@@ -37,6 +37,11 @@ def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
+@pytest.fixture(scope="module")
+def guardian_role():
+    yield web3.solidityKeccak(['string'], ["GUARDIAN"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
 def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
@@ -99,8 +104,22 @@ def create_governor(token, gov, accounts, governor_role):
 
 
 @pytest.fixture(scope="module")
+def create_guardian(token, gov, accounts, guardian_role):
+    def create_guardian(tok=token, governance=gov):
+        tok.grantRole(guardian_role, accounts[7], {"from": gov})
+        return accounts[7]
+
+    yield create_guardian
+
+
+@pytest.fixture(scope="module")
 def governor(create_governor):
     yield create_governor()
+
+
+@pytest.fixture(scope="module")
+def guardian(create_guardian):
+    yield create_guardian()
 
 
 @pytest.fixture(scope="module")
