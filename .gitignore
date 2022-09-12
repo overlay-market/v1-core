@@ -4,6 +4,7 @@ node_modules/
 .hypothesis/
 build/
 reports/
+cache/
 .env
 *.sw[op]
 .DS_Store
