@@ -5,7 +5,7 @@ import "../../../contracts/feeds/uniswapv3/OverlayV1NoReserveUniswapV3Factory.so
 
 contract DeployNoReserveUniswapV3FeedFactory is Script {
 
-    function run() external{
+    function run() virtual external {
         
         address WALLET = vm.envAddress("WALLET");
         vm.startBroadcast(WALLET);

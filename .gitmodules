@@ -7,9 +7,6 @@
 [submodule "lib/v3-core"]
 	path = lib/v3-core
 	url = https://github.com/Uniswap/v3-core
-[submodule "lib/v1-periphery"]
-	path = lib/v1-periphery
-	url = https://github.com/overlay-market/v1-periphery
 [submodule "lib/council"]
 	path = lib/council
 	url = https://github.com/overlay-market/council

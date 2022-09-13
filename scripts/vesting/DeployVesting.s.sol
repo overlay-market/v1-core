@@ -11,11 +11,11 @@ contract DeployVesting is Script {
     vm.startBroadcast(WALLET);
 
 
-    vm.endBroadcast();
+    vm.stopBroadcast();
 
   }
 
-  function deployVestingValut () {
+  function deployVestingVault () internal {
 
     address OVL = vm.envAddress("OVL_TOKEN");
 

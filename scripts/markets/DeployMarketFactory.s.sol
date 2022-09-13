@@ -5,25 +5,29 @@ import "forge-std/Script.sol";
 import "../../contracts/OverlayV1Factory.sol";
 
 
-contract DeployFactory is Script {
+contract DeployMarketFactory is Script {
 
-  function run () external {
+  function run () virtual external {
 
     address deployer = vm.envAddress("WALLET");
     vm.startBroadcast(deployer);
 
-    deployFactory();
+    deployMarketFactory(address(0));
 
     vm.stopBroadcast();
 
   }
   
-  function deployFactory () internal {
+  function deployMarketFactory (address _ovl) internal returns (address) {
 
-    address OVL_TOKEN = vm.envAddress("OVL_TOKEN");
+    address OVL_TOKEN = _ovl == address(0) 
+      ? vm.envAddress("OVL_TOKEN") 
+      : _ovl;
     address FOUNDATION = vm.envAddress("FOUNDATION");
 
     OverlayV1Factory factory = new OverlayV1Factory(OVL_TOKEN, FOUNDATION);
+
+    return address(factory);
 
   }
 

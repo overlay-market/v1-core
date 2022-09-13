@@ -8,9 +8,9 @@ remappings = [
     '@layerzero1/=lib/solidity-examples/',
     '@openzeppelin/=lib/openzeppelin-contracts/',
     '@uniswap/v3-core/=lib/v3-core/',
-    '@overlay/v1-periphery/=lib/v1-periphery',
-    '@overlay/v1-core/=.',
-    '@overlay/council/=lib/council'
+    '@overlay/v1-periphery/=lib/v1-periphery/',
+    '@overlay/v1-core/=./',
+    '@overlay/council/=lib/council/'
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

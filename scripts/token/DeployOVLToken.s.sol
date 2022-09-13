@@ -8,21 +8,23 @@ contract DeployOVLToken is Script {
   event logAddr(address addr);
   event logUint(uint256 num);
 
-  function run() external {
+  function run() virtual external {
 
     address WALLET = vm.envAddress("WALLET");
     vm.startBroadcast(WALLET);
 
-    deployOVL();
+    deployOVLToken();
 
     vm.stopBroadcast();
 
   }
 
-  function deployOVL () internal {
+  function deployOVLToken () internal returns (address) {
 
     address FOUNDATION = vm.envAddress("FOUNDATION");
     OverlayV1Token token = new OverlayV1Token(FOUNDATION);
+
+    return address(token);
 
   }
 
