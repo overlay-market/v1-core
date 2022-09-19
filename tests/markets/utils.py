@@ -2,7 +2,7 @@ from brownie import web3
 from decimal import Decimal
 from enum import Enum
 from hexbytes import HexBytes
-from math import log
+from math import log, exp, sqrt
 from typing import Any
 
 
@@ -70,3 +70,35 @@ def price_to_tick(price: int) -> int:
     price = 1.0001 ** tick
     """
     return int(log(Decimal(price) / Decimal(1e18)) / log(Decimal(1.0001)))
+
+
+def oi_after_funding(time_delta: int,
+                     oi_long: Decimal,
+                     oi_short: Decimal,
+                     k: Decimal) -> (Decimal, Decimal):
+    """
+    Return the long oi and short oi for market after applying funding rates
+    """
+    if time_delta <= 0:
+        return (oi_long, oi_short)
+    is_long_overweighted = oi_long > oi_short
+    (oi_overweight, oi_underweight) = (
+        oi_long, oi_short) if is_long_overweighted else (oi_short, oi_long)
+    oi_total = oi_overweight + oi_underweight
+    oi_imabalance = oi_overweight - oi_underweight
+    oi_invariant = oi_underweight * oi_overweight
+
+    if oi_imabalance == 0 or oi_total == 0:
+        return (oi_long, oi_short)
+
+    expect_oi = oi_total * Decimal(
+        sqrt(1 - (oi_imabalance/oi_total)**2 * Decimal(
+            1 - exp(-4*k*time_delta))))
+    expect_oi_imb = oi_imabalance * Decimal(exp(-2*k*time_delta))
+
+    expect_oi_overweight = (expect_oi + expect_oi_imb) / 2
+    expect_oi_underweight = oi_invariant / expect_oi_overweight
+
+    return (expect_oi_overweight,
+            expect_oi_underweight) if is_long_overweighted else (
+                expect_oi_underweight, expect_oi_overweight)
