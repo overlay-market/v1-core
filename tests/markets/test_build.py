@@ -3,7 +3,7 @@ from pytest import approx
 from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from math import log
+from math import log, exp, sqrt
 from random import randint
 
 from .utils import (
@@ -12,6 +12,7 @@ from .utils import (
     mid_from_feed,
     price_to_tick,
     tick_to_price,
+    get_new_oi_shares,
     RiskParameter
 )
 
@@ -885,6 +886,7 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     n = 10
     total_notional_long = Decimal(10000)
     total_notional_short = Decimal(7500)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
 
     # alice goes long and bob goes short n times
     input_total_notional_long = total_notional_long * Decimal(1e18)
@@ -915,9 +917,19 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
     is_long_alice = True
     is_long_bob = False
 
+    input_oi_alice = []
+    input_oi_bob = []
+    oi_long_calc_list = []
+    oi_short_calc_list = []
+    oi_long_shares_list = []
+    oi_short_shares_list = []
+
     for i in range(n):
         # mine chain for funding to occur over timedelta
-        chain.mine(timedelta=86400)
+        dt = 86400
+        chain.mine(timedelta=dt)
+        data = feed.latest()
+        mid_price = mid_from_feed(data)
 
         # choose a random leverage
         leverage_alice = randint(1, leverage_cap)
@@ -933,6 +945,9 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         input_collateral_bob = int(collateral_bob * Decimal(1e18))
         input_leverage_alice = int(leverage_alice * Decimal(1e18))
         input_leverage_bob = int(leverage_bob * Decimal(1e18))
+        input_oi_alice.append(
+            input_collateral_alice*input_leverage_alice/mid_price)
+        input_oi_bob.append(input_collateral_bob*input_leverage_bob/mid_price)
 
         # NOTE: slippage tests in test_slippage.py
         # NOTE: setting to min/max here, so never reverts with slippage>max
@@ -940,17 +955,59 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         input_price_limit_bob = 2**256-1 if is_long_bob else 0
 
         # NOTE: updating market to avoid doing funding calcs for expects
-        market.update({"from": alice})
+        tx_update = market.update({"from": alice})
+        end_time = tx_update.timestamp
+
+        if i == 0:
+            assert market.oiLong() == 0
+            assert market.oiShort() == 0
+            assert market.oiLongShares() == 0
+            assert market.oiShortShares() == 0
+
+        if i > 0:
+            dt_actual = end_time - start_time  # NOQA
+            oi_calc = Decimal(oi_long_calc_list[-1]
+                              + oi_short_calc_list[-1]
+                              + input_oi_bob[i-1])
+            oi_imb_calc = Decimal(oi_long_calc_list[-1]
+                                  - oi_short_calc_list[-1]
+                                  - input_oi_bob[i-1])
+            future_oi_calc = oi_calc * Decimal(
+                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
+                    1 - exp(-4*k*dt_actual))))
+            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
+
+            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
+            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+
+            assert approx(market.oiLong()) == oi_long_calc
+            assert approx(market.oiShort()) == oi_short_calc
+
+            oi_long_calc_list.append(market.oiLong())
+            oi_short_calc_list.append(market.oiShort())
+
+            assert approx(market.oiLongShares()) == oi_long_shares_list[-1]
+            if len(oi_short_shares_list) == 1:
+                assert approx(market.oiShortShares()) == input_oi_bob[0]
+                oi_short_shares_list.append(market.oiShortShares())
+            else:
+                total_oi_shares_short = \
+                    get_new_oi_shares(input_oi_bob[i-1],
+                                      pre_build_oi_short,  # NOQA
+                                      oi_short_shares_list[-1])
+                assert approx(market.oiShortShares()) == total_oi_shares_short
+                oi_short_shares_list.append(market.oiShortShares())
 
         # cache current aggregate long oi for comparison later
         expect_oi_long = market.oiLong()
         expect_oi_long_shares = market.oiLongShares()
+        pre_build_oi_long = expect_oi_long
 
         # build position for alice
         tx_alice = market.build(input_collateral_alice, input_leverage_alice,
                                 is_long_alice, input_price_limit_alice,
                                 {"from": alice})
-
+        start_time = tx_alice.timestamp
         actual_pos_id_alice = tx_alice.return_value
         expect_pos_id_alice = expect_pos_id
 
@@ -1019,19 +1076,69 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
         expect_pos_id += 1
 
         # mine chain another timedelta
-        chain.mine(timedelta=86400)
+        chain.mine(timedelta=dt)
+        tx_update = market.update({"from": bob})
+        end_time = tx_update.timestamp
 
-        # NOTE: updating market to avoid doing funding calcs for expects
-        market.update({"from": bob})
+        if i == 0:
+            dt_actual = end_time - start_time
+            oi_calc = Decimal(input_oi_alice[0])
+            oi_imb_calc = oi_calc
+            future_oi_calc = oi_calc * Decimal(
+                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
+                    1 - exp(-4*k*dt_actual))))
+            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
+
+            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
+            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+
+            assert approx(market.oiLong()) == oi_long_calc
+            assert market.oiShort() == 0
+            assert approx(market.oiLongShares()) == input_oi_alice[0]
+            assert market.oiShortShares() == 0
+
+            oi_long_calc_list.append(market.oiLong())
+            oi_short_calc_list.append(0)
+            oi_long_shares_list.append(market.oiLongShares())
+            oi_short_shares_list.append(market.oiShortShares())
+
+        if i > 0:
+            dt_actual = end_time - start_time
+            oi_calc = Decimal((input_oi_alice[i] + oi_long_calc_list[-1])
+                              + (oi_short_calc_list[-1]))
+            oi_imb_calc = Decimal((input_oi_alice[i] + oi_long_calc_list[-1])
+                                  - (oi_short_calc_list[-1]))
+            future_oi_calc = oi_calc * Decimal(
+                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
+                    1 - exp(-4*k*dt_actual))))
+            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
+
+            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
+            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+
+            assert approx(market.oiLong()) == oi_long_calc
+            assert approx(market.oiShort()) == oi_short_calc
+
+            total_oi_shares_long = get_new_oi_shares(input_oi_alice[i],
+                                                     pre_build_oi_long,
+                                                     oi_long_shares_list[-1])
+            assert approx(market.oiLongShares()) == total_oi_shares_long
+            oi_long_shares_list.append(market.oiLongShares())
+            assert approx(market.oiShortShares()) == oi_short_shares_list[-1]
+
+            oi_long_calc_list.append(market.oiLong())
+            oi_short_calc_list.append(market.oiShort())
 
         # cache current aggregate short oi for comparison later
         expect_oi_short = market.oiShort()
         expect_oi_short_shares = market.oiShortShares()
+        pre_build_oi_short = expect_oi_short  # NOQA
 
         # build position for bob
         tx_bob = market.build(input_collateral_bob, input_leverage_bob,
                               is_long_bob, input_price_limit_bob,
                               {"from": bob})
+        start_time = tx_bob.timestamp
 
         actual_pos_id_bob = tx_bob.return_value
         expect_pos_id_bob = expect_pos_id

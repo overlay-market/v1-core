@@ -70,3 +70,12 @@ def price_to_tick(price: int) -> int:
     price = 1.0001 ** tick
     """
     return int(log(Decimal(price) / Decimal(1e18)) / log(Decimal(1.0001)))
+
+
+def get_new_oi_shares(new_oi: float,
+                      total_oi: float,
+                      oi_shares: float) -> float:
+    """
+    Calculates new total OI shares as a result of adding OI
+    """
+    return ((new_oi/total_oi) * oi_shares) + oi_shares
