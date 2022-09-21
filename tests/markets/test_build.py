@@ -12,6 +12,7 @@ from .utils import (
     mid_from_feed,
     price_to_tick,
     tick_to_price,
+    oi_after_funding,
     get_new_oi_shares,
     RiskParameter
 )
@@ -966,19 +967,13 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         if i > 0:
             dt_actual = end_time - start_time  # NOQA
-            oi_calc = Decimal(oi_long_calc_list[-1]
-                              + oi_short_calc_list[-1]
-                              + input_oi_bob[i-1])
-            oi_imb_calc = Decimal(oi_long_calc_list[-1]
-                                  - oi_short_calc_list[-1]
-                                  - input_oi_bob[i-1])
-            future_oi_calc = oi_calc * Decimal(
-                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
-                    1 - exp(-4*k*dt_actual))))
-            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
-
-            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
-            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+            oi_long_calc, oi_short_calc = \
+                oi_after_funding(
+                    dt_actual,
+                    Decimal(oi_long_calc_list[-1]),
+                    Decimal(oi_short_calc_list[-1] + input_oi_bob[i-1]),
+                    k
+                    )
 
             assert approx(market.oiLong()) == oi_long_calc
             assert approx(market.oiShort()) == oi_short_calc
@@ -1082,15 +1077,13 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         if i == 0:
             dt_actual = end_time - start_time
-            oi_calc = Decimal(input_oi_alice[0])
-            oi_imb_calc = oi_calc
-            future_oi_calc = oi_calc * Decimal(
-                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
-                    1 - exp(-4*k*dt_actual))))
-            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
-
-            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
-            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+            oi_long_calc, oi_short_calc = \
+                oi_after_funding(
+                    dt_actual,
+                    Decimal(input_oi_alice[0]),
+                    Decimal(0),
+                    k
+                    )
 
             assert approx(market.oiLong()) == oi_long_calc
             assert market.oiShort() == 0
@@ -1104,17 +1097,13 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
 
         if i > 0:
             dt_actual = end_time - start_time
-            oi_calc = Decimal((input_oi_alice[i] + oi_long_calc_list[-1])
-                              + (oi_short_calc_list[-1]))
-            oi_imb_calc = Decimal((input_oi_alice[i] + oi_long_calc_list[-1])
-                                  - (oi_short_calc_list[-1]))
-            future_oi_calc = oi_calc * Decimal(
-                sqrt(1 - (oi_imb_calc/oi_calc)**2 * Decimal(
-                    1 - exp(-4*k*dt_actual))))
-            future_oi_imb = oi_imb_calc * Decimal(exp(-2*k*dt_actual))
-
-            oi_long_calc = int((future_oi_calc + future_oi_imb) / 2)
-            oi_short_calc = int((future_oi_calc - future_oi_imb) / 2)
+            oi_long_calc, oi_short_calc = \
+                oi_after_funding(
+                    dt_actual,
+                    Decimal(input_oi_alice[i] + oi_long_calc_list[-1]),
+                    Decimal(oi_short_calc_list[-1]),
+                    k
+                    )
 
             assert approx(market.oiLong()) == oi_long_calc
             assert approx(market.oiShort()) == oi_short_calc
