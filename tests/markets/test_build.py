@@ -3,7 +3,7 @@ from pytest import approx
 from brownie import chain, reverts
 from brownie.test import given, strategy
 from decimal import Decimal
-from math import log, exp, sqrt
+from math import log
 from random import randint
 
 from .utils import (
@@ -132,6 +132,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
 def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
     trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
@@ -160,6 +161,7 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
+    start_time = tx.timestamp
 
     # calculate oi
     data = feed.latest()
@@ -193,9 +195,19 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
 
     # pass some time for funding to have oi deviate from oiShares
     chain.mine(timedelta=604800)
-    _ = market.update({"from": alice})
+    tx = market.update({"from": alice})
+    end_time = tx.timestamp
 
     # cache prior oi and oiShares aggregate values after update
+    calc_oi_long, calc_oi_short = \
+        oi_after_funding(
+            end_time - start_time,
+            Decimal(oi * Decimal(1e18)) if is_long else Decimal(0),
+            Decimal(0) if is_long else Decimal(oi * Decimal(1e18)),
+            k)
+    assert approx(market.oiLong()) == calc_oi_long
+    assert approx(market.oiShort()) == calc_oi_short
+
     expect_oi = market.oiLong() if is_long else market.oiShort()
     expect_oi_shares = market.oiLongShares() \
         if is_long else market.oiShortShares()
