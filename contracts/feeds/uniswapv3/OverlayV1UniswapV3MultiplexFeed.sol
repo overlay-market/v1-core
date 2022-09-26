@@ -9,7 +9,7 @@ import "../../libraries/uniswap/v3-core/TickMath.sol";
 
 import "../OverlayV1Feed.sol";
 
-contract OverlayV1UniswapV3InverseFeed is OverlayV1Feed {
+contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
     uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
 
     // relevant pools for the feed
