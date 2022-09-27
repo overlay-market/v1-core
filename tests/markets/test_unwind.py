@@ -2009,7 +2009,7 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
 
 
 def test_unwind_reverts_when_has_shutdown(factory, feed, market, ovl,
-                                          alice, gov):
+                                          alice, guardian):
     # build inputs
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -2035,7 +2035,7 @@ def test_unwind_reverts_when_has_shutdown(factory, feed, market, ovl,
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(feed, {"from": gov})
+    factory.shutdown(feed, {"from": guardian})
 
     # attempt to unwind again
     with reverts("OVLV1: shutdown"):

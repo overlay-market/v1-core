@@ -1,5 +1,7 @@
 import pytest
-from brownie import Contract, OverlayV1UniswapV3Factory
+from brownie import (
+    Contract, OverlayV1UniswapV3Factory, OverlayV1NoReserveUniswapV3Factory
+)
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +49,30 @@ def pool_daiweth_30bps():
 def pool_uniweth_30bps():
     # to be used as example ovlweth pool
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
+
+
+@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+def create_factory_without_reserve(gov, uni_factory, weth, request):
+    micro, macro, cardinality, block_time = request.param
+    uni_fact = uni_factory.address
+
+    def create_factory_without_reserve(
+            univ3_factory=uni_fact,
+            micro_window=micro, macro_window=macro,
+            cardinality_min=cardinality,
+            avg_block_time=block_time):
+        factory = gov.deploy(
+                        OverlayV1NoReserveUniswapV3Factory, univ3_factory,
+                        micro_window, macro_window, cardinality_min,
+                        avg_block_time)
+        return factory
+
+    yield create_factory_without_reserve
+
+
+@pytest.fixture(scope="module")
+def factory_without_reserve(create_factory_without_reserve):
+    yield create_factory_without_reserve()
 
 
 # TODO: change params to (600, 3600, 300, 14)
