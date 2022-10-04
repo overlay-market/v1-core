@@ -85,16 +85,16 @@ def oi_after_funding(time_delta: int,
     (oi_overweight, oi_underweight) = (
         oi_long, oi_short) if is_long_overweighted else (oi_short, oi_long)
     oi_total = oi_overweight + oi_underweight
-    oi_imabalance = oi_overweight - oi_underweight
+    oi_imbalance = oi_overweight - oi_underweight
     oi_invariant = oi_underweight * oi_overweight
 
-    if oi_imabalance == 0 or oi_total == 0:
+    if oi_imbalance == 0 or oi_total == 0:
         return (oi_long, oi_short)
 
     expect_oi = oi_total * Decimal(
-        sqrt(1 - (oi_imabalance/oi_total)**2 * Decimal(
+        sqrt(1 - (oi_imbalance/oi_total)**2 * Decimal(
             1 - exp(-4*k*time_delta))))
-    expect_oi_imb = oi_imabalance * Decimal(exp(-2*k*time_delta))
+    expect_oi_imb = oi_imbalance * Decimal(exp(-2*k*time_delta))
 
     expect_oi_overweight = (expect_oi + expect_oi_imb) / 2
     expect_oi_underweight = oi_invariant / expect_oi_overweight
