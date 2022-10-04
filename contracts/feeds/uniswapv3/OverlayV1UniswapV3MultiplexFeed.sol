@@ -13,17 +13,18 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
     uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
 
     // relevant pools for the feed
-    // no market pool as we will use ethXPool to get price
-    address public immutable ethXPool;
-    address public immutable ovlEthPool;
+    // no market pool as we will use baseXPool and xQuotePool to get price
+    address public immutable basePool;
+    address public immutable quotePool;
 
-    // market tokens
-    address public immutable marketToken0; // X or OVL
-    address public immutable marketToken1; // X or OVL
+    // basePool tokens
+    address public immutable basePoolToken0;
+    address public immutable basePoolToken1;
 
-    // ethXPool tokens
-    address public immutable xPoolToken0;
-    address public immutable xPoolToken1;
+    // quotePool tokens
+    address public immutable quotePoolToken0;
+    address public immutable quotePoolToken1;
+
 
     // marketPool base and quote token arrangements
     address public immutable marketBaseToken; // X
@@ -31,64 +32,65 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
     uint128 public immutable marketBaseAmount; // unit of x
 
     // ovlEthPool tokens
-    // @dev weth is the common token between ethXPool and ovlEthPool
-    address public immutable ovl;
-    address public immutable weth;
+    // @dev x is the common token between basePool and quotePool
+    address public immutable x;
 
     constructor(
-        address _ethXPool,
+        address _basePool,
         address _marketBaseToken,
         uint128 _marketBaseAmount,
-        address _ovlEthPool,
-        address _ovl,
+        address _marketQuoteToken,
+        address _quotePool,
         uint256 _microWindow,
         uint256 _macroWindow,
         uint256 _cardinalityMinimum
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         // determine X token
         // need OVL/X pool for ovl vs X price to make reserve conversion from X => OVL
-        address _ovlXToken0 = IUniswapV3Pool(_ovlEthPool).token0();
-        address _ovlXToken1 = IUniswapV3Pool(_ovlEthPool).token1();
-        require(_ovlXToken0 == _ovl || _ovlXToken1 == _ovl, "OVLV1: ovlXToken != OVL");
-        weth = _ovlXToken0 == _ovl ? _ovlXToken1 : _ovlXToken0;
+
+        require(_basePool != _quotePool, "OVLV1: Same pool");
+
+        address _baseToken0 = IUniswapV3Pool(_basePool).token0();
+        address _baseToken1 = IUniswapV3Pool(_basePool).token1();
+        require(_baseToken0 == _marketBaseToken || _baseToken1 == _marketBaseToken, "OVLV1: basePoolToken != base token");
+
+        x = _baseToken0 == _marketBaseToken ? _baseToken1 : _baseToken0;
 
         // need X in market pool to make reserve conversion from X => OVL
-        address _marketToken0 = IUniswapV3Pool(_ethXPool).token0();
-        address _marketToken1 = IUniswapV3Pool(_ethXPool).token1();
+        address _quoteToken0 = IUniswapV3Pool(_quotePool).token0();
+        address _quoteToken1 = IUniswapV3Pool(_quotePool).token1();
 
-        require(_marketToken0 == weth || _marketToken1 == weth, "OVLV1: marketToken != X");
-        marketToken0 = _ovl;
-        marketToken1 = _marketToken0 == weth ? _marketToken1 : _marketToken0;
+        require(_quoteToken0 == _marketQuoteToken || _quoteToken1 == _marketQuoteToken, "OVLV1: quotePoolToken != quote token");
+        
+        require(_quoteToken0 == x || _quoteToken1 == x, "OVLV1: quotePoolToken != x");
+        
+        basePoolToken0 = _baseToken0;
+        basePoolToken1 = x;
 
-        xPoolToken0 = _marketToken0;
-        xPoolToken1 = _marketToken1;
+        quotePoolToken0 = _quoteToken0;
+        quotePoolToken1 = _quoteToken1;
 
-        require(
-            _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1: marketToken != marketBaseToken"
-        );
 
         marketBaseToken = _marketBaseToken;
-        marketQuoteToken = _ovl;
+        marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
 
         // check observation cardinality large enough for market and
         // ovl pool on deploy
-        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_ovlEthPool).slot0();
+        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_basePool).slot0();
         require(
             observationCardinalityOvlX >= _cardinalityMinimum,
-            "OVLV1: ovlXCardinality < min"
+            "OVLV1: basePoolCardinality < min"
         );
 
-        (, , , uint16 observationCardinalityMarket, , , ) = IUniswapV3Pool(_ethXPool).slot0();
+        (, , , uint16 observationCardinalityMarket, , , ) = IUniswapV3Pool(_quotePool).slot0();
         require(
             observationCardinalityMarket >= _cardinalityMinimum,
-            "OVLV1: marketCardinality < min"
+            "OVLV1: quotePoolCardinality < min"
         );
 
-        ethXPool = _ethXPool;
-        ovlEthPool = _ovlEthPool;
-        ovl = _ovl;
+        basePool = _basePool;
+        quotePool = _quotePool;
     }
 
 
@@ -99,7 +101,6 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
         // consult to market pool
         // secondsAgo.length = 4; twaps.length = liqs.length = 3
-        address _quoteToken = ethXPool == ovlEthPool ? ovl : weth;
         (
             uint32[] memory secondsAgos,
             uint32[] memory windows,
@@ -108,7 +109,7 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         (
             int24[] memory arithmeticMeanTicksMarket,
             uint128[] memory harmonicMeanLiquiditiesMarket
-        ) = consult(ethXPool, secondsAgos, windows, nowIdxs);
+        ) = consult(basePool, secondsAgos, windows, nowIdxs);
 
 
         // in terms of prices, will use for indexes
@@ -120,76 +121,56 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
             arithmeticMeanTicksMarket[0],
             marketBaseAmount,
             marketBaseToken,
-            weth
+            x
         );
         // window: [now - macroWindow, now]
         uint256 priceOverMacroWindow = getQuoteAtTick(
             arithmeticMeanTicksMarket[1],
             marketBaseAmount,
             marketBaseToken,
-            weth
+            x
         );
         // window: [now - microWindow, now]
         uint256 priceOverMicroWindow = getQuoteAtTick(
             arithmeticMeanTicksMarket[2],
             marketBaseAmount,
             marketBaseToken,
-            weth
+            x
         );
 
         // reserve calculation done over window: [now - microWindow, now]
-        // needs ovlX price over micro to convert into OVL terms from X
-        // get mean ticks of X in OVL to convert reserveInX to reserveInOvl
-        int24 arithmeticMeanTickOvlX;
-        if (ethXPool == ovlEthPool) {
-            // simply mean ticks over the micro window of market pool
-            // NOTE: saves the additional consult call to ovlXPool
-            arithmeticMeanTickOvlX = arithmeticMeanTicksMarket[2];
-        } else {
-            // // consult to ovlX pool
-            // // secondsAgo.length = 2; twaps.length = liqs.length = 1
-            // (
-            //     uint32[] memory secondsAgosOvlX,
-            //     uint32[] memory windowsOvlX,
-            //     uint256[] memory nowIdxsOvlX
-            // ) = _inputsToConsultOvlXPool(microWindow, macroWindow);
-            (int24[] memory arithmeticMeanTicksOvlX, ) = consult(
-                ovlEthPool,
-                secondsAgos, 
-                windows, 
-                nowIdxs
-            );
+        // needs xQuote price over micro to convert into quote terms from X
 
-            arithmeticMeanTickOvlX = arithmeticMeanTicksOvlX[2];        
-
-
-            priceOneMacroWindowAgo = FullMath.mulDiv(priceOneMacroWindowAgo, getQuoteAtTick(
-                                    arithmeticMeanTicksOvlX[0], 
-                                    ONE, 
-                                    weth, 
-                                    ovl), ONE);
-
-            priceOverMacroWindow = FullMath.mulDiv(priceOverMacroWindow, getQuoteAtTick(
-                                    arithmeticMeanTicksOvlX[1], 
-                                    ONE, 
-                                    weth, 
-                                    ovl), ONE);
-
-            priceOverMicroWindow = FullMath.mulDiv(priceOverMicroWindow, getQuoteAtTick(
-                                    arithmeticMeanTicksOvlX[2], 
-                                    ONE, 
-                                    weth, 
-                                    ovl), ONE);
-        }
-
-        // reserve is the reserve in marketPool over micro window
-        // window: [now - microWindow, now]
-        uint256 reserve = getReserveInOvl(
-            arithmeticMeanTicksMarket[2],
-            harmonicMeanLiquiditiesMarket[2],
-            arithmeticMeanTickOvlX
+        // // consult to xQuote pool
+        // // secondsAgo.length = 2; twaps.length = liqs.length = 1
+        (int24[] memory arithmeticMeanTicksQuote, ) = consult(
+            quotePool,
+            secondsAgos, 
+            windows, 
+            nowIdxs
         );
 
+
+        priceOneMacroWindowAgo = getQuoteAtTick(
+                                arithmeticMeanTicksQuote[0], 
+                                uint128(priceOneMacroWindowAgo), 
+                                x, 
+                                marketQuoteToken);
+
+        priceOverMacroWindow = getQuoteAtTick(
+                                arithmeticMeanTicksQuote[1], 
+                                uint128(priceOverMacroWindow), 
+                                x, 
+                                marketQuoteToken);
+
+        priceOverMicroWindow = getQuoteAtTick(
+                                arithmeticMeanTicksQuote[2], 
+                                uint128(priceOverMicroWindow), 
+                                x, 
+                                marketQuoteToken);
+
+        ////// X/Y pool Y/Z pool, X = 2e18 Y(18 decimal), Y = 5e6 Z(6 decimal), X = 10e24 / Y decimals Z (6 decimal)
+        ////// X/Y pool Y/Z pool, X = 2e6 Y(6 decimal), Y = 5e18 Z(18 decimal), X = 10e24 / Y decimals Z (18 decimal)
 
         return
             Oracle.Data({
@@ -199,8 +180,8 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
                 priceOverMicroWindow: priceOverMicroWindow,
                 priceOverMacroWindow: priceOverMacroWindow,
                 priceOneMacroWindowAgo: priceOneMacroWindowAgo,
-                reserveOverMicroWindow: reserve,
-                hasReserve: true
+                reserveOverMicroWindow: 0,
+                hasReserve: false
             });
     }
 
@@ -324,26 +305,16 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         }
     }
 
-    /// @dev virtual balance of X in the pool in OVL terms
-    function getReserveInOvl(
-        int24 arithmeticMeanTickMarket,
-        uint128 harmonicMeanLiquidityMarket,
-        int24 arithmeticMeanTickOvlX
-    ) public view returns (uint256 reserveInOvl_) {
-        uint256 reserveInWeth = getReserveInWeth(arithmeticMeanTickMarket, harmonicMeanLiquidityMarket);
-        uint256 amountOfWethPerOvl = getQuoteAtTick(arithmeticMeanTickOvlX, ONE, ovl, weth);
-        reserveInOvl_ = FullMath.mulDiv(reserveInWeth, uint256(ONE), amountOfWethPerOvl);
-    }
 
     /// @dev virtual balance of X in the pool
-    function getReserveInWeth(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
+    function getReserveInQuote(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
         public
         view
         returns (uint256 reserveInX_)
     {
         uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(arithmeticMeanTickMarket);
         // X ? x (token0) : y (token1)
-        reserveInX_ = xPoolToken0 == weth
+        reserveInX_ = quotePoolToken0 == marketQuoteToken
             ? FullMath.mulDiv(1 << 96, uint256(harmonicMeanLiquidityMarket), uint256(sqrtPriceX96))
             : FullMath.mulDiv(
                 uint256(harmonicMeanLiquidityMarket),
