@@ -173,8 +173,9 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
             marketQuoteToken
         );
 
-        ////// X/Y pool Y/Z pool, X = 2e18 Y(18 decimal), Y = 5e6 Z(6 decimal), X = 10e24 / Y decimals Z (6 decimal)
-        ////// X/Y pool Y/Z pool, X = 2e6 Y(6 decimal), Y = 5e18 Z(18 decimal), X = 10e24 / Y decimals Z (18 decimal)
+        // X/Y pool Y/Z pool
+        // X = 2e18 Y(18 decimal), Y = 5e6 Z(6 decimal), X = 10e24 / Y decimals Z (6 decimal)
+        // X = 2e6 Y(6 decimal), Y = 5e18 Z(18 decimal), X = 10e24 / Y decimals Z (18 decimal)
 
         return
             Oracle.Data({
