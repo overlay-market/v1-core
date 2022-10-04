@@ -25,7 +25,6 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
     address public immutable quotePoolToken0;
     address public immutable quotePoolToken1;
 
-
     // marketPool base and quote token arrangements
     address public immutable marketBaseToken; // X
     address public immutable marketQuoteToken; // OVL
@@ -52,7 +51,10 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
 
         address _baseToken0 = IUniswapV3Pool(_basePool).token0();
         address _baseToken1 = IUniswapV3Pool(_basePool).token1();
-        require(_baseToken0 == _marketBaseToken || _baseToken1 == _marketBaseToken, "OVLV1: basePoolToken != base token");
+        require(
+            _baseToken0 == _marketBaseToken || _baseToken1 == _marketBaseToken,
+            "OVLV1: basePoolToken != base token"
+        );
 
         x = _baseToken0 == _marketBaseToken ? _baseToken1 : _baseToken0;
 
@@ -60,16 +62,18 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         address _quoteToken0 = IUniswapV3Pool(_quotePool).token0();
         address _quoteToken1 = IUniswapV3Pool(_quotePool).token1();
 
-        require(_quoteToken0 == _marketQuoteToken || _quoteToken1 == _marketQuoteToken, "OVLV1: quotePoolToken != quote token");
-        
+        require(
+            _quoteToken0 == _marketQuoteToken || _quoteToken1 == _marketQuoteToken,
+            "OVLV1: quotePoolToken != quote token"
+        );
+
         require(_quoteToken0 == x || _quoteToken1 == x, "OVLV1: quotePoolToken != x");
-        
+
         basePoolToken0 = _baseToken0;
         basePoolToken1 = x;
 
         quotePoolToken0 = _quoteToken0;
         quotePoolToken1 = _quoteToken1;
-
 
         marketBaseToken = _marketBaseToken;
         marketQuoteToken = _marketQuoteToken;
@@ -93,7 +97,6 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         quotePool = _quotePool;
     }
 
-
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// @dev for micro and macro window averaging intervals.
     /// @dev market pool and ovlX pool have different consult inputs
@@ -110,7 +113,6 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
             int24[] memory arithmeticMeanTicksMarket,
             uint128[] memory harmonicMeanLiquiditiesMarket
         ) = consult(basePool, secondsAgos, windows, nowIdxs);
-
 
         // in terms of prices, will use for indexes
         //  0: priceOneMacroWindowAgo: prices[0]
@@ -145,29 +147,31 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         // // secondsAgo.length = 2; twaps.length = liqs.length = 1
         (int24[] memory arithmeticMeanTicksQuote, ) = consult(
             quotePool,
-            secondsAgos, 
-            windows, 
+            secondsAgos,
+            windows,
             nowIdxs
         );
 
-
         priceOneMacroWindowAgo = getQuoteAtTick(
-                                arithmeticMeanTicksQuote[0], 
-                                uint128(priceOneMacroWindowAgo), 
-                                x, 
-                                marketQuoteToken);
+            arithmeticMeanTicksQuote[0],
+            uint128(priceOneMacroWindowAgo),
+            x,
+            marketQuoteToken
+        );
 
         priceOverMacroWindow = getQuoteAtTick(
-                                arithmeticMeanTicksQuote[1], 
-                                uint128(priceOverMacroWindow), 
-                                x, 
-                                marketQuoteToken);
+            arithmeticMeanTicksQuote[1],
+            uint128(priceOverMacroWindow),
+            x,
+            marketQuoteToken
+        );
 
         priceOverMicroWindow = getQuoteAtTick(
-                                arithmeticMeanTicksQuote[2], 
-                                uint128(priceOverMicroWindow), 
-                                x, 
-                                marketQuoteToken);
+            arithmeticMeanTicksQuote[2],
+            uint128(priceOverMicroWindow),
+            x,
+            marketQuoteToken
+        );
 
         ////// X/Y pool Y/Z pool, X = 2e18 Y(18 decimal), Y = 5e6 Z(6 decimal), X = 10e24 / Y decimals Z (6 decimal)
         ////// X/Y pool Y/Z pool, X = 2e6 Y(6 decimal), Y = 5e18 Z(18 decimal), X = 10e24 / Y decimals Z (18 decimal)
@@ -305,7 +309,6 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
         }
     }
 
-
     /// @dev virtual balance of X in the pool
     function getReserveInQuote(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)
         public
@@ -321,7 +324,5 @@ contract OverlayV1UniswapV3MultiplexFeed is OverlayV1Feed {
                 uint256(sqrtPriceX96),
                 1 << 96
             );
-    }    
-
-
+    }
 }
