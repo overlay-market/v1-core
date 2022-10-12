@@ -19,10 +19,6 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         aggregator = AggregatorV3Interface(_aggregator);
     }
 
-    function checkGasFunction() external returns (Oracle.Data memory) {
-        return _fetch();
-    }
-
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
 
         (uint80 roundId,,,,) = aggregator.latestRoundData();
