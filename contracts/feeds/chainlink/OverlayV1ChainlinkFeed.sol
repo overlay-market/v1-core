@@ -19,19 +19,23 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         aggregator = AggregatorV3Interface(_aggregator);
     }
 
+    function checkGasFunction() external returns (Oracle.Data memory) {
+        return _fetch();
+    }
+
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        (uint80 roundId, int256 answer, , , ) = aggregator.latestRoundData();
-        uint256 decimalNormalized = (uint256(answer) * 10**18) / 10**aggregator.decimals();
+
+        (uint80 roundId,,,,) = aggregator.latestRoundData();
 
         return
             Oracle.Data({
                 timestamp: block.timestamp,
                 microWindow: microWindow,
                 macroWindow: macroWindow,
-                priceOverMicroWindow: _getAveragePrice(macroWindow, roundId, false),
-                priceOverMacroWindow: _getAveragePrice(microWindow, roundId, false),
+                priceOverMicroWindow: _getAveragePrice(microWindow, roundId, false),
+                priceOverMacroWindow: _getAveragePrice(macroWindow, roundId, false),
                 priceOneMacroWindowAgo: _getAveragePrice(macroWindow, roundId, true),
-                reserveOverMicroWindow: uint256(decimalNormalized),
+                reserveOverMicroWindow: 0,
                 hasReserve: false
             });
     }
@@ -61,6 +65,9 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
                 sumOfPrice += (nextTimestamp - targetTimestamp) * uint256(answer);
                 break;
             }
+
+            nextTimestamp = updatedAt;
+            roundId--;
         }
 
         return ((sumOfPrice / windowLength) * 10**18) / 10**aggregator.decimals();
