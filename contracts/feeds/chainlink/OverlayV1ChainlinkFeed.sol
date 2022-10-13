@@ -20,52 +20,92 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
+        (uint80 roundId, , , , ) = aggregator.latestRoundData();
 
-        (uint80 roundId,,,,) = aggregator.latestRoundData();
+        (
+            uint256 priceOverMicroWindow,
+            uint256 priceOverMacroWindow,
+            uint256 priceOneMacroWindowAgo
+        ) = _getAveragePrice(roundId);
 
         return
             Oracle.Data({
                 timestamp: block.timestamp,
                 microWindow: microWindow,
                 macroWindow: macroWindow,
-                priceOverMicroWindow: _getAveragePrice(microWindow, roundId, false),
-                priceOverMacroWindow: _getAveragePrice(macroWindow, roundId, false),
-                priceOneMacroWindowAgo: _getAveragePrice(macroWindow, roundId, true),
+                priceOverMicroWindow: priceOverMicroWindow,
+                priceOverMacroWindow: priceOverMacroWindow,
+                priceOneMacroWindowAgo: priceOneMacroWindowAgo,
                 reserveOverMicroWindow: 0,
                 hasReserve: false
             });
     }
 
-    function _getAveragePrice(
-        uint256 windowLength,
-        uint80 roundId,
-        bool windowAgo
-    ) internal view returns (uint256) {
-        uint256 nextTimestamp = windowAgo ? block.timestamp - windowLength : block.timestamp;
-        uint256 targetTimestamp = nextTimestamp - windowLength;
-        uint256 sumOfPrice;
+    function _getAveragePrice(uint80 roundId)
+        internal
+        view
+        returns (
+            uint256 priceOverMicroWindow,
+            uint256 priceOverMacroWindow,
+            uint256 priceOneMacroWindowAgo
+        )
+    {
+        // nextTimestamp will be next time stamp recorded from current round id
+        uint256 nextTimestamp = block.timestamp;
+        // these values will keep decreasing till zero, until all data is used up in respective window
+        uint256 _microWindow = microWindow;
+        uint256 _macroWindow = macroWindow;
+
+        // timestamp till which value need to be considered for macrowindow ago
+        uint256 macroAgoTargetTimestamp = nextTimestamp - 2 * macroWindow;
+
+        uint256 sumOfPriceMicroWindow;
+        uint256 sumOfPriceMacroWindow;
+        uint256 sumOfPriceMacroWindowAgo;
 
         while (true) {
             (, int256 answer, , uint256 updatedAt, ) = aggregator.getRoundData(roundId);
 
-            if (windowAgo) {
-                if (updatedAt > nextTimestamp) {
-                    roundId--;
-                    continue;
-                }
+            if (_microWindow > 0) {
+                uint256 dt = nextTimestamp - updatedAt < _microWindow
+                    ? nextTimestamp - updatedAt
+                    : _microWindow;
+                sumOfPriceMicroWindow += dt * uint256(answer);
+                _microWindow -= dt;
             }
 
-            if (updatedAt >= targetTimestamp) {
-                sumOfPrice += (nextTimestamp - updatedAt) * uint256(answer);
-            } else {
-                sumOfPrice += (nextTimestamp - targetTimestamp) * uint256(answer);
-                break;
+            if (_macroWindow > 0) {
+                uint256 dt = nextTimestamp - updatedAt < _macroWindow
+                    ? nextTimestamp - updatedAt
+                    : _macroWindow;
+                sumOfPriceMacroWindow += dt * uint256(answer);
+                _macroWindow -= dt;
+            }
+
+            if (updatedAt <= block.timestamp - macroWindow) {
+                if (updatedAt >= macroAgoTargetTimestamp) {
+                    sumOfPriceMacroWindowAgo += (nextTimestamp - updatedAt) * uint256(answer);
+                } else {
+                    sumOfPriceMacroWindowAgo +=
+                        (nextTimestamp - macroAgoTargetTimestamp) *
+                        uint256(answer);
+                    break;
+                }
             }
 
             nextTimestamp = updatedAt;
             roundId--;
         }
 
-        return ((sumOfPrice / windowLength) * 10**18) / 10**aggregator.decimals();
+        priceOverMicroWindow =
+            (sumOfPriceMicroWindow * (10**18)) /
+            (microWindow * 10**aggregator.decimals());
+        priceOverMacroWindow =
+            (sumOfPriceMacroWindow * (10**18)) /
+            (macroWindow * 10**aggregator.decimals());
+        priceOneMacroWindowAgo =
+            (sumOfPriceMacroWindowAgo * (10**18)) /
+            (macroWindow * 10**aggregator.decimals());
     }
+
 }
