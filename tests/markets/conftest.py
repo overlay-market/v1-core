@@ -37,6 +37,11 @@ def fake_factory(accounts):
 
 
 @pytest.fixture(scope="module")
+def guardian(accounts):
+    yield accounts[6]
+
+
+@pytest.fixture(scope="module")
 def minter_role():
     yield web3.solidityKeccak(['string'], ["MINTER"])
 
@@ -49,6 +54,11 @@ def burner_role():
 @pytest.fixture(scope="module")
 def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
+
+
+@pytest.fixture(scope="module")
+def guardian_role():
+    yield web3.solidityKeccak(['string'], ["GUARDIAN"])
 
 
 @pytest.fixture(scope="module", params=[8000000])
@@ -227,8 +237,8 @@ def mock_feed(create_mock_feed):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl, governor_role,
-                   feed_factory, mock_feed_factory):
+def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
+                   guardian_role, feed_factory, mock_feed_factory):
     def create_factory(tok=ovl, recipient=fee_recipient):
         # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok, recipient)
@@ -238,6 +248,8 @@ def create_factory(gov, fee_recipient, request, ovl, governor_role,
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(governor_role, gov, {"from": gov})
+        # grant gov the guardian role on token to access factory methods
+        tok.grantRole(guardian_role, guardian, {"from": gov})
 
         # add both feed factories
         factory.addFeedFactory(feed_factory, {"from": gov})

@@ -45,7 +45,7 @@ def test_shutdown_reverts_when_not_factory(market, rando):
 
 # emergency withdraw tests
 def test_emergency_withdraw_transfers_collateral(
-        mock_market, mock_feed, factory, ovl, alice, gov, rando):
+        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -75,7 +75,7 @@ def test_emergency_withdraw_transfers_collateral(
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(mock_feed, {"from": gov})
+    factory.shutdown(mock_feed, {"from": guardian})
 
     expect_collateral_out = int(
         Decimal(input_collateral) * (Decimal(1e18) - Decimal(fraction))
@@ -109,7 +109,7 @@ def test_emergency_withdraw_transfers_collateral(
 
 
 def test_emergency_withdraw_updates_position(
-        mock_market, mock_feed, factory, ovl, alice, gov, rando):
+        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -139,7 +139,7 @@ def test_emergency_withdraw_updates_position(
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(mock_feed, {"from": gov})
+    factory.shutdown(mock_feed, {"from": guardian})
 
     # emergency withdraw collateral
     _ = mock_market.emergencyWithdraw(input_pos_id, {"from": alice})
@@ -157,7 +157,7 @@ def test_emergency_withdraw_updates_position(
 
 
 def test_emergency_withdraw_executes_transfers(
-        mock_market, mock_feed, factory, ovl, alice, gov, rando):
+        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -187,7 +187,7 @@ def test_emergency_withdraw_executes_transfers(
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(mock_feed, {"from": gov})
+    factory.shutdown(mock_feed, {"from": guardian})
 
     # calculate the expected collateral amount transferred
     expect_collateral_out = int(
@@ -226,12 +226,12 @@ def test_emergency_withdraw_reverts_when_not_shutdown(market, ovl, alice):
 
 def test_emergency_withdraw_reverts_when_position_not_exists(market, feed, ovl,
                                                              factory, alice,
-                                                             gov):
+                                                             guardian):
     input_pos_id = 100
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(feed, {"from": gov})
+    factory.shutdown(feed, {"from": guardian})
 
     # check can't withdraw collateral when no position exists
     with reverts("OVLV1:!position"):
@@ -239,7 +239,7 @@ def test_emergency_withdraw_reverts_when_position_not_exists(market, feed, ovl,
 
 
 def test_multiple_emergency_withdraw(
-        mock_market, mock_feed, factory, ovl, alice, bob, gov, rando):
+        mock_market, mock_feed, factory, ovl, alice, bob, guardian, rando):
     # loop through 10 times
     n = 10
     total_collateral_long = Decimal(10000)
@@ -328,7 +328,7 @@ def test_multiple_emergency_withdraw(
 
     # shutdown market
     # NOTE: factory.shutdown() tests in factories/market/test_setters.py
-    factory.shutdown(mock_feed, {"from": gov})
+    factory.shutdown(mock_feed, {"from": guardian})
 
     # withdraw remaining collateral for each position
     for id in actual_pos_ids:

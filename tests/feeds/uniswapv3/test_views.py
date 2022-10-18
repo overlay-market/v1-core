@@ -1,6 +1,24 @@
 from pytest import approx
 
 
+def test_get_quote_at_tick_for_daiweth_without_reserve(
+        dai, weth, quanto_feed_without_reserve):
+    # from Uniswap whitepaper: price = 1.0001^tick
+    tick = -82944  # num_dai / num_weth ~ 4000
+    base_amount = 1e18
+    base_token = weth
+    quote_token = dai
+
+    # flip expect tick based off uniswap convention of base/quote if need to
+    expect_sign = -1 if base_token.address > quote_token.address else 1
+    expect_quote_amount = int(base_amount * 1.0001 ** (expect_sign * tick))
+
+    actual_quote_amount = quanto_feed_without_reserve.getQuoteAtTick(
+        tick, base_amount, base_token, quote_token
+    )
+    assert approx(expect_quote_amount) == actual_quote_amount
+
+
 def test_get_quote_at_tick_for_daiweth(dai, weth, quanto_feed):
     # from Uniswap whitepaper: price = 1.0001^tick
     tick = -82944  # num_dai / num_weth ~ 4000

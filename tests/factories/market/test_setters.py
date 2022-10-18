@@ -144,14 +144,14 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
 
 
 # shutdown tests
-def test_shutdown(factory, market, gov):
+def test_shutdown(factory, market, guardian):
     feed = market.feed()
 
     # check hasn't been shut down yet
     assert market.isShutdown() is False
 
     # shut the market down
-    tx = factory.shutdown(feed, {"from": gov})
+    tx = factory.shutdown(feed, {"from": guardian})
 
     # check now set to shutdown
     market.isShutdown() is True
@@ -159,16 +159,16 @@ def test_shutdown(factory, market, gov):
     # check event emitted
     assert 'EmergencyShutdown' in tx.events
     expect_event = OrderedDict({
-        "user": gov,
+        "user": guardian,
         "market": market
     })
     actual_event = tx.events['EmergencyShutdown']
     assert actual_event == expect_event
 
 
-def test_shutdown_reverts_when_not_gov(factory, market, rando):
+def test_shutdown_reverts_when_not_guardian(factory, market, rando):
     feed = market.feed()
 
-    # can't shutdown when not a governor
-    with reverts("OVLV1: !governor"):
+    # can't shutdown when not a guardian
+    with reverts("OVLV1: !guardian"):
         _ = factory.shutdown(feed, {"from": rando})

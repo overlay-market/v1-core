@@ -26,10 +26,21 @@ def test_admin_grant_governor_role_then_revoke(token, admin, rando,
     assert token.hasRole(governor_role, rando) is False
 
 
+def test_admin_grant_guardian_role_then_revoke(token, admin, rando,
+                                               guardian_role):
+    token.grantRole(guardian_role, rando, {"from": admin})
+    assert token.hasRole(guardian_role, rando) is True
+
+    token.revokeRole(guardian_role, rando, {"from": admin})
+    assert token.hasRole(guardian_role, rando) is False
+
+
 def test_grant_roles_reverts_when_not_admin(token, rando, minter_role,
-                                            burner_role, governor_role):
+                                            burner_role, governor_role,
+                                            guardian_role):
     admin_role = token.DEFAULT_ADMIN_ROLE()
-    roles = [minter_role, burner_role, governor_role, admin_role]
+    roles = [minter_role, burner_role, governor_role,
+             guardian_role, admin_role]
     for role in roles:
         with reverts():
             token.grantRole(role, rando, {"from": rando})

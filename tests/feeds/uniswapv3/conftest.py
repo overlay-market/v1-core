@@ -1,5 +1,7 @@
 import pytest
-from brownie import Contract, OverlayV1UniswapV3Feed
+from brownie import (
+    Contract, OverlayV1UniswapV3Feed, OverlayV1NoReserveUniswapV3Feed
+)
 
 
 @pytest.fixture(scope="module")
@@ -84,6 +86,39 @@ def create_quanto_feed(gov, pool_daiweth_30bps, pool_uniweth_30bps,
 @pytest.fixture(scope="module")
 def quanto_feed(create_quanto_feed):
     yield create_quanto_feed()
+
+
+@pytest.fixture(scope="module", params=[(600, 3600, 200)])
+def create_quanto_feed_without_reserve(gov, pool_daiweth_30bps,
+                                       pool_uniweth_30bps, dai, weth, request):
+    micro, macro, cardinality = request.param
+
+    mkt_pool = pool_daiweth_30bps.address
+    mkt_base_tok = weth.address
+    mkt_quote_tok = dai.address
+    mkt_base_amt = 1 * 10 * weth.decimals()
+
+    def create_quanto_feed_without_reserve(
+          market_pool=mkt_pool,
+          market_base_token=mkt_base_tok,
+          market_quote_token=mkt_quote_tok,
+          market_base_amount=mkt_base_amt,
+          micro_window=micro, macro_window=macro,
+          cardinality_min=cardinality):
+
+        feed = gov.deploy(OverlayV1NoReserveUniswapV3Feed,
+                          market_pool, market_base_token, market_quote_token,
+                          market_base_amount, micro_window, macro_window,
+                          cardinality_min)
+
+        return feed
+
+    yield create_quanto_feed_without_reserve
+
+
+@pytest.fixture(scope="module")
+def quanto_feed_without_reserve(create_quanto_feed_without_reserve):
+    yield create_quanto_feed_without_reserve()
 
 
 @pytest.fixture(scope="module", params=[(600, 3600, 200)])
