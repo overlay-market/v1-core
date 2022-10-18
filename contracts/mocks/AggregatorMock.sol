@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract Aggregator is AggregatorV3Interface {
+contract AggregatorMock is AggregatorV3Interface {
     
     struct RoundData {
         int256 answer;

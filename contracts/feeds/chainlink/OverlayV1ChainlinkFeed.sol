@@ -83,11 +83,14 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             }
 
             if (updatedAt <= block.timestamp - macroWindow) {
+                uint256 startTime = nextTimestamp > block.timestamp - macroWindow
+                    ? block.timestamp - macroWindow
+                    : nextTimestamp;
                 if (updatedAt >= macroAgoTargetTimestamp) {
-                    sumOfPriceMacroWindowAgo += (nextTimestamp - updatedAt) * uint256(answer);
+                    sumOfPriceMacroWindowAgo += (startTime - updatedAt) * uint256(answer);
                 } else {
                     sumOfPriceMacroWindowAgo +=
-                        (nextTimestamp - macroAgoTargetTimestamp) *
+                        (startTime - macroAgoTargetTimestamp) *
                         uint256(answer);
                     break;
                 }
@@ -107,5 +110,4 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             (sumOfPriceMacroWindowAgo * (10**18)) /
             (macroWindow * 10**aggregator.decimals());
     }
-
 }
