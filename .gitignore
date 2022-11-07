@@ -1,4 +1,7 @@
 __pycache__/
+broadcast/
+cache/
+lib/
 node_modules/
 .history
 .hypothesis/

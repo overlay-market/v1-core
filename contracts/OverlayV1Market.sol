@@ -122,6 +122,11 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice initializes the market and its risk params
     /// @notice called only once by factory on deployment
+    /// @dev this function is called once upon deployment
+    /// by the factory contract to set up the configuration
+    /// for the market
+    /// @param _params the array of market parameters as 
+    /// documented in the Risk library
     function initialize(uint256[15] memory _params) external onlyFactory {
         // initialize update data
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
@@ -157,6 +162,22 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev builds a new position
+    /// @param collateral Amount of ovl collateral the user is 
+    /// providing to take out their position.
+    /// @param leverage Amount of leverage in the format of 
+    /// a fixed point number from one to the leverage cap.
+    /// @param isLong Whether the user is taking a long 
+    /// or a short position on the feed. On build, a long
+    /// position implies consuming an ask order and a short 
+    /// position implies consuming the bid.
+    /// @param priceLimit This is a limit the user can place so
+    /// that they are not exposed to prices beyond a certain point.
+    /// this is important because the bid and the ask adjust 
+    /// according to the demand at the moment. If another user
+    /// pays a great deal of gas to have their transaction mined
+    /// first, they could push the bid or the ask a considerable 
+    /// amount and anyone coming in after them would have significant
+    /// price impact for their transaction.
     function build(
         uint256 collateral,
         uint256 leverage,
@@ -252,6 +273,25 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev unwinds fraction of an existing position
+    /// @param positionId ID of the position in question. It is
+    /// hashed together with msg.sender, which also serves as 
+    /// authorization that they do in fact own this position,
+    /// as it is not possible for any other address to result in
+    /// the same key to the position mapping that msg.sender plus
+    /// the position ID would result in.
+    /// @param fraction Fraction, expressed in fixed point form, of 
+    /// the remaining part of the position the user wants to realize 
+    /// PnL from. As a user unwinds portions of their position, the 
+    /// fraction is updated each time such that passing 1e18 shall
+    /// unwind the remainder of their position. If a user passes .5
+    /// two times in a row, then 75% of their position will be unwound.
+    /// @param priceLimit A limit to the price a user will receive 
+    /// according to the current volume in the bid or the ask, depending
+    /// on whether their position was a long or a short position. 
+    /// If the position is a long position, the price is the bid price
+    /// and the limit is for how low the price may go.
+    /// If the position is a short position, the price is the ask price
+    /// and the limit is for how high the price may go.
     function unwind(
         uint256 positionId,
         uint256 fraction,
@@ -384,6 +424,19 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev liquidates a liquidatable position
+    /// @notice This function liquidates a position when that position has
+    /// become liquidatable according to the maintenance margin parameter
+    /// on the market. The price used for liquidations is different from
+    /// the price that a user will get on building and unwinding; it is 
+    /// not the bid or the ask, but a conservative mid market price derived
+    /// by averaging the macro (long TWAP) and micro (short TWAP) prices 
+    /// from the feed. 
+    /// @param owner Address of the position's owner, since the way
+    /// these contracts index a user's position is by hashing the 
+    /// ID of the position with the msg.sender which built the position.
+    /// @param positionId ID of the position, which is hashed together
+    /// with the address which owns the position in order to retrieve the
+    /// position.
     function liquidate(address owner, uint256 positionId) external notShutdown {
         uint256 value;
         uint256 cost;
@@ -486,6 +539,10 @@ contract OverlayV1Market is IOverlayV1Market {
         ovl.transfer(IOverlayV1Factory(factory).feeRecipient(), marginRemaining);
     }
 
+    /// @notice This function pays funding as well as fetches the prices 
+    /// from the oracle. It is used internally at the beginning of every
+    /// build, unwind and liquidate call to the contract. Anyone may call 
+    /// it, if they should so desire... but it is mainly for internal use.
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
     function update() public returns (Oracle.Data memory) {
@@ -526,7 +583,9 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice Current open interest after funding payments transferred
     /// @notice from overweight oi side to underweight oi side
-    /// @dev The value of oiOverweight must be >= oiUnderweight
+    /// @dev The value of oiOverweight must be >= oiUnderweight,
+    /// otherwise this function will revert and return confusing 
+    /// values to off chain calls.
     function oiAfterFunding(
         uint256 oiOverweight,
         uint256 oiUnderweight,
@@ -578,8 +637,17 @@ contract OverlayV1Market is IOverlayV1Market {
         return (oiOverweight, oiUnderweight);
     }
 
+    /// @notice This function is responsible for reading the amount of
+    /// ovl that has been printed within the "circuit breaker window" 
+    /// Risk parameter. It reads the printing snapshot for its current
+    /// value, which is set to decay linearly over that timeframe.
     /// @dev current oi cap with adjustments to lower in the event
     /// @dev market has printed a lot in recent past
+    /// @param cap Open Interest cap after converted from notional terms
+    /// for this market.
+    /// @returns cap Newly computed open interest cap, potentially constrained
+    /// according to how much ovl has been printed out of this market within
+    /// the circuit breaker window parameter from the risk parameters.
     function capOiAdjustedForCircuitBreaker(uint256 cap) public view returns (uint256) {
         // Adjust cap downward for circuit breaker. Use snapshotMinted
         // but transformed to account for decay in magnitude of minted since
@@ -614,6 +682,22 @@ contract OverlayV1Market is IOverlayV1Market {
         return cap.mulDown(adjustment);
     }
 
+    /// @notice This function is meant to constrain the cap according
+    /// to the market depth of the feed being traded marked to ovl terms.
+    /// If the ovl terms of the feed being traded is too little, then there
+    /// is the possibility to manipulate the market and profit greately
+    /// on the overlay market. Therefore, we constrain it in two different
+    /// ways. 
+    /// The frontrun bound is to guard against scenarios where the trader 
+    /// buys ovl on spot and immediately enters that ovl into a position
+    /// on the overlay market. They have pumped the price up with their
+    /// purchase on spot, and intend on profiting with their position
+    /// as the time weighted average price catches up to the influence of 
+    /// their many trades to push it up.
+    /// The backrun bound is such that the user takes out a position first
+    /// on the associated overlay market, and proceeds to manipulate the 
+    /// price on spot for a long enough period where they have a guaranteed
+    /// profit on their position in the overlay market.
     /// @dev current notional cap with adjustments to prevent
     /// @dev front-running trade and back-running trade
     function capNotionalAdjustedForBounds(Oracle.Data memory data, uint256 cap)
