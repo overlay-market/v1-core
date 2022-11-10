@@ -8,3 +8,7 @@ reports/
 *.sw[op]
 .DS_Store
 *.bk
+broadcast/
+cache/
+lib/
+out/
