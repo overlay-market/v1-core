@@ -2,8 +2,8 @@
 src = 'contracts'
 out = 'out'
 libs = ['lib']
+script = 'scripts'
 remappings = [
-    '@layerzero1/=lib/solidity-examples/',
     '@openzeppelin/=lib/openzeppelin-contracts/',
     '@uniswap/v3-core/=lib/v3-core/',
 ]
