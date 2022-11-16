@@ -15,10 +15,12 @@ contract Simulation is Script {
 
     // use uni for now
     address weth = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address ovl = 0x1f9840a85d5af5bf1d1762f925bdaddc4201f984;
-    address spot = 0x1d42064fc4beb5f8aaf85f4617ae8b3b5b8bd801;
+    address ovl = 0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984;
+    address spot = 0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801;
 
     OverlayV1PUMA PUMA = new OverlayV1PUMA(ovl, spot);
+
+    PUMA.detect(600);
 
   }
 

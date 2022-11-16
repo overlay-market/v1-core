@@ -3,10 +3,17 @@ pragma solidity 0.8.10;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
+import "./libraries/uniswap/v3-core/BitMath.sol";
 import "./libraries/uniswap/v3-core/FullMath.sol";
+import "./libraries/uniswap/v3-core/RemoteTickBitmap.sol";
+import "./libraries/uniswap/v3-core/SqrtPriceMath.sol";
 import "./libraries/uniswap/v3-core/TickMath.sol";
 
 import "./OverlayV1Token.sol";
+
+import "forge-std/console.sol";
+import "forge-std/console2.sol";
+
 
 contract OverlayV1PUMA {
 
@@ -58,6 +65,25 @@ contract OverlayV1PUMA {
       address(ovl),
       address(x)
     );
+
+  }
+
+  function nextTick () public view {
+
+    ( ,int24 current,,,,, ) = spot.slot0();
+
+    int24 spacing = spot.tickSpacing();
+
+    ( int24 next, bool init ) = RemoteTickBitmap.nextInitializedTickWithinOneWord(
+      spot.tickBitmap,
+      current,
+      spacing,
+      false
+    );
+
+    console.log(current);
+    console.logInt(next);
+    console.log(init);
 
   }
 
