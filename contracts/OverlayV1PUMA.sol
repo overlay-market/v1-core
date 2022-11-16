@@ -6,7 +6,6 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "./libraries/uniswap/v3-core/BitMath.sol";
 import "./libraries/uniswap/v3-core/FullMath.sol";
 import "./libraries/uniswap/v3-core/RemoteTickBitmap.sol";
-import "./libraries/uniswap/v3-core/SqrtPriceMath.sol";
 import "./libraries/uniswap/v3-core/TickMath.sol";
 
 import "./OverlayV1Token.sol";
