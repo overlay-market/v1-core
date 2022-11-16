@@ -10,5 +10,4 @@ reports/
 *.bk
 broadcast/
 cache/
-lib/
 out/
