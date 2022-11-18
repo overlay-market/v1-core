@@ -20,7 +20,9 @@ contract Simulation is Script {
 
     OverlayV1PUMA PUMA = new OverlayV1PUMA(ovl, spot);
 
-    PUMA.detect(600);
+    // PUMA.detect(600);
+
+    PUMA.nextTick();
 
   }
 
