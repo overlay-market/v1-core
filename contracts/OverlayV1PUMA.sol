@@ -181,19 +181,15 @@ contract OverlayV1PUMA {
   ) public view returns (uint256 quoteAmount_) {
       uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
-      console.log("sqrtRatio", sqrtRatioX96);
-
       // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by
       // itself
       if (sqrtRatioX96 <= type(uint128).max) {
           uint256 ratioX192 = uint256(sqrtRatioX96) * sqrtRatioX96;
-          console.log("RATIO - ", ratioX192);
           quoteAmount_ = baseToken < quoteToken
               ? FullMath.mulDiv(ratioX192, baseAmount, 1 << 192)
               : FullMath.mulDiv(1 << 192, baseAmount, ratioX192);
       } else {
           uint256 ratioX128 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, 1 << 64);
-          console.log("RATIO", ratioX128);
           quoteAmount_ = baseToken < quoteToken
               ? FullMath.mulDiv(ratioX128, baseAmount, 1 << 128)
               : FullMath.mulDiv(1 << 128, baseAmount, ratioX128);
@@ -209,11 +205,10 @@ contract OverlayV1PUMA {
 
       uint256 baseAmount = FullMath.mulDiv(1e18, 1e18, quoteAmount);
 
+      // TODO: know if it overflows and adjust accordingly
       uint256 ratio = baseToken < quoteToken
         ? FullMath.mulDiv(quoteAmount, 1 << 192, 1e18)
-        : FullMath.mulDiv(quoteAmount, 1e18, 1 >> 128);
-
-      console.log("RATIO", ratio);
+        : FullMath.mulDiv(quoteAmount, 1e18, 1 >> 192);
 
       uint256 root = sqrt(ratio);
 
@@ -226,6 +221,7 @@ contract OverlayV1PUMA {
   function sqrt(uint input) internal pure returns (uint output) {
 
       if (input > 3) {
+
           output = input;
           uint intermediate = input / 2 + 1;
           while (intermediate < output) {
