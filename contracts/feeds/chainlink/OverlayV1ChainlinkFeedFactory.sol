@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: BUSL-1.1
+pragma solidity 0.8.10;
+
+import "../OverlayV1FeedFactory.sol";
+import "./OverlayV1ChainlinkFeed.sol";
+
+contract OverlayV1ChainlinkFactory is OverlayV1FeedFactory {
+    // registry of feeds; for a given aggregator pair, returns associated feed
+    mapping(address => address) public getFeed;
+
+    constructor(uint256 _microWindow, uint256 _macroWindow)
+        OverlayV1FeedFactory(_microWindow, _macroWindow)
+    {}
+
+    /// @dev deploys a new feed contract
+    /// @param _aggregator chainlink price feed
+    /// @return feed_ address of the new feed
+    function deployFeed(address _aggregator) external returns (address feed_) {
+        // check feed doesn't already exist
+        require(getFeed[_aggregator] == address(0), "OVLV1: feed already exists");
+
+        // Create a new Feed contract
+        feed_ = address(new OverlayV1ChainlinkFeed(_aggregator, microWindow, macroWindow));
+
+        // store feed registry record for _aggregator and record address as deployed feed
+        getFeed[_aggregator] = feed_;
+        isFeed[feed_] = true;
+
+        emit FeedDeployed(msg.sender, feed_);
+    }
+}
