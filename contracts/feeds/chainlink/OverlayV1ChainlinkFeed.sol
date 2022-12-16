@@ -5,9 +5,9 @@ import "../OverlayV1Feed.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
-    uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
-
     AggregatorV3Interface public immutable aggregator;
+    string public description;
+    uint8 public decimals;
 
     constructor(
         address _aggregator,
@@ -17,6 +17,8 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         require(_aggregator != address(0), "Invalid feed");
 
         aggregator = AggregatorV3Interface(_aggregator);
+        decimals = aggregator.decimals();
+        description = aggregator.description();
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
