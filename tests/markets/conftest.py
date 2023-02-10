@@ -138,19 +138,20 @@ def pool_uniweth_30bps():
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+@pytest.fixture(scope="module", params=[(600, 1800, 240, 15, 1)])
 def create_feed_factory(gov, uni_factory, weth, uni, request):
-    micro, macro, cardinality, block_time = request.param
+    micro, macro, cardinality, block_time, decimals = request.param
     tok = uni.address
     uni_fact = uni_factory
 
     def create_feed_factory(univ3_factory=uni_fact, ovl=tok,
                             micro_window=micro, macro_window=macro,
                             cardinality_min=cardinality,
-                            avg_block_time=block_time):
+                            avg_block_time=block_time,
+                            decimal=decimals):
         feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovl,
                                   univ3_factory, micro_window, macro_window,
-                                  cardinality_min, avg_block_time)
+                                  cardinality_min, avg_block_time, decimal)
         return feed_factory
 
     yield create_feed_factory
