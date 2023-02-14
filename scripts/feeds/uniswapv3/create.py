@@ -13,17 +13,23 @@ def main():
     `deployFeed()` function.
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-    dev = accounts.load(click.prompt(
-        "Account", type=click.Choice(accounts.load())))
+    dev = accounts.load(
+        click.prompt("Account", type=click.Choice(accounts.load()))
+    )
 
     # instantiate the feed factory contract
     feed_factory = OverlayV1UniswapV3Factory.at(UNIV3_FEED_FACTORY)
 
     # assemble params for deployFeed
-    params = ["marketBaseToken (address)", "marketQuoteToken (address)",
-              "marketFee (uint24)", "marketBaseAmount (uint128)",
-              "ovlXBaseToken (address)", "ovlXQuoteToken (address)",
-              "ovlXFee (uint24)"]
+    params = [
+        "marketBaseToken (address)",
+        "marketQuoteToken (address)",
+        "marketFee (uint24)",
+        "marketBaseAmount (uint128)",
+        "ovlXBaseToken (address)",
+        "ovlXQuoteToken (address)",
+        "ovlXFee (uint24)",
+    ]
     args = [click.prompt(f"{param}") for param in params]
 
     click.echo(

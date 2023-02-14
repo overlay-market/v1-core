@@ -13,8 +13,9 @@ def main():
     `deployMarket()` function.
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-    gov = accounts.load(click.prompt(
-        "Account", type=click.Choice(accounts.load())))
+    gov = accounts.load(
+        click.prompt("Account", type=click.Choice(accounts.load()))
+    )
 
     # instantiate the factory contract
     factory = OverlayV1Factory.at(FACTORY)
@@ -39,7 +40,7 @@ def main():
         "tradingFeeRate (uint256)",
         "minCollateral (uint256)",
         "priceDriftUpperLimit (uint256)",
-        "averageBlockTime (uint256)"
+        "averageBlockTime (uint256)",
     ]
     args = [click.prompt(f"{param}") for param in params]
 
@@ -70,6 +71,8 @@ def main():
     )
 
     if click.confirm("Deploy New Market"):
-        tx = factory.deployMarket(feed_factory, feed, args, {"from": gov})
+        tx = factory.deployMarket(
+            feed_factory, feed, args, {"from": gov}
+        )
         tx.info()
         click.echo("Market deployed")

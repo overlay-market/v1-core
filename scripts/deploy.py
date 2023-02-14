@@ -1,6 +1,12 @@
 import click
 
-from brownie import OverlayV1Token, OverlayV1Factory, accounts, network, web3
+from brownie import (
+    OverlayV1Token,
+    OverlayV1Factory,
+    accounts,
+    network,
+    web3,
+)
 from hexbytes import HexBytes
 
 
@@ -22,7 +28,7 @@ BURNER = "BURNER"
 def _role(name):
     if name == ADMIN:
         return HexBytes("0x00")
-    return web3.solidityKeccak(['string'], [name])
+    return web3.solidityKeccak(["string"], [name])
 
 
 def main():
@@ -34,8 +40,9 @@ def main():
     renounces all token rights for deployer.
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-    dev = accounts.load(click.prompt(
-        "Account", type=click.Choice(accounts.load())))
+    dev = accounts.load(
+        click.prompt("Account", type=click.Choice(accounts.load()))
+    )
 
     # deploy OVL
     ovl = OverlayV1Token.deploy({"from": dev}, publish_source=True)
@@ -43,7 +50,8 @@ def main():
 
     # deploy market factory
     factory = OverlayV1Factory.deploy(
-        ovl, FEE_RECIPIENT, {"from": dev}, publish_source=True)
+        ovl, FEE_RECIPIENT, {"from": dev}, publish_source=True
+    )
     click.echo(f"Factory deployed [{factory.address}]")
 
     # grant market factory admin role to grant minter + burner roles to markets
