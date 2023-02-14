@@ -9,8 +9,8 @@ on:
       - main
 
 env:
-    # increasing available memory for node reduces issues with ganache crashing
-    # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+  # increasing available memory for node reduces issues with ganache crashing
+  # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
   NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - name: Create env file
         run: |
           touch .env
-          echo WEB3_INFURA_PROJECT_ID=${{ secrets.WEB3_INFURA_PROJECT_ID }} >> .env
+          echo WEB3_INFURA_PROJECT_ID=429eb57532b54560b1d4cc4201724bf0 >> .env
           echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
           cat .env
       - name: Cache Compiler Installations
