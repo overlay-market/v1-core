@@ -36,8 +36,7 @@ contract OverlayV1NoReserveUniswapV3Factory is
         // NOTE: need > 2 * macroWindow b/c of priceOneMacroWindowAgo
         // SEE: Uniswap/v3-core/blob/main/contracts/libraries/Oracle.sol#L90
         require(
-            (_averageBlockTime * uint256(_observationCardinalityMinimum)) /
-                _decimals >=
+            (_averageBlockTime * uint256(_observationCardinalityMinimum)) / _decimals >=
                 2 * _macroWindow,
             "OVLV1: cardinality < 2 * macroWindow"
         );
