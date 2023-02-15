@@ -22,11 +22,20 @@ def test_positions_setter(position, alice):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long, liquidated,
-           oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
     position.set(owner, id, pos)
 
     # pos key
@@ -58,11 +67,20 @@ def test_positions_getter(position, bob):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long, liquidated,
-           oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
     position.set(owner, id, pos)
 
     # check retrieved position is expected

@@ -14,12 +14,11 @@ def test_deploy_feed_creates_feed(factory, alice):
     assert factory.isFeed(actual_feed) is True
 
     # check event emitted
-    assert 'FeedDeployed' in tx.events
-    expect_event = OrderedDict({
-        "user": alice.address,
-        "feed": actual_feed
-    })
-    actual_event = tx.events['FeedDeployed']
+    assert "FeedDeployed" in tx.events
+    expect_event = OrderedDict(
+        {"user": alice.address, "feed": actual_feed}
+    )
+    actual_event = tx.events["FeedDeployed"]
     assert actual_event == expect_event
 
     # check feed deployed with correct immutables set

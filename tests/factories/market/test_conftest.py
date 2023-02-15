@@ -1,5 +1,14 @@
-def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
-                         gov, market, deployer, governor_role):
+def test_factory_fixture(
+    factory,
+    fee_recipient,
+    feed_factory,
+    feed_three,
+    ovl,
+    gov,
+    market,
+    deployer,
+    governor_role,
+):
     # check ovl immutable set
     assert factory.ovl() == ovl
 
@@ -7,7 +16,10 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert factory.feeRecipient() == fee_recipient
 
     # check deployer contract deployed on factory deploy
-    assert factory.deployer() != "0x0000000000000000000000000000000000000000"
+    assert (
+        factory.deployer()
+        != "0x0000000000000000000000000000000000000000"
+    )
     assert deployer.factory() == factory
 
     # check factory has been given admin role on ovl token
@@ -39,7 +51,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
         100000000000000,  # MIN_TRADING_FEE_RATE = 0.01 % (1 bps)
         1000000000000,  # MIN_MINIMUM_COLLATERAL= 1e-6 OVL
         1000000000000,  # MIN_PRICE_DRIFT_UPPER_LIMIT= 0.01 bps/s
-        0  # MIN_AVERAGE_BLOCK_TIME = 0s
+        0,  # MIN_AVERAGE_BLOCK_TIME = 0s
     ]
     actual_params_min = [
         factory.PARAMS_MIN(i) for i in range(len(expect_params_min))
@@ -64,7 +76,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
         5000000000000000,  # MAX_TRADING_FEE_RATE = 0.50% (50 bps)
         1000000000000000000,  # MAX_MINIMUM_COLLATERAL = 1 OVL
         100000000000000,  # MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
-        3600  # MAX_AVERAGE_BLOCK_TIME = 1h
+        3600,  # MAX_AVERAGE_BLOCK_TIME = 1h
     ]
     actual_params_max = [
         factory.PARAMS_MAX(i) for i in range(len(expect_params_max))
@@ -72,7 +84,9 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
     assert expect_params_max == actual_params_max
 
 
-def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
+def test_feed_factory_fixture(
+    feed_factory, feed_one, feed_two, feed_three
+):
     # check params set properly
     assert feed_factory.microWindow() == 600
     assert feed_factory.macroWindow() == 3600
@@ -105,7 +119,7 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
         750000000000000,
         100000000000000,
         10000000000000,
-        14
+        14,
     ]
     actual_params = [market.params(i) for i in range(15)]
     assert expect_params == actual_params

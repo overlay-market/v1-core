@@ -13,8 +13,9 @@ def isolation(fn_isolation):
     pass
 
 
-def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
-                                   fake_factory, gov):
+def test_initialize_creates_market(
+    fake_deployer, ovl, fake_feed, fake_factory, gov
+):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -32,11 +33,23 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
     price_drift_upper_limit = 100000000000000
     average_block_time = 14
 
-    params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
-              circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin_fraction, maintenance_margin_burn_rate,
-              liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit, average_block_time]
+    params = [
+        k,
+        lmbda,
+        delta,
+        cap_payoff,
+        cap_notional,
+        cap_leverage,
+        circuit_breaker_window,
+        circuit_breaker_mint_target,
+        maintenance_margin_fraction,
+        maintenance_margin_burn_rate,
+        liquidation_fee_rate,
+        trading_fee_rate,
+        min_collateral,
+        price_drift_upper_limit,
+        average_block_time,
+    ]
 
     # deploy the market from the deployer
     tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
@@ -53,7 +66,9 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
 
     # check market deployed correctly with risk params
     expect_params = params
-    actual_params = [market.params(i) for i in range(len(RiskParameter))]
+    actual_params = [
+        market.params(i) for i in range(len(RiskParameter))
+    ]
     assert expect_params == actual_params
 
     # check risk calc cached for price drift upper limit
@@ -66,8 +81,9 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
     assert expect_drift == approx(actual_drift)
 
 
-def test_initialize_reverts_when_not_factory(fake_deployer, fake_feed,
-                                             fake_factory, rando):
+def test_initialize_reverts_when_not_factory(
+    fake_deployer, fake_feed, fake_factory, rando
+):
     # risk params
     params = [
         2220000000000,  # expect_k
@@ -97,8 +113,9 @@ def test_initialize_reverts_when_not_factory(fake_deployer, fake_feed,
         _ = market.initialize(params, {"from": rando})
 
 
-def test_initialize_reverts_when_price_is_zero(ovl, fake_deployer, fake_feed,
-                                               fake_factory, gov):
+def test_initialize_reverts_when_price_is_zero(
+    ovl, fake_deployer, fake_feed, fake_factory, gov
+):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -116,11 +133,23 @@ def test_initialize_reverts_when_price_is_zero(ovl, fake_deployer, fake_feed,
     price_drift_upper_limit = 100000000000000
     average_block_time = 14
 
-    params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
-              circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin_fraction, maintenance_margin_burn_rate,
-              liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit, average_block_time]
+    params = [
+        k,
+        lmbda,
+        delta,
+        cap_payoff,
+        cap_notional,
+        cap_leverage,
+        circuit_breaker_window,
+        circuit_breaker_mint_target,
+        maintenance_margin_fraction,
+        maintenance_margin_burn_rate,
+        liquidation_fee_rate,
+        trading_fee_rate,
+        min_collateral,
+        price_drift_upper_limit,
+        average_block_time,
+    ]
 
     # deploy the market from the deployer
     tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
@@ -136,10 +165,9 @@ def test_initialize_reverts_when_price_is_zero(ovl, fake_deployer, fake_feed,
         market.initialize(params, {"from": fake_factory})
 
 
-def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, fake_feed,
-                                                          fake_deployer,
-                                                          fake_factory,
-                                                          gov):
+def test_deploy_reverts_when_max_leverage_is_liquidatable(
+    ovl, fake_feed, fake_deployer, fake_factory, gov
+):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -157,11 +185,23 @@ def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, fake_feed,
     price_drift_upper_limit = 100000000000000
     average_block_time = 14
 
-    params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
-              circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin_fraction, maintenance_margin_burn_rate,
-              liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit, average_block_time]
+    params = [
+        k,
+        lmbda,
+        delta,
+        cap_payoff,
+        cap_notional,
+        cap_leverage,
+        circuit_breaker_window,
+        circuit_breaker_mint_target,
+        maintenance_margin_fraction,
+        maintenance_margin_burn_rate,
+        liquidation_fee_rate,
+        trading_fee_rate,
+        min_collateral,
+        price_drift_upper_limit,
+        average_block_time,
+    ]
 
     # deploy the market from the deployer
     tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})
@@ -173,10 +213,9 @@ def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, fake_feed,
         market.initialize(params, {"from": fake_factory})
 
 
-def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, fake_feed,
-                                                         fake_deployer,
-                                                         fake_factory,
-                                                         gov):
+def test_deploy_reverts_when_price_drift_exceeds_max_exp(
+    ovl, fake_feed, fake_deployer, fake_factory, gov
+):
     # risk params
     k = 1220000000000
     lmbda = 1000000000000000000
@@ -194,11 +233,23 @@ def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, fake_feed,
     price_drift_upper_limit = 100000000000000000
     average_block_time = 14
 
-    params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
-              circuit_breaker_window, circuit_breaker_mint_target,
-              maintenance_margin_fraction, maintenance_margin_burn_rate,
-              liquidation_fee_rate, trading_fee_rate, min_collateral,
-              price_drift_upper_limit, average_block_time]
+    params = [
+        k,
+        lmbda,
+        delta,
+        cap_payoff,
+        cap_notional,
+        cap_leverage,
+        circuit_breaker_window,
+        circuit_breaker_mint_target,
+        maintenance_margin_fraction,
+        maintenance_margin_burn_rate,
+        liquidation_fee_rate,
+        trading_fee_rate,
+        min_collateral,
+        price_drift_upper_limit,
+        average_block_time,
+    ]
 
     # deploy the market from the deployer
     tx = fake_deployer.deploy(fake_feed, {"from": fake_factory})

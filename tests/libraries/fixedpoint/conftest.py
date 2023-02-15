@@ -27,6 +27,7 @@ def create_fixed_point(alice):
     def create_fixed_point():
         fixed_point = alice.deploy(FixedPointMock)
         return fixed_point
+
     yield create_fixed_point
 
 

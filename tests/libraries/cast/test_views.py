@@ -27,8 +27,8 @@ def test_to_int192_bounded(cast):
 
 
 def test_to_int192_bounded_when_less_than_min(cast):
-    value = -2**250
-    expect = -2**191
+    value = -(2**250)
+    expect = -(2**191)
     actual = cast.toInt192Bounded(value)
     assert expect == actual
 

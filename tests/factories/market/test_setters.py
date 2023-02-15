@@ -22,12 +22,9 @@ def test_set_fee_recipient(factory, gov, rando):
     assert expect_fee_recipient == actual_fee_recipient
 
     # check event emitted
-    assert 'FeeRecipientUpdated' in tx.events
-    expect_event = OrderedDict({
-        "user": gov,
-        "recipient": rando
-    })
-    actual_event = tx.events['FeeRecipientUpdated']
+    assert "FeeRecipientUpdated" in tx.events
+    expect_event = OrderedDict({"user": gov, "recipient": rando})
+    actual_event = tx.events["FeeRecipientUpdated"]
     assert actual_event == expect_event
 
 
@@ -36,15 +33,21 @@ def test_set_fee_recipient_reverts_when_not_gov(factory, alice):
 
     # check can't set fee recipient with non gov account
     with reverts("OVLV1: !governor"):
-        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": alice})
+        _ = factory.setFeeRecipient(
+            expect_fee_recipient, {"from": alice}
+        )
 
 
 def test_set_fee_recipient_reverts_when_zero_address(factory, gov):
-    expect_fee_recipient = "0x0000000000000000000000000000000000000000"
+    expect_fee_recipient = (
+        "0x0000000000000000000000000000000000000000"
+    )
 
     # check can't set fee recipient as zero address
     with reverts("OVLV1: feeRecipient should not be zero address"):
-        _ = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
+        _ = factory.setFeeRecipient(
+            expect_fee_recipient, {"from": gov}
+        )
 
 
 # risk param tests
@@ -73,21 +76,25 @@ def test_set_risk_param(factory, market, gov):
     for i in range(len(default_params)):
         # set param
         expect_param = default_params[i]
-        tx = factory.setRiskParam(feed, i, expect_param, {"from": gov})
+        tx = factory.setRiskParam(
+            feed, i, expect_param, {"from": gov}
+        )
 
         # check param changed
         actual_param = market.params(i)
         assert expect_param == actual_param
 
         # check event emitted
-        assert 'ParamUpdated' in tx.events
-        expect_event = OrderedDict({
-            "user": gov,
-            "market": market,
-            "name": i,
-            "value": expect_param
-        })
-        actual_event = tx.events['ParamUpdated']
+        assert "ParamUpdated" in tx.events
+        expect_event = OrderedDict(
+            {
+                "user": gov,
+                "market": market,
+                "name": i,
+                "value": expect_param,
+            }
+        )
+        actual_event = tx.events["ParamUpdated"]
         assert actual_event == expect_event
 
 
@@ -100,7 +107,9 @@ def test_set_risk_param_reverts_when_not_gov(factory, market, alice):
         _ = factory.setRiskParam(feed, 0, expect_k, {"from": alice})
 
 
-def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
+def test_set_risk_param_reverts_when_less_than_min(
+    factory, market, gov
+):
     feed = market.feed()
 
     for i in range(15):
@@ -109,7 +118,9 @@ def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
         if expect_param >= 0:
             # check can't set param less than min
             with reverts("OVLV1: param out of bounds"):
-                _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
+                _ = factory.setRiskParam(
+                    feed, i, expect_param, {"from": gov}
+                )
 
         # check can set param when equal to min
         expect_param = factory.PARAMS_MIN(i)
@@ -122,7 +133,9 @@ def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
         chain.undo()
 
 
-def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
+def test_set_risk_param_reverts_when_greater_than_max(
+    factory, market, gov
+):
     feed = market.feed()
 
     for i in range(15):
@@ -130,7 +143,9 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
 
         # check can't set param greater than max
         with reverts("OVLV1: param out of bounds"):
-            _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
+            _ = factory.setRiskParam(
+                feed, i, expect_param, {"from": gov}
+            )
 
         # check can set param when equal to max
         expect_param = factory.PARAMS_MAX(i)
@@ -157,12 +172,9 @@ def test_shutdown(factory, market, guardian):
     market.isShutdown() is True
 
     # check event emitted
-    assert 'EmergencyShutdown' in tx.events
-    expect_event = OrderedDict({
-        "user": guardian,
-        "market": market
-    })
-    actual_event = tx.events['EmergencyShutdown']
+    assert "EmergencyShutdown" in tx.events
+    expect_event = OrderedDict({"user": guardian, "market": market})
+    actual_event = tx.events["EmergencyShutdown"]
     assert actual_event == expect_event
 
 

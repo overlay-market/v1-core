@@ -5,7 +5,7 @@ from brownie.test import given, strategy
 from decimal import Decimal
 
 
-@given(x=strategy('decimal', min_value='0', max_value='40'))
+@given(x=strategy("decimal", min_value="0", max_value="40"))
 def test_exp_up(fixed_point, x):
     x_fixed = int(x * Decimal(1e18))
 
@@ -30,7 +30,7 @@ def test_exp_up_reverts_when_x_greater_than_int256(fixed_point):
         fixed_point.expUp(x)
 
 
-@given(x=strategy('decimal', min_value='0', max_value='40'))
+@given(x=strategy("decimal", min_value="0", max_value="40"))
 def test_exp_down(fixed_point, x):
     x_fixed = int(x * Decimal(1e18))
 

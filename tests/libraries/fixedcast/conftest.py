@@ -27,6 +27,7 @@ def create_fixed_cast(alice):
     def create_fixed_cast():
         fixed_cast = alice.deploy(FixedCastMock)
         return fixed_cast
+
     yield create_fixed_cast
 
 

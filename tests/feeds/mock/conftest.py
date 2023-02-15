@@ -22,16 +22,25 @@ def rando(accounts):
     yield accounts[3]
 
 
-@pytest.fixture(scope="module", params=[
-    (600, 3600, 1000000000000000000, 2000000000000000000000000)
-])
+@pytest.fixture(
+    scope="module",
+    params=[
+        (600, 3600, 1000000000000000000, 2000000000000000000000000)
+    ],
+)
 def create_feed(gov, request):
     micro, macro, p, r = request.param
 
-    def create_feed(micro_window=micro, macro_window=macro,
-                    price=p, reserve=r):
-        feed = gov.deploy(OverlayV1FeedMock, micro_window, macro_window,
-                          price, reserve)
+    def create_feed(
+        micro_window=micro, macro_window=macro, price=p, reserve=r
+    ):
+        feed = gov.deploy(
+            OverlayV1FeedMock,
+            micro_window,
+            macro_window,
+            price,
+            reserve,
+        )
         return feed
 
     yield create_feed

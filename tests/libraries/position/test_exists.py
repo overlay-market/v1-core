@@ -18,11 +18,20 @@ def test_exists(position):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     # check exists when not liquidated and fraction > 0
     expect = True
@@ -45,11 +54,20 @@ def test_exists_when_liquidated(position):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     # check exists when liquidated
     expect = False
@@ -73,11 +91,20 @@ def test_exists_when_fraction_remaining_zero(position):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     # check exists when not liquidated and fraction == 0
     expect = False

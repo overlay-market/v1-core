@@ -29,8 +29,10 @@ def test_bid_adds_static_spread(market, rando):
 
 
 @given(
-    volume=strategy('decimal', min_value='0.0001', max_value='1.0000',
-                    places=4))
+    volume=strategy(
+        "decimal", min_value="0.0001", max_value="1.0000", places=4
+    )
+)
 def test_bid_adds_market_impact(market, volume, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
@@ -49,7 +51,9 @@ def test_bid_adds_market_impact(market, volume, rando):
 
     # bids get the lower of micro/macro prices (worse price), multiplied
     # by additional spread e^(-delta-lmbda*volume)
-    expect_bid = int(min(price_micro, price_macro) * exp(-delta-lmbda*volume))
+    expect_bid = int(
+        min(price_micro, price_macro) * exp(-delta - lmbda * volume)
+    )
     actual_bid = int(market.bid(data, input_volume))
     assert actual_bid == approx(expect_bid)
 
@@ -106,8 +110,10 @@ def test_ask_adds_static_spread(market, rando):
 
 
 @given(
-    volume=strategy('decimal', min_value='0.0001', max_value='1.0000',
-                    places=4))
+    volume=strategy(
+        "decimal", min_value="0.0001", max_value="1.0000", places=4
+    )
+)
 def test_ask_adds_market_impact(market, volume, rando):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
@@ -126,12 +132,16 @@ def test_ask_adds_market_impact(market, volume, rando):
 
     # asks get the higher of micro/macro prices (worse price), multiplied
     # by additional spread e^(delta+lmbda*volume)
-    expect_ask = int(max(price_micro, price_macro) * exp(delta+lmbda*volume))
+    expect_ask = int(
+        max(price_micro, price_macro) * exp(delta + lmbda * volume)
+    )
     actual_ask = int(market.ask(data, input_volume))
     assert actual_ask == approx(expect_ask)
 
 
-def test_ask_reverts_when_impact_greater_than_max_slippage(market, rando):
+def test_ask_reverts_when_impact_greater_than_max_slippage(
+    market, rando
+):
     # params idx for delta, lmbda params
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value

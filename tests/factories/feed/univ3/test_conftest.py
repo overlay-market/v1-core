@@ -12,8 +12,14 @@ def test_token_fixtures(dai, weth, uni):
     assert uni.name() == "Uniswap"
 
 
-def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
-                       pool_uniweth_30bps):
+def test_pool_fixtures(
+    dai,
+    weth,
+    uni,
+    uni_factory,
+    pool_daiweth_30bps,
+    pool_uniweth_30bps,
+):
     assert pool_daiweth_30bps.fee() == 3000
     assert pool_daiweth_30bps.token0() == dai
     assert pool_daiweth_30bps.token1() == weth

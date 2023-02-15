@@ -27,6 +27,7 @@ def create_position(alice):
     def create_position():
         position = alice.deploy(PositionMock)
         return position
+
     yield create_position
 
 

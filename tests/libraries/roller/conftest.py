@@ -27,6 +27,7 @@ def create_roller(alice):
     def create_roller():
         roller = alice.deploy(RollerMock)
         return roller
+
     yield create_roller
 
 

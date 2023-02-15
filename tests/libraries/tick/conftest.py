@@ -27,6 +27,7 @@ def create_tick_mock(alice):
     def create_tick_mock():
         tick_mock = alice.deploy(TickMock)
         return tick_mock
+
     yield create_tick_mock
 
 

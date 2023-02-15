@@ -24,10 +24,9 @@ class RiskParameter(Enum):
     AVERAGE_BLOCK_TIME = 14
 
 
-def calculate_position_info(notional: Decimal,
-                            leverage: Decimal,
-                            trading_fee_rate: Decimal) -> (Decimal, Decimal,
-                                                           Decimal, Decimal):
+def calculate_position_info(
+    notional: Decimal, leverage: Decimal, trading_fee_rate: Decimal
+) -> (Decimal, Decimal, Decimal, Decimal):
     """
     Returns position attributes in decimal format (int / 1e18)
     """
@@ -42,7 +41,7 @@ def get_position_key(owner: str, id: int) -> HexBytes:
     Returns the position key to retrieve an individual position
     from positions mapping
     """
-    return web3.solidityKeccak(['address', 'uint256'], [owner, id])
+    return web3.solidityKeccak(["address", "uint256"], [owner, id])
 
 
 def mid_from_feed(data: Any) -> float:
@@ -69,4 +68,6 @@ def price_to_tick(price: int) -> int:
     Returns the tick associated with a given price
     price = 1.0001 ** tick
     """
-    return int(log(Decimal(price) / Decimal(1e18)) / log(Decimal(1.0001)))
+    return int(
+        log(Decimal(price) / Decimal(1e18)) / log(Decimal(1.0001))
+    )

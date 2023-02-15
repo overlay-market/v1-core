@@ -12,8 +12,15 @@ def isolation(fn_isolation):
     pass
 
 
-def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
-                                      minter_role, burner_role, gov):
+def test_deploy_market_creates_market(
+    factory,
+    feed_factory,
+    feed_one,
+    ovl,
+    minter_role,
+    burner_role,
+    gov,
+):
     # NOTE: feed_one will have a successfully deployed market on it for
     # remainder of test_deploy_market.py
     expect_feed_factory = feed_factory
@@ -36,22 +43,27 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_price_drift_upper_limit = 100000000000000
     expect_average_block_time = 14
 
-    expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_notional, expect_cap_leverage,
-                     expect_circuit_breaker_window,
-                     expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin_fraction,
-                     expect_maintenance_margin_burn_rate,
-                     expect_liquidation_fee_rate, expect_trading_fee_rate,
-                     expect_min_collateral, expect_price_drift_upper_limit,
-                     expect_average_block_time]
+    expect_params = [
+        expect_k,
+        expect_lmbda,
+        expect_delta,
+        expect_cap_payoff,
+        expect_cap_notional,
+        expect_cap_leverage,
+        expect_circuit_breaker_window,
+        expect_circuit_breaker_mint_target,
+        expect_maintenance_margin_fraction,
+        expect_maintenance_margin_burn_rate,
+        expect_liquidation_fee_rate,
+        expect_trading_fee_rate,
+        expect_min_collateral,
+        expect_price_drift_upper_limit,
+        expect_average_block_time,
+    ]
 
     # deploy market
     tx = factory.deployMarket(
-        expect_feed_factory,
-        expect_feed,
-        expect_params,
-        {"from": gov}
+        expect_feed_factory, expect_feed, expect_params, {"from": gov}
     )
     # check returned address matches market
     expect_market = tx.return_value
@@ -66,13 +78,11 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert ovl.hasRole(burner_role, actual_market) is True
 
     # check event emitted
-    assert 'MarketDeployed' in tx.events
-    expect_event = OrderedDict({
-        "user": gov,
-        "market": expect_market,
-        "feed": expect_feed
-    })
-    actual_event = tx.events['MarketDeployed']
+    assert "MarketDeployed" in tx.events
+    expect_event = OrderedDict(
+        {"user": gov, "market": expect_market, "feed": expect_feed}
+    )
+    actual_event = tx.events["MarketDeployed"]
     assert actual_event == expect_event
 
     # check contract deployed with correct constructor params
@@ -88,12 +98,15 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     assert expect_params == actual_params
 
     # check update last timestamp is last block's
-    assert market_contract.timestampUpdateLast() \
-        == chain[tx.block_number]['timestamp']
+    assert (
+        market_contract.timestampUpdateLast()
+        == chain[tx.block_number]["timestamp"]
+    )
 
 
-def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
-                                            rando):
+def test_deploy_market_reverts_when_not_gov(
+    factory, feed_factory, feed_two, rando
+):
     # NOTE: feed_two will NOT have a successfully deployed market on it
     # in test_deploy_market.py
     expect_feed_factory = feed_factory
@@ -116,16 +129,23 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_price_drift_upper_limit = 100000000000000
     expect_average_block_time = 14
 
-    expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_notional, expect_cap_leverage,
-                     expect_circuit_breaker_window,
-                     expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin_fraction,
-                     expect_maintenance_margin_burn_rate,
-                     expect_liquidation_fee_rate,
-                     expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit,
-                     expect_average_block_time]
+    expect_params = [
+        expect_k,
+        expect_lmbda,
+        expect_delta,
+        expect_cap_payoff,
+        expect_cap_notional,
+        expect_cap_leverage,
+        expect_circuit_breaker_window,
+        expect_circuit_breaker_mint_target,
+        expect_maintenance_margin_fraction,
+        expect_maintenance_margin_burn_rate,
+        expect_liquidation_fee_rate,
+        expect_trading_fee_rate,
+        expect_min_collateral,
+        expect_price_drift_upper_limit,
+        expect_average_block_time,
+    ]
 
     # check can't deploy from rando account
     with reverts("OVLV1: !governor"):
@@ -133,20 +153,22 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": rando}
+            {"from": rando},
         )
 
 
-def test_deploy_market_reverts_when_market_already_exists(factory,
-                                                          feed_factory,
-                                                          feed_three, gov):
+def test_deploy_market_reverts_when_market_already_exists(
+    factory, feed_factory, feed_three, gov
+):
     # NOTE: feed_one has a successfully deployed market on it given
     # test_deploy_market_creates_market above in test_deploy_market.py
     expect_feed_factory = feed_factory
     expect_feed = feed_three
 
-    assert factory.getMarket(feed_three) \
+    assert (
+        factory.getMarket(feed_three)
         != "0x0000000000000000000000000000000000000000"
+    )
 
     # risk params
     expect_k = 1220000000000
@@ -165,16 +187,23 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_price_drift_upper_limit = 100000000000000
     expect_average_block_time = 14
 
-    expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_notional, expect_cap_leverage,
-                     expect_circuit_breaker_window,
-                     expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin_fraction,
-                     expect_maintenance_margin_burn_rate,
-                     expect_liquidation_fee_rate,
-                     expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit,
-                     expect_average_block_time]
+    expect_params = [
+        expect_k,
+        expect_lmbda,
+        expect_delta,
+        expect_cap_payoff,
+        expect_cap_notional,
+        expect_cap_leverage,
+        expect_circuit_breaker_window,
+        expect_circuit_breaker_mint_target,
+        expect_maintenance_margin_fraction,
+        expect_maintenance_margin_burn_rate,
+        expect_liquidation_fee_rate,
+        expect_trading_fee_rate,
+        expect_min_collateral,
+        expect_price_drift_upper_limit,
+        expect_average_block_time,
+    ]
 
     # check can't deploy from rando account
     with reverts("OVLV1: market already exists"):
@@ -182,12 +211,13 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": gov}
+            {"from": gov},
         )
 
 
-def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
-                                                               feed_two, gov):
+def test_deploy_market_reverts_when_feed_factory_not_supported(
+    factory, rando, feed_two, gov
+):
     # NOTE: feed_two will NOT have a successfully deployed market on it
     # in test_deploy_market.py
     expect_feed_factory = rando
@@ -210,16 +240,23 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_price_drift_upper_limit = 100000000000000
     expect_average_block_time = 14
 
-    expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_notional, expect_cap_leverage,
-                     expect_circuit_breaker_window,
-                     expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin_fraction,
-                     expect_maintenance_margin_burn_rate,
-                     expect_liquidation_fee_rate,
-                     expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit,
-                     expect_average_block_time]
+    expect_params = [
+        expect_k,
+        expect_lmbda,
+        expect_delta,
+        expect_cap_payoff,
+        expect_cap_notional,
+        expect_cap_leverage,
+        expect_circuit_breaker_window,
+        expect_circuit_breaker_mint_target,
+        expect_maintenance_margin_fraction,
+        expect_maintenance_margin_burn_rate,
+        expect_liquidation_fee_rate,
+        expect_trading_fee_rate,
+        expect_min_collateral,
+        expect_price_drift_upper_limit,
+        expect_average_block_time,
+    ]
 
     # check can't deploy with rando factory feed
     with reverts("OVLV1: feed factory not supported"):
@@ -227,12 +264,13 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": gov}
+            {"from": gov},
         )
 
 
-def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
-                                                        rando, gov):
+def test_deploy_market_reverts_when_feed_does_not_exist(
+    factory, feed_factory, rando, gov
+):
     expect_feed_factory = feed_factory
     expect_feed = rando
 
@@ -253,16 +291,23 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_price_drift_upper_limit = 100000000000000
     expect_average_block_time = 14
 
-    expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
-                     expect_cap_notional, expect_cap_leverage,
-                     expect_circuit_breaker_window,
-                     expect_circuit_breaker_mint_target,
-                     expect_maintenance_margin_fraction,
-                     expect_maintenance_margin_burn_rate,
-                     expect_liquidation_fee_rate,
-                     expect_trading_fee_rate, expect_min_collateral,
-                     expect_price_drift_upper_limit,
-                     expect_average_block_time]
+    expect_params = [
+        expect_k,
+        expect_lmbda,
+        expect_delta,
+        expect_cap_payoff,
+        expect_cap_notional,
+        expect_cap_leverage,
+        expect_circuit_breaker_window,
+        expect_circuit_breaker_mint_target,
+        expect_maintenance_margin_fraction,
+        expect_maintenance_margin_burn_rate,
+        expect_liquidation_fee_rate,
+        expect_trading_fee_rate,
+        expect_min_collateral,
+        expect_price_drift_upper_limit,
+        expect_average_block_time,
+    ]
 
     # check can't deploy with rando feed not in factory feed registry
     with reverts("OVLV1: feed does not exist"):
@@ -270,14 +315,14 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": gov}
+            {"from": gov},
         )
 
 
 # risk param out of bounds tests
-def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
-                                                        feed_one, feed_two,
-                                                        gov):
+def test_deploy_market_reverts_when_param_less_than_min(
+    factory, feed_factory, feed_one, feed_two, gov
+):
     expect_feed_factory = feed_factory
     expect_feed = feed_two
 
@@ -313,7 +358,7 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
                     expect_feed_factory,
                     expect_feed,
                     expect_params,
-                    {"from": gov}
+                    {"from": gov},
                 )
 
         # check deploys with param equal to min
@@ -323,16 +368,16 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": gov}
+            {"from": gov},
         )
 
         # undo the tx so can try to redeploy new market for next param
         chain.undo()
 
 
-def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
-                                                           feed_two, gov,
-                                                           feed_factory):
+def test_deploy_market_reverts_when_param_greater_than_max(
+    factory, feed_one, feed_two, gov, feed_factory
+):
     expect_feed_factory = feed_factory
     expect_feed = feed_two
 
@@ -367,7 +412,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
                 expect_feed_factory,
                 expect_feed,
                 expect_params,
-                {"from": gov}
+                {"from": gov},
             )
 
         # check deploys with param equal to max
@@ -377,7 +422,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
             expect_feed_factory,
             expect_feed,
             expect_params,
-            {"from": gov}
+            {"from": gov},
         )
 
         # undo the tx so can try to redeploy new market for next param

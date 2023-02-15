@@ -24,22 +24,22 @@ def rando(accounts):
 
 @pytest.fixture(scope="module")
 def minter_role():
-    yield web3.solidityKeccak(['string'], ["MINTER"])
+    yield web3.solidityKeccak(["string"], ["MINTER"])
 
 
 @pytest.fixture(scope="module")
 def burner_role():
-    yield web3.solidityKeccak(['string'], ["BURNER"])
+    yield web3.solidityKeccak(["string"], ["BURNER"])
 
 
 @pytest.fixture(scope="module")
 def governor_role():
-    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
+    yield web3.solidityKeccak(["string"], ["GOVERNOR"])
 
 
 @pytest.fixture(scope="module")
 def guardian_role():
-    yield web3.solidityKeccak(['string'], ["GUARDIAN"])
+    yield web3.solidityKeccak(["string"], ["GUARDIAN"])
 
 
 @pytest.fixture(scope="module", params=[8000000])
@@ -54,8 +54,12 @@ def create_token(gov, alice, bob, minter_role, request):
         tok.mint(gov, supply * 10 ** tok.decimals(), {"from": gov})
         tok.renounceRole(minter_role, gov, {"from": gov})
 
-        tok.transfer(alice, (supply/2) * 10 ** tok.decimals(), {"from": gov})
-        tok.transfer(bob, (supply/2) * 10 ** tok.decimals(), {"from": gov})
+        tok.transfer(
+            alice, (supply / 2) * 10 ** tok.decimals(), {"from": gov}
+        )
+        tok.transfer(
+            bob, (supply / 2) * 10 ** tok.decimals(), {"from": gov}
+        )
         return tok
 
     yield create_token
@@ -125,7 +129,9 @@ def guardian(create_guardian):
 @pytest.fixture(scope="module")
 def create_admin(token, gov, accounts):
     def create_admin(tok=token, governance=gov):
-        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), accounts[7], {"from": gov})
+        tok.grantRole(
+            tok.DEFAULT_ADMIN_ROLE(), accounts[7], {"from": gov}
+        )
         return accounts[7]
 
     yield create_admin

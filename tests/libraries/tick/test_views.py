@@ -6,7 +6,7 @@ from math import log, pow
 
 
 # NOTE: only care to 4 decimals but use 6 for testing
-@given(price=strategy('decimal', min_value='0.000001', places=6))
+@given(price=strategy("decimal", min_value="0.000001", places=6))
 def test_price_to_tick(tick_mock, price):
     base = Decimal(1.0001)
     input_price = price * Decimal(1e18)
@@ -17,7 +17,9 @@ def test_price_to_tick(tick_mock, price):
     assert expect == actual
 
 
-@given(tick=strategy('int24', min_value='-410000', max_value='1200000'))
+@given(
+    tick=strategy("int24", min_value="-410000", max_value="1200000")
+)
 def test_tick_to_price(tick_mock, tick):
     base = Decimal(1.0001)
     input_tick = tick
@@ -30,7 +32,7 @@ def test_tick_to_price(tick_mock, tick):
 
 
 # NOTE: make sure unitary
-@given(price=strategy('decimal', min_value='2e-18'))
+@given(price=strategy("decimal", min_value="2e-18"))
 def test_price_to_tick_to_price(tick_mock, price):
     input_price = price * Decimal(1e18)
     output_tick = tick_mock.priceToTick(input_price)
@@ -61,7 +63,9 @@ def test_price_to_tick_reverts_when_lt_min(tick_mock):
 
 def test_price_to_tick_reverts_when_gt_max(tick_mock):
     # check passes for input price of 1.0001 ** (120 * 1e4)
-    input_price = int(Decimal(1.0001) ** Decimal(1200000) * Decimal(1e18))
+    input_price = int(
+        Decimal(1.0001) ** Decimal(1200000) * Decimal(1e18)
+    )
 
     actual = tick_mock.priceToTick(input_price)
     expect = 1199999  # rounding issues at 1200000
@@ -89,7 +93,7 @@ def test_tick_to_price_reverts_when_lt_min(tick_mock):
 def test_tick_to_price_reverts_when_gt_max(tick_mock):
     base = Decimal(1.0001)
     # reverts when larger than max tick
-    input_tick = (1200000 + 1)
+    input_tick = 1200000 + 1
     with reverts("OVLV1: tick out of bounds"):
         tick_mock.tickToPrice(input_tick)
 

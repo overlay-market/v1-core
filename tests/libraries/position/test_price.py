@@ -5,7 +5,7 @@ from decimal import Decimal
 from .utils import price_to_tick
 
 
-@given(mid_price=strategy('decimal', min_value='2e-18'))
+@given(mid_price=strategy("decimal", min_value="2e-18"))
 def test_mid_price_at_entry(position, mid_price):
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
@@ -21,18 +21,27 @@ def test_mid_price_at_entry(position, mid_price):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = mid_price
     actual = int(position.midPriceAtEntry(pos))
     assert expect == approx(actual, rel=1e-4)
 
 
-@given(entry_price=strategy('decimal', min_value='2e-18'))
+@given(entry_price=strategy("decimal", min_value="2e-18"))
 def test_entry_price(position, entry_price):
     notional = 10000000000000000000  # 10
     debt = 2000000000000000000  # 2
@@ -48,11 +57,20 @@ def test_entry_price(position, entry_price):
 
     oi = int((notional / mid_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = entry_price
     actual = int(position.entryPrice(pos))

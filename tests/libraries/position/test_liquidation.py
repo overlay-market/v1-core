@@ -15,11 +15,17 @@ def test_liquidatable(position):
     entry_tick = price_to_tick(entry_price)
     mid_tick = entry_tick
 
-    oi = int(Decimal(notional) / Decimal(entry_price) * Decimal(1e18)
-             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    oi = int(
+        Decimal(notional)
+        / Decimal(entry_price)
+        * Decimal(1e18)
+        * Decimal(fraction_remaining)
+        / Decimal(1e4)
+    )  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.064
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.064
 
     # inputs for position function
     cap_payoff = 5000000000000000000  # 5
@@ -30,46 +36,114 @@ def test_liquidatable(position):
     # position.value * (1-liq_fee_rate) < maintenance * initial_notional
     # check returns True when long is liquidatable
     is_long = True
-    current_price = 90526315789473677312 * (1 - tol)  # ~ 90.5263 * (1-tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 90526315789473677312 * (
+        1 - tol
+    )  # ~ 90.5263 * (1-tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when long is not liquidatable
     is_long = True
-    current_price = 90526315789473677312 * (1 + tol)  # ~ 90.5263 * (1+tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 90526315789473677312 * (
+        1 + tol
+    )  # ~ 90.5263 * (1+tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns True when short is liquidatable
     is_long = False
-    current_price = 109473684210526322688 * (1 + tol)  # ~ 109.4737 * (1+tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 109473684210526322688 * (
+        1 + tol
+    )  # ~ 109.4737 * (1+tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when short is not liquidatable
     is_long = False
-    current_price = 109473684210526322688 * (1 - tol)  # ~ 109.4737 * (1-tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 109473684210526322688 * (
+        1 - tol
+    )  # ~ 109.4737 * (1-tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
 
@@ -84,11 +158,17 @@ def test_liquidatable_when_entry_not_equal_to_mid(position):
     mid_price = 100000000000000000000  # 100
     mid_tick = price_to_tick(mid_price)
 
-    oi = int(Decimal(notional) / Decimal(mid_price) * Decimal(1e18)
-             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    oi = int(
+        Decimal(notional)
+        / Decimal(mid_price)
+        * Decimal(1e18)
+        * Decimal(fraction_remaining)
+        / Decimal(1e4)
+    )  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.064
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.064
 
     # inputs for position function
     cap_payoff = 5000000000000000000  # 5
@@ -98,54 +178,122 @@ def test_liquidatable_when_entry_not_equal_to_mid(position):
     # liquidatable when position.value < maintenance * initial_notional
     # check returns True when long is liquidatable
     is_long = True
-    current_price = 90527315789473693696 * (1 - tol)  # ~ 90.5273 * (1-tol)
+    current_price = 90527315789473693696 * (
+        1 - tol
+    )  # ~ 90.5273 * (1-tol)
     entry_price = 100001000000000000000  # 100.001
     entry_tick = price_to_tick(entry_price)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when long is not liquidatable
     is_long = True
-    current_price = 90527315789473693696 * (1 + tol)  # ~ 90.5273 * (1+tol)
+    current_price = 90527315789473693696 * (
+        1 + tol
+    )  # ~ 90.5273 * (1+tol)
     entry_price = 100001000000000000000  # 100.001
     entry_tick = price_to_tick(entry_price)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns True when short is liquidatable
     is_long = False
-    current_price = 109472684210526306304 * (1 + tol)  # ~ 109.4727 * (1+tol)
+    current_price = 109472684210526306304 * (
+        1 + tol
+    )  # ~ 109.4727 * (1+tol)
     entry_price = 99999000000000000000  # 99.999
     entry_tick = price_to_tick(entry_price)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when short is not liquidatable
     is_long = False
-    current_price = 109472684210526306304 * (1 - tol)  # ~ 109.4727 * (1-tol)
+    current_price = 109472684210526306304 * (
+        1 - tol
+    )  # ~ 109.4727 * (1-tol)
     entry_price = 99999000000000000000  # 99.999
     entry_tick = price_to_tick(entry_price)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
 
@@ -167,25 +315,56 @@ def test_liquidatable_when_oi_zero(position):
 
     oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
     # check returns False when long oi is zero
     is_long = True
     expect = False
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when short oi is zero
     is_long = False
     expect = False
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
 
@@ -205,27 +384,58 @@ def test_liquidatable_when_liquidated(position):
 
     oi = int((notional / entry_price) * 1000000000000000000)  # 0.1
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.08
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.08
 
     # check returns False when long oi has been liquidated
     is_long = True
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when short oi has been liquidated
     is_long = False
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
 
@@ -243,54 +453,128 @@ def test_liquidatable_when_leverage_one(position):
     entry_tick = price_to_tick(entry_price)
     mid_tick = entry_tick
 
-    oi = int(Decimal(notional) / Decimal(entry_price) * Decimal(1e18)
-             * Decimal(fraction_remaining) / Decimal(1e4))  # 0.08
+    oi = int(
+        Decimal(notional)
+        / Decimal(entry_price)
+        * Decimal(1e18)
+        * Decimal(fraction_remaining)
+        / Decimal(1e4)
+    )  # 0.08
     shares_to_oi_ratio = 800000000000000000  # 0.8
-    oi_shares = int(Decimal(oi) * Decimal(shares_to_oi_ratio)
-                    / Decimal(1e18))  # 0.064
+    oi_shares = int(
+        Decimal(oi) * Decimal(shares_to_oi_ratio) / Decimal(1e18)
+    )  # 0.064
 
     tol = 1e-4  # 1bps
 
     # check returns False when long price moves less than maintenance require
     is_long = True
-    current_price = 10526315789473685504 * (1 + tol)  # ~ 10.5263 * (1+tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 10526315789473685504 * (
+        1 + tol
+    )  # ~ 10.5263 * (1+tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns True when long price moves more than maintenance require
     is_long = True
-    current_price = 10526315789473685504 * (1 - tol)  # ~ 10.5263 * (1-tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 10526315789473685504 * (
+        1 - tol
+    )  # ~ 10.5263 * (1-tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns False when short price moves less than maintenance require
     is_long = False
-    current_price = 189473684210526289920 * (1 - tol)  # ~ 189.4736 * (1-tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 189473684210526289920 * (
+        1 - tol
+    )  # ~ 189.4736 * (1-tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = False
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual
 
     # check returns True when short price moves more than maintenance require
     is_long = False
-    current_price = 189473684210526289920 * (1 + tol)  # ~ 189.4736 * (1+tol)
-    pos = (notional, debt, mid_tick, entry_tick, is_long,
-           liquidated, oi_shares, fraction_remaining)
+    current_price = 189473684210526289920 * (
+        1 + tol
+    )  # ~ 189.4736 * (1+tol)
+    pos = (
+        notional,
+        debt,
+        mid_tick,
+        entry_tick,
+        is_long,
+        liquidated,
+        oi_shares,
+        fraction_remaining,
+    )
 
     expect = True
-    actual = position.liquidatable(pos, oi, oi_shares, current_price,
-                                   cap_payoff, maintenance, liq_fee_rate)
+    actual = position.liquidatable(
+        pos,
+        oi,
+        oi_shares,
+        current_price,
+        cap_payoff,
+        maintenance,
+        liq_fee_rate,
+    )
     assert expect == actual

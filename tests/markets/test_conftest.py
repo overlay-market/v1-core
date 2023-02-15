@@ -14,8 +14,14 @@ def test_token_fixtures(dai, weth, uni):
     assert uni.name() == "Uniswap"
 
 
-def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
-                       pool_uniweth_30bps):
+def test_pool_fixtures(
+    dai,
+    weth,
+    uni,
+    uni_factory,
+    pool_daiweth_30bps,
+    pool_uniweth_30bps,
+):
     assert pool_daiweth_30bps.fee() == 3000
     assert pool_daiweth_30bps.token0() == dai
     assert pool_daiweth_30bps.token1() == weth
@@ -32,8 +38,9 @@ def test_factory_fixture(factory, ovl, fee_recipient):
     assert factory.feeRecipient() == fee_recipient
 
 
-def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
-                      uni):
+def test_feed_fixture(
+    feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth, uni
+):
     assert feed.marketPool() == pool_daiweth_30bps
     assert feed.ovlXPool() == pool_uniweth_30bps
     assert feed.ovl() == uni
@@ -69,8 +76,15 @@ def test_fake_deployer_fixture(fake_deployer, fake_factory, ovl):
     assert fact == fake_factory
 
 
-def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
-                             minter_role, burner_role, gov):
+def test_mock_market_fixture(
+    mock_market,
+    mock_feed,
+    ovl,
+    factory,
+    minter_role,
+    burner_role,
+    gov,
+):
     # check addresses set properly
     assert mock_market.ovl() == ovl
     assert mock_market.feed() == mock_feed
@@ -92,9 +106,11 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        14,
     ]
-    actual_params = [mock_market.params(name.value) for name in RiskParameter]
+    actual_params = [
+        mock_market.params(name.value) for name in RiskParameter
+    ]
     assert expect_params == actual_params
 
     # check mock market has minter and burner roles on ovl token
@@ -115,8 +131,9 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     assert mock_market.timestampUpdateLast() != 0
 
 
-def test_market_fixture(market, feed, ovl, factory, minter_role,
-                        burner_role, gov):
+def test_market_fixture(
+    market, feed, ovl, factory, minter_role, burner_role, gov
+):
     # check addresses set properly
     assert market.ovl() == ovl
     assert market.feed() == feed
@@ -138,9 +155,11 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        14,
     ]
-    actual_params = [market.params(name.value) for name in RiskParameter]
+    actual_params = [
+        market.params(name.value) for name in RiskParameter
+    ]
     assert expect_params == actual_params
 
     # check market has minter and burner roles on ovl token

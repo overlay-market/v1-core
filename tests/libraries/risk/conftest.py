@@ -27,6 +27,7 @@ def create_risk(alice):
     def create_risk():
         risk = alice.deploy(RiskMock)
         return risk
+
     yield create_risk
 
 

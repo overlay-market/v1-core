@@ -7,11 +7,19 @@ def test_latest_updates_data_on_first_call(feed):
     price = feed.price()
     reserve = feed.reserve()
     has_reserve = True
-    timestamp = chain[-1]['timestamp']
+    timestamp = chain[-1]["timestamp"]
 
     # check new data returned
-    expect = (timestamp, micro_window, macro_window, price, price,
-              price, reserve, has_reserve)
+    expect = (
+        timestamp,
+        micro_window,
+        macro_window,
+        price,
+        price,
+        price,
+        reserve,
+        has_reserve,
+    )
     actual = feed.latest()
     assert actual == expect
 
@@ -26,9 +34,17 @@ def test_latest_updates_data_on_many_calls(feed):
         price = feed.price()
         reserve = feed.reserve()
         has_reserve = True
-        timestamp = chain[-1]['timestamp']
+        timestamp = chain[-1]["timestamp"]
 
-        expect = (timestamp, micro_window, macro_window, price, price,
-                  price, reserve, has_reserve)
+        expect = (
+            timestamp,
+            micro_window,
+            macro_window,
+            price,
+            price,
+            price,
+            reserve,
+            has_reserve,
+        )
         actual = feed.latest()
         assert actual == expect

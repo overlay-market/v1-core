@@ -5,8 +5,10 @@ from brownie.test import given, strategy
 from decimal import Decimal
 
 
-@given(a=strategy('uint256', min_value='1', max_value=str(2**255-1)),
-       b=strategy('uint256', min_value='1', max_value=str(2**255-1)))
+@given(
+    a=strategy("uint256", min_value="1", max_value=str(2**255 - 1)),
+    b=strategy("uint256", min_value="1", max_value=str(2**255 - 1)),
+)
 def test_log_up(fixed_point, a, b):
     expect_a = Decimal(a) / Decimal(1e18)
     expect_b = Decimal(b) / Decimal(1e18)
@@ -46,8 +48,10 @@ def test_log_up_reverts_b_is_gt_max(fixed_point):
         fixed_point.logUp(a, b)
 
 
-@given(a=strategy('uint256', min_value='1', max_value=str(2**255-1)),
-       b=strategy('uint256', min_value='1', max_value=str(2**255-1)))
+@given(
+    a=strategy("uint256", min_value="1", max_value=str(2**255 - 1)),
+    b=strategy("uint256", min_value="1", max_value=str(2**255 - 1)),
+)
 def test_log_down(fixed_point, a, b):
     expect_a = Decimal(a) / Decimal(1e18)
     expect_b = Decimal(b) / Decimal(1e18)

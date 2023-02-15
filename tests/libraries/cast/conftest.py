@@ -27,6 +27,7 @@ def create_cast(alice):
     def create_cast():
         cast = alice.deploy(CastMock)
         return cast
+
     yield create_cast
 
 
