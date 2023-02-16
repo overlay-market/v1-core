@@ -20,9 +20,7 @@ def main():
     feed_factory = OverlayV1ChainlinkFeedFactory.at(CHAINLINK_FEED_FACTORY)
 
     # assemble params for deployFeed
-    params = ["_aggregator (address)",
-              "_microWindow (uint256)",
-              "_macroWindow (uint256)"]
+    params = ["_aggregator (address)"]
     args = [click.prompt(f"{param}") for param in params]
 
     click.echo(
@@ -30,12 +28,10 @@ def main():
         OverlayV1ChainlinkFeed Parameters
 
         aggregator (address): {args[0]}
-        microWindow (uint256): {args[1]}
-        macroWindow (uint256): {args[2]}
         """
     )
 
     if click.confirm("Deploy New Feed"):
-        tx = feed_factory.deployFeed(*args, {"from": dev})
+        tx = feed_factory.deployFeed(*args, {"from": dev}, publish_source=True)
         tx.info()
         click.echo("Chainlink Feed deployed")
