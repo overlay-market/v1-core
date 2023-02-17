@@ -32,6 +32,6 @@ def main():
     )
 
     if click.confirm("Deploy New Feed"):
-        tx = feed_factory.deployFeed(*args, {"from": dev}, publish_source=True)
+        tx = feed_factory.deployFeed(*args, {"from": dev})
         tx.info()
         click.echo("Chainlink Feed deployed")
