@@ -8,7 +8,7 @@ from brownie import (
 def test_deploy_factory_reverts_when_cardinality_lt_macro(
     alice, uni, uni_factory
 ):
-    decimals = 10
+    decimals = 1
     micro_window = 600
     macro_window = 3600
     avg_block_time = 14
@@ -33,10 +33,10 @@ def test_deploy_factory_reverts_when_cardinality_lt_macro(
 def test_deploy_no_reserve_factory_reverts_when_cardinality_lt_macro(
     alice, uni_factory
 ):
-    decimals = 10
+    decimals = 1
     micro_window = 600
     macro_window = 3600
-    avg_block_time = 4
+    avg_block_time = 14
 
     # check factory deploy reverts when cardinality too small given
     # micro and macro windows
