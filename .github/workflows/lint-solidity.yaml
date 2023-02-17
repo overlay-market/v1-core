@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - development
   pull_request:
     branches:
       - main
+      - development
 
 jobs:
   solidity-lint:
@@ -19,7 +21,7 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '17.x'
+          node-version: "17.x"
 
       - name: Install node.js dependencies
         run: npm install
