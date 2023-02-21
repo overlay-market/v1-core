@@ -19,7 +19,7 @@ def main():
     params = ["ovl (address)", "uniV3Factory (address)",
               "microWindow (uint256)", "macroWindow (uint256)",
               "observationCardinalityMinimum (uint16)",
-              "averageBlockTime (uint256)"]
+              "averageBlockTime (uint256)", "decimals (uint256)"]
     args = [
         click.prompt(f"{param}")
         if param != "uniV3Factory (address)"
