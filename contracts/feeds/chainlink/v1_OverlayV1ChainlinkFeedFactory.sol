@@ -5,7 +5,10 @@ import "../OverlayV1FeedFactory.sol";
 import "./v1_OverlayV1ChainlinkFeed.sol";
 import "../../interfaces/feeds/chainlink/Iv1_OverlayV1ChainlinkFeedFactory.sol";
 
-contract v1_OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, OverlayV1FeedFactory {
+contract v1_OverlayV1ChainlinkFeedFactory is
+    Iv1_OverlayV1ChainlinkFeedFactory,
+    OverlayV1FeedFactory
+{
     // registry of feeds; for a given aggregator pair, returns associated feed
     mapping(address => address) public getFeed;
 
