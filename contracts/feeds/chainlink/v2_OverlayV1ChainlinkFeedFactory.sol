@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "../OverlayV1FeedFactory.sol";
 import "./v2_OverlayV1ChainlinkFeed.sol";
-import "../../interfaces/feeds/chainlink/IOverlayV1ChainlinkFeedFactory.sol";
+import "../../interfaces/feeds/chainlink/Iv2_OverlayV1ChainlinkFeedFactory.sol";
 
 contract v2_OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, OverlayV1FeedFactory {
     // registry of feeds; for a given aggregator pair, returns associated feed
