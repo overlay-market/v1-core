@@ -20,6 +20,9 @@ contract OverlayV1NFTPerpFeedFactory is IOverlayV1NFTPerpFeedFactory, OverlayV1F
         // check feed doesn't already exist
         require(getFeed[_aggregator] == address(0), "OVLV1: feed already exists");
 
+        // check _decimal isn't 0
+        require(_decimal > 0, "OVLV1: _decimal cannot be 0");
+
         // Create a new Feed contract
         _feed = address(new OverlayV1NFTPerpFeed(_aggregator, microWindow, macroWindow, _decimal));
 
