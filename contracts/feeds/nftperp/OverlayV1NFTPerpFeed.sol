@@ -12,12 +12,13 @@ contract OverlayV1NFTPerpFeed is OverlayV1Feed {
     constructor(
         address _aggregator,
         uint256 _microWindow,
-        uint256 _macroWindow
+        uint256 _macroWindow,
+        uint8 _decimal
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         require(_aggregator != address(0), "Invalid feed");
 
         aggregator = AggregatorV3Interface(_aggregator);
-        decimals = aggregator.decimals();
+        decimals = _decimal;
         description = aggregator.description();
     }
 
@@ -104,12 +105,12 @@ contract OverlayV1NFTPerpFeed is OverlayV1Feed {
 
         priceOverMicroWindow =
             (sumOfPriceMicroWindow * (10**18)) /
-            (microWindow * 10**aggregator.decimals());
+            (microWindow * 10**decimals);
         priceOverMacroWindow =
             (sumOfPriceMacroWindow * (10**18)) /
-            (macroWindow * 10**aggregator.decimals());
+            (macroWindow * 10**decimals);
         priceOneMacroWindowAgo =
             (sumOfPriceMacroWindowAgo * (10**18)) /
-            (macroWindow * 10**aggregator.decimals());
+            (macroWindow * 10**decimals);
     }
 }
