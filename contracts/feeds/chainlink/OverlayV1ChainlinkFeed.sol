@@ -54,7 +54,8 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     {
         // nextTimestamp will be next time stamp recorded from current round id
         uint256 nextTimestamp = block.timestamp;
-        // these values will keep decreasing till zero, until all data is used up in respective window
+        // these values will keep decreasing till zero,
+        // until all data is used up in respective window
         uint256 _microWindow = microWindow;
         uint256 _macroWindow = macroWindow;
 

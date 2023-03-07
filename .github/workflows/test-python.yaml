@@ -4,13 +4,15 @@ on:
   push:
     branches:
       - main
+      - development
   pull_request:
     branches:
       - main
+      - development
 
 env:
-    # increasing available memory for node reduces issues with ganache crashing
-    # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+  # increasing available memory for node reduces issues with ganache crashing
+  # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
   NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
