@@ -16,12 +16,15 @@ contract OverlayV1NFTPerpFeedFactory is IOverlayV1NFTPerpFeedFactory, OverlayV1F
     /// @dev deploys a new feed contract
     /// @param _aggregator chainlink price feed
     /// @return _feed address of the new feed
-    function deployFeed(address _aggregator) external returns (address _feed) {
+    function deployFeed(address _aggregator, uint8 _decimal) external returns (address _feed) {
         // check feed doesn't already exist
         require(getFeed[_aggregator] == address(0), "OVLV1: feed already exists");
 
+        // check _decimal isn't 0
+        require(_decimal > 0, "OVLV1: _decimal cannot be 0");
+
         // Create a new Feed contract
-        _feed = address(new OverlayV1NFTPerpFeed(_aggregator, microWindow, macroWindow));
+        _feed = address(new OverlayV1NFTPerpFeed(_aggregator, microWindow, macroWindow, _decimal));
 
         // store feed registry record for _aggregator and record address as deployed feed
         getFeed[_aggregator] = _feed;
