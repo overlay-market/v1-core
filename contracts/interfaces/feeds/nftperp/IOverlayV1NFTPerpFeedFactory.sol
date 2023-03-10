@@ -9,5 +9,5 @@ interface IOverlayV1NFTPerpFeedFactory is IOverlayV1FeedFactory {
 
     /// @dev deploys a new feed contract
     /// @return _feed address of the new feed
-    function deployFeed(address _aggregator) external returns (address _feed);
+    function deployFeed(address _aggregator, uint8 _decimal) external returns (address _feed);
 }
