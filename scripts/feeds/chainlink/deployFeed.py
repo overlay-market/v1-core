@@ -12,7 +12,7 @@ def main():
     parameters = get_parameters()
 
     click.echo("Getting all parameters")
-    dev = accounts.load(1) # will prompt you to enter password on terminal
+    dev = accounts.load('name of saved address') # will prompt you to enter password on terminal
     aggregator = parameters["mcap1000"]['aggregator']
     risk_parameters = parameters["mcap1000"]['risk_parameters']
     overlay_v1_factory_address = parameters["mcap1000"]['overlay_v1_factory_address']
