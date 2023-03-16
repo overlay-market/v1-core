@@ -1,5 +1,6 @@
 import click
 
+from scripts.load_feed_parameters import get_parameters
 from brownie import accounts, network, Contract
 
 def main():
@@ -8,56 +9,43 @@ def main():
     from OverlayV1Factory contract
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-    dev = accounts.load(click.prompt(
-        "Account", type=click.Choice(accounts.load())))
+    parameters = get_parameters()
 
-    # assemble feed constructor param
-    feed_args = [click.prompt("_aggregator")]
+    click.echo("Getting all parameters")
+    dev = accounts.load(1) # will prompt you to enter password on terminal
+    aggregator = parameters["mcap1000"]['aggregator']
+    risk_parameters = parameters["mcap1000"]['risk_parameters']
+    overlay_v1_factory_address = parameters["mcap1000"]['overlay_v1_factory_address']
+    overlay_v1_chainlink_feed_factory_contract_address = parameters[
+        "mcap1000"]['overlay_v1_chainlink_feed_factory_contract_address']
 
-    # get overlay v1 chainlink feed factory address
-    overlay_v1_chainlink_feed_factory_contract_address = click.prompt(
-        "OverlayV1ChainlinkFeedFactoryAddress")
-
+    # connect to overlay v1 chainlink feed factory contract
     overlay_v1_chainlink_feed_factory_contract = Contract.from_explorer(
         f"{overlay_v1_chainlink_feed_factory_contract_address}")
 
     # get feed address
-    feed = overlay_v1_chainlink_feed_factory_contract.deployFeed.call(
-        *feed_args, {"from": dev})
+    feed_contract_address = overlay_v1_chainlink_feed_factory_contract.deployFeed.call(
+        aggregator, {"from": dev})
 
     # deploy feed
+    click.echo("Deploying Chainlink Feed")
     overlay_v1_chainlink_feed_factory_contract.deployFeed(
-        *feed_args, {"from": dev})
-    click.echo(f"Chainlink Feed deployed [{feed}]")
+        aggregator, {"from": dev})
+    click.echo(f"Chainlink Feed deployed [{feed_contract_address}]")
 
-    """
-    About to start testing this part
-    """
+    # connect to overlay v1 factory contract
+    overlay_v1_factory_contract = Contract.from_explorer(
+        f'{overlay_v1_factory_address}')
 
-    # assemble market constructor params
-    # params = ["feedFactory (address)", "feed (address)", "params (uint256[15])"]
+    # get market address
+    market = overlay_v1_factory_contract.deployMarket.call(
+        overlay_v1_chainlink_feed_factory_contract_address,feed_contract_address,risk_parameters,
+        {"from": dev})
 
-    # market_args = [
-    #     click.prompt(f"{param}")
-    #     if param != "feed (address)"
-    #     else feed
-    #     for param in params
-    # ]
+    # deploy market
+    click.echo("Deploying Chainlink Market")
+    overlay_v1_factory_contract.deployMarket(
+        overlay_v1_chainlink_feed_factory_contract_address,feed_contract_address,risk_parameters,
+        {"from": dev})
 
-    # # get overlay v1 factory address
-    # overlay_v1_factory_address = [click.prompt(
-    #     "OverlayV1Factory")]
-
-    # # deploy maket
-    # overlay_v1_factory_contract = Contract.from_explorer(
-    #     f'{overlay_v1_factory_address}')
-
-    #  # get market address
-    # market = overlay_v1_factory_contract.deployMarket.call(
-    #     *market_args, {"from": dev})
-
-    # # deploy market
-    # feed = overlay_v1_factory_contract.deployMarket.call(
-    #     *market_args, {"from": dev})
-
-    # click.echo(f"Market deployed [{market}]")
+    click.echo(f"Market deployed [{market}]")
