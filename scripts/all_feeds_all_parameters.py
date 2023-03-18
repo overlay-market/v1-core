@@ -39,7 +39,7 @@ all_feeeds_all_parameters = {
 		    "priceDriftUpperLimit": 100000000000000,
 		    "averageBlockTime": 0
 			}
-		}
+		},
 	"arbitrum_one" : {
 		"macroWindow" : 3600,
 		"microWindow" : 600,
@@ -64,7 +64,7 @@ all_feeeds_all_parameters = {
 		    "averageBlockTime": 0
 			}
 		}
-	}
+	},
 
     # TODELETE toy example for testing
     "toy-market": {
