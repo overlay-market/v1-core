@@ -8,27 +8,37 @@ def main():
     from OverlayV1Factory contract
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-    all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
 
     click.echo("Getting all parameters")
     dev = accounts.load(1) # will prompt you to enter password on terminal
 
-    for key in all_feeds_all_parameters:
-        if 'key_you_want_to_avoid' not in all_feeds_all_parameters[key]:
-            parameters = OM.get_feed_network_parameters(key, OM.ARB_TEST, 'translucent')
-            aggregator = parameters[0]
-            overlay_v1_chainlink_feed_factory_contract_address = parameters[3]
+    deployable_feeds = OM.filter_by_deployable([True])
+    all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
 
-            # connect to overlay v1 chainlink feed factory contract
-            overlay_v1_chainlink_feed_factory_contract = Contract.from_explorer(
-                f"{overlay_v1_chainlink_feed_factory_contract_address}")
+    for key, chain_dict in deployable_feeds.items():
+        for chain_key in chain_dict:
+            feed_oracle = OM.getKey(chain_dict[chain_key])
+            if 'feed_address' not in chain_dict[chain_key][feed_oracle]:
+                parameters = OM.get_feed_network_parameters(key, chain_key, feed_oracle)
+                aggregator = parameters[0]
+                overlay_v1_chainlink_feed_factory_contract_address = parameters[3]
 
-            # get feed address
-            feed_contract_address = overlay_v1_chainlink_feed_factory_contract.deployFeed.call(
-                aggregator, {"from": dev})
+                print(aggregator,overlay_v1_chainlink_feed_factory_contract_address)
 
-            # deploy feed
-            click.echo("Deploying Chainlink Feed")
-            overlay_v1_chainlink_feed_factory_contract.deployFeed(
-                aggregator, {"from": dev, "maxFeePerGas": 3674000000})
-            click.echo(f"Chainlink Feed deployed [{feed_contract_address}]")
+                # connect to overlay v1 chainlink feed factory contract
+                overlay_v1_chainlink_feed_factory_contract = Contract.from_explorer(
+                    f"{overlay_v1_chainlink_feed_factory_contract_address}")
+
+                # get feed address
+                feed_contract_address = overlay_v1_chainlink_feed_factory_contract.deployFeed.call(
+                    aggregator, {"from": dev})
+
+                # deploy feed
+                click.echo("Deploying Chainlink Feed")
+                overlay_v1_chainlink_feed_factory_contract.deployFeed(
+                    aggregator, {"from": dev, "maxFeePerGas": 3674000000})
+                click.echo(f"Chainlink Feed deployed [{feed_contract_address}]")
+
+                all_feeds_all_parameters[key][chain_key][feed_oracle]['feed_address'] = f'{feed_contract_address}'
+                data = all_feeds_all_parameters
+                OM.update_feeds_with_market_parameter(data)
