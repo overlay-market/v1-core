@@ -1,4 +1,4 @@
-import all_addresses as aa
+# import all_addresses as aa
 import os
 import json
 from pathlib import Path
@@ -19,7 +19,7 @@ class OM: #Overlay Management
 	ARB_TEST = 'arbitrum_goerli'
 	ARB_MAIN = 'arbitrum_one'
 
-    ## XXX these are ordered!!! XXX DO NOT CHANGE
+    ## XXX these are ordered!!! XXX DO NOT CHANGE 
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
@@ -58,13 +58,14 @@ class OM: #Overlay Management
 		return [params[key] for key in cls.risk_params]
 
 	@classmethod
-	def get_feed_network_parameters(cls, feed, network):
-		params = cls.all_feeds_all_parameters[feed][network]
-		aggregator = params['aggregator']
-		risk_parameters = params['risk_parameters']
-		factory_address = params['factory_address']
-		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
-		risk_params = cls.risk_param_array(params['risk_parameters'])
+	def get_feed_network_parameters(cls, feed, network, project):
+		params = cls.get_all_feeds_all_parameters()
+		param = params[feed][network][project]
+		aggregator = param['aggregator']
+		risk_parameters = param['risk_parameters']
+		factory_address = param['factory_address']
+		chainlink_feed_factory_contract_address = param['chainlink_feed_factory_contract_address']
+		risk_params = cls.risk_param_array(param['risk_parameters'])
 
 		return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
 
@@ -75,3 +76,12 @@ class OM: #Overlay Management
 
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
 			return json.load(f)
+
+	
+	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
+	@classmethod
+	def update_feeds_with_market_parameter(cls, data):
+
+		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
+			json.dump(data, f, indent=4)
+			

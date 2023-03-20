@@ -21,6 +21,8 @@ class TestRiskParams(unittest.TestCase):
         filtered = OM.filter_by_blockchain(chainlist)
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
 
+    def test_feed_network_parameters(self):
+        all_feeds_all_parameters= OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
 
 
 if __name__ == '__main__':
