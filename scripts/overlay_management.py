@@ -98,4 +98,9 @@ class OM: #Overlay Management
 
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
 			json.dump(data, f, indent=4)
+
+	@classmethod
+	def getKey(cls, chain_dict):
+		for key in chain_dict:
+			return key
 			
