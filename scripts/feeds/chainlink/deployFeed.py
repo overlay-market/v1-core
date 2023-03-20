@@ -4,8 +4,7 @@ from brownie import accounts, network, Contract
 
 def main():
     """
-    Deploys a new OverlayV1ChainlinkFeed contract, and actual market 
-    from OverlayV1Factory contract
+    Deploys a new OverlayV1ChainlinkFeed contract
     """
     click.echo(f"You are using the '{network.show_active()}' network")
     all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
