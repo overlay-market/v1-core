@@ -1,65 +1,6 @@
-#NOTES:
-#factory_address refers to OverlayV1Factory
-#feed_factory_contract_address refers to XXX
+import all_addresses as aa
 
-class AllFeedsAllParameters:
-
-	#CHAINS:
-	ETH_MAIN = 'ethereum_goerli'
-	ETH_TEST = 'ethereum_mainnet'
-	ARB_TEST = 'arbitrum_goerli'
-	ARB_MAIN = 'arbitrum_one'
-
-    ## XXX these are ordered!!! XXX DO NOT CHANGE
-	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
-
-	@classmethod
-	def filter_by_blockchain(cls, selected_chains: list):
-		afap = cls.all_feeds_all_parameters
-		res = {} 
-		for market, chain in afap.items():
-			for chain, oracle in chain.items():
-				if chain in selected_chains:
-					if market not in res.keys():
-						res[market] = {}
-					for oracle, params in oracle.items():					
-						res[market].update({chain: {oracle: params}})
-
-		return res
-
-	@classmethod
-	def filter_by_oracle(cls, selected_oracles: list):
-		afap = cls.all_feeds_all_parameters
-		res = {} 
-		for market, chain in afap.items():
-			for chain, oracle in chain.items():
-				for oracle, params in oracle.items():
-					if oracle in selected_oracles:
-						if market in res.keys():
-							res[market].update({chain: {oracle: params}})
-						else:
-							res[market] = {chain: {oracle: params}}
-		return res
-					
-
-	@classmethod
-	def risk_param_array(cls, params):
-		return [params[key] for key in cls.risk_params]
-
-	@classmethod
-	def get_feed_network_parameters(cls, feed, network):
-		params = cls.all_feeds_all_parameters[feed][network]
-		aggregator = params['aggregator']
-		risk_parameters = params['risk_parameters']
-		factory_address = params['factory_address']
-		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
-		risk_params = cls.risk_param_array(params['risk_parameters'])
-
-		return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
-
-
-	# XXX THIS IS THE MAIN DATA STORE XXX
-	all_feeds_all_parameters = {
+all_feeds_all_parameters = {
 		"mcap1000" :  {
 			"arbitrum_goerli" : {
 				"translucent": {
