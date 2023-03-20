@@ -8,7 +8,18 @@ class TestRiskParams(unittest.TestCase):
         afap = AllFeedsAllParameters
         self.assertListEqual(afap.risk_params, risk_params)
 
-        ...
+    def test_filter_by_network(self):
+        afap = AllFeedsAllParameters
+
+        chainlist = [afap.ARB_TEST, afap.ARB_MAIN]
+        filtered = afap.filter_by_blockchain(chainlist)
+        self.assertEqual(len(filtered['mcap1000'].keys()), 2)
+
+        chainlist = [afap.ARB_TEST]
+        filtered = afap.filter_by_blockchain(chainlist)
+        self.assertEqual(len(filtered['mcap1000'].keys()), 1)
+
+
 
 if __name__ == '__main__':
     unittest.main()
