@@ -4,9 +4,6 @@ from brownie import accounts, network, Contract
 
 
 
-selected_networks = ["network1", "network2"]
-filter_by_network(all_feeds_all_params, selected_networks):
-    return  {market: {network: c for network, c in b.items() if network in selected_networks} for market, b in a.items()}
 
 def main(network):
     """
