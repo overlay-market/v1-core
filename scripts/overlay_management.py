@@ -1,10 +1,17 @@
 import all_addresses as aa
+import os
+import json
+from pathlib import Path
 
 #NOTES:
 #factory_address refers to OverlayV1Factory
 #feed_factory_contract_address refers to XXX
 
 class OM: #Overlay Management
+
+
+	#TODO fix this hacky way of getting the path	
+	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/all_feeds_all_parameters.json'   
 
 	#CHAINS:
 	ETH_MAIN = 'ethereum_goerli'
@@ -18,7 +25,7 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_blockchain(cls, selected_chains: list):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.all_feeds_all_parameters
+		afap = cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
@@ -33,7 +40,7 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_oracle(cls, selected_oracles: list):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.all_feeds_all_parameters
+		afap = cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
@@ -62,7 +69,9 @@ class OM: #Overlay Management
 		return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
 
 
-	# XXX THIS IS THE MAIN DATA STORE XXX
-	@property
-	def all_feeds_all_parameters():
-		...
+	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
+	@classmethod
+	def get_all_feeds_all_parameters(cls):
+
+		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
+			return json.load(f)
