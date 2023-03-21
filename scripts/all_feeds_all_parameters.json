@@ -24,8 +24,7 @@
                     "minCollateral": 100000000000000,
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
-                },
-                "feed_address": "0xB719D15A321b123C2c3219889E24BD983905dEF5"
+                }
             }
         },
         "arbitrum_one": {

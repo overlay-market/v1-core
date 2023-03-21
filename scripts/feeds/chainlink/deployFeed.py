@@ -24,8 +24,6 @@ def main():
                     aggregator = parameters[0]
                     overlay_v1_chainlink_feed_factory_contract_address = parameters[3]
 
-                    print(aggregator,overlay_v1_chainlink_feed_factory_contract_address)
-
                     # connect to overlay v1 chainlink feed factory contract
                     overlay_v1_chainlink_feed_factory_contract = Contract.from_explorer(
                         f"{overlay_v1_chainlink_feed_factory_contract_address}")

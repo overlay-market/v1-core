@@ -43,7 +43,10 @@ class TestRiskParams(unittest.TestCase):
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
 
     def test_feed_network_parameters(self):
-        all_feeds_all_parameters= OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
+        feed_network_parameters = OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
+        all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
+        param = all_feeds_all_parameters['mcap1000']['arbitrum_goerli']['translucent']['aggregator']
+        self.assertEqual(feed_network_parameters[0], param)
 
 
 if __name__ == '__main__':
