@@ -25,8 +25,7 @@
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
                 },
-                "feed_address": "0xB719D15A321b123C2c3219889E24BD983905dEF5",
-                "market": "0x8aA1f99CFE02560E4895E1b16d275d5D8471Ced5"
+                "feed_address": "0xB719D15A321b123C2c3219889E24BD983905dEF5"
             }
         },
         "arbitrum_one": {
