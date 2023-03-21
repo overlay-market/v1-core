@@ -38,7 +38,7 @@ class OM: #Overlay Management
 		return res
 
 	@classmethod
-	def filter_by_oracle(cls, selected_oracles: list, afap):
+	def filter_by_oracle(cls, selected_oracles: list):
 		# this nested for loops are here to explicitly show exactly what is going on 
 		afap = cls.get_all_feeds_all_parameters()
 		res = {} 

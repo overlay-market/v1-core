@@ -21,6 +21,27 @@ class TestRiskParams(unittest.TestCase):
         filtered = OM.filter_by_blockchain(chainlist)
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
 
+    def test_filter_by_oracle(self):
+
+        oraclelist = ['translucent']
+        filtered = OM.filter_by_oracle(oraclelist)
+        self.assertEqual(len(filtered['mcap1000'].keys()), 2)
+
+        oraclelist = ['translucent']
+        filtered = OM.filter_by_oracle(oraclelist)
+        self.assertEqual(len(filtered['toy-market'].keys()), 1)
+
+    def test_filter_by_deployable(self):
+
+        deployablelist = [True]
+        filtered = OM.filter_by_deployable(deployablelist)
+        self.assertEqual(len(filtered['mcap1000'].keys()), 1)
+        self.assertEqual(len(filtered['toy-market'].keys()), 1)
+
+        deployablelist = [False]
+        filtered = OM.filter_by_deployable(deployablelist)
+        self.assertEqual(len(filtered['mcap1000'].keys()), 1)
+
     def test_feed_network_parameters(self):
         all_feeds_all_parameters= OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
 
