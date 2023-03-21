@@ -2,9 +2,10 @@
     "mcap1000": {
         "arbitrum_goerli": {
             "translucent": {
+                "deployable": true,
                 "macroWindow": 3600,
                 "microWindow": 600,
-                "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb",
+                "aggregator": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08",
                 "factory_address": "0x733A47039C02bB3B5950F1c6DAaC5E24f3821AB2",
                 "chainlink_feed_factory_contract_address": "0x75D6b2D432EeB742942E4f6E9FF77Db56B834099",
                 "risk_parameters": {
@@ -23,11 +24,14 @@
                     "minCollateral": 100000000000000,
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
-                }
+                },
+                "feed_address": "0xB719D15A321b123C2c3219889E24BD983905dEF5",
+                "market": "0x8aA1f99CFE02560E4895E1b16d275d5D8471Ced5"
             }
         },
         "arbitrum_one": {
             "translucent": {
+                "deployable": false,
                 "macroWindow": 3600,
                 "microWindow": 600,
                 "aggregator": "0x2748A42aBd328835DFDA748bdD1D77Ce3c3312EE",
@@ -56,9 +60,10 @@
     "toy-market": {
         "arbitrum_goerli": {
             "translucent": {
+                "deployable": true,
                 "macroWindow": 3600,
                 "microWindow": 600,
-                "aggregator": "0x1AdDb2368414B3b4cF1BCe7A887d2De7Bfb6886f",
+                "aggregator": "0x1692Bdd32F31b831caAc1b0c9fAF68613682813b",
                 "factory_address": "0x733A47039C02bB3B5950F1c6DAaC5E24f3821AB2",
                 "chainlink_feed_factory_contract_address": "0x75D6b2D432EeB742942E4f6E9FF77Db56B834099",
                 "risk_parameters": {
@@ -77,7 +82,9 @@
                     "minCollateral": 100000000000000,
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
-                }
+                },
+                "feed_address": "0x7c302e90249fCF9C644f0B1C79095a9883B15E25",
+                "market": "0x5da8DF5C611D0bb835dF429fe039f170E9A1f6cd"
             }
         }
     }
