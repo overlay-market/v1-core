@@ -13,6 +13,7 @@ def main():
     click.echo("Getting all parameters")
     dev = accounts.load(1) # will prompt you to enter password on terminal
 
+    deployed_markets = []
     for key, chain_dict in deployable_feeds.items():
         for chain_key in chain_dict:
             if chain_key == network.show_active():
@@ -47,8 +48,11 @@ def main():
                         {"from": dev, "maxFeePerGas": 3674000000})
 
                     click.echo(f"Market deployed [{market}]")
-                
+
+                    deployed_markets.append((market, chain_key, feed_oracle)) 
                     all_feeds_all_parameters[key][chain_key][feed_oracle]['market'] = f'{market}'
                     data = all_feeds_all_parameters
                     OM.update_feeds_with_market_parameter(data)
+
+    return deployed_markets
             
