@@ -23,9 +23,9 @@ class OM: #Overlay Management
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
-	def filter_by_blockchain(cls, selected_chains: list):
+	def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.get_all_feeds_all_parameters()
+		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
@@ -38,9 +38,9 @@ class OM: #Overlay Management
 		return res
 
 	@classmethod
-	def filter_by_oracle(cls, selected_oracles: list):
+	def filter_by_oracle(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.get_all_feeds_all_parameters()
+		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
@@ -52,9 +52,9 @@ class OM: #Overlay Management
 		return res
 	
 	@classmethod
-	def filter_by_deployable(cls, selected_deployables: list):
+	def filter_by_deployable(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.get_all_feeds_all_parameters()
+		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
