@@ -38,7 +38,7 @@ class OM: #Overlay Management
 		return res
 
 	@classmethod
-	def filter_by_oracle(cls, selected_chains: list, to_filter: dict = None):
+	def filter_by_oracle(cls, selected_oracles: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
 		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
 		res = {} 
@@ -52,14 +52,14 @@ class OM: #Overlay Management
 		return res
 	
 	@classmethod
-	def filter_by_deployable(cls, selected_chains: list, to_filter: dict = None):
+	def filter_by_deployable(cls, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
 		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
 		res = {} 
 		for market_key, chain_dict in afap.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				for oracle_key, params in oracle_dict.items():
-					if params['deployable'] in selected_deployables:
+					if params['deployable']:
 						if market_key not in res.keys():
 							res[market_key] = {}	
 						res[market_key].update({chain_key: {oracle_key: params}})
