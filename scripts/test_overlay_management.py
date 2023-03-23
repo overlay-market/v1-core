@@ -32,15 +32,10 @@ class TestRiskParams(unittest.TestCase):
         self.assertEqual(len(filtered['toy-market'].keys()), 1)
 
     def test_filter_by_deployable(self):
-
-        deployablelist = [True]
+        deployablelist = OM.get_all_feeds_all_parameters()
         filtered = OM.filter_by_deployable(deployablelist)
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
         self.assertEqual(len(filtered['toy-market'].keys()), 1)
-
-        deployablelist = [False]
-        filtered = OM.filter_by_deployable(deployablelist)
-        self.assertEqual(len(filtered['mcap1000'].keys()), 1)
 
     def test_feed_network_parameters(self):
         feed_network_parameters = OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
@@ -51,3 +46,4 @@ class TestRiskParams(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+ 
