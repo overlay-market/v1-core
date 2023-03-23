@@ -1,5 +1,5 @@
 from scripts.overlay_management import OM
-from brownie import accounts, Contract
+from brownie import accounts, Contract, chain
 import numpy as np
 from pytest import approx
 
@@ -74,18 +74,20 @@ def test_impact(market, state, prices, params):
     assert expected_bid_w_impact == approx(actual_bid_w_impact, rel=1e4)
 
 
-# def test_funding_rate(market, state):
-#     k = PARAMS['k']
-#     long_oi, short_oi = market.oiLong(), market.oiShort()
-#     imb_oi = abs(long_oi - short_oi) * (-1 if short_oi > long_oi else 1)
-#     total_oi = long_oi + short_oi
-#     actual_funding_rate = state.fundingRate(market)
+def test_funding_rate(market, state, params):
+    blk = chain.height-1
+    k = params['k']
+    long_oi = market.oiLong(block_identifier=blk)
+    short_oi = market.oiShort(block_identifier=blk)
+    imb_oi = abs(long_oi - short_oi) * (-1 if short_oi > long_oi else 1)
+    total_oi = long_oi + short_oi
+    actual_funding_rate = state.fundingRate(market, block_identifier=blk)
 
-#     if total_oi == 0:
-#         assert actual_funding_rate == 0
-#     else:
-#         expected_funding_rate = 2 * k * imb_oi/total_oi
-#         assert expected_funding_rate == actual_funding_rate
+    if total_oi == 0:
+        assert actual_funding_rate == 0
+    else:
+        expected_funding_rate = 2 * k * imb_oi/total_oi
+        assert expected_funding_rate == approx(actual_funding_rate, rel=1e4)
 
 
 def main(chain_id, market_id, oracle_id):
@@ -122,10 +124,11 @@ def main(chain_id, market_id, oracle_id):
     test_impact(market, state, prices, params)
     print('Market impact as expected')
 
-    # # Check funding rate
-    # test_funding_rate(market, state)
-    # print('Funding rate as expected')
+    # Check funding rate
+    test_funding_rate(market, state, params)
+    print('Funding rate as expected')
 
+    # TODO: The following tests require making txs
     # # Build position and check funding rate
     # approve_all_ovl_to_market(ovl, acc, market)
     # is_long = True
