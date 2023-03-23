@@ -85,5 +85,36 @@
                 "market": "0x5da8DF5C611D0bb835dF429fe039f170E9A1f6cd"
             }
         }
+    },
+    "BAYC": {
+        "arbitrum_one": {
+            "nftperp": {
+                "deployable": false,
+                "macroWindow": 3600,
+                "microWindow": 600,
+                "aggregator": "0xc34357b6a01aeead2638f285d5cc6ba1d0db70f1",
+                "factory_address": "USAGE DEPRECATED; refer `const_addresses` in overlay_management.py",
+                "chainlink_feed_factory_contract_address": "0xFA0282158936D8A9cC9F413A90d592a47397239a",
+                "risk_parameters": {
+                    "k": 115740740740,
+                    "lambda": 954000000000000000,
+                    "delta": 5500000000000000,
+                    "capPayoff": 10000000000000000000,
+                    "capNotional": 80000000000000000000000,
+                    "capLeverage": 5000000000000000000,
+                    "circuitBreakerWindow": 2592000,
+                    "circuitBreakerMintTarget": 6667000000000000000000,
+                    "maintenanceMarginFraction": 40000000000000000,
+                    "maintenanceMarginBurnRate": 50000000000000000,
+                    "liquidationFeeRate": 50000000000000000,
+                    "tradingFeeRate": 750000000000000,
+                    "minCollateral": 100000000000000,
+                    "priceDriftUpperLimit": 87000000000000,
+                    "averageBlockTime": 0
+                },
+                "feed_address": "0x12862CD8Aa0eA4e78C994febD6A4031ad524a80C",
+                "market": "0xB31d222c23104Cbc2c04Df77941F1F2C478133dD"
+            }
+        }
     }
 }
