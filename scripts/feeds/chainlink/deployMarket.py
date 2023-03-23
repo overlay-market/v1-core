@@ -53,6 +53,8 @@ def main():
 
             deployed_markets.append((market, chain_id, oracle_feed))
             all_feeds_all_parameters[key][chain_id][oracle_feed][OM.MARKET_ADDRESS] = f'{market}'
-            all_feeds_all_parameters[key][chain_id][oracle_feed][OM.DEPLOYED_MARKET] = deployed_markets
             data = all_feeds_all_parameters
             OM.update_feeds_with_market_parameter(data)
+
+
+    return deployed_markets
