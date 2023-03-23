@@ -20,6 +20,7 @@ class OM: #Overlay Management
 	ARB_MAIN = 'arbitrum_one'
 	FEED_ADDRESS = 'feed_address'
 	MARKET_ADDRESS = 'market_address'
+	DEPLOYED_MARKET = 'deployed_market'
 
     ## XXX these are ordered!!! XXX DO NOT CHANGE 
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]

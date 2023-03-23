@@ -25,7 +25,8 @@
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
                 },
-                "feed_address": "777"
+                "feed_address": "0x7c302e90249fCF9C644f0B1C79095a9883B15E25",
+                "market": "0x5da8DF5C611D0bb835dF429fe039f170E9A1f6cd"
             }
         },
         "arbitrum_one": {
@@ -82,7 +83,8 @@
                     "priceDriftUpperLimit": 100000000000000,
                     "averageBlockTime": 0
                 },
-                "feed_address": "777"
+                "feed_address": "0x7c302e90249fCF9C644f0B1C79095a9883B15E25",
+                "market": "0x5da8DF5C611D0bb835dF429fe039f170E9A1f6cd"
             }
         }
     }
