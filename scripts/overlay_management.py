@@ -71,14 +71,13 @@ class OM: #Overlay Management
 		return [params[key] for key in cls.risk_params]
 
 	@classmethod
-	def get_feed_network_parameters(cls, feed, network, project):
-		params = cls.get_all_feeds_all_parameters()
-		param = params[feed][network][project]
-		aggregator = param['aggregator']
-		risk_parameters = param['risk_parameters']
-		factory_address = param['factory_address']
-		chainlink_feed_factory_contract_address = param['chainlink_feed_factory_contract_address']
-		risk_params = cls.risk_param_array(param['risk_parameters'])
+	def get_market_parameters(cls, feed, network, oracle):
+		params = cls.get_all_feeds_all_parameters()[feed][network][oracle]
+		aggregator = params['aggregator']
+		risk_parameters = params['risk_parameters']
+		factory_address = params['factory_address']
+		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
+		risk_params = cls.risk_param_array(params['risk_parameters'])
 
 		return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
 
