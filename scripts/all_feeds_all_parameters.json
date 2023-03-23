@@ -56,7 +56,7 @@
         }
     },
     "toy-market": {
-        "arbitrum_goerli": {
+        "arbitrum_goerlii": {
             "translucent": {
                 "deployable": true,
                 "macroWindow": 3600,
