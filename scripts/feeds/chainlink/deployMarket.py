@@ -18,6 +18,7 @@ def main():
 
     deployed_markets = []
     for key, chain_dict in deployable_feeds.items():
+        #TODO FIX THE BELOW TO LOOP THROUGH ALL ORACLES
         oracle_feed =  OM.getKey(chain_dict[chain_id])
         if OM.MARKET_ADDRESS not in chain_dict[chain_id][oracle_feed]:
             parameters = OM.get_feed_network_parameters(key, chain_id, oracle_feed)
