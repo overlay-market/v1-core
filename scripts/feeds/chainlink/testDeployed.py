@@ -40,17 +40,17 @@ def unwind(market, is_long, pid, acc):
     market.unwind(pid, 1e18, price_limit, {'from': acc})
 
 
-# def test_static_spread(prices, latest_feed):
-#     (bid, ask, _) = prices
-#     (_, _, _, price_micro, price_macro, _, _, _) = latest_feed
-#     expect_bid = int(
-#         min(price_micro, price_macro) * np.exp(-PARAMS['delta']/1e18)
-#     )
-#     expect_ask = int(
-#         max(price_micro, price_macro) * np.exp(-PARAMS['delta']/1e18)
-#     )
-#     assert expect_bid == approx(bid, rel=1e4)
-#     assert expect_ask == approx(ask, rel=1e4)
+def test_static_spread(prices, latest_feed, params):
+    (bid, ask, _) = prices
+    (_, _, _, price_micro, price_macro, _, _, _) = latest_feed
+    expect_bid = int(
+        min(price_micro, price_macro) * np.exp(-params['delta']/1e18)
+    )
+    expect_ask = int(
+        max(price_micro, price_macro) * np.exp(-params['delta']/1e18)
+    )
+    assert expect_bid == approx(bid, rel=1e4)
+    assert expect_ask == approx(ask, rel=1e4)
 
 
 def test_params_equal(market, param_names, param_values):
@@ -58,20 +58,20 @@ def test_params_equal(market, param_names, param_values):
         assert market.params(i) == param_values[v]
 
 
-# def test_impact(market, state, prices):
-#     lmbd = PARAMS['lambda']
-#     (bid, ask, mid) = prices
-#     oi = (10e18/mid) * 1e18  # Test with position of notional size 10 OVL
-#     frac_oi = state.fractionOfCapOi(market, oi)
-#     vol_ask = state.volumeAsk(market, frac_oi)
-#     actual_ask_w_impact = state.ask(market, frac_oi)
-#     expected_ask_w_impact = int(ask * np.exp((lmbd/1e18) * (vol_ask/1e18)))
-#     assert expected_ask_w_impact == approx(actual_ask_w_impact, rel=1e4)
+def test_impact(market, state, prices, params):
+    lmbd = params['lambda']
+    (bid, ask, mid) = prices
+    oi = (10e18/mid) * 1e18  # Test with position of notional size 10 OVL
+    frac_oi = state.fractionOfCapOi(market, oi)
+    vol_ask = state.volumeAsk(market, frac_oi)
+    actual_ask_w_impact = state.ask(market, frac_oi)
+    expected_ask_w_impact = int(ask * np.exp((lmbd/1e18) * (vol_ask/1e18)))
+    assert expected_ask_w_impact == approx(actual_ask_w_impact, rel=1e4)
 
-#     vol_bid = state.volumeBid(market, frac_oi)
-#     actual_bid_w_impact = state.bid(market, frac_oi)
-#     expected_bid_w_impact = int(bid * np.exp((lmbd/1e18) * (vol_bid/1e18)))
-#     assert expected_bid_w_impact == approx(actual_bid_w_impact, rel=1e4)
+    vol_bid = state.volumeBid(market, frac_oi)
+    actual_bid_w_impact = state.bid(market, frac_oi)
+    expected_bid_w_impact = int(bid * np.exp((lmbd/1e18) * (vol_bid/1e18)))
+    assert expected_bid_w_impact == approx(actual_bid_w_impact, rel=1e4)
 
 
 # def test_funding_rate(market, state):
@@ -90,15 +90,20 @@ def test_params_equal(market, param_names, param_values):
 
 def main(chain_id, market_id, oracle_id):
     # acc = accounts.load(acc)
+    # Load all_feeds_all_parameters.json
     afap = OM.get_all_feeds_all_parameters()
     market_vars = afap[market_id][chain_id][oracle_id]
+    
+    # Load data from afap
+    params = market_vars['risk_parameters']
     market = load_contract(market_vars['market'])
     feed = load_contract(market_vars['feed_address'])
     
+    # Load addresses from class variables 
     ovl = load_contract(OM.const_addresses[chain_id]['ovl'])
     state = load_contract(OM.const_addresses[chain_id]['state'])
 
-
+    # Get prices
     prices = get_prices(market, state)
     latest_feed = get_latest_from_feed(feed)
 
@@ -106,16 +111,16 @@ def main(chain_id, market_id, oracle_id):
     # print(f'Amount ETH held by testing account: {acc.balance()/1e18}')
 
     # Check if parameters input was correct while deploying contract
-    test_params_equal(market, OM.risk_params, market_vars['risk_parameters'])
+    test_params_equal(market, OM.risk_params, params)
     print('On-chain risk parameters as expected')
 
-    # # Check bid-ask static spread (delta)
-    # test_static_spread(prices, latest_feed)
-    # print('Static spread as expected')
+    # Check bid-ask static spread (delta)
+    test_static_spread(prices, latest_feed, params)
+    print('Static spread as expected')
 
-    # # Check impact (lambda)
-    # test_impact(market, state, prices)
-    # print('Market impact as expected')
+    # Check impact (lambda)
+    test_impact(market, state, prices, params)
+    print('Market impact as expected')
 
     # # Check funding rate
     # test_funding_rate(market, state)
