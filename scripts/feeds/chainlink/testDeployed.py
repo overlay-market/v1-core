@@ -4,29 +4,6 @@ import numpy as np
 from pytest import approx
 
 
-# OVL_ADDR = '0x4305C4Bc521B052F17d389c2Fe9d37caBeB70d54'
-# STATE_ADDR = '0xC3cB99652111e7828f38544E3e94c714D8F9a51a'
-# MARKET_ADDR = '0x1067B7DF86552A53D816CE3fed50d6D01310b48f'
-# FEED_ADDR = '0x6C4296156875dAb08Dd35A8E539E0aef6B88f459'
-# TODO: Get params from all_feeds_all_parameters.json
-PARAMS = {
-    'k': 680187455489,
-    'lambda': 1101276756574031744,
-    'delta': 3825444954737599,
-    'capPayoff': 10000000000000000000,
-    'capNotional': 800000000000000000000000,
-    'capLeverage': 5000000000000000000,
-    'circuitBreakerWindow': 2592000,
-    'circuitBreakerMintTarget': 66670000000000000000000,
-    'maintenanceMarginFraction': 77621507357346512,
-    'maintenanceMarginBurnRate': 64852413396413568,
-    'liquidationFeeRate': 50000000000000000,
-    'tradingFeeRate': 750000000000000,
-    'minCollateral': 100000000000000,
-    'priceDriftUpperLimit': 100000000000000
-}
-
-
 def load_contract(address):
     try:
         return Contract(address)
@@ -76,21 +53,9 @@ def unwind(market, is_long, pid, acc):
 #     assert expect_ask == approx(ask, rel=1e4)
 
 
-# def test_params_equal(market):
-#     assert market.params(0) == PARAMS['k']
-#     assert market.params(1) == PARAMS['lambda']
-#     assert market.params(2) == PARAMS['delta']
-#     assert market.params(3) == PARAMS['capPayoff']
-#     assert market.params(4) == PARAMS['capNotional']
-#     assert market.params(5) == PARAMS['capLeverage']
-#     assert market.params(6) == PARAMS['circuitBreakerWindow']
-#     assert market.params(7) == PARAMS['circuitBreakerMintTarget']
-#     assert market.params(8) == PARAMS['maintenanceMarginFraction']
-#     assert market.params(9) == PARAMS['maintenanceMarginBurnRate']
-#     assert market.params(10) == PARAMS['liquidationFeeRate']
-#     assert market.params(11) == PARAMS['tradingFeeRate']
-#     assert market.params(12) == PARAMS['minCollateral']
-#     assert market.params(13) == PARAMS['priceDriftUpperLimit']
+def test_params_equal(market, param_names, param_values):
+    for i, v in enumerate(param_names):
+        assert market.params(i) == param_values[v]
 
 
 # def test_impact(market, state, prices):
@@ -123,11 +88,13 @@ def unwind(market, is_long, pid, acc):
 #         assert expected_funding_rate == actual_funding_rate
 
 
-def main(chain_id, feed_addres, market_address):
+def main(chain_id, market_id, oracle_id):
     # acc = accounts.load(acc)
-    market = load_contract(market_address)
-    feed = load_contract(feed_addres)
-    # afap = OM.get_all_feeds_all_parameters()
+    afap = OM.get_all_feeds_all_parameters()
+    market_vars = afap[market_id][chain_id][oracle_id]
+    market = load_contract(market_vars['market'])
+    feed = load_contract(market_vars['feed_address'])
+    
     ovl = load_contract(OM.const_addresses[chain_id]['ovl'])
     state = load_contract(OM.const_addresses[chain_id]['state'])
 
@@ -138,9 +105,9 @@ def main(chain_id, feed_addres, market_address):
     # print(f'Amount OVL held by testing account: {ovl.balanceOf(acc)/1e18}')
     # print(f'Amount ETH held by testing account: {acc.balance()/1e18}')
 
-    # # Check if parameters input was correct while deploying contract
-    # test_params_equal(market)
-    # print('On-chain risk parameters as expected')
+    # Check if parameters input was correct while deploying contract
+    test_params_equal(market, OM.risk_params, market_vars['risk_parameters'])
+    print('On-chain risk parameters as expected')
 
     # # Check bid-ask static spread (delta)
     # test_static_spread(prices, latest_feed)
