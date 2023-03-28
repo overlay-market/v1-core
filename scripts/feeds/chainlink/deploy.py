@@ -3,4 +3,4 @@ from scripts.feeds.chainlink import deployMarket as dm
 
 def main(acc, chain_id):
     df.main(acc, chain_id)
-    dm.main()
+    dm.main(acc, chain_id)
