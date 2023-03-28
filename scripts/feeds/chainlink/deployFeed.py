@@ -2,7 +2,7 @@ import click
 from scripts.overlay_management import OM
 from brownie import accounts, network, Contract
 
-def main(acc):
+def main(acc, chain_id):
     """
     Deploys a new OverlayV1ChainlinkFeed contract
     """
@@ -12,13 +12,13 @@ def main(acc):
     dev = accounts.load(acc) # will prompt you to enter password on terminal
 
     all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
-    deployable_chains = OM.filter_by_blockchain([network.show_active()])
+    deployable_chains = OM.filter_by_blockchain(chain_id)
     deployable_feeds = OM.filter_by_deployable(deployable_chains)
 
     for key, chain_dict in deployable_feeds.items():
-        feed_oracle =  OM.getKey(chain_dict[network.show_active()])
-        if OM.FEED_ADDRESS not in chain_dict[network.show_active()][feed_oracle]:
-            parameters = OM.get_feed_network_parameters(key, network.show_active(), feed_oracle)
+        feed_oracle =  OM.getKey(chain_dict[chain_id])
+        if OM.FEED_ADDRESS not in chain_dict[chain_id][feed_oracle]:
+            parameters = OM.get_feed_network_parameters(key, chain_id, feed_oracle)
             aggregator = parameters[0]
             overlay_v1_chainlink_feed_factory_contract_address = parameters[3]
 
@@ -36,6 +36,6 @@ def main(acc):
                 aggregator, {"from": dev, "maxFeePerGas": 3674000000})
             click.echo(f"Chainlink Feed deployed [{feed_contract_address}]")
 
-            all_feeds_all_parameters[key][network.show_active()][feed_oracle][OM.FEED_ADDRESS] = f'{777}'
+            all_feeds_all_parameters[key][chain_id][feed_oracle][OM.FEED_ADDRESS] = f'{777}'
             data = all_feeds_all_parameters
             OM.update_feeds_with_market_parameter(data)
