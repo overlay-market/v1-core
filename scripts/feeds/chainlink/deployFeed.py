@@ -2,14 +2,14 @@ import click
 from scripts.overlay_management import OM
 from brownie import accounts, network, Contract
 
-def main():
+def main(acc):
     """
     Deploys a new OverlayV1ChainlinkFeed contract
     """
     click.echo(f"You are using the '{network.show_active()}' network")
 
     click.echo("Getting all parameters")
-    dev = accounts.load(1) # will prompt you to enter password on terminal
+    dev = accounts.load(acc) # will prompt you to enter password on terminal
 
     all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
     deployable_chains = OM.filter_by_blockchain([network.show_active()])
