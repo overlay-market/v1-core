@@ -14,8 +14,8 @@ class OM: #Overlay Management
 	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/all_feeds_all_parameters.json'   
 
 	#CHAINS:
-	ETH_MAIN = 'ethereum_goerli'
-	ETH_TEST = 'ethereum_mainnet'
+	ETH_MAIN = 'ethereum_mainnet'
+	ETH_TEST = 'ethereum_goerli'
 	ARB_TEST = 'arbitrum_goerli'
 	ARB_MAIN = 'arbitrum_one'
 	FEED_ADDRESS = 'feed_address'
@@ -24,19 +24,19 @@ class OM: #Overlay Management
 
 	#CONSTANT ADDRESSES (CHAIN WISE):
 	const_addresses = {
-		'arbitrum_one': {
+		ARB_MAIN: {
 			'factory': '0xC3cB99652111e7828f38544E3e94c714D8F9a51a',
 			'state': '0xC3cB99652111e7828f38544E3e94c714D8F9a51a',
 			'ovl': '0x4305C4Bc521B052F17d389c2Fe9d37caBeB70d54'
 		},
 
-		'ethereum_mainnet_addresses': {
+		ETH_MAIN: {
 			'factory': '0x9a74758c2A80fA1B1d899E0E1f24CF505a4Dea33',
 			'state': '0x477122219aa1F76E190f480a85af97DE0A643320',
 			'ovl': '0xdc77acc82cce1cc095cba197474cc06824ade6f7'
 		},
 
-		'arbitrum_goerli': {
+		ARB_TEST: {
 			'factory': '0x733A47039C02bB3B5950F1c6DAaC5E24f3821AB2',
 			'state': '0x68eb0F1Fbbb35b98526F53c01B18507f95F02119',
 			'ovl': '0x1023b1BC47b9b449eAD9329EE0eFD4fDAcA3D767'
