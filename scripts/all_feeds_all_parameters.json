@@ -60,7 +60,7 @@
     "toy-market": {
         "arbitrum_goerli": {
             "translucent": {
-                "deployable": true,
+                "deployable": false, 
                 "macroWindow": 3600,
                 "microWindow": 600,
                 "aggregator": "0x1692Bdd32F31b831caAc1b0c9fAF68613682813b",
