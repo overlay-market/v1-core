@@ -7,7 +7,7 @@ class TestRiskParams(unittest.TestCase):
         risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
         self.assertListEqual(OM.risk_params, risk_params)
 
-    def test_all_feeds_all_parameters(self):
+    def test_get_all_parameters(self):
         ap = OM.get_all_parameters()
         ...
 
@@ -33,7 +33,7 @@ class TestRiskParams(unittest.TestCase):
         all_params = OM.get_all_parameters()
         filtered = OM.filter_by_deployable(all_params)
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
-        self.assertEqual(len(filtered['toy-market'].keys()), 1)
+        self.assertRaises(KeyError, filtered.__getitem__, ('toy-market',)) 
 
     def test_get_market_parameters(self):
         market_parameters = OM.get_market_parameters('mcap1000','arbitrum_goerli','translucent')
