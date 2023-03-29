@@ -14,7 +14,7 @@ def main(acc, chain_id):
     deployable_feeds = OM.get_deployable_feeds(chain_id)
 
     click.echo("Getting all parameters")
-    afap = OM.get_all_feeds_all_parameters(chain_id)
+    afap = OM.get_all_parameters(chain_id)
 
     for dm in deployable_feeds:
         # Get oracle and chain name
@@ -40,4 +40,4 @@ def main(acc, chain_id):
         
         # Save address
         afap[dm]['feed_address'] = feed_address
-        OM.update_all_feeds_all_parameters(afap, chain_id)
+        OM.update_all_parameters(afap, chain_id)

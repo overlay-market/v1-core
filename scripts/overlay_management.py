@@ -68,7 +68,7 @@ class OM: #Overlay Management
 
 	@classmethod
 	def get_deployable_feeds(cls, chain_id):
-		afap = cls.get_all_feeds_all_parameters(chain_id)
+		afap = cls.get_all_parameters(chain_id)
 		deployable_feeds = []
 		for market_key, market_dict in afap.items():
 			if market_dict['feed_parameters']['deployable']:
@@ -79,9 +79,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				if chain_key in selected_chains:
 					if market_key not in res.keys():
@@ -94,9 +94,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_oracle(cls, selected_oracles: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				for oracle_key, params in oracle_dict.items():
 					if oracle_key in selected_oracles:
@@ -108,9 +108,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_deployable(cls, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				for oracle_key, params in oracle_dict.items():
 					if params['deployable']:
@@ -126,10 +126,11 @@ class OM: #Overlay Management
 
 	@classmethod
 	def get_market_parameters(cls, feed, network, oracle):
-		params = cls.get_all_feeds_all_parameters()[feed][network][oracle]
+		params = cls.get_all_parameters()[feed][network][oracle]
 		aggregator = params['aggregator']
 		risk_parameters = params['risk_parameters']
 		factory_address = params['factory_address']
+		#TODO fix the next line
 		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
 		risk_params = cls.risk_param_array(params['risk_parameters'])
 
@@ -138,7 +139,7 @@ class OM: #Overlay Management
 
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def get_all_feeds_all_parameters(cls, chain_id: str = None):
+	def get_all_parameters(cls, chain_id: str = None):
 		'''
 		Return all parameters of all chains if no chain_id is specified.
 		Otherwise return all parameters of specified chain_id only.
@@ -150,15 +151,14 @@ class OM: #Overlay Management
 		else:
 			return afap[chain_id]
 
-	
-	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def update_all_feeds_all_parameters(cls, data, chain_id):
-		afap = cls.get_all_feeds_all_parameters()
+	def update_all_parameters(cls, data, chain_id):
+		afap = cls.get_all_parameters()
 		afap[chain_id] = data
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
 			json.dump(afap, f, indent=4)
 
+	#TODO remove
 	@classmethod
 	def getKey(cls, chain_dict):
 		for key in chain_dict:
