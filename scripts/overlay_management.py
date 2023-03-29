@@ -100,6 +100,7 @@ class OM: #Overlay Management
 		aggregator = params['aggregator']
 		risk_parameters = params['risk_parameters']
 		factory_address = params['factory_address']
+		#TODO fix the next line
 		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
 		risk_params = cls.risk_param_array(params['risk_parameters'])
 
@@ -109,18 +110,15 @@ class OM: #Overlay Management
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
 	def get_all_parameters(cls):
-
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
 			return json.load(f)
 
-	
-	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def update_feeds_with_market_parameter(cls, data):
-
+	def update_all_parameters(cls, data):
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
 			json.dump(data, f, indent=4)
 
+	#TODO remove
 	@classmethod
 	def getKey(cls, chain_dict):
 		for key in chain_dict:
