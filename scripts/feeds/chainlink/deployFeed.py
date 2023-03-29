@@ -1,6 +1,8 @@
 import click
 from scripts.overlay_management import OM
 from brownie import accounts, network, Contract
+import sys
+
 
 def main(acc, chain_id):
     """
@@ -10,10 +12,9 @@ def main(acc, chain_id):
 
     click.echo("Getting all parameters")
     dev = accounts.load(acc) # will prompt you to enter password on terminal
-
-    all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
-    deployable_chains = OM.filter_by_blockchain(chain_id)
-    deployable_feeds = OM.filter_by_deployable(deployable_chains)
+    
+    deployable_markets = OM.get_deployable_markets()
+    afap = OM.get_all_feeds_all_parameters()
 
     for key, chain_dict in deployable_feeds.items():
         feed_oracle =  OM.getKey(chain_dict[chain_id])
