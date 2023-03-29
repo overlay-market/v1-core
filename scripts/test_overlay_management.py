@@ -8,7 +8,7 @@ class TestRiskParams(unittest.TestCase):
         self.assertListEqual(OM.risk_params, risk_params)
 
     def test_all_feeds_all_parameters(self):
-        afap = OM.get_all_feeds_all_parameters()
+        ap = OM.get_all_parameters()
         ...
 
     def test_filter_by_network(self):
@@ -30,15 +30,15 @@ class TestRiskParams(unittest.TestCase):
         self.assertEqual(len(filtered['toy-market'].keys()), 1)
 
     def test_filter_by_deployable(self):
-        deployablelist = OM.get_all_feeds_all_parameters()
-        filtered = OM.filter_by_deployable(deployablelist)
+        all_params = OM.get_all_parameters()
+        filtered = OM.filter_by_deployable(all_params)
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
         self.assertEqual(len(filtered['toy-market'].keys()), 1)
 
     def test_get_market_parameters(self):
         market_parameters = OM.get_market_parameters('mcap1000','arbitrum_goerli','translucent')
-        all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
-        params = all_feeds_all_parameters['mcap1000']['arbitrum_goerli']['translucent']['aggregator']
+        all_params = OM.get_all_parameters()
+        params = all_params['mcap1000']['arbitrum_goerli']['translucent']['aggregator']
         self.assertEqual(market_parameters[0], params)
 
 
