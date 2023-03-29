@@ -1,6 +1,6 @@
 import click
 from scripts.overlay_management import OM
-from brownie import accounts, network, Contract
+from brownie import network, Contract
 from scripts import utils
 
 
@@ -10,43 +10,36 @@ def main(acc, chain_id):
     """
     click.echo(f"You are using the '{network.show_active()}' network")
 
-    click.echo("Getting all parameters")
     # dev = accounts.load(acc) # will prompt you to enter password on terminal
     deployable_markets = OM.get_deployable_markets()
+
+    click.echo("Getting all parameters")
     afap = OM.get_all_feeds_all_parameters()
 
     for dm in deployable_markets:
+        # Get oracle and chain name
         oracle = afap[dm]['oracle']
         chain_id = afap[dm]['chain_id']
-        feed_factory_addr = OM.const_addresses[chain_id]['feed_factory'][oracle]
+
+        # Get address of feed factory corresponding to chain and oracle type
+        feed_factory_addr =\
+            OM.const_addresses[chain_id]['feed_factory'][oracle]
         feed_factory_abi = utils.get_abi(chain_id, feed_factory_addr)
 
+        # Load contract object using feed factory's address
         feed_factory = Contract.from_abi('feed_factory',
                                          feed_factory_addr,
                                          feed_factory_abi)
-
-
-    for key, chain_dict in deployable_feeds.items():
-        feed_oracle =  OM.getKey(chain_dict[chain_id])
-        if OM.FEED_ADDRESS not in chain_dict[chain_id][feed_oracle]:
-            parameters = OM.get_feed_network_parameters(key, chain_id, feed_oracle)
-            aggregator = parameters[0]
-            overlay_v1_chainlink_feed_factory_contract_address = parameters[3]
-
-            # connect to overlay v1 chainlink feed factory contract
-            overlay_v1_chainlink_feed_factory_contract = Contract.from_explorer(
-                f"{overlay_v1_chainlink_feed_factory_contract_address}")
-
-            # get feed address
-            feed_contract_address = overlay_v1_chainlink_feed_factory_contract.deployFeed.call(
-                aggregator, {"from": dev})
-
-            # deploy feed
-            click.echo("Deploying Chainlink Feed")
-            overlay_v1_chainlink_feed_factory_contract.deployFeed(
-                aggregator, {"from": dev, "maxFeePerGas": 3674000000})
-            click.echo(f"Chainlink Feed deployed [{feed_contract_address}]")
-
-            all_feeds_all_parameters[key][chain_id][feed_oracle][OM.FEED_ADDRESS] = f'{777}'
-            data = all_feeds_all_parameters
-            OM.update_feeds_with_market_parameter(data)
+        
+        # Get input parameters for deploying feed
+        feed_parameters = list(afap[dm]['feed_parameters'].values())
+        
+        # Deploy feed and get address of deployed feed from emitted event
+        tx = feed_factory.deployFeed(*feed_parameters,
+                                     {"from": dev, 'priority_fee':"2 gwei"})
+        feed_address = tx.events['FeedDeployed']['feed']
+        
+        # Save address
+        feed_address = 'check'
+        afap[dm]['feed_address'] = feed_address
+        OM.update_feeds_with_market_parameter(afap)
