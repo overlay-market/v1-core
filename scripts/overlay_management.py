@@ -138,19 +138,26 @@ class OM: #Overlay Management
 
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def get_all_feeds_all_parameters(cls, chain_id: str):
-
+	def get_all_feeds_all_parameters(cls, chain_id: str = None):
+		'''
+		Return all parameters of all chains if no chain_id is specified.
+		Otherwise return all parameters of specified chain_id only.
+		'''
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
 			afap = json.load(f)
-		return afap[chain_id]
+		if chain_id is None:
+			return afap
+		else:
+			return afap[chain_id]
 
 	
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def update_feeds_with_market_parameter(cls, data):
-
+	def update_all_feeds_all_parameters(cls, data, chain_id):
+		afap = cls.get_all_feeds_all_parameters()
+		afap[chain_id] = data
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
-			json.dump(data, f, indent=4)
+			json.dump(afap, f, indent=4)
 
 	@classmethod
 	def getKey(cls, chain_dict):
