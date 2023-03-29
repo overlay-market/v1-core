@@ -58,14 +58,13 @@ class OM: #Overlay Management
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
-	def get_deployable_markets(cls):
-		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = cls.get_all_feeds_all_parameters()
-		deployable_markets = []
+	def get_deployable_feeds(cls, chain_id):
+		afap = cls.get_all_feeds_all_parameters(chain_id)
+		deployable_feeds = []
 		for market_key, market_dict in afap.items():
-			if market_dict['deployable']:
-				deployable_markets.append(market_key)
-		return deployable_markets
+			if market_dict['feed_parameters']['deployable']:
+				deployable_feeds.append(market_key)
+		return deployable_feeds
 	
 	
 	@classmethod
@@ -130,10 +129,11 @@ class OM: #Overlay Management
 
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def get_all_feeds_all_parameters(cls):
+	def get_all_feeds_all_parameters(cls, chain_id: str):
 
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
-			return json.load(f)
+			afap = json.load(f)
+		return afap[chain_id]
 
 	
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX

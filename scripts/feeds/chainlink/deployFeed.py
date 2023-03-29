@@ -1,6 +1,6 @@
 import click
 from scripts.overlay_management import OM
-from brownie import network, Contract
+from brownie import network, Contract, accounts
 from scripts import utils
 
 
@@ -10,13 +10,13 @@ def main(acc, chain_id):
     """
     click.echo(f"You are using the '{network.show_active()}' network")
 
-    # dev = accounts.load(acc) # will prompt you to enter password on terminal
-    deployable_markets = OM.get_deployable_markets()
+    dev = accounts.load(acc) # will prompt you to enter password on terminal
+    deployable_feeds = OM.get_deployable_feeds(chain_id)
 
     click.echo("Getting all parameters")
-    afap = OM.get_all_feeds_all_parameters()
+    afap = OM.get_all_feeds_all_parameters(chain_id)
 
-    for dm in deployable_markets:
+    for dm in deployable_feeds:
         # Get oracle and chain name
         oracle = afap[dm]['oracle']
         chain_id = afap[dm]['chain_id']
@@ -35,7 +35,7 @@ def main(acc, chain_id):
         feed_parameters = list(afap[dm]['feed_parameters'].values())
         
         # Deploy feed and get address of deployed feed from emitted event
-        tx = feed_factory.deployFeed(*feed_parameters,
+        tx = feed_factory.deployFeed(*feed_parameters[1:],  # Leave out 'True' from deployable'
                                      {"from": dev, 'priority_fee':"2 gwei"})
         feed_address = tx.events['FeedDeployed']['feed']
         
