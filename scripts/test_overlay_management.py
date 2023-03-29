@@ -3,7 +3,7 @@ from unittest.mock import mock_open, patch
 import json
 from overlay_management import OM
 
-class TestRiskParams(unittest.TestCase):
+class TestOM(unittest.TestCase):
     
     mock_data = '''
         {
