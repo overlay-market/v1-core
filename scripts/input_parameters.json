@@ -1,90 +1,96 @@
 {
-    "BTC-ETH": {
-        "chain_id": "arbitrum_goerli",
-        "oracle": "chainlink",
-        "deployable": true,
-        "feed_factory_parameters": {
-            "macroWindow": 3600,
-            "microWindow": 600
+    "arbitrum_goerli": {
+        "BTC-ETH": {
+            "chain_id": "arbitrum_goerli",
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "deployable": false,
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "deployable": true,
+                "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
+            },
+            "risk_parameters": {
+                "deployable": true,
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
+            }
         },
-        "feed_parameters": {
-            "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
+        "ETH-USD": {
+            "chain_id": "arbitrum_goerli",
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "deployable": false,
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "deployable": false,
+                "aggregator": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
+            },
+            "risk_parameters": {
+                "deployable": false,
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
+            }
         },
-        "risk_parameters": {
-            "k": 115740740740,
-            "lambda": 954000000000000000,
-            "delta": 5500000000000000,
-            "capPayoff": 10000000000000000000,
-            "capNotional": 80000000000000000000000,
-            "capLeverage": 5000000000000000000,
-            "circuitBreakerWindow": 2592000,
-            "circuitBreakerMintTarget": 6667000000000000000000,
-            "maintenanceMarginFraction": 40000000000000000,
-            "maintenanceMarginBurnRate": 50000000000000000,
-            "liquidationFeeRate": 50000000000000000,
-            "tradingFeeRate": 750000000000000,
-            "minCollateral": 100000000000000,
-            "priceDriftUpperLimit": 87000000000000,
-            "averageBlockTime": 0
-        }
-    },
-    "ETH-USD": {
-        "chain_id": "arbitrum_goerli",
-        "oracle": "chainlink",
-        "deployable": false,
-        "feed_factory_parameters": {
-            "macroWindow": 3600,
-            "microWindow": 600
-        },
-        "feed_parameters": {
-            "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
-        },
-        "risk_parameters": {
-            "k": 115740740740,
-            "lambda": 954000000000000000,
-            "delta": 5500000000000000,
-            "capPayoff": 10000000000000000000,
-            "capNotional": 80000000000000000000000,
-            "capLeverage": 5000000000000000000,
-            "circuitBreakerWindow": 2592000,
-            "circuitBreakerMintTarget": 6667000000000000000000,
-            "maintenanceMarginFraction": 40000000000000000,
-            "maintenanceMarginBurnRate": 50000000000000000,
-            "liquidationFeeRate": 50000000000000000,
-            "tradingFeeRate": 750000000000000,
-            "minCollateral": 100000000000000,
-            "priceDriftUpperLimit": 87000000000000,
-            "averageBlockTime": 0
-        }
-    },
-    "DAI-USD": {
-        "chain_id": "arbitrum_goerli",
-        "oracle": "chainlink",
-        "deployable": false,
-        "feed_factory_parameters": {
-            "macroWindow": 3600,
-            "microWindow": 600
-        },
-        "feed_parameters": {
-            "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
-        },
-        "aggregator": "0x103b53E977DA6E4Fa92f76369c8b7e20E7fb7fe1",
-        "risk_parameters": {
-            "k": 115740740740,
-            "lambda": 954000000000000000,
-            "delta": 5500000000000000,
-            "capPayoff": 10000000000000000000,
-            "capNotional": 80000000000000000000000,
-            "capLeverage": 5000000000000000000,
-            "circuitBreakerWindow": 2592000,
-            "circuitBreakerMintTarget": 6667000000000000000000,
-            "maintenanceMarginFraction": 40000000000000000,
-            "maintenanceMarginBurnRate": 50000000000000000,
-            "liquidationFeeRate": 50000000000000000,
-            "tradingFeeRate": 750000000000000,
-            "minCollateral": 100000000000000,
-            "priceDriftUpperLimit": 87000000000000,
-            "averageBlockTime": 0
+        "DAI-USD": {
+            "chain_id": "arbitrum_goerli",
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "deployable": false,
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "deployable": false,
+                "aggregator": "0x103b53E977DA6E4Fa92f76369c8b7e20E7fb7fe1"
+            },
+            "risk_parameters": {
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
+            }
         }
     }
 }
