@@ -12,7 +12,6 @@ class TestRiskParams(unittest.TestCase):
         ...
 
     def test_filter_by_network(self):
-
         chainlist = [OM.ARB_TEST, OM.ARB_MAIN]
         filtered = OM.filter_by_blockchain(chainlist)
         self.assertEqual(len(filtered['mcap1000'].keys()), 2)
@@ -22,7 +21,6 @@ class TestRiskParams(unittest.TestCase):
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
 
     def test_filter_by_oracle(self):
-
         oraclelist = ['translucent']
         filtered = OM.filter_by_oracle(oraclelist)
         self.assertEqual(len(filtered['mcap1000'].keys()), 2)
@@ -37,11 +35,11 @@ class TestRiskParams(unittest.TestCase):
         self.assertEqual(len(filtered['mcap1000'].keys()), 1)
         self.assertEqual(len(filtered['toy-market'].keys()), 1)
 
-    def test_feed_network_parameters(self):
-        feed_network_parameters = OM.get_feed_network_parameters('mcap1000','arbitrum_goerli','translucent')
+    def test_get_market_parameters(self):
+        market_parameters = OM.get_market_parameters('mcap1000','arbitrum_goerli','translucent')
         all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
-        param = all_feeds_all_parameters['mcap1000']['arbitrum_goerli']['translucent']['aggregator']
-        self.assertEqual(feed_network_parameters[0], param)
+        params = all_feeds_all_parameters['mcap1000']['arbitrum_goerli']['translucent']['aggregator']
+        self.assertEqual(market_parameters[0], params)
 
 
 if __name__ == '__main__':
