@@ -1,0 +1,27 @@
+{
+    "BTC-ETH": {
+        "chain": "arbitrum_goerli",
+        "oracle": "chainlink",
+        "deployable": true,
+        "macroWindow": 3600,
+        "microWindow": 600,
+        "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb",
+        "risk_parameters": {
+            "k": 115740740740,
+            "lambda": 954000000000000000,
+            "delta": 5500000000000000,
+            "capPayoff": 10000000000000000000,
+            "capNotional": 80000000000000000000000,
+            "capLeverage": 5000000000000000000,
+            "circuitBreakerWindow": 2592000,
+            "circuitBreakerMintTarget": 6667000000000000000000,
+            "maintenanceMarginFraction": 40000000000000000,
+            "maintenanceMarginBurnRate": 50000000000000000,
+            "liquidationFeeRate": 50000000000000000,
+            "tradingFeeRate": 750000000000000,
+            "minCollateral": 100000000000000,
+            "priceDriftUpperLimit": 87000000000000,
+            "averageBlockTime": 0
+            }
+        }
+}
