@@ -49,9 +49,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				if chain_key in selected_chains:
 					if market_key not in res.keys():
@@ -64,9 +64,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_oracle(cls, selected_oracles: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				for oracle_key, params in oracle_dict.items():
 					if oracle_key in selected_oracles:
@@ -78,9 +78,9 @@ class OM: #Overlay Management
 	@classmethod
 	def filter_by_deployable(cls, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
-		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
+		all_params = to_filter if to_filter else cls.get_all_parameters()
 		res = {} 
-		for market_key, chain_dict in afap.items():
+		for market_key, chain_dict in all_params.items():
 			for chain_key, oracle_dict in chain_dict.items():
 				for oracle_key, params in oracle_dict.items():
 					if params['deployable']:
@@ -96,7 +96,7 @@ class OM: #Overlay Management
 
 	@classmethod
 	def get_market_parameters(cls, feed, network, oracle):
-		params = cls.get_all_feeds_all_parameters()[feed][network][oracle]
+		params = cls.get_all_parameters()[feed][network][oracle]
 		aggregator = params['aggregator']
 		risk_parameters = params['risk_parameters']
 		factory_address = params['factory_address']
@@ -108,7 +108,7 @@ class OM: #Overlay Management
 
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
 	@classmethod
-	def get_all_feeds_all_parameters(cls):
+	def get_all_parameters(cls):
 
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
 			return json.load(f)
