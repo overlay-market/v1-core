@@ -1,6 +1,6 @@
 {
     "BTC-ETH": {
-        "chain": "arbitrum_goerli",
+        "chain_id": "arbitrum_goerli",
         "oracle": "chainlink",
         "deployable": true,
         "macroWindow": 3600,
@@ -25,7 +25,7 @@
         }
     },
     "ETH-USD": {
-        "chain": "arbitrum_goerli",
+        "chain_id": "arbitrum_goerli",
         "oracle": "chainlink",
         "deployable": true,
         "macroWindow": 3600,
@@ -51,7 +51,7 @@
     }
     ,
     "DAI-USD": {
-        "chain": "arbitrum_goerli",
+        "chain_id": "arbitrum_goerli",
         "oracle": "chainlink",
         "deployable": false,
         "macroWindow": 3600,
