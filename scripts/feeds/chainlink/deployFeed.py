@@ -19,7 +19,6 @@ def main(acc, chain_id):
     for dm in deployable_feeds:
         # Get oracle and chain name
         oracle = afap[dm]['oracle']
-        chain_id = afap[dm]['chain_id']
 
         # Get address of feed factory corresponding to chain and oracle type
         feed_factory_addr =\
@@ -41,4 +40,4 @@ def main(acc, chain_id):
         
         # Save address
         afap[dm]['feed_address'] = feed_address
-        OM.update_feeds_with_market_parameter(afap)
+        OM.update_all_feeds_all_parameters(afap, chain_id)
