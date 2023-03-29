@@ -66,14 +66,14 @@ class OM: #Overlay Management
     ## XXX these are ordered!!! XXX DO NOT CHANGE 
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
-	# @classmethod
-	# def get_deployable_feeds(cls, chain_id):
-	# 	afap = cls.get_all_parameters(chain_id)
-	# 	deployable_feeds = []
-	# 	for market_key, market_dict in afap.items():
-	# 		if market_dict['feed_parameters']['deployable']:
-	# 			deployable_feeds.append(market_key)
-	# 	return deployable_feeds
+	@classmethod
+	def get_deployable_feeds(cls, chain_id):
+		afap = cls.get_all_parameters(chain_id)
+		deployable_feeds = []
+		for market_key, market_dict in afap.items():
+			if market_dict['feed_parameters']['deployable']:
+				deployable_feeds.append(market_key)
+		return deployable_feeds
 	
 	
 	# @classmethod
