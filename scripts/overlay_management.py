@@ -66,75 +66,75 @@ class OM: #Overlay Management
     ## XXX these are ordered!!! XXX DO NOT CHANGE 
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
-	@classmethod
-	def get_deployable_feeds(cls, chain_id):
-		afap = cls.get_all_parameters(chain_id)
-		deployable_feeds = []
-		for market_key, market_dict in afap.items():
-			if market_dict['feed_parameters']['deployable']:
-				deployable_feeds.append(market_key)
-		return deployable_feeds
+	# @classmethod
+	# def get_deployable_feeds(cls, chain_id):
+	# 	afap = cls.get_all_parameters(chain_id)
+	# 	deployable_feeds = []
+	# 	for market_key, market_dict in afap.items():
+	# 		if market_dict['feed_parameters']['deployable']:
+	# 			deployable_feeds.append(market_key)
+	# 	return deployable_feeds
 	
 	
-	@classmethod
-	def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
-		# this nested for loops are here to explicitly show exactly what is going on 
-		all_params = to_filter if to_filter else cls.get_all_parameters()
-		res = {} 
-		for market_key, chain_dict in all_params.items():
-			for chain_key, oracle_dict in chain_dict.items():
-				if chain_key in selected_chains:
-					if market_key not in res.keys():
-						res[market_key] = {}
-					for oracle_key, params in oracle_dict.items():					
-						res[market_key].update({chain_key: {oracle_key: params}})
+	# @classmethod
+	# def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
+	# 	# this nested for loops are here to explicitly show exactly what is going on 
+	# 	all_params = to_filter if to_filter else cls.get_all_parameters()
+	# 	res = {} 
+	# 	for market_key, chain_dict in all_params.items():
+	# 		for chain_key, oracle_dict in chain_dict.items():
+	# 			if chain_key in selected_chains:
+	# 				if market_key not in res.keys():
+	# 					res[market_key] = {}
+	# 				for oracle_key, params in oracle_dict.items():					
+	# 					res[market_key].update({chain_key: {oracle_key: params}})
 
-		return res
+	# 	return res
 
-	@classmethod
-	def filter_by_oracle(cls, selected_oracles: list, to_filter: dict = None):
-		# this nested for loops are here to explicitly show exactly what is going on 
-		all_params = to_filter if to_filter else cls.get_all_parameters()
-		res = {} 
-		for market_key, chain_dict in all_params.items():
-			for chain_key, oracle_dict in chain_dict.items():
-				for oracle_key, params in oracle_dict.items():
-					if oracle_key in selected_oracles:
-						if market_key not in res.keys():
-							res[market_key] = {}
-						res[market_key].update({chain_key: {oracle_key: params}})
-		return res
+	# @classmethod
+	# def filter_by_oracle(cls, selected_oracles: list, to_filter: dict = None):
+	# 	# this nested for loops are here to explicitly show exactly what is going on 
+	# 	all_params = to_filter if to_filter else cls.get_all_parameters()
+	# 	res = {} 
+	# 	for market_key, chain_dict in all_params.items():
+	# 		for chain_key, oracle_dict in chain_dict.items():
+	# 			for oracle_key, params in oracle_dict.items():
+	# 				if oracle_key in selected_oracles:
+	# 					if market_key not in res.keys():
+	# 						res[market_key] = {}
+	# 					res[market_key].update({chain_key: {oracle_key: params}})
+	# 	return res
 	
-	@classmethod
-	def filter_by_deployable(cls, to_filter: dict = None):
-		# this nested for loops are here to explicitly show exactly what is going on 
-		all_params = to_filter if to_filter else cls.get_all_parameters()
-		res = {} 
-		for market_key, chain_dict in all_params.items():
-			for chain_key, oracle_dict in chain_dict.items():
-				for oracle_key, params in oracle_dict.items():
-					if params['deployable']:
-						if market_key not in res.keys():
-							res[market_key] = {}	
-						res[market_key].update({chain_key: {oracle_key: params}})
-		return res
+	# @classmethod
+	# def filter_by_deployable(cls, to_filter: dict = None):
+	# 	# this nested for loops are here to explicitly show exactly what is going on 
+	# 	all_params = to_filter if to_filter else cls.get_all_parameters()
+	# 	res = {} 
+	# 	for market_key, chain_dict in all_params.items():
+	# 		for chain_key, oracle_dict in chain_dict.items():
+	# 			for oracle_key, params in oracle_dict.items():
+	# 				if params['deployable']:
+	# 					if market_key not in res.keys():
+	# 						res[market_key] = {}	
+	# 					res[market_key].update({chain_key: {oracle_key: params}})
+	# 	return res
 					
 
 	@classmethod
 	def risk_param_array(cls, params):
 		return [params[key] for key in cls.risk_params]
 
-	@classmethod
-	def get_market_parameters(cls, feed, network, oracle):
-		params = cls.get_all_parameters()[feed][network][oracle]
-		aggregator = params['aggregator']
-		risk_parameters = params['risk_parameters']
-		factory_address = params['factory_address']
-		#TODO fix the next line
-		chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
-		risk_params = cls.risk_param_array(params['risk_parameters'])
+	# @classmethod
+	# def get_market_parameters(cls, feed, network, oracle):
+	# 	params = cls.get_all_parameters()[feed][network][oracle]
+	# 	aggregator = params['aggregator']
+	# 	risk_parameters = params['risk_parameters']
+	# 	factory_address = params['factory_address']
+	# 	#TODO fix the next line
+	# 	chainlink_feed_factory_contract_address = params['chainlink_feed_factory_contract_address']
+	# 	risk_params = cls.risk_param_array(params['risk_parameters'])
 
-		return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
+	# 	return aggregator, risk_parameters, factory_address, chainlink_feed_factory_contract_address, risk_params
 
 
 	# XXX THIS IS ACCESS TO THE MAIN DATA STORE XXX
