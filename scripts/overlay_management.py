@@ -58,6 +58,17 @@ class OM: #Overlay Management
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
+	def get_deployable_markets(cls):
+		# this nested for loops are here to explicitly show exactly what is going on 
+		afap = cls.get_all_feeds_all_parameters()
+		deployable_markets = []
+		for market_key, market_dict in afap.items():
+			if market_dict['deployable']:
+				deployable_markets.append(market_key)
+		return deployable_markets
+	
+	
+	@classmethod
 	def filter_by_blockchain(cls, selected_chains: list, to_filter: dict = None):
 		# this nested for loops are here to explicitly show exactly what is going on 
 		afap = to_filter if to_filter else cls.get_all_feeds_all_parameters()
