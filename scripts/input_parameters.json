@@ -1,7 +1,6 @@
 {
     "arbitrum_goerli": {
         "BTC-ETH": {
-            "chain_id": "arbitrum_goerli",
             "oracle": "chainlink",
             "feed_factory_parameters": {
                 "deployable": false,
@@ -9,11 +8,11 @@
                 "microWindow": 600
             },
             "feed_parameters": {
-                "deployable": true,
+                "deployable": false,
                 "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
             },
             "risk_parameters": {
-                "deployable": true,
+                "deployable": false,
                 "k": 115740740740,
                 "lambda": 954000000000000000,
                 "delta": 5500000000000000,
@@ -32,7 +31,6 @@
             }
         },
         "ETH-USD": {
-            "chain_id": "arbitrum_goerli",
             "oracle": "chainlink",
             "feed_factory_parameters": {
                 "deployable": false,
@@ -61,9 +59,10 @@
                 "priceDriftUpperLimit": 87000000000000,
                 "averageBlockTime": 0
             }
-        },
+        }
+    },
+    "ethereum_goerli": {
         "DAI-USD": {
-            "chain_id": "arbitrum_goerli",
             "oracle": "chainlink",
             "feed_factory_parameters": {
                 "deployable": false,
@@ -71,10 +70,11 @@
                 "microWindow": 600
             },
             "feed_parameters": {
-                "deployable": false,
-                "aggregator": "0x103b53E977DA6E4Fa92f76369c8b7e20E7fb7fe1"
+                "deployable": true,
+                "aggregator": "0x0d79df66BE487753B02D015Fb622DED7f0E9798d"
             },
             "risk_parameters": {
+                "deployable": true,
                 "k": 115740740740,
                 "lambda": 954000000000000000,
                 "delta": 5500000000000000,

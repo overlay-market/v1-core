@@ -40,6 +40,5 @@ def main(acc, chain_id):
         feed_address = tx.events['FeedDeployed']['feed']
         
         # Save address
-        feed_address = 'check'
         afap[dm]['feed_address'] = feed_address
         OM.update_feeds_with_market_parameter(afap)

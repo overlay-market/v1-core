@@ -52,6 +52,15 @@ class OM: #Overlay Management
 				'chainlink': '0x75D6b2D432EeB742942E4f6E9FF77Db56B834099'
 			}
 		},
+
+		ETH_TEST: {
+			'factory': '0x2422d0108b844FC5114E864346c584b0d10d57C0',
+			'state': '0x9d2fbD680e2873A99dFc1dB876e933c7CE05Cf12',
+			'ovl': '0xdBD4a09ac1962F028390C53F4a4d126F5E13baEe',
+			'feed_factory': {
+				'chainlink': '0x5967A38B49ad2B63A5f04D02dbEAaD76BC4965Ac'
+			}
+		}
 	}
 
     ## XXX these are ordered!!! XXX DO NOT CHANGE 
