@@ -11,7 +11,7 @@ class OM: #Overlay Management
 
 
 	#TODO fix this hacky way of getting the path	
-	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/input_parameters.json'   
+	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/all_feeds_all_parameters.json'   
 
 	#CHAINS:
 	ETH_MAIN = 'ethereum_mainnet'
