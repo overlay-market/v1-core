@@ -157,10 +157,3 @@ class OM: #Overlay Management
 		afap[chain_id] = data
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
 			json.dump(afap, f, indent=4)
-
-	#TODO remove
-	@classmethod
-	def getKey(cls, chain_dict):
-		for key in chain_dict:
-			return key
-			
