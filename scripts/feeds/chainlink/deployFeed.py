@@ -1,18 +1,14 @@
 from scripts.overlay_management import OM
-from brownie import network, Contract
+from brownie import Contract
 from scripts import utils
 
 
-def main(acc, chain_id):
+def main(acc, chain_id, afap):
     """
     Deploys a new OverlayV1ChainlinkFeed contract
     """
     print(f"Commence feed deployment")
-    print(f"You are using the '{network.show_active()}' network")
     deployable_feeds = OM.get_deployable(chain_id, 'feed')
-
-    print("Getting all parameters")
-    afap = OM.get_all_parameters(chain_id)
 
     for df in deployable_feeds:
         # Get oracle

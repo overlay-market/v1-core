@@ -1,18 +1,14 @@
-from brownie import network, Contract
+from brownie import Contract
 from scripts.overlay_management import OM
 from scripts import utils
 
 
-def main(acc, chain_id):
+def main(acc, chain_id, afap):
     """
     Deploys a market from OverlayV1Factory contract
     """
     print(f"Commence market deployment")
-    print(f"You are using the '{network.show_active()}' network")
     deployable_markets = OM.get_deployable(chain_id, 'market')
-
-    print("Getting all parameters")
-    afap = OM.get_all_parameters(chain_id)
 
     for dm in deployable_markets:
         # Get required addresses corresponding to chain

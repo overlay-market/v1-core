@@ -1,9 +1,16 @@
-from brownie import accounts
+from brownie import accounts, network
+from scripts.overlay_management import OM
 from scripts.feeds.chainlink import deployFeed as df
 from scripts.feeds.chainlink import deployMarket as dm
 
 
-def main(acc, chain_id):
-    dev = accounts.load(acc)
-    df.main(dev, chain_id)
-    dm.main(dev, chain_id)
+def main(acc_addr, chain_id):
+    print(f"You are using the '{network.show_active()}' network")
+
+    print('Getting all parameters')
+    afap = OM.get_all_parameters(chain_id)
+    acc = accounts.load(acc_addr)
+
+    # Deploy feed and market contracts
+    df.main(acc, chain_id, afap)
+    dm.main(acc, chain_id, afap)
