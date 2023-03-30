@@ -11,6 +11,9 @@ def main(acc, chain_id, all_params):
     deployable_markets = OM.get_deployable(chain_id, 'market')
 
     for dm in deployable_markets:
+        # Get oracle
+        oracle = all_params[dm]['oracle']
+
         # Get required addresses corresponding to chain
         factory_addr = OM.const_addresses[chain_id]['factory']
         factory_abi = utils.get_abi(chain_id, factory_addr)
@@ -23,9 +26,10 @@ def main(acc, chain_id, all_params):
 
         # Deploy market
         feed_addr = all_params[dm]['feed_address']
-        feed_factory_addr = OM.const_addresses[chain_id]['feed_factory']
+        feed_factory_addr =\
+            OM.const_addresses[chain_id]['feed_factory'][oracle]
         risk_params = list(all_params[dm]['market_parameters'].values())
-        tx = factory.deployMarket(
+        factory.deployMarket(
             feed_factory_addr, feed_addr, risk_params[1:],
             {"from": acc, 'priority_fee':"2 gwei"}
         )
