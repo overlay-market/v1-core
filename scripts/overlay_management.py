@@ -67,13 +67,18 @@ class OM: #Overlay Management
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
-	def get_deployable_feeds(cls, chain_id):
+	def get_deployable(cls, chain_id, contract_type):
+		'''
+		Get deployable contracts.
+		Deployable contracts might be of the follring types:
+		feed_factory, feed or market
+		'''
 		afap = cls.get_all_parameters(chain_id)
-		deployable_feeds = []
+		deployable_contracts = []
 		for market_key, market_dict in afap.items():
-			if market_dict['feed_parameters']['deployable']:
-				deployable_feeds.append(market_key)
-		return deployable_feeds
+			if market_dict[f'{contract_type}_parameters']['deployable']:
+				deployable_contracts.append(market_key)
+		return deployable_contracts
 	
 	
 	# @classmethod

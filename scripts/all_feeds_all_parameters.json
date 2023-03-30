@@ -11,7 +11,7 @@
                 "deployable": false,
                 "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
             },
-            "risk_parameters": {
+            "market_parameters": {
                 "deployable": false,
                 "k": 115740740740,
                 "lambda": 954000000000000000,
@@ -41,7 +41,7 @@
                 "deployable": false,
                 "aggregator": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
             },
-            "risk_parameters": {
+            "market_parameters": {
                 "deployable": false,
                 "k": 115740740740,
                 "lambda": 954000000000000000,
@@ -73,7 +73,7 @@
                 "deployable": true,
                 "aggregator": "0x0d79df66BE487753B02D015Fb622DED7f0E9798d"
             },
-            "risk_parameters": {
+            "market_parameters": {
                 "deployable": true,
                 "k": 115740740740,
                 "lambda": 954000000000000000,
