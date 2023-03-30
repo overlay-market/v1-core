@@ -1,4 +1,3 @@
-import click
 from brownie import accounts, network, Contract
 from scripts.overlay_management import OM
 from scripts import utils
@@ -8,11 +7,11 @@ def main(acc, chain_id):
     """
     Deploys a market from OverlayV1Factory contract
     """
-    click.echo(f"Commence market deployment")
-    click.echo(f"You are using the '{network.show_active()}' network")
+    print(f"Commence market deployment")
+    print(f"You are using the '{network.show_active()}' network")
     deployable_markets = OM.get_deployable(chain_id, 'market')
 
-    click.echo("Getting all parameters")
+    print("Getting all parameters")
     afap = OM.get_all_parameters(chain_id)
 
     for dm in deployable_markets:
