@@ -1,4 +1,4 @@
-from brownie import accounts, network, Contract
+from brownie import network, Contract
 from scripts.overlay_management import OM
 from scripts import utils
 

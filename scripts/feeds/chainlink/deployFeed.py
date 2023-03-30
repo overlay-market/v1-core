@@ -1,5 +1,5 @@
 from scripts.overlay_management import OM
-from brownie import network, Contract, accounts
+from brownie import network, Contract
 from scripts import utils
 
 
