@@ -11,7 +11,7 @@ class OM: #Overlay Management
 
 
 	#TODO fix this hacky way of getting the path	
-	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/all_feeds_all_parameters.json'   
+	RISK_PARAMETERS_DIR = Path(os.getcwd()) / 'scripts/all_parameters.json'   
 
 	#CHAINS:
 	ETH_MAIN = 'ethereum_mainnet'
@@ -73,9 +73,9 @@ class OM: #Overlay Management
 		Deployable contracts might be of the follring types:
 		feed_factory, feed or market
 		'''
-		afap = cls.get_all_parameters(chain_id)
+		all_params = cls.get_all_parameters(chain_id)
 		deployable_contracts = []
-		for market_key, market_dict in afap.items():
+		for market_key, market_dict in all_params.items():
 			if market_dict[f'{contract_type}_parameters']['deployable']:
 				deployable_contracts.append(market_key)
 		return deployable_contracts
@@ -150,15 +150,15 @@ class OM: #Overlay Management
 		Otherwise return all parameters of specified chain_id only.
 		'''
 		with  open(cls.RISK_PARAMETERS_DIR, 'r') as f:
-			afap = json.load(f)
+			all_params = json.load(f)
 		if chain_id is None:
-			return afap
+			return all_params
 		else:
-			return afap[chain_id]
+			return all_params[chain_id]
 
 	@classmethod
 	def update_all_parameters(cls, data, chain_id):
-		afap = cls.get_all_parameters()
-		afap[chain_id] = data
+		all_params = cls.get_all_parameters()
+		all_params[chain_id] = data
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
-			json.dump(afap, f, indent=4)
+			json.dump(all_params, f, indent=4)

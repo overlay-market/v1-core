@@ -92,11 +92,11 @@ def test_funding_rate(market, state, params):
 
 def main(chain_id, market_id, oracle_id):
     # acc = accounts.load(acc)
-    # Load all_feeds_all_parameters.json
-    afap = OM.get_all_feeds_all_parameters()
-    market_vars = afap[market_id][chain_id][oracle_id]
+    # Load all_parameters.json
+    all_params = OM.get_all_parameters()
+    market_vars = all_params[market_id][chain_id][oracle_id]
     
-    # Load data from afap
+    # Load data from all_params
     params = market_vars['risk_parameters']
     market = load_contract(market_vars['market'])
     feed = load_contract(market_vars['feed_address'])

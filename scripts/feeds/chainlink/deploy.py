@@ -8,9 +8,9 @@ def main(acc_addr, chain_id):
     print(f"You are using the '{network.show_active()}' network")
 
     print('Getting all parameters')
-    afap = OM.get_all_parameters(chain_id)
+    all_params = OM.get_all_parameters(chain_id)
     acc = accounts.load(acc_addr)
 
     # Deploy feed and market contracts
-    df.main(acc, chain_id, afap)
-    dm.main(acc, chain_id, afap)
+    df.main(acc, chain_id, all_params)
+    dm.main(acc, chain_id, all_params)

@@ -3,7 +3,7 @@ from scripts.overlay_management import OM
 from scripts import utils
 
 
-def main(acc, chain_id, afap):
+def main(acc, chain_id, all_params):
     """
     Deploys a market from OverlayV1Factory contract
     """
@@ -19,12 +19,12 @@ def main(acc, chain_id, afap):
         factory = Contract.from_abi('factory', factory_addr, factory_abi)
 
         # Get input parameters for deploying market
-        market_parameters = list(afap[dm]['market_parameters'].values())
+        market_parameters = list(all_params[dm]['market_parameters'].values())
 
         # Deploy market
-        feed_addr = afap[dm]['feed_address']
+        feed_addr = all_params[dm]['feed_address']
         feed_factory_addr = OM.const_addresses[chain_id]['feed_factory']
-        risk_params = list(afap[dm]['market_parameters'].values())
+        risk_params = list(all_params[dm]['market_parameters'].values())
         tx = factory.deployMarket(
             feed_factory_addr, feed_addr, risk_params[1:],
             {"from": acc, 'priority_fee':"2 gwei"}
@@ -32,5 +32,5 @@ def main(acc, chain_id, afap):
         market_address = factory.getMarket(feed_addr)
 
         # Save address
-        afap[dm]['market_address'] = market_address
-        OM.update_all_parameters(afap, chain_id)
+        all_params[dm]['market_address'] = market_address
+        OM.update_all_parameters(all_params, chain_id)
