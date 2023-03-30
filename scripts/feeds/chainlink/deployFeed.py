@@ -16,7 +16,7 @@ def main(acc, chain_id):
     afap = OM.get_all_parameters(chain_id)
 
     for df in deployable_feeds:
-        # Get oracle and chain name
+        # Get oracle
         oracle = afap[df]['oracle']
 
         # Get address of feed factory corresponding to chain and oracle type
@@ -24,7 +24,7 @@ def main(acc, chain_id):
             OM.const_addresses[chain_id]['feed_factory'][oracle]
         feed_factory_abi = utils.get_abi(chain_id, feed_factory_addr)
 
-        # Load contract object using feed factory's address
+        # Load contract object using feed factory's address and abi
         feed_factory = Contract.from_abi('feed_factory',
                                          feed_factory_addr,
                                          feed_factory_abi)
@@ -34,7 +34,7 @@ def main(acc, chain_id):
         
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters[1:],  # Leave out 'True' from deployable'
-                                     {"from": dev, 'priority_fee':"2 gwei"})
+                                     {"from": acc, 'priority_fee':"2 gwei"})
         feed_address = tx.events['FeedDeployed']['feed']
         
         # Save address
