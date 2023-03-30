@@ -9,9 +9,7 @@ def main(acc, chain_id):
     Deploys a new OverlayV1ChainlinkFeed contract
     """
     click.echo(f"You are using the '{network.show_active()}' network")
-
-    dev = accounts.load(acc) # will prompt you to enter password on terminal
-    deployable_feeds = OM.get_deployable_feeds(chain_id)
+    deployable_feeds = OM.get_deployable(chain_id, 'feed')
 
     click.echo("Getting all parameters")
     afap = OM.get_all_parameters(chain_id)

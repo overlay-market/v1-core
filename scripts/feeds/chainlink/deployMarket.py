@@ -2,20 +2,14 @@ import click
 from scripts.overlay_management import OM
 from brownie import accounts, network, Contract
 
-def main(acc, chain_id):
+
+def main(dev, chain_id):
     """
     Deploys a market from OverlayV1Factory contract
     """
-
     click.echo(f"You are using the '{network.show_active()}' network")
-    all_feeds_all_parameters = OM.get_all_feeds_all_parameters()
-    deployable_chains = OM.filter_by_blockchain([chain_id])
-    deployable_feeds = OM.filter_by_deployable(deployable_chains)
 
-    click.echo("Getting all parameters")
-    dev = accounts.load(acc) # will prompt you to enter password on terminal
-
-    deployed_markets = []
+    deployed_markets = OM.get_deployable(chain_id, 'market')
     for key, chain_dict in deployable_feeds.items():
         #TODO FIX THE BELOW TO LOOP THROUGH ALL ORACLES
         oracle_feed =  OM.getKey(chain_dict[chain_id])
