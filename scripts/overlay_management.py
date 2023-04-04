@@ -70,13 +70,15 @@ class OM: #Overlay Management
 	def get_deployable(cls, chain_id, contract_type):
 		'''
 		Get deployable contracts.
-		Deployable contracts might be of the follring types:
+		Deployable contracts might be of the following types:
 		feed_factory, feed or market
 		'''
 		all_params = cls.get_all_parameters(chain_id)
 		deployable_contracts = []
 		for market_key, market_dict in all_params.items():
-			if market_dict[f'{contract_type}_parameters']['deployable']:
+			# If `contract_type` address is not in JSON then it's
+			# assumed that it needs to be deployed
+			if f'{contract_type}_address' not in market_dict:
 				deployable_contracts.append(market_key)
 		return deployable_contracts
 	
