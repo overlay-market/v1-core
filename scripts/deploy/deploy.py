@@ -1,8 +1,8 @@
 from ape_safe import ApeSafe
 from brownie import accounts, network
 from scripts.overlay_management import OM
-from scripts.feeds.chainlink import deployFeed as df
-from scripts.feeds.chainlink import deployMarket as dm
+from scripts.deploy import deploy_feed as df
+from scripts.deploy import deploy_market as dm
 
 
 def main(chain_id):

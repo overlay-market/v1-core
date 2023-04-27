@@ -5,6 +5,7 @@ from brownie import OverlayV1ChainlinkFeedFactory, accounts, network, Contract
 
 
 def main():
+    # TODO: This is deprecated and needs to be redone completely
     """
     Deploys a new OverlayV1ChainlinkFeedFactory contract, which allows for
     permissionless deployment of OverlayV1Chainlink feeds.
