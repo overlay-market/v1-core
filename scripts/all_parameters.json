@@ -151,6 +151,61 @@
                 "minCollateral": 100000000000000,
                 "priceDriftUpperLimit": 87000000000000,
                 "averageBlockTime": 0
+            },
+            "feed_address": "0xE4f81870Be81aD897c945b75Fb18f5123A8f08f0"
+        },
+        "JPY-USD": {
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
+            },
+            "market_parameters": {
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
+            }
+        },
+        "FORTH-USD": {
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+            },
+            "market_parameters": {
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
             }
         }
     }

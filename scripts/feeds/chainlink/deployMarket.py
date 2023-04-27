@@ -1,4 +1,4 @@
-from brownie import Contract
+from brownie import Contract, history
 from scripts.overlay_management import OM
 from scripts import utils
 
@@ -7,12 +7,13 @@ def main(safe, chain_id, all_params):
     """
     Deploys a market from OverlayV1Factory contract
     """
-    print(f"Commence market deployment")
+    print(f"Commence market deployment script")
     deployable_markets = OM.get_deployable(chain_id, 'market')
-    if len(deployable_markets) == 0:
-        print('No markets to deploy')
+    num_to_deploy = len(deployable_markets)
+    print(f'Markets to deploy: {num_to_deploy}')
 
     for dm in deployable_markets:
+        print(f'Commencing {dm} market deployment')
         # Get oracle
         oracle = all_params[dm]['oracle']
 
@@ -35,9 +36,17 @@ def main(safe, chain_id, all_params):
             feed_factory_addr, feed_addr, risk_params,{'from': safe.address})
         market_address = factory.getMarket(feed_addr)
 
-        # Sign and post tx
-        OM.bundle_sign_post_to_safe(safe)
-
-        # Save address
+        # Save address to dict
         all_params[dm]['market_address'] = market_address
-        OM.update_all_parameters(all_params, chain_id)
+
+    # Build multisend tx
+    print(f'Batching {num_to_deploy} deployments')
+    hist = history.from_sender(safe.address)
+    safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
+
+    # Sign and post
+    safe.sign_transaction(safe_tx)
+    safe.post_transaction(safe_tx)
+
+    # Save addresses to file
+    OM.update_all_parameters(all_params, chain_id)

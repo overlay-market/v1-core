@@ -42,9 +42,6 @@ def main(safe, chain_id, all_params):
     hist = history.from_sender(safe.address)
     safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
 
-    # Preview tx
-    safe.preview(safe_tx, call_trace=True, include_pending=True)
-
     # Sign and post
     safe.sign_transaction(safe_tx)
     safe.post_transaction(safe_tx)
