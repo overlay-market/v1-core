@@ -1,16 +1,17 @@
+from ape_safe import ApeSafe
 from brownie import accounts, network
 from scripts.overlay_management import OM
 from scripts.feeds.chainlink import deployFeed as df
 from scripts.feeds.chainlink import deployMarket as dm
 
 
-def main(acc_addr, chain_id):
+def main(chain_id):
     print(f"You are using the '{network.show_active()}' network")
 
     print('Getting all parameters')
     all_params = OM.get_all_parameters(chain_id)
-    acc = accounts.load(acc_addr)
+    safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
 
     # Deploy feed and market contracts
-    df.main(acc, chain_id, all_params)
-    dm.main(acc, chain_id, all_params)
+    df.main(safe, chain_id, all_params)
+    dm.main(safe, chain_id, all_params)

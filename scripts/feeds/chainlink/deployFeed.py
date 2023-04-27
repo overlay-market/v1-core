@@ -3,7 +3,7 @@ from brownie import Contract
 from scripts import utils
 
 
-def main(acc, chain_id, all_params):
+def main(safe, chain_id, all_params):
     """
     Deploys a new OverlayV1ChainlinkFeed contract
     """
@@ -31,7 +31,8 @@ def main(acc, chain_id, all_params):
         
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters,
-                                     {"from": acc, 'priority_fee':"2 gwei"})
+                                     {'from': safe.address,
+                                      'priority_fee':'2 gwei'})
         feed_address = tx.events['FeedDeployed']['feed']
         
         # Save address
