@@ -31,8 +31,7 @@ def main(safe, chain_id, all_params):
         
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters,
-                                     {'from': safe.address,
-                                      'priority_fee':'2 gwei'})
+                                     {'from': safe.address})
         feed_address = tx.events['FeedDeployed']['feed']
         
         # Save address

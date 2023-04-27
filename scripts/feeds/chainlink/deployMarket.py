@@ -32,9 +32,7 @@ def main(safe, chain_id, all_params):
             OM.const_addresses[chain_id]['feed_factory'][oracle]
         risk_params = list(all_params[dm]['market_parameters'].values())
         factory.deployMarket(
-            feed_factory_addr, feed_addr, risk_params,
-            {'from': safe.address, 'priority_fee':'2 gwei'}
-        )
+            feed_factory_addr, feed_addr, risk_params,{'from': safe.address})
         market_address = factory.getMarket(feed_addr)
 
         # Save address
