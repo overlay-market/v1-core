@@ -125,6 +125,33 @@
             },
             "feed_address": "0x5eAE2c029Ef4836F2d9eE3Db7d831df69c20d232",
             "market_address": "0x5A32641584e441164d43AE2AD5778C89BE96324D"
+        },
+        "GBP-USD": {
+            "oracle": "chainlink",
+            "feed_factory_parameters": {
+                "macroWindow": 3600,
+                "microWindow": 600
+            },
+            "feed_parameters": {
+                "aggregator": "0x73D9c953DaaB1c829D01E1FC0bd92e28ECfB66DB"
+            },
+            "market_parameters": {
+                "k": 115740740740,
+                "lambda": 954000000000000000,
+                "delta": 5500000000000000,
+                "capPayoff": 10000000000000000000,
+                "capNotional": 80000000000000000000000,
+                "capLeverage": 5000000000000000000,
+                "circuitBreakerWindow": 2592000,
+                "circuitBreakerMintTarget": 6667000000000000000000,
+                "maintenanceMarginFraction": 40000000000000000,
+                "maintenanceMarginBurnRate": 50000000000000000,
+                "liquidationFeeRate": 50000000000000000,
+                "tradingFeeRate": 750000000000000,
+                "minCollateral": 100000000000000,
+                "priceDriftUpperLimit": 87000000000000,
+                "averageBlockTime": 0
+            }
         }
     }
 }

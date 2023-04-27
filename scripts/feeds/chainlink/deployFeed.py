@@ -9,6 +9,8 @@ def main(acc, chain_id, all_params):
     """
     print(f"Commence feed deployment")
     deployable_feeds = OM.get_deployable(chain_id, 'feed')
+    if len(deployable_feeds) == 0:
+        print('No feeds to deploy')
 
     for df in deployable_feeds:
         # Get oracle
@@ -28,7 +30,7 @@ def main(acc, chain_id, all_params):
         feed_parameters = list(all_params[df]['feed_parameters'].values())
         
         # Deploy feed and get address of deployed feed from emitted event
-        tx = feed_factory.deployFeed(*feed_parameters[1:],  # Leave out 'True' from deployable'
+        tx = feed_factory.deployFeed(*feed_parameters,
                                      {"from": acc, 'priority_fee':"2 gwei"})
         feed_address = tx.events['FeedDeployed']['feed']
         

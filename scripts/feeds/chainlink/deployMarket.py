@@ -9,6 +9,8 @@ def main(acc, chain_id, all_params):
     """
     print(f"Commence market deployment")
     deployable_markets = OM.get_deployable(chain_id, 'market')
+    if len(deployable_markets) == 0:
+        print('No markets to deploy')
 
     for dm in deployable_markets:
         # Get oracle
@@ -30,7 +32,7 @@ def main(acc, chain_id, all_params):
             OM.const_addresses[chain_id]['feed_factory'][oracle]
         risk_params = list(all_params[dm]['market_parameters'].values())
         factory.deployMarket(
-            feed_factory_addr, feed_addr, risk_params[1:],
+            feed_factory_addr, feed_addr, risk_params,
             {"from": acc, 'priority_fee':"2 gwei"}
         )
         market_address = factory.getMarket(feed_addr)
