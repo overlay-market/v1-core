@@ -32,10 +32,19 @@ def main(safe, chain_id, all_params):
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters, {'from': safe.address})
         feed_address = tx.events['FeedDeployed']['feed']
-        
-        # Sign and post tx
-        OM.bundle_sign_post_to_safe(safe)
 
-        # Save address
+        # Save address to dict
         all_params[df]['feed_address'] = feed_address
-        OM.update_all_parameters(all_params, chain_id)
+    
+    # Build multisend tx
+    safe_tx = safe.multisend_from_receipts()
+
+    # Preview tx
+    safe.preview(safe_tx, call_trace=True, include_pending=True)
+
+    # Sign and post
+    safe.sign_transaction(safe_tx)
+    safe.post_transaction(safe_tx)
+
+    # Save addresses to file
+    OM.update_all_parameters(all_params, chain_id)
