@@ -30,10 +30,12 @@ def main(safe, chain_id, all_params):
         feed_parameters = list(all_params[df]['feed_parameters'].values())
         
         # Deploy feed and get address of deployed feed from emitted event
-        tx = feed_factory.deployFeed(*feed_parameters,
-                                     {'from': safe.address})
+        tx = feed_factory.deployFeed(*feed_parameters, {'from': safe.address})
         feed_address = tx.events['FeedDeployed']['feed']
         
+        # Sign and post tx
+        OM.bundle_sign_post_to_safe(safe)
+
         # Save address
         all_params[df]['feed_address'] = feed_address
         OM.update_all_parameters(all_params, chain_id)

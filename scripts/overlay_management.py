@@ -116,3 +116,9 @@ class OM: #Overlay Management
 		all_params[chain_id] = data
 		with  open(cls.RISK_PARAMETERS_DIR, 'w') as f:
 			json.dump(all_params, f, indent=4)
+
+	@classmethod
+	def bundle_sign_post_to_safe(cls, safe):
+		safe_tx = safe.multisend_from_receipts()
+		safe.sign_transaction(safe_tx)
+		safe.post_transaction(safe_tx)

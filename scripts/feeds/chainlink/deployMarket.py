@@ -35,6 +35,9 @@ def main(safe, chain_id, all_params):
             feed_factory_addr, feed_addr, risk_params,{'from': safe.address})
         market_address = factory.getMarket(feed_addr)
 
+        # Sign and post tx
+        OM.bundle_sign_post_to_safe(safe)
+
         # Save address
         all_params[dm]['market_address'] = market_address
         OM.update_all_parameters(all_params, chain_id)
