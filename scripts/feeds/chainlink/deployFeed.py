@@ -1,5 +1,5 @@
 from scripts.overlay_management import OM
-from brownie import Contract
+from brownie import Contract, history
 from scripts import utils
 
 
@@ -7,12 +7,13 @@ def main(safe, chain_id, all_params):
     """
     Deploys a new OverlayV1ChainlinkFeed contract
     """
-    print(f"Commence feed deployment")
+    print(f"Commence feed deployment script")
     deployable_feeds = OM.get_deployable(chain_id, 'feed')
-    if len(deployable_feeds) == 0:
-        print('No feeds to deploy')
+    num_to_deploy = len(deployable_feeds)
+    print(f'Feeds to deploy: {num_to_deploy}')
 
     for df in deployable_feeds:
+        print(f'Commencing {df} feed deployment')
         # Get oracle
         oracle = all_params[df]['oracle']
 
@@ -37,7 +38,9 @@ def main(safe, chain_id, all_params):
         all_params[df]['feed_address'] = feed_address
     
     # Build multisend tx
-    safe_tx = safe.multisend_from_receipts()
+    print(f'Batching {num_to_deploy} deployments')
+    hist = history.from_sender(safe.address)
+    safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
 
     # Preview tx
     safe.preview(safe_tx, call_trace=True, include_pending=True)
