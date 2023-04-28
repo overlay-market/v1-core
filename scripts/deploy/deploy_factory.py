@@ -1,34 +1,37 @@
-import click
+from eth_utils import keccak
+from ape_safe import ApeSafe
+from scripts.overlay_management import OM
+from scripts import utils
+from brownie import (
+    OverlayV1ChainlinkFeedFactory,
+    Contract, history,
+    accounts, network
+)
+import json
+import web3
 
-from scripts.load_feed_parameters import get_parameters
-from brownie import OverlayV1ChainlinkFeedFactory, accounts, network, Contract
-
-
-def main():
+def main(chain_id):
     # TODO: This is deprecated and needs to be redone completely
     """
-    Deploys a new OverlayV1ChainlinkFeedFactory contract, which allows for
-    permissionless deployment of OverlayV1Chainlink feeds.
+    Deploys a new Feed Factory contract
     """
-    click.echo(f"You are using the '{network.show_active()}' network")
-    parameters = get_parameters()
+    all_params = OM.get_all_parameters(chain_id)
+    safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
 
-    click.echo("Getting all parameters")
-    dev = accounts.load('name of saved address') # will prompt you to enter password on terminal
-    macro_window = parameters["mcap1000"]['macroWindow']
-    micro_window = parameters["mcap1000"]['microWindow']
-    overlay_v1_factory_address = parameters["mcap1000"]['overlay_v1_factory_address']
+    create = Contract('0x7cbB62EaA69F79e6873cD1ecB2392971036cFAa4')
+    init_code = OverlayV1ChainlinkFeedFactory.bytecode
+    tx = create.performCreate(0, init_code, {'from': safe.address})
 
-    # deploy feed factory
-    click.echo("Deploying Chainlink Feed Factory")
     feed_factory = OverlayV1ChainlinkFeedFactory.deploy(
-        micro_window,macro_window, {"from": dev}, publish_source=True)
-    click.echo(f"Chainlink Feed Factory deployed [{feed_factory.address}]")
+        600, 3600, {"from": safe.address})
 
-    overlay_v1_factory_contract = Contract.from_explorer(
-        overlay_v1_factory_address)
+    factory_addr = OM.const_addresses[chain_id]['factory']
+    factory_abi = utils.get_abi(chain_id, factory_addr)
+    factory = Contract.from_abi('factory', factory_addr, factory_abi)
 
-    # add factory
-    click.echo("Adding Chainlink Feed Factory Address on Overlay V1 Factory Contract")
-    overlay_v1_factory_contract.addFeedFactory(feed_factory, {"from": dev})
-    click.echo("Feed Factory added to OverlayV1Factory")
+    # Add factory
+    factory.addFeedFactory(feed_factory, {"from": safe.address})
+    safe_tx = safe.multisend_from_receipts()
+    safe.sign_transaction(safe_tx)
+    safe.post_transaction(safe_tx)
+    breakpoint()

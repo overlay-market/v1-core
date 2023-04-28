@@ -27,7 +27,7 @@ class OM: #Overlay Management
 	STATE_ADDRESS = 'state'
 	OVL_ADDRESS = 'ovl'
 	FEED_FACTORY_ADDRESS = 'feed_factory'
-	CHAINLINK_FEED_FACTORY_ADDRESS = 'chainlink'
+	CHAINLINK_FEED_FACTORY_ADDRESS = 'OverlayV1ChainlinkFeedFactory'
 	NFTPERP_FEED_FACTORY_ADDRESS = 'nftperp'
 	UNI_V3_FEED_FACTORY_ADDRESS = 'uniswap_v3'
 

@@ -182,7 +182,7 @@
             }
         },
         "FORTH-USD": {
-            "oracle": "chainlink",
+            "oracle": "OverlayV1ChainlinkFeedFactory",
             "feed_factory_parameters": {
                 "macroWindow": 3600,
                 "microWindow": 600
