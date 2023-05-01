@@ -2,8 +2,6 @@
 import os
 import json
 from pathlib import Path
-from brownie import Contract
-from scripts import utils
 
 #NOTES:
 #factory_address refers to OverlayV1Factory
@@ -66,13 +64,6 @@ class OM: #Overlay Management
     ## XXX these are ordered!!! XXX DO NOT CHANGE 
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
-	@classmethod
-	def load_const_contract(cls, chain_id, contract_name):
-		contract_addr = cls.const_addresses[chain_id][contract_name]
-		contract_abi = utils.get_abi(chain_id, contract_addr)
-		return Contract.from_abi(contract_name, contract_addr, contract_abi)
-		
-	
 	@classmethod
 	def get_deployable(cls, chain_id, contract_type):
 		'''

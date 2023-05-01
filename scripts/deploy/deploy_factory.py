@@ -64,7 +64,7 @@ def main(chain_id):
         with open(f'scripts/deploy/{file_name}.json', 'w') as j:
             json.dump(verif_info, j, indent=4)
         # Add feed factory to factory
-        factory = OM.load_const_contract(
+        factory = utils.load_const_contract(
             OM.const_addresses[chain_id][OM.FACTORY_ADDRESS]
         )
         factory.addFeedFactory(ff_address, {"from": safe.address})

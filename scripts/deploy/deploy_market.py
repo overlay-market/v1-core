@@ -18,7 +18,7 @@ def main(safe, chain_id, all_params):
         oracle = all_params[dm]['oracle']
 
         # Load factory contract
-        factory = OM.load_const_contract(
+        factory = utils.load_const_contract(
             OM.const_addresses[chain_id][OM.FACTORY_ADDRESS]
         )
 

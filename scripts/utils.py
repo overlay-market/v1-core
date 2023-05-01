@@ -1,5 +1,6 @@
 import requests
 import json
+from brownie import Contract
 from scripts.overlay_management import OM
 
 
@@ -20,3 +21,9 @@ def get_abi(chain_id, address):
     abi = json.loads(abi)
 
     return abi
+
+
+def load_const_contract(chain_id, contract_name):
+    contract_addr = OM.const_addresses[chain_id][contract_name]
+    contract_abi = get_abi(chain_id, contract_addr)
+    return Contract.from_abi(contract_name, contract_addr, contract_abi)
