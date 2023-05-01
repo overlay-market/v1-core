@@ -71,11 +71,16 @@ class OM: #Overlay Management
 		'''
 		all_params = cls.get_all_parameters(chain_id)
 		deployable_contracts = []
-		for market_key, market_dict in all_params.items():
-			# If `contract_type` address is not in JSON then it's
-			# assumed that it needs to be deployed
-			if f'{contract_type}_address' not in market_dict:
-				deployable_contracts.append(market_key)
+		for ff_key, ff_dict in all_params.items():
+			if f'feed_factory_address' not in ff_dict:
+				print(f"Skipping all markets and feeds in {ff_key} "
+						"since feed factory is not deployed")
+				continue
+			else:
+				for market_key, market_dict in ff_dict['markets'].items():
+					if f"{contract_type}_address" not in market_dict:
+						dc = {ff_key: market_key}
+						deployable_contracts.append(dc)
 		return deployable_contracts
 	
 	@classmethod
