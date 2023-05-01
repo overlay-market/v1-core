@@ -83,6 +83,7 @@ class OM: #Overlay Management
 		Deployable contracts might be of the following types:
 		feed_factory, feed or market
 		'''
+		# TODO: Change based on new structure of all_params
 		all_params = cls.get_all_parameters(chain_id)
 		deployable_contracts = []
 		for market_key, market_dict in all_params.items():
@@ -91,6 +92,20 @@ class OM: #Overlay Management
 			if f'{contract_type}_address' not in market_dict:
 				deployable_contracts.append(market_key)
 		return deployable_contracts
+	
+	@classmethod
+	def get_deployable_feed_factory(cls, chain_id):
+		'''
+		Get deployable feed factories
+		'''
+		all_params = cls.get_all_parameters(chain_id)
+		ffs = all_params['feed_factories']
+		deployable_ff = []
+		for ff in ffs:
+			if 'feed_factory_address' not in ff:
+				dff = {key: ff[key] for key in ['contract_name', 'feed_factory_parameters']}
+				deployable_ff.append(dff)
+		return deployable_ff
 
 	@classmethod
 	def risk_param_array(cls, params):
