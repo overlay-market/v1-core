@@ -17,12 +17,10 @@ def main(safe, chain_id, all_params):
         # Get oracle
         oracle = all_params[dm]['oracle']
 
-        # Get required addresses corresponding to chain
-        factory_addr = OM.const_addresses[chain_id]['factory']
-        factory_abi = utils.get_abi(chain_id, factory_addr)
-
-        # Load contract objects using address and abi
-        factory = Contract.from_abi('factory', factory_addr, factory_abi)
+        # Load factory contract
+        factory = OM.load_const_contract(
+            OM.const_addresses[chain_id][OM.FACTORY_ADDRESS]
+        )
 
         # Get input parameters for deploying market
         market_parameters = list(all_params[dm]['market_parameters'].values())

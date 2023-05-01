@@ -63,11 +63,17 @@ def main(chain_id):
         file_name = f"{ff['contract_name']}_{chain_id}_{ff_parameters_str}"
         with open(f'scripts/deploy/{file_name}.json', 'w') as j:
             json.dump(verif_info, j, indent=4)
+        # Add feed factory to factory
+        factory = OM.load_const_contract(
+            OM.const_addresses[chain_id][OM.FACTORY_ADDRESS]
+        )
+        factory.addFeedFactory(ff_address, {"from": safe.address})
 
     # Build multisend tx
-    print(f'Batching {num_to_deploy} deployments')
+    # Two txs per feed factory: 1) Deployment; 2) Addition to factory
+    print(f'Batching {num_to_deploy*2} transactions')
     hist = history.from_sender(safe.address)
-    safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
+    safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy*2:])
 
     # Sign and post
     safe.sign_transaction(safe_tx)
