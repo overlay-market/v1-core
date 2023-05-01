@@ -58,6 +58,7 @@ def main(chain_id):
             ff_address
         # Save verification info (for etherscan verification)
         verif_info = ff_contract.get_verification_info()
+        verif_info['abi_encoded_constructor_arguments'] = hex_constructor
         ff_parameters_str = '_'.join(str(ffp) for ffp in ff_parameters)
         file_name = f"{ff['contract_name']}_{chain_id}_{ff_parameters_str}"
         with open(f'scripts/deploy/{file_name}.json', 'w') as j:
