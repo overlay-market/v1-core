@@ -8,34 +8,30 @@ def main(safe, chain_id, all_params):
     Deploys a new feed contract
     """
     print(f"Commence feed deployment script")
-    deployable_feeds = OM.get_deployable(chain_id, 'feed')
+    deployable_feeds = OM.get_deployable_feed_market(chain_id, 'feed')
     num_to_deploy = len(deployable_feeds)
     print(f'Feeds to deploy: {num_to_deploy}')
+    if num_to_deploy == 0:
+        return
 
     for df in deployable_feeds:
         print(f'Commencing {df} feed deployment')
-        # Get oracle
-        oracle = all_params[df]['oracle']
-
+        ff_name = list(df.keys())[0]
+        df_name = list(df.values())[0]
         # Get address of feed factory corresponding to chain and oracle type
-        feed_factory_addr =\
-            OM.const_addresses[chain_id]['feed_factory'][oracle]
-        feed_factory_abi = utils.get_abi(chain_id, feed_factory_addr)
+        feed_factory_addr = all_params[ff_name]['feed_factory_address']
+        feed_factory = utils.load_contract(chain_id, feed_factory_addr)
 
-        # Load contract object using feed factory's address and abi
-        feed_factory = Contract.from_abi('feed_factory',
-                                         feed_factory_addr,
-                                         feed_factory_abi)
-        
         # Get input parameters for deploying feed
-        feed_parameters = list(all_params[df]['feed_parameters'].values())
+        feed_parameters =\
+            list(all_params[ff_name]['markets'][df_name]['feed_parameters'].values())
         
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters, {'from': safe.address})
         feed_address = tx.events['FeedDeployed']['feed']
 
         # Save address to dict
-        all_params[df]['feed_address'] = feed_address
+        all_params[ff_name]['markets'][df_name]['feed_address'] = feed_address
     
     # Build multisend tx
     print(f'Batching {num_to_deploy} deployments')
