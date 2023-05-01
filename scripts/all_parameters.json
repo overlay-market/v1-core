@@ -1,212 +1,109 @@
 {
-    "arbitrum_goerli": {
-        "BTC-ETH": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "deployable": false,
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "deployable": false,
-                "aggregator": "0x66765301a65dc76F1eec04494E55d939E23f59Bb"
-            },
-            "market_parameters": {
-                "deployable": true,
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
-            }
-        },
-        "ETH-USD": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "deployable": false,
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "deployable": true,
-                "aggregator": "0x62CAe0FA2da220f43a51F86Db2EDb36DcA9A5A08"
-            },
-            "market_parameters": {
-                "deployable": true,
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
-            }
-        }
-    },
     "ethereum_goerli": {
-        "DAI-USD": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "deployable": false,
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "deployable": false,
-                "aggregator": "0x0d79df66BE487753B02D015Fb622DED7f0E9798d"
-            },
-            "market_parameters": {
-                "deployable": false,
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
-            },
-            "feed_address": "0x21a3Eb95Ca8B3E6244389482514f6C13CFFfC408",
-            "market_address": "0x073B999bC688CcD7abC56a3E693af66e2DB62a53"
-        },
-        "SNX-USD": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "deployable": false,
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "deployable": true,
-                "aggregator": "0xdC5f59e61e51b90264b38F0202156F07956E2577"
-            },
-            "market_parameters": {
-                "deployable": true,
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
-            },
-            "feed_address": "0x5eAE2c029Ef4836F2d9eE3Db7d831df69c20d232",
-            "market_address": "0x5A32641584e441164d43AE2AD5778C89BE96324D"
-        },
-        "GBP-USD": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "aggregator": "0x73D9c953DaaB1c829D01E1FC0bd92e28ECfB66DB"
-            },
-            "market_parameters": {
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
-            },
-            "feed_address": "0xE4f81870Be81aD897c945b75Fb18f5123A8f08f0"
-        },
-        "JPY-USD": {
-            "oracle": "chainlink",
-            "feed_factory_parameters": {
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
-            },
-            "market_parameters": {
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
+        "feed_factories": [
+        {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "macroWindow": 3600,
+            "microWindow": 600,
+            "feed_factory_address": "0x5967A38B49ad2B63A5f04D02dbEAaD76BC4965Ac",
+            "markets": {
+                "JPY-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    }
+                },
+                "FORTH-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    }
+                }
             }
         },
-        "FORTH-USD": {
-            "oracle": "OverlayV1ChainlinkFeedFactory",
-            "feed_factory_parameters": {
-                "macroWindow": 3600,
-                "microWindow": 600
-            },
-            "feed_parameters": {
-                "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
-            },
-            "market_parameters": {
-                "k": 115740740740,
-                "lambda": 954000000000000000,
-                "delta": 5500000000000000,
-                "capPayoff": 10000000000000000000,
-                "capNotional": 80000000000000000000000,
-                "capLeverage": 5000000000000000000,
-                "circuitBreakerWindow": 2592000,
-                "circuitBreakerMintTarget": 6667000000000000000000,
-                "maintenanceMarginFraction": 40000000000000000,
-                "maintenanceMarginBurnRate": 50000000000000000,
-                "liquidationFeeRate": 50000000000000000,
-                "tradingFeeRate": 750000000000000,
-                "minCollateral": 100000000000000,
-                "priceDriftUpperLimit": 87000000000000,
-                "averageBlockTime": 0
+        {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "macroWindow": 3600,
+            "microWindow": 600,
+            "markets": {
+                "JPY-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    }
+                },
+                "FORTH-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    }
+                }
             }
         }
+    ]
     }
 }
