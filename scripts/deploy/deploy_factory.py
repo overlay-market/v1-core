@@ -34,3 +34,11 @@ def main(chain_id):
         # Get contract bytecode and append encoded constructors
         bytecode = ff_contract.bytecode
         data = bytecode + hex_constructor
+        # Load create call contract
+        create_call_addr = OM.const_addresses[chain_id][OM.CREATE_CALL]
+        create_call_abi = utils.get_abi(chain_id, create_call_addr)
+        create_call = Contract.from_abi(
+            'create_call',
+            create_call_addr,
+            create_call_abi
+        )
