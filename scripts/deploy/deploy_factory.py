@@ -11,7 +11,6 @@ import json
 from web3 import Web3
 
 def main(chain_id):
-    # TODO: This is deprecated and needs to be redone completely
     """
     Deploys a new Feed Factory contract
     """
@@ -64,9 +63,7 @@ def main(chain_id):
         with open(f'scripts/deploy/{file_name}.json', 'w') as j:
             json.dump(verif_info, j, indent=4)
         # Add feed factory to factory
-        factory = utils.load_const_contract(
-            OM.const_addresses[chain_id][OM.FACTORY_ADDRESS]
-        )
+        factory = utils.load_const_contract(chain_id, OM.FACTORY_ADDRESS)
         factory.addFeedFactory(ff_address, {"from": safe.address})
 
     # Build multisend tx

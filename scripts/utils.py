@@ -1,6 +1,7 @@
 import requests
 import json
 from brownie import Contract
+import time
 from scripts.overlay_management import OM
 
 
@@ -17,6 +18,7 @@ def get_abi(chain_id, address):
     url = f'https://{api}.io/api?module=contract&action=getabi&address={address}'
 
     response = requests.get(url)
+    time.sleep(3)  # To avoid rate limit
     abi = response.json()['result']
     abi = json.loads(abi)
 

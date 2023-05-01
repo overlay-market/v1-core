@@ -106,7 +106,8 @@
                             "averageBlockTime": 0
                         }
                     }
-                }
+                },
+                "feed_factory_address": "0x0766c613110f1228563ba9811502c4FA39A5f74B"
             }
         ]
     }
