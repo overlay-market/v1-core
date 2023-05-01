@@ -27,5 +27,8 @@ def get_abi(chain_id, address):
 
 def load_const_contract(chain_id, contract_name):
     contract_addr = OM.const_addresses[chain_id][contract_name]
-    contract_abi = get_abi(chain_id, contract_addr)
-    return Contract.from_abi(contract_name, contract_addr, contract_abi)
+    try:
+        return Contract(contract_addr)
+    except ValueError:
+        contract_abi = get_abi(chain_id, contract_addr)
+        return Contract.from_abi(contract_name, contract_addr, contract_abi)

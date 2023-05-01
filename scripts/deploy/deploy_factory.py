@@ -23,11 +23,14 @@ def main(chain_id):
     if num_to_deploy == 0:
         return
     
-    for ff in deployable_ff:
-        print(f'Commencing feed factory deployment: {ff}')
+    for ff_key in deployable_ff:
+        print(f'Commencing feed factory deployment: {ff_key}')
+        ff = all_params[ff_key]
+        
         # Load the contract using brownie and get contract object from `locals()`
         exec(f"from brownie import {ff['contract_name']}")
         ff_contract = locals()[ff['contract_name']]
+
         # Encode contract constructor arguments
         abi = ff_contract.abi
         args_constructor = abi[0]['inputs']
@@ -38,23 +41,21 @@ def main(chain_id):
             ff_parameters
         )
         hex_constructor = Web3.toHex(encoded_constructor)[2:]
+
         # Get contract bytecode and append encoded constructors
         bytecode = ff_contract.bytecode
         data = bytecode + hex_constructor
+
         # Load create call contract
-        create_call_addr = OM.const_addresses[chain_id][OM.CREATE_CALL]
-        create_call_abi = utils.get_abi(chain_id, create_call_addr)
-        create_call = Contract.from_abi(
-            'create_call',
-            create_call_addr,
-            create_call_abi
-        )
+        create_call = utils.load_const_contract(chain_id, OM.CREATE_CALL)
+
         # Deploy feed factory and get address
         tx = create_call.performCreate(0, data, {'from': safe.address})
         ff_address = tx.events['ContractCreation']['newContract']
+
         # Save address to dict
-        all_params['feed_factories'][ff['loc']]['feed_factory_address'] =\
-            ff_address
+        all_params[ff_key]['feed_factory_address'] = ff_address
+
         # Save verification info (for etherscan verification)
         verif_info = ff_contract.get_verification_info()
         verif_info['abi_encoded_constructor_arguments'] = hex_constructor
@@ -62,6 +63,7 @@ def main(chain_id):
         file_name = f"{ff['contract_name']}_{chain_id}_{ff_parameters_str}"
         with open(f'scripts/deploy/{file_name}.json', 'w') as j:
             json.dump(verif_info, j, indent=4)
+
         # Add feed factory to factory
         factory = utils.load_const_contract(chain_id, OM.FACTORY_ADDRESS)
         factory.addFeedFactory(ff_address, {"from": safe.address})

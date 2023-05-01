@@ -5,7 +5,7 @@ from scripts import utils
 
 def main(safe, chain_id, all_params):
     """
-    Deploys a new OverlayV1ChainlinkFeed contract
+    Deploys a new feed contract
     """
     print(f"Commence feed deployment script")
     deployable_feeds = OM.get_deployable(chain_id, 'feed')

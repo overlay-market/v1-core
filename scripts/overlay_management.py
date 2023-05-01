@@ -65,13 +65,10 @@ class OM: #Overlay Management
 	risk_params = ["k", "lambda", "delta", "capPayoff", "capNotional", "capLeverage", "circuitBreakerWindow", "circuitBreakerMintTarget", "maintenanceMarginFraction", "maintenanceMarginBurnRate", "liquidationFeeRate", "tradingFeeRate", "minCollateral", "priceDriftUpperLimit", "averageBlockTime"]
 
 	@classmethod
-	def get_deployable(cls, chain_id, contract_type):
+	def get_deployable_feed_market(cls, chain_id, contract_type):
 		'''
-		Get deployable contracts.
-		Deployable contracts might be of the following types:
-		feed_factory, feed or market
+		Get deployable feed or market
 		'''
-		# TODO: Change based on new structure of all_params
 		all_params = cls.get_all_parameters(chain_id)
 		deployable_contracts = []
 		for market_key, market_dict in all_params.items():
@@ -87,13 +84,10 @@ class OM: #Overlay Management
 		Get deployable feed factories
 		'''
 		all_params = cls.get_all_parameters(chain_id)
-		ffs = all_params['feed_factories']
 		deployable_ff = []
-		for i, ff in enumerate(ffs):
-			if 'feed_factory_address' not in ff:
-				dff = {key: ff[key] for key in ['contract_name', 'feed_factory_parameters']}
-				dff['loc'] = i
-				deployable_ff.append(dff)
+		for ff in all_params.items():
+			if 'feed_factory_address' not in ff[1].keys():
+				deployable_ff.append(ff[0])
 		return deployable_ff
 
 	@classmethod
