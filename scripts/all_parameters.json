@@ -3,8 +3,10 @@
         "feed_factories": [
         {
             "contract_name": "OverlayV1ChainlinkFeedFactory",
-            "macroWindow": 3600,
-            "microWindow": 600,
+            "feed_factory_parameters": {
+                "microWindow": 600,
+                "macroWindow": 3600
+            },
             "feed_factory_address": "0x5967A38B49ad2B63A5f04D02dbEAaD76BC4965Ac",
             "markets": {
                 "JPY-USD": {
@@ -55,8 +57,10 @@
         },
         {
             "contract_name": "OverlayV1ChainlinkFeedFactory",
-            "macroWindow": 3600,
-            "microWindow": 600,
+            "feed_factory_parameters": {
+                "microWindow": 1200,
+                "macroWindow": 3600
+            },
             "markets": {
                 "JPY-USD": {
                     "feed_parameters": {
