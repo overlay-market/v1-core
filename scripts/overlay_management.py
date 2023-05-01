@@ -103,9 +103,10 @@ class OM: #Overlay Management
 		all_params = cls.get_all_parameters(chain_id)
 		ffs = all_params['feed_factories']
 		deployable_ff = []
-		for ff in ffs:
+		for i, ff in enumerate(ffs):
 			if 'feed_factory_address' not in ff:
 				dff = {key: ff[key] for key in ['contract_name', 'feed_factory_parameters']}
+				dff['loc'] = i
 				deployable_ff.append(dff)
 		return deployable_ff
 
