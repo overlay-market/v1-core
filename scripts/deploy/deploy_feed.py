@@ -5,7 +5,7 @@ from scripts import utils
 
 def main(safe, chain_id, all_params):
     """
-    Deploys a new feed contract
+    Deploys new feed contracts
     """
     print(f"Commence feed deployment script")
     deployable_feeds = OM.get_deployable_feed_market(chain_id, 'feed')
@@ -18,6 +18,7 @@ def main(safe, chain_id, all_params):
         print(f'Commencing {df} feed deployment')
         ff_name = list(df.keys())[0]
         df_name = list(df.values())[0]
+
         # Get address of feed factory corresponding to chain and oracle type
         feed_factory_addr = all_params[ff_name]['feed_factory_address']
         feed_factory = utils.load_contract(chain_id, feed_factory_addr)

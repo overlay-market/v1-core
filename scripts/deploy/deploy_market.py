@@ -5,35 +5,36 @@ from scripts import utils
 
 def main(safe, chain_id, all_params):
     """
-    Deploys a market from OverlayV1Factory contract
+    Deploys new market contracts
     """
     print(f"Commence market deployment script")
-    deployable_markets = OM.get_deployable(chain_id, 'market')
+    deployable_markets = OM.get_deployable_feed_market(chain_id, 'market')
     num_to_deploy = len(deployable_markets)
     print(f'Markets to deploy: {num_to_deploy}')
+    if num_to_deploy == 0:
+        return
 
     for dm in deployable_markets:
         print(f'Commencing {dm} market deployment')
-        # Get oracle
-        oracle = all_params[dm]['oracle']
+        ff_name = list(dm.keys())[0]
+        dm_name = list(dm.values())[0]
 
         # Load factory contract
         factory = utils.load_const_contract(chain_id, OM.FACTORY_ADDRESS)
 
         # Get input parameters for deploying market
-        market_parameters = list(all_params[dm]['market_parameters'].values())
+        risk_params = \
+            list(all_params[ff_name]['markets'][dm_name]['market_parameters'].values())
 
         # Deploy market
-        feed_addr = all_params[dm]['feed_address']
-        feed_factory_addr =\
-            OM.const_addresses[chain_id]['feed_factory'][oracle]
-        risk_params = list(all_params[dm]['market_parameters'].values())
+        feed_addr = all_params[ff_name]['markets'][dm_name]['feed_address']
+        feed_factory_addr = all_params[ff_name]['feed_factory_address']
         factory.deployMarket(
             feed_factory_addr, feed_addr, risk_params,{'from': safe.address})
         market_address = factory.getMarket(feed_addr)
 
         # Save address to dict
-        all_params[dm]['market_address'] = market_address
+        all_params[ff_name]['markets'][dm_name]['market_address'] = market_address
 
     # Build multisend tx
     print(f'Batching {num_to_deploy} deployments')
