@@ -27,6 +27,7 @@ To generate the required tokens, see
 - `ETHERSCAN_TOKEN`: Creating an API key in [Etherscan's API docs](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics)
 - `WEB3_INFURA_PROJECT_ID`: Getting Started in [Infura's API docs](https://infura.io/docs)
 
+For Overlay Management requirements, go to the end of this file.
 
 ## Diagram
 
@@ -126,3 +127,30 @@ The process to add a new market is as follows:
 2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
 3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OVL token prior to any markets being deployed, otherwise `deployMarket()` will revert.
+
+## Overlay Management
+#### Installation:
+Create a virutal environment with `virtualenv` and install requirements
+```
+virtualenv venv -p python3.9
+source venv/bin/activate
+pip install -r requirements.txt
+```
+#### Debugging:
+Some users might see the following error on using `brownie` cli:
+```
+<...>
+    class HashableRLP(rlp.Serializable):
+AttributeError: module 'rlp' has no attribute 'Serializable'
+```
+Follow the instructions here to fix it: https://github.com/banteg/ape-safe/issues/49
+
+#### Usage:
+For deploying feed factory:
+```
+brownie run scripts/deploy/deploy_feed_factory.py main arbitrum_one --network arbitrum-main-fork
+```
+For deploying feed and market:
+```
+brownie run scripts/deploy/deploy.py main arbitrum_one --network arbitrum-main-fork
+```
