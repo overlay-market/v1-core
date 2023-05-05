@@ -1,4 +1,4 @@
-from brownie import Contract, history
+from brownie import history
 from scripts.overlay_management import OM
 from scripts import utils
 
@@ -7,7 +7,7 @@ def main(safe, chain_id, all_params):
     """
     Deploys new market contracts
     """
-    print(f"Commence market deployment script")
+    print("Commence market deployment script")
     deployable_markets = OM.get_deployable_feed_market(chain_id, 'market')
     num_to_deploy = len(deployable_markets)
     print(f'Markets to deploy: {num_to_deploy}')
@@ -24,17 +24,21 @@ def main(safe, chain_id, all_params):
 
         # Get input parameters for deploying market
         risk_params = \
-            list(all_params[ff_name]['markets'][dm_name]['market_parameters'].values())
+            list(
+                all_params[ff_name]['markets'][dm_name]['market_parameters']
+                .values()
+            )
 
         # Deploy market
         feed_addr = all_params[ff_name]['markets'][dm_name]['feed_address']
         feed_factory_addr = all_params[ff_name]['feed_factory_address']
         factory.deployMarket(
-            feed_factory_addr, feed_addr, risk_params,{'from': safe.address})
+            feed_factory_addr, feed_addr, risk_params, {'from': safe.address})
         market_address = factory.getMarket(feed_addr)
 
         # Save address to dict
-        all_params[ff_name]['markets'][dm_name]['market_address'] = market_address
+        all_params[ff_name]['markets'][dm_name]['market_address'] =\
+            market_address
 
     # Build multisend tx
     print(f'Batching {num_to_deploy} deployments')

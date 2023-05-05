@@ -15,7 +15,7 @@ def get_abi(chain_id, address):
     elif chain_id == OM.ETH_TEST:
         api = 'api-goerli.etherscan'
 
-    url = f'https://{api}.io/api?module=contract&action=getabi&address={address}'
+    url = f'https://{api}.io/api?module=contract&action=getabi&address={address}'  # NOQA
 
     response = requests.get(url)
     time.sleep(3)  # To avoid rate limit

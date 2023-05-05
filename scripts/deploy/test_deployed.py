@@ -1,5 +1,5 @@
 from scripts.overlay_management import OM
-from brownie import accounts, Contract, chain
+from brownie import Contract, chain
 import numpy as np
 from pytest import approx
 
@@ -95,14 +95,14 @@ def main(chain_id, market_id, oracle_id):
     # Load all_parameters.json
     all_params = OM.get_all_parameters()
     market_vars = all_params[market_id][chain_id][oracle_id]
-    
+
     # Load data from all_params
     params = market_vars['risk_parameters']
     market = load_contract(market_vars['market'])
     feed = load_contract(market_vars['feed_address'])
-    
-    # Load addresses from class variables 
-    ovl = load_contract(OM.const_addresses[chain_id]['ovl'])
+
+    # Load addresses from class variables
+    # ovl = load_contract(OM.const_addresses[chain_id]['ovl'])
     state = load_contract(OM.const_addresses[chain_id]['state'])
 
     # Get prices

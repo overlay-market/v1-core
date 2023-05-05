@@ -1,5 +1,5 @@
 from scripts.overlay_management import OM
-from brownie import Contract, history
+from brownie import history
 from scripts import utils
 
 
@@ -7,7 +7,7 @@ def main(safe, chain_id, all_params):
     """
     Deploys new feed contracts
     """
-    print(f"Commence feed deployment script")
+    print("Commence feed deployment script")
     deployable_feeds = OM.get_deployable_feed_market(chain_id, 'feed')
     num_to_deploy = len(deployable_feeds)
     print(f'Feeds to deploy: {num_to_deploy}')
@@ -25,15 +25,18 @@ def main(safe, chain_id, all_params):
 
         # Get input parameters for deploying feed
         feed_parameters =\
-            list(all_params[ff_name]['markets'][df_name]['feed_parameters'].values())
-        
+            list(
+                all_params[ff_name]['markets'][df_name]['feed_parameters']
+                .values()
+            )
+
         # Deploy feed and get address of deployed feed from emitted event
         tx = feed_factory.deployFeed(*feed_parameters, {'from': safe.address})
         feed_address = tx.events['FeedDeployed']['feed']
 
         # Save address to dict
         all_params[ff_name]['markets'][df_name]['feed_address'] = feed_address
-    
+
     # Build multisend tx
     print(f'Batching {num_to_deploy} deployments')
     hist = history.from_sender(safe.address)

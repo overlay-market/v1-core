@@ -1,20 +1,17 @@
-from eth_utils import keccak
 from eth_abi import encode
 from ape_safe import ApeSafe
 from scripts.overlay_management import OM
 from scripts import utils
-from brownie import (
-    Contract, history,
-    accounts, network
-)
+from brownie import history
 import json
 from web3 import Web3
+
 
 def main(chain_id):
     """
     Deploys a new Feed Factory contract
     """
-    print(f"Commence feed factory deployment script")
+    print("Commence feed factory deployment script")
     safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
     all_params = OM.get_all_parameters(chain_id)
     deployable_ff = OM.get_deployable_feed_factory(chain_id)
@@ -22,12 +19,12 @@ def main(chain_id):
     print(f'Feed factories to deploy: {num_to_deploy}')
     if num_to_deploy == 0:
         return
-    
+
     for ff_key in deployable_ff:
         print(f'Commencing feed factory deployment: {ff_key}')
         ff = all_params[ff_key]
-        
-        # Load the contract using brownie and get contract object from `locals()`
+
+        # Load contract using brownie and get contract object from `locals()`
         exec(f"from brownie import {ff['contract_name']}")
         ff_contract = locals()[ff['contract_name']]
 

@@ -1,5 +1,5 @@
 from ape_safe import ApeSafe
-from brownie import accounts, network
+from brownie import network
 from scripts.overlay_management import OM
 from scripts.deploy import deploy_feed as df
 from scripts.deploy import deploy_market as dm
