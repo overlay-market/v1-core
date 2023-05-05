@@ -145,6 +145,12 @@ AttributeError: module 'rlp' has no attribute 'Serializable'
 ```
 Follow the instructions here to fix it: https://github.com/banteg/ape-safe/issues/49
 
+#### Networks
+You will need a forked arbitrum mainnet network to test gnosis safe transactions before they're posted to the safe. This is in accordance with the [ape-safe](https://github.com/banteg/ape-safe) workflow:
+```
+brownie networks import arbitrum-fork.yaml
+```
+
 #### Usage:
 For deploying feed factory:
 ```
