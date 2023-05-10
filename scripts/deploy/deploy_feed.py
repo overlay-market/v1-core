@@ -43,8 +43,8 @@ def main(safe, chain_id, all_params):
     safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
 
     # Sign and post
-    safe.sign_transaction(safe_tx)
-    safe.post_transaction(safe_tx)
+    # safe.sign_transaction(safe_tx)
+    # safe.post_transaction(safe_tx)
 
-    # Save addresses to file
-    OM.update_all_parameters(all_params, chain_id)
+    # # Save addresses to file
+    # OM.update_all_parameters(all_params, chain_id)
