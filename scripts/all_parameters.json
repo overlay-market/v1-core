@@ -28,7 +28,9 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xFcb76076A2e52b3b1AC4E82517D709c9ccD1b12a",
+                    "market_address": "0x8c82C349E349ffD9403c3984Cb1aD1b0f76f7D2e"
                 },
                 "MAYC/WETH": {
                     "feed_parameters": {
@@ -51,7 +53,9 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xB7D3BA20d0998bE5886d8D9b4F63A50fF9F678e1",
+                    "market_address": "0xcE45C64911bD0a088dAABD73EE1Bc09aE98cD84B"
                 },
                 "MILADY/WETH": {
                     "feed_parameters": {
@@ -74,7 +78,9 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xAC30A17D152407847770088212EBe28C74Fc17EB",
+                    "market_address": "0xccd645835CA0033f0C1106e7B24f288e59E867E8"
                 },
                 "PUDGY PENGUINS/WETH": {
                     "feed_parameters": {
@@ -97,7 +103,9 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xD1bEfec417e3E4Fc41aFa04B56CD722308cD9573",
+                    "market_address": "0x8c7Dc90243FC7984583339da8dF0a5d57eC491dB"
                 }
             },
             "feed_factory_address": "0xFA0282158936D8A9cC9F413A90d592a47397239a"
