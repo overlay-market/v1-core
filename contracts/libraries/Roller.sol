@@ -53,12 +53,7 @@ library Roller {
         // otherwise, calculate fraction of value remaining given linear decay.
         // fraction of value to take off due to decay (linear drift toward zero)
         // is fraction of windowLast that has elapsed since timestampLast
-        uint256 windowFraction = dt.divDown(snapWindow);
-        uint256 absSnapAccumulator = snapAccumulator.abs();
-        int256 dSnapAccumulator = snapAccumulator >= 0
-            ? int256(windowFraction.mulDown(absSnapAccumulator))
-            : -int256(windowFraction.mulDown(absSnapAccumulator));
-        snapAccumulator -= dSnapAccumulator;
+        snapAccumulator = (snapAccumulator * int256(snapWindow - dt)) / int256(snapWindow);
 
         // add in the new value for accumulator now
         int256 accumulatorNow = snapAccumulator + value;

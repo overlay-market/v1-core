@@ -59,6 +59,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
         uint256 value
     );
 
+    // event for emergency shutdown
+    event EmergencyShutdown(address indexed user, address indexed market);
+
     // ovl token
     IOverlayV1Token public immutable ovl;
 
@@ -80,11 +83,18 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // events for factory functions
     event MarketDeployed(address indexed user, address market, address feed);
     event FeedFactoryAdded(address indexed user, address feedFactory);
+    event FeedFactoryRemoved(address indexed user, address feedFactory);
     event FeeRecipientUpdated(address indexed user, address recipient);
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
         require(ovl.hasRole(GOVERNOR_ROLE, msg.sender), "OVLV1: !governor");
+        _;
+    }
+
+    // governor modifier for governance sensitive functions
+    modifier onlyGuardian() {
+        require(ovl.hasRole(GUARDIAN_ROLE, msg.sender), "OVLV1: !guardian");
         _;
     }
 
@@ -104,6 +114,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(!isFeedFactory[feedFactory], "OVLV1: feed factory already supported");
         isFeedFactory[feedFactory] = true;
         emit FeedFactoryAdded(msg.sender, feedFactory);
+    }
+
+    /// @dev removes a supported feed factory
+    function removeFeedFactory(address feedFactory) external onlyGovernor {
+        require(isFeedFactory[feedFactory], "OVLV1: address not feed factory");
+        isFeedFactory[feedFactory] = false;
+        emit FeedFactoryRemoved(msg.sender, feedFactory);
     }
 
     /// @dev deploys a new market contract
@@ -175,5 +192,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
+    }
+
+    /// @notice Shut down of market by governance in the event of an emergency
+    function shutdown(address feed) external onlyGuardian {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.shutdown();
+        emit EmergencyShutdown(msg.sender, address(market));
     }
 }

@@ -1,5 +1,9 @@
 # v1-core
 
+[![Lint Python](https://github.com/overlay-market/v1-core/actions/workflows/lint-python.yaml/badge.svg)](https://github.com/overlay-market/v1-core/actions/workflows/lint-python.yaml)
+[![Lint Solidity](https://github.com/overlay-market/v1-core/actions/workflows/lint-solidity.yaml/badge.svg)](https://github.com/overlay-market/v1-core/actions/workflows/lint-solidity.yaml)
+[![Tests](https://github.com/overlay-market/v1-core/actions/workflows/test-python.yaml/badge.svg)](https://github.com/overlay-market/v1-core/actions/workflows/test-python.yaml)
+
 V1 core smart contracts
 
 
@@ -53,18 +57,22 @@ The market contract tracks the current open interest for all outstanding positio
 
 ```
 library Position {
-  struct Info {
-      uint96 notional; // initial notional = collateral * leverage
-      uint96 debt; // debt
-      uint48 entryToMidRatio; // ratio of entryPrice / _midFromFeed() at build
-      bool isLong; // whether long or short
-      bool liquidated; // whether has been liquidated
-      uint256 oiShares; // shares of aggregate open interest on side
-  }
+    /// @dev immutables: notionalInitial, debtInitial, midTick, entryTick, isLong
+    /// @dev mutables: liquidated, oiShares, fractionRemaining
+    struct Info {
+        uint96 notionalInitial; // initial notional = collateral * leverage
+        uint96 debtInitial; // initial debt = notional - collateral
+        int24 midTick; // midPrice = 1.0001 ** midTick at build
+        int24 entryTick; // entryPrice = 1.0001 ** entryTick at build
+        bool isLong; // whether long or short
+        bool liquidated; // whether has been liquidated (mutable)
+        uint240 oiShares; // current shares of aggregate open interest on side (mutable)
+        uint16 fractionRemaining; // fraction of initial position remaining (mutable)
+    }
 }
 ```
 
-For each market contract, there is an associated feed contract that delivers the data from the data stream. The market contract stores a pointer to the `feed` contract that it retrieves new data from, and the market uses its `update()` function to retrieve the most recent price and liquidity data from the feed through a call to `IOverlayV1Feed(feed).latest()`. This call occurs every time a user interacts with the market.
+For each market contract, there is an associated feed contract that delivers the data from the data stream. The market contract stores a pointer to the `feed` contract that it retrieves new data from, and the market uses the feed's `update()` function to retrieve the most recent price and liquidity data from the feed through a call to `IOverlayV1Feed(feed).latest()`. This call occurs every time a user interacts with the market.
 
 All markets are implemented by the contract `OverlayV1Market.sol`, regardless of the underlying feed type.
 
@@ -97,14 +105,16 @@ library Oracle {
   }
 }
 ```
-from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data` data is consumed by each deployment of `OverlayV1Market.sol` for traders to take positions on the market of interest.
+from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data` is consumed by each deployment of `OverlayV1Market.sol` for traders to take positions on the market of interest.
 
 For each oracle provider supported, there should be a specific implementation of a feed contract that inherits from `OverlayV1Feed.sol` (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools).
 
 
 ### OVL Module
 
-OVL module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OVL to compensate traders for their PnL on positions.
+The OVL module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OVL to compensate traders for their PnL on positions.
+
+[`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol) grants these mint and burn permissions on a call to `deployMarket()`. Because of this, the factory contract must have admin privileges on the OVL token prior to deploying markets.
 
 
 ## Deployment Process

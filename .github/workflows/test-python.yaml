@@ -42,7 +42,6 @@ jobs:
           echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
           echo MAX_EXAMPLES=${{env.MAX_EXAMPLES}} >> .env
           cat .env
-
       - name: Cache Compiler Installations
         uses: actions/cache@v2
         with:

@@ -2,8 +2,8 @@ def test_factory_fixture(factory, uni_factory, weth, uni):
     assert factory.uniV3Factory() == uni_factory
     assert factory.ovl() == uni  # UNI acts as ovl for testing
     assert factory.microWindow() == 600
-    assert factory.macroWindow() == 3000
-    assert factory.observationCardinalityMinimum() == 200
+    assert factory.macroWindow() == 1800
+    assert factory.observationCardinalityMinimum() == 240
 
 
 def test_token_fixtures(dai, weth, uni):

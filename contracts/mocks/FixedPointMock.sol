@@ -50,6 +50,14 @@ contract FixedPointMock {
         return x.expUp();
     }
 
+    function logDown(uint256 a, uint256 b) external pure returns (int256) {
+        return a.logDown(b);
+    }
+
+    function logUp(uint256 a, uint256 b) external pure returns (int256) {
+        return a.logUp(b);
+    }
+
     function complement(uint256 x) external pure returns (uint256) {
         return x.complement();
     }
