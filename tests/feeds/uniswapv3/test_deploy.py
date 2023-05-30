@@ -125,8 +125,7 @@ def test_deploy_feed_reverts_on_cardinal_in_market_pool(gov, weth, dai, uni,
     micro_window = 600
     macro_window = 3600
 
-    # TODO: fix so not hardcoded
-    cardinality_market = 400
+    cardinality_market = market_pool.slot0()[3] + 100
     cardinality_ovlweth = 300
 
     with reverts("OVLV1: marketCardinality < min"):
@@ -149,9 +148,8 @@ def test_deploy_feed_reverts_on_cardinal_in_ovlweth_pool(gov, weth, dai, uni,
     micro_window = 600
     macro_window = 3600
 
-    # TODO: fix so not hardcoded
     cardinality_market = 200
-    cardinality_ovlweth = 400
+    cardinality_ovlweth = ovlweth_pool.slot0()[3] + 100
 
     with reverts("OVLV1: ovlXCardinality < min"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
