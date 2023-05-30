@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - dev
+      - development
   pull_request:
     branches:
       - main
       - dev
+      - development
 
 jobs:
   flake8-lint:

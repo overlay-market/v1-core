@@ -2,9 +2,20 @@ name: Overlay V1 Core Test Python
 
 on:
   push:
-    branches: [ main, dev ]
-  pull_request_target:
-    branches: [ main, dev ]
+    branches:
+      - main
+      - development
+      - dev
+  pull_request:
+    branches:
+      - main
+      - development
+      - dev
+
+env:
+  # increasing available memory for node reduces issues with ganache crashing
+  # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+  NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
   tests:
