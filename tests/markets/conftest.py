@@ -37,6 +37,11 @@ def fake_factory(accounts):
 
 
 @pytest.fixture(scope="module")
+def guardian(accounts):
+    yield accounts[6]
+
+
+@pytest.fixture(scope="module")
 def minter_role():
     yield web3.solidityKeccak(['string'], ["MINTER"])
 
@@ -51,13 +56,23 @@ def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
+@pytest.fixture(scope="module")
+def guardian_role():
+    yield web3.solidityKeccak(['string'], ["GUARDIAN"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, request):
+def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        # mint the token then renounce minter role
+        tok.grantRole(minter_role, gov, {"from": gov})
         tok.mint(gov, supply * 10 ** tok.decimals(), {"from": gov})
+        tok.renounceRole(minter_role, gov, {"from": gov})
+
         tok.transfer(alice, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         tok.transfer(bob, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         return tok
@@ -71,7 +86,7 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 3000, 1000000000000000000, 2000000000000000000000000)
+    (600, 1800, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_fake_feed(gov, request):
     micro, macro, p, r = request.param
@@ -123,7 +138,7 @@ def pool_uniweth_30bps():
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 3000, 200, 15)])
+@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
 def create_feed_factory(gov, uni_factory, weth, uni, request):
     micro, macro, cardinality, block_time = request.param
     tok = uni.address
@@ -183,7 +198,7 @@ def feed(create_feed):
     yield create_feed()
 
 
-@pytest.fixture(scope="module", params=[(600, 3000)])
+@pytest.fixture(scope="module", params=[(600, 1800)])
 def create_mock_feed_factory(gov, request):
     micro, macro = request.param
 
@@ -222,8 +237,8 @@ def mock_feed(create_mock_feed):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl, governor_role,
-                   feed_factory, mock_feed_factory):
+def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
+                   guardian_role, feed_factory, mock_feed_factory):
     def create_factory(tok=ovl, recipient=fee_recipient):
         # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok, recipient)
@@ -233,6 +248,8 @@ def create_factory(gov, fee_recipient, request, ovl, governor_role,
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(governor_role, gov, {"from": gov})
+        # grant gov the guardian role on token to access factory methods
+        tok.grantRole(guardian_role, guardian, {"from": gov})
 
         # add both feed factories
         factory.addFeedFactory(feed_factory, {"from": gov})
@@ -264,7 +281,8 @@ def fake_deployer(create_fake_deployer):
 def create_market(gov, ovl):
     def create_market(feed, factory, feed_factory, risk_params,
                       governance=gov, ovl=ovl):
-        tx = factory.deployMarket(feed_factory, feed, risk_params)
+        tx = factory.deployMarket(
+            feed_factory, feed, risk_params, {"from": gov})
         market_addr = tx.return_value
         market = OverlayV1Market.at(market_addr)
         return market
@@ -273,7 +291,7 @@ def create_market(gov, ovl):
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff
@@ -298,7 +316,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
 
 
 @pytest.fixture(scope="module", params=[(
-    1220000000000,  # k
+    122000000000,  # k
     500000000000000000,  # lmbda
     2500000000000000,  # delta
     5000000000000000000,  # capPayoff

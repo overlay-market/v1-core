@@ -32,6 +32,9 @@ interface IOverlayV1Factory {
     // adding feed factory to allowed feed types
     function addFeedFactory(address feedFactory) external;
 
+    // removing feed factory from allowed feed types
+    function removeFeedFactory(address feedFactory) external;
+
     // deploy new market
     function deployMarket(
         address feedFactory,

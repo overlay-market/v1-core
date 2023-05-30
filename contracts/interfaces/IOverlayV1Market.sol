@@ -60,12 +60,14 @@ interface IOverlayV1Market {
         external
         view
         returns (
-            uint96 notional_,
-            uint96 debt_,
-            uint48 entryToMidRatio_,
+            uint96 notionalInitial_,
+            uint96 debtInitial_,
+            int24 midTick_,
+            int24 entryTick_,
             bool isLong_,
             bool liquidated_,
-            uint256 oiShares_
+            uint240 oiShares_,
+            uint16 fractionRemaining_
         );
 
     // update related quantities
@@ -73,6 +75,9 @@ interface IOverlayV1Market {
 
     // cached risk calcs
     function dpUpperLimit() external view returns (uint256);
+
+    // emergency shutdown
+    function isShutdown() external view returns (bool);
 
     // initializes market
     function initialize(uint256[15] memory params) external;
@@ -106,9 +111,9 @@ interface IOverlayV1Market {
         uint256 timeElapsed
     ) external view returns (uint256 oiOverweight_, uint256 oiUnderweight_);
 
-    // current notional cap with adjustments for circuit breaker if market has
+    // current open interest cap with adjustments for circuit breaker if market has
     // printed a lot in recent past
-    function capNotionalAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
+    function capOiAdjustedForCircuitBreaker(uint256 cap) external view returns (uint256);
 
     // bound on open interest cap from circuit breaker
     function circuitBreaker(Roller.Snapshot memory snapshot, uint256 cap)
@@ -140,4 +145,10 @@ interface IOverlayV1Market {
 
     // risk parameter setter
     function setRiskParam(Risk.Parameters name, uint256 value) external;
+
+    // emergency shutdown market
+    function shutdown() external;
+
+    // emergency withdraw collateral after shutdown
+    function emergencyWithdraw(uint256 positionId) external;
 }

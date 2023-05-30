@@ -24,7 +24,7 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     leverage = Decimal(1.5)
 
     # tolerance
-    tol = 1e-3
+    tol = 3e-4
 
     # calculate expected pos info data
     trading_fee_rate = Decimal(
@@ -81,7 +81,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     leverage = Decimal(1.5)
 
     # tolerance
-    tol = 1e-3
+    tol = 3e-4
 
     # so don't have to worry about funding
     market.setRiskParam(RiskParameter.K.value, 0, {"from": factory})
@@ -110,7 +110,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     pos = market.positions(pos_key)
-    (actual_notional, _, _, _, actual_entry_price, _) = pos
+    (actual_notional, _, _, _, _, _, _, actual_fraction) = pos
 
     # calculate expected exit price
     # NOTE: ask(), bid() tested in test_price.py
@@ -143,11 +143,10 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
 
     # check all oi shares removed
     expect_pos_key = get_position_key(alice.address, input_pos_id)
-    expect_notional = 0
-    expect_debt = 0
+    expect_oi_shares = 0
+    expect_fraction = 0
 
     actual_pos = market.positions(expect_pos_key)
-    (actual_notional, actual_debt, _, _, _, _) = actual_pos
-
-    assert expect_notional == actual_notional
-    assert expect_debt == actual_debt
+    (_, _, _, _, _, _, actual_oi_shares, actual_fraction) = actual_pos
+    assert expect_fraction == actual_fraction
+    assert expect_oi_shares == actual_oi_shares
