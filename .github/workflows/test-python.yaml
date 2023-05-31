@@ -61,14 +61,11 @@ jobs:
             ~/.vvm
           key: compiler-cache
 
-      # - name: Setup Node.js
-      #   uses: actions/setup-node@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
 
-      # - name: Install Ganache
-      #   run: npm install -g ganache-cli@6.12.1
-
-      - name: Install Foundry
-        uses: foundry-rs/foundry-toolchain@v1
+      - name: Install Ganache
+        run: npm install -g ganache-cli@6.12.1
 
       - name: Setup Python
         uses: actions/setup-python@v2
