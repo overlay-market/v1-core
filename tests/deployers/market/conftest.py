@@ -1,5 +1,5 @@
 import pytest
-from brownie import OverlayV1Deployer, OverlayV1FeedMock, OverlayV1Token
+from brownie import web3, OverlayV1Deployer, OverlayV1FeedMock, OverlayV1Token
 
 
 @pytest.fixture(scope="module")
@@ -27,13 +27,33 @@ def rando(accounts):
     yield accounts[4]
 
 
+@pytest.fixture(scope="module")
+def minter_role():
+    yield web3.solidityKeccak(['string'], ["MINTER"])
+
+
+@pytest.fixture(scope="module")
+def burner_role():
+    yield web3.solidityKeccak(['string'], ["BURNER"])
+
+
+@pytest.fixture(scope="module")
+def governor_role():
+    yield web3.solidityKeccak(['string'], ["GOVERNOR"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, request):
+def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        # mint the token then renounce minter role
+        tok.grantRole(minter_role, gov, {"from": gov})
         tok.mint(gov, supply * 10 ** tok.decimals(), {"from": gov})
+        tok.renounceRole(minter_role, gov, {"from": gov})
+
         tok.transfer(alice, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         tok.transfer(bob, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         return tok

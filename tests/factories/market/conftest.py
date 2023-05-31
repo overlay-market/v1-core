@@ -37,6 +37,11 @@ def fee_recipient(accounts):
 
 
 @pytest.fixture(scope="module")
+def guardian(accounts):
+    yield accounts[6]
+
+
+@pytest.fixture(scope="module")
 def minter_role():
     yield web3.solidityKeccak(['string'], ["MINTER"])
 
@@ -51,13 +56,23 @@ def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
+@pytest.fixture(scope="module")
+def guardian_role():
+    yield web3.solidityKeccak(['string'], ["GUARDIAN"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, request):
+def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        # mint the token then renounce minter role
+        tok.grantRole(minter_role, gov, {"from": gov})
         tok.mint(gov, supply * 10 ** tok.decimals(), {"from": gov})
+        tok.renounceRole(minter_role, gov, {"from": gov})
+
         tok.transfer(alice, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         tok.transfer(bob, (supply/2) * 10 ** tok.decimals(), {"from": gov})
         return tok
@@ -127,8 +142,8 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, fee_recipient, request, ovl, governor_role,
-                   feed_factory, feed_three):
+def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
+                   guardian_role, feed_factory, feed_three):
 
     def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
@@ -140,6 +155,8 @@ def create_factory(gov, fee_recipient, request, ovl, governor_role,
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(governor_role, gov, {"from": gov})
+        # grant gov the guardian role on token to access factory methods
+        tok.grantRole(guardian_role, guardian, {"from": gov})
 
         # add the feed factory
         factory.addFeedFactory(feeds, {"from": gov})

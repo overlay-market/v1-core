@@ -4,7 +4,7 @@ from decimal import Decimal
 from math import exp
 from pytest import approx
 
-from .utils import RiskParameter
+from .utils import calculate_position_info, RiskParameter
 
 
 # NOTE: Use isolation fixture to avoid possible revert with max
@@ -42,6 +42,102 @@ def test_set_risk_param(market, factory):
         # check was actually set
         actual_param = market.params(i)
         assert expect_param == actual_param
+
+        # undo tx for params to revert to conftest.py market state
+        chain.undo()
+
+
+def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
+    # risk params
+    expect_params = [
+        2220000000000,  # expect_k
+        500000000000000000,  # expect_lmbda
+        5000000000000000,  # expect_delta
+        7000000000000000000,  # expect_cap_payoff
+        900000000000000000000000,  # expect_cap_notional
+        4000000000000000000,  # expect_cap_leverage
+        3592000,  # expect_circuit_breaker_window
+        96670000000000000000000,  # expect_circuit_breaker_mint_target
+        50000000000000000,  # expect_maintenance_margin_fraction
+        200000000000000000,  # expect_maintenance_margin_burn_rate
+        5000000000000000,  # expect_liquidation_fee_rate
+        250000000000000,  # expect_trading_fee_rate
+        500000000000000,  # expect_min_collateral
+        50000000000000,  # expect_price_drift_upper_limit
+        14,  # expect_average_block_time
+    ]
+
+    # build some positions
+    # position build attributes
+    notional_initial = Decimal(1000)
+    leverage = Decimal(1.5)
+    is_long = True
+
+    # calculate expected pos info data
+    idx_trade = RiskParameter.TRADING_FEE_RATE.value
+    trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
+    collateral, _, _, trade_fee \
+        = calculate_position_info(notional_initial, leverage, trading_fee_rate)
+
+    # input values for build
+    input_collateral = int(collateral * Decimal(1e18))
+    input_leverage = int(leverage * Decimal(1e18))
+    input_is_long = is_long
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 2**256-1 if is_long else 0
+
+    # approve collateral amount: collateral + trade fee
+    approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
+
+    # approve then build
+    # NOTE: build() tests in test_build.py
+    ovl.approve(market, approve_collateral, {"from": alice})
+    _ = market.build(input_collateral, input_leverage, input_is_long,
+                     input_price_limit, {"from": alice})
+
+    # cache prior oi, timestamp update last values
+    prior_oi_long = market.oiLong()
+    prior_oi_short = market.oiShort()
+    prior_timestamp_update_last = market.timestampUpdateLast()
+
+    for i in range(len(RiskParameter)):
+        # mine the chain forward for some funding
+        dt = 604800
+        chain.mine(timestamp=prior_timestamp_update_last+dt)
+
+        # get the expected oi BEFORE risk param set
+        # to check that new k value (if set k) isn't used in oiAfterFunding
+        # i.e. market updated before risk param set
+        time_elapsed = dt
+
+        # NOTE: oiAfterFunding() tests in test_funding.py
+        if (prior_oi_long > prior_oi_short):
+            expect_oi_long, expect_oi_short = market.oiAfterFunding(
+                prior_oi_long, prior_oi_short, time_elapsed)
+        else:
+            expect_oi_short, expect_oi_long = market.oiAfterFunding(
+                prior_oi_short, prior_oi_long, time_elapsed)
+
+        # set the risk param
+        expect_param = expect_params[i]
+        tx = market.setRiskParam(i, expect_param, {"from": factory})
+
+        # check expect funding calc used correct now time given chain mine
+        timestamp_now = chain[tx.block_number]['timestamp']
+        expect_timestamp_update_last = timestamp_now
+
+        # get actual updated storage vars
+        actual_timestamp_update_last = market.timestampUpdateLast()
+        actual_oi_long = market.oiLong()
+        actual_oi_short = market.oiShort()
+
+        assert actual_timestamp_update_last == expect_timestamp_update_last
+        assert actual_timestamp_update_last != prior_timestamp_update_last
+
+        assert int(expect_oi_long) == approx(int(actual_oi_long))
+        assert int(expect_oi_short) == approx(int(actual_oi_short))
 
         # undo tx for params to revert to conftest.py market state
         chain.undo()

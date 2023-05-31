@@ -12,9 +12,9 @@ library Cast {
     /// @dev casts an int256 to an int192 bounded by int192 range of values
     /// @dev to avoid reverts and overflows
     function toInt192Bounded(int256 value) internal pure returns (int192) {
-        int192 value192 = (type(int192).min <= value && value <= type(int192).max)
-            ? int192(value)
-            : (value < type(int192).min ? type(int192).min : type(int192).max);
+        int192 value192 = value < type(int192).min
+            ? type(int192).min
+            : (value > type(int192).max ? type(int192).max : int192(value));
         return value192;
     }
 }

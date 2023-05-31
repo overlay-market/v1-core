@@ -42,19 +42,19 @@ def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
     assert feed.marketBaseToken() == weth
     assert feed.marketQuoteToken() == dai
     assert feed.microWindow() == 600
-    assert feed.macroWindow() == 3000
+    assert feed.macroWindow() == 1800
 
 
 def test_mock_feed_fixture(mock_feed):
     assert mock_feed.microWindow() == 600
-    assert mock_feed.macroWindow() == 3000
+    assert mock_feed.macroWindow() == 1800
     assert mock_feed.price() == 1000000000000000000
     assert mock_feed.reserve() == 2000000000000000000000000
 
 
 def test_fake_feed_fixture(fake_feed):
     assert fake_feed.microWindow() == 600
-    assert fake_feed.macroWindow() == 3000
+    assert fake_feed.macroWindow() == 1800
     assert fake_feed.price() == 1000000000000000000
     assert fake_feed.reserve() == 2000000000000000000000000
 
@@ -78,7 +78,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
 
     # risk params
     expect_params = [
-        1220000000000,
+        122000000000,
         500000000000000000,
         2500000000000000,
         5000000000000000000,
@@ -107,6 +107,9 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     assert mock_market.oiLongShares() == 0
     assert mock_market.oiShortShares() == 0
 
+    # check is shutdown set to false
+    assert mock_market.isShutdown() is False
+
     # check timestamp update last is same as block when mock_market deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py
     assert mock_market.timestampUpdateLast() != 0
@@ -121,7 +124,7 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
 
     # risk params
     expect_params = [
-        1220000000000,
+        122000000000,
         500000000000000000,
         2500000000000000,
         5000000000000000000,
@@ -149,6 +152,9 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
     assert market.oiShort() == 0
     assert market.oiLongShares() == 0
     assert market.oiShortShares() == 0
+
+    # check is shutdown set to false
+    assert market.isShutdown() is False
 
     # check timestamp update last is same as block when market was deployed
     # NOTE: -3 in index since had two grantRole txs after in conftest.py

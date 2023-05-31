@@ -44,10 +44,12 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     # get values prior to mine chain
     expect_oi_long = market.oiLong()
     expect_oi_short = market.oiShort()
+    expect_oi_long_shares = market.oiLongShares()
+    expect_oi_short_shares = market.oiShortShares()
     timestamp_last = market.timestampUpdateLast()
 
     # mine chain into the future
-    chain.mine(timedelta=600)
+    chain.mine(timedelta=86400)
 
     # call update
     tx = market.update({"from": rando})
@@ -55,6 +57,7 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     time_elapsed = timestamp_now - timestamp_last
 
     # NOTE: oiAfterFunding() tests in test_funding.py
+    # NOTE: oiShares aggregates shouldn't change
     if (expect_oi_long > expect_oi_short):
         expect_oi_long, expect_oi_short = market.oiAfterFunding(
             expect_oi_long, expect_oi_short, time_elapsed)
@@ -64,18 +67,24 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
 
     actual_oi_long = market.oiLong()
     actual_oi_short = market.oiShort()
+    actual_oi_long_shares = market.oiLongShares()
+    actual_oi_short_shares = market.oiShortShares()
 
     # check oi long and short stored after funding calc
     assert expect_oi_long == actual_oi_long
     assert expect_oi_short == actual_oi_short
+
+    # check oi long and short shares haven't changed
+    assert expect_oi_long_shares == actual_oi_long_shares
+    assert expect_oi_short_shares == actual_oi_short_shares
 
 
 def test_update_sets_last_timestamp(market, rando):
     # prior is timestamp is timestamp when deployed in conftest.py
     prior = market.timestampUpdateLast()
 
-    # mine the chain 60s into the future
-    chain.mine(timedelta=60)
+    # mine the chain 3600s into the future
+    chain.mine(timedelta=3600)
 
     # call update
     tx = market.update({"from": rando})

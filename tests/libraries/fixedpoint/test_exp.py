@@ -38,7 +38,7 @@ def test_exp_down(fixed_point, x):
     actual = fixed_point.expDown(x_fixed)
 
     assert expect == approx(actual)
-    assert expect >= actual  # check round up error added
+    assert expect >= actual  # check round down error subtracted
 
 
 def test_exp_down_when_pow_is_zero(fixed_point):
