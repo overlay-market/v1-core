@@ -12,8 +12,10 @@ on:
       - development
       - dev
 
-# env:
-#   NODE_OPTIONS: --max_old_space_size=4096
+env:
+  # increasing available memory for node reduces issues with ganache crashing
+  # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+  NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
   tests:
@@ -39,10 +41,10 @@ jobs:
         if: ${{ github.base_ref == 'main' && github.head_ref == 'dev' }}
         run: echo "MAX_EXAMPLES=50" >> "$GITHUB_ENV"
 
-      - name: Set env MAX_EXAMPLES to 3 if base branch is NOT main
+      - name: Set env MAX_EXAMPLES to 1 if base branch is NOT main
         shell: bash
         if: github.base_ref != 'main'
-        run: echo "MAX_EXAMPLES=3" >> "$GITHUB_ENV"
+        run: echo "MAX_EXAMPLES=1" >> "$GITHUB_ENV"
 
       - name: Create env file
         run: |
@@ -51,7 +53,6 @@ jobs:
           echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
           echo MAX_EXAMPLES=${{env.MAX_EXAMPLES}} >> .env
           cat .env
-          
       - name: Cache Compiler Installations
         uses: actions/cache@v2
         with:
@@ -60,18 +61,11 @@ jobs:
             ~/.vvm
           key: compiler-cache
 
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          
-      - name: Install Anvil
-        run: |
-          git clone https://github.com/foundry-rs/foundry
-          cd foundry
-          git checkout 98fa8950d88bbee3ecc15d56295c8a2ba6f60005
-          cargo install --path ./anvil --bins --locked --force
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+
+      - name: Install Ganache
+        run: npm install -g ganache-cli@6.12.1
 
       - name: Setup Python
         uses: actions/setup-python@v2

@@ -1,6 +1,6 @@
 # use Ganache's forked mainnet mode as the default network
 networks:
-  default: anvil-fork
+  default: mainnet-fork
 
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
