@@ -70,6 +70,7 @@ jobs:
         run: |
           git clone https://github.com/foundry-rs/foundry
           cd foundry
+          git checkout 98fa8950d88bbee3ecc15d56295c8a2ba6f60005
           cargo install --path ./anvil --bins --locked --force
 
       - name: Setup Python
