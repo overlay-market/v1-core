@@ -2,7 +2,7 @@
 
 ## Table of v1-core functions
 
-Below is a table of `v1-core` functions and the associated sections and equations in the `v1-core` whitepaper (WP), based on [this draft](https://planckcat.mypinata.cloud/ipfs/QmVMX7DH8Kh22kxMyDFGUJcw1a3irNPvyZBtAogkyJYJEv).
+Below is a table of `v1-core` functions and the associated sections and equations in the `v1-core` whitepaper (WP), based on [this draft](https://gateway.pinata.cloud/ipfs/QmVMX7DH8Kh22kxMyDFGUJcw1a3irNPvyZBtAogkyJYJEv).
 
 | Function | Code Location | WP Location | Description |
 | --- | --- | --- | --- |
