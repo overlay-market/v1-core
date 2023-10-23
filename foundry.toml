@@ -1,6 +1,9 @@
 [profile.default]
-src = "src"
+src = "contracts"
+test = "tests"
+script = "scripts"
 out = "out"
+cache_path  = "forge-cache"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
