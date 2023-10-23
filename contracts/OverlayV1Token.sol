@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "openzeppelin/token/ERC20/ERC20.sol";
+import "openzeppelin/access/AccessControlEnumerable.sol";
 
 import "./interfaces/IOverlayV1Token.sol";
 
 contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OVL") {
+    /// @notice indicates whether transfers are allowed for everyone or only whitelisted addresses
+    bool public transfersLocked;
+
     constructor() {
+        // Only whitelisted addresses can transfer by default
+        transfersLocked = true;
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -27,5 +32,20 @@ contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Over
 
     function burn(uint256 _amount) external onlyBurner {
         _burn(msg.sender, _amount);
+    }
+
+    function unlockTransfers() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        transfersLocked = false;
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256)
+        internal
+        view
+        override
+    {
+        require(
+            !transfersLocked || hasRole(TRANSFER_ROLE, from) || hasRole(TRANSFER_ROLE, to),
+            "ERC20: cannot transfer"
+        );
     }
 }
