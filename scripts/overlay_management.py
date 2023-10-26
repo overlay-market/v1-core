@@ -50,7 +50,6 @@ class OM:  # Overlay Management
             OVL_ADDRESS: '0xdc77acc82cce1cc095cba197474cc06824ade6f7'
         },
         ARB_TEST: {
-            PROTOCOL_SAFE: '0xc946446711eE82b87cc34611810B0f2DD14c15DD',  # This is an EOA; gnosis safe doesn't have a arbitrum goerli deployment  # NOQA E501
             FACTORY_ADDRESS: '0x733A47039C02bB3B5950F1c6DAaC5E24f3821AB2',
             STATE_ADDRESS: '0x68eb0F1Fbbb35b98526F53c01B18507f95F02119',
             OVL_ADDRESS: '0x1023b1BC47b9b449eAD9329EE0eFD4fDAcA3D767'
