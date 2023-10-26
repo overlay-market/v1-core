@@ -2,6 +2,7 @@
 import os
 import json
 from pathlib import Path
+from brownie import network
 
 
 class OM:  # Overlay Management
@@ -13,6 +14,14 @@ class OM:  # Overlay Management
     ETH_TEST = 'ethereum_goerli'
     ARB_TEST = 'arbitrum_goerli'
     ARB_MAIN = 'arbitrum_one'
+
+    # CHAIN IDs: BROWNIE NETWORKS
+    NETWORK_MAPPING = {
+        ETH_MAIN: 'mainnet',
+        ETH_TEST: 'goerli',
+        ARB_MAIN: 'arbitrum-main',
+        ARB_TEST: 'arbitrum-goerli'
+    }
 
     # SAFES
     PROTOCOL_SAFE = 'protocol_safe'
@@ -41,6 +50,7 @@ class OM:  # Overlay Management
             OVL_ADDRESS: '0xdc77acc82cce1cc095cba197474cc06824ade6f7'
         },
         ARB_TEST: {
+            PROTOCOL_SAFE: '0xc946446711eE82b87cc34611810B0f2DD14c15DD',  # This is an EOA; gnosis safe doesn't have a arbitrum goerli deployment  # NOQA E501
             FACTORY_ADDRESS: '0x733A47039C02bB3B5950F1c6DAaC5E24f3821AB2',
             STATE_ADDRESS: '0x68eb0F1Fbbb35b98526F53c01B18507f95F02119',
             OVL_ADDRESS: '0x1023b1BC47b9b449eAD9329EE0eFD4fDAcA3D767'
@@ -116,3 +126,13 @@ class OM:  # Overlay Management
         all_params[chain_id] = data
         with open(cls.RISK_PARAMETERS_DIR, 'w') as f:
             json.dump(all_params, f, indent=4)
+
+    @classmethod
+    def connect_to_chain(cls, chain_id):
+        '''
+        Connect to chain that corresponds to chain_id
+        '''
+        # Disconnect from default network (mainnet-fork)
+        network.disconnect()
+        # Connect to right network
+        network.connect(cls.NETWORK_MAPPING[chain_id])
