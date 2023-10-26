@@ -3,7 +3,6 @@ from ape_safe import ApeSafe
 from scripts.overlay_management import OM
 from scripts import utils
 from brownie import history, accounts
-import json
 from web3 import Web3
 
 
@@ -27,10 +26,11 @@ def deploy_w_safe(chain_id, safe, dep_ff, num, all_params):
         ff, ff_contract = get_feed_factory_details(ff_key, all_params)
 
         # Encode contract constructor arguments
+        ff_params = ff['feed_factory_parameters'].values()
         abi = ff_contract.abi
         args_constructor = abi[0]['inputs']
         types_constructor = [ca['type'] for ca in args_constructor]
-        ff_parameters = list(ff['feed_factory_parameters'].values())
+        ff_parameters = list(ff_params)
         encoded_constructor = encode(
             types_constructor,
             ff_parameters
@@ -52,12 +52,10 @@ def deploy_w_safe(chain_id, safe, dep_ff, num, all_params):
         all_params[ff_key]['feed_factory_address'] = ff_address
 
         # Save verification info (for etherscan verification)
-        verif_info = ff_contract.get_verification_info()
-        verif_info['abi_encoded_constructor_arguments'] = hex_constructor
-        ff_parameters_str = '_'.join(str(ffp) for ffp in ff_parameters)
-        file_name = f"{ff['contract_name']}_{chain_id}_{ff_parameters_str}"
-        with open(f'scripts/deploy/{file_name}.json', 'w') as j:
-            json.dump(verif_info, j, indent=4)
+        ff_params_str = '_'.join(str(param) for param in ff_params)
+        OM.get_verification_info(
+            ff_contract, f"{ff['contract_name']}_{ff_params_str}"
+        )
 
         # Add feed factory to factory
         add_feed_factory_to_factory(chain_id, safe.address, ff_address)
@@ -80,8 +78,14 @@ def deploy_w_eoa(chain_id, eoa, dep_ff, all_params):
         print(f'Commencing feed factory deployment: {ff_key}')
         ff, ff_contract = get_feed_factory_details(ff_key, all_params)
         # Deploy feed factory and get address
-        eoa.deploy(ff_contract, *ff['feed_factory_parameters'].values())
+        ff_params = ff['feed_factory_parameters'].values()
+        eoa.deploy(ff_contract, *ff_params)
         ff_address = ff_contract[-1].address
+        # Save verification info (for etherscan verification)
+        ff_params_str = '_'.join(str(param) for param in ff_params)
+        OM.get_verification_info(
+            ff_contract, f"{ff['contract_name']}_{ff_params_str}"
+        )
         # Save address to dict
         all_params[ff_key]['feed_factory_address'] = ff_address
         # Add feed factory to factory

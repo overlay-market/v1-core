@@ -143,3 +143,18 @@ class OM:  # Overlay Management
             # deploy contracts using ape-safe.
             network.connect(f'{cls.NETWORK_MAPPING[chain_id]}-fork')
         print(f"You are using the '{network.show_active()}' network")
+
+    @classmethod
+    def get_verification_info(cls, contract, name):
+        '''
+        Save verification info (for etherscan verification)
+        Inputs:
+            contract: brownie contract object
+            name: name of contract (name should not include 'json' extension)
+        '''
+        # Get verification info
+        verif_info = contract.get_verification_info()
+        # Create `verif_info` directory if it doesn't exist
+        Path('scripts/deploy/verif_info').mkdir(parents=True, exist_ok=True)
+        with open(f'scripts/deploy/verif_info/{name}.json', 'w') as j:
+            json.dump(verif_info, j, indent=4)

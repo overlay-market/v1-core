@@ -1,19 +1,11 @@
 from ape_safe import ApeSafe
 from brownie import accounts, OverlayV1Token, Contract, history, web3
-import json
 from scripts.overlay_management import OM
 from scripts import utils
 
 
 MINTER_ROLE = web3.solidityKeccak(['string'], ["MINTER"])
 GOVERNOR_ROLE = web3.solidityKeccak(['string'], ["GOVERNOR"])
-
-
-def get_verification_info():
-    # Save verification info (for etherscan verification)
-    verif_info = OverlayV1Token.get_verification_info()
-    with open('scripts/deploy/OverlayV1Token_verif_info.json', 'w') as j:
-        json.dump(verif_info, j, indent=4)
 
 
 def deploy_w_eoa(eoa):
@@ -61,4 +53,4 @@ def main(chain_id):
         safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
         ovl_addr = deploy_w_safe(chain_id, safe)
     print(f'Overlay token deployed at {ovl_addr}')
-    get_verification_info()
+    OM.get_verification_info(ovl, 'OverlayV1Token')
