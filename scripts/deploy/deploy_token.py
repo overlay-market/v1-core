@@ -50,7 +50,6 @@ def deploy_w_safe(chain_id, safe):
 
 def main(chain_id):
     OM.connect_to_chain(chain_id)
-    print('Getting all parameters')
     if chain_id == OM.ARB_TEST:
         eoa_name = input('Enter EOA name: ')
         eoa = accounts.load(eoa_name)
