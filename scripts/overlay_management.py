@@ -135,4 +135,12 @@ class OM:  # Overlay Management
         # Disconnect from default network (mainnet-fork)
         network.disconnect()
         # Connect to right network
-        network.connect(cls.NETWORK_MAPPING[chain_id])
+        if chain_id == cls.ARB_TEST:
+            # For deploying on arbitrum testnet; ape-safe isn't used.
+            # So, we don't need to connect to a the forked chain.
+            network.connect(cls.NETWORK_MAPPING[chain_id])
+        else:
+            # For all other chains, we need to connect to a forked chain to
+            # deploy contracts using ape-safe.
+            network.connect(f'{cls.NETWORK_MAPPING[chain_id]}-fork')
+        print(f"You are using the '{network.show_active()}' network")
