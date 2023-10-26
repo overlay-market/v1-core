@@ -51,7 +51,7 @@ class OM:  # Overlay Management
         },
         ARB_TEST: {
             FACTORY_ADDRESS: '0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1',
-            STATE_ADDRESS: '0x68eb0F1Fbbb35b98526F53c01B18507f95F02119',
+            STATE_ADDRESS: '',
             OVL_ADDRESS: '0x738C250ef3e490acC17A8552A0BF11BabB29613c'
         },
         ETH_TEST: {
