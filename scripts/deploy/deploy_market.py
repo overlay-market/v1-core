@@ -3,7 +3,7 @@ from scripts.overlay_management import OM
 from scripts import utils
 
 
-def main(safe, chain_id, all_params):
+def main(gov, chain_id, all_params, is_safe):
     """
     Deploys new market contracts
     """
@@ -13,6 +13,11 @@ def main(safe, chain_id, all_params):
     print(f'Markets to deploy: {num_to_deploy}')
     if num_to_deploy == 0:
         return
+
+    if is_safe:
+        signer = gov.address
+    else:
+        signer = gov
 
     for dm in deployable_markets:
         print(f'Commencing {dm} market deployment')
@@ -33,21 +38,23 @@ def main(safe, chain_id, all_params):
         feed_addr = all_params[ff_name]['markets'][dm_name]['feed_address']
         feed_factory_addr = all_params[ff_name]['feed_factory_address']
         factory.deployMarket(
-            feed_factory_addr, feed_addr, risk_params, {'from': safe.address})
+            feed_factory_addr, feed_addr, risk_params, {'from': signer})
         market_address = factory.getMarket(feed_addr)
 
         # Save address to dict
         all_params[ff_name]['markets'][dm_name]['market_address'] =\
             market_address
 
-    # Build multisend tx
-    print(f'Batching {num_to_deploy} deployments')
-    hist = history.from_sender(safe.address)
-    safe_tx = safe.multisend_from_receipts(hist[-num_to_deploy:])
+    if is_safe:
+        # Build multisend tx
+        print(f'Batching {num_to_deploy} deployments')
+        hist = history.from_sender(gov.address)
+        safe_tx = gov.multisend_from_receipts(hist[-num_to_deploy:])
 
-    # Sign and post
-    safe.sign_transaction(safe_tx)
-    safe.post_transaction(safe_tx)
-
+        # Sign and post
+        gov.sign_transaction(safe_tx)
+        gov.post_transaction(safe_tx)
+    else:
+        pass
     # Save addresses to file
     OM.update_all_parameters(all_params, chain_id)
