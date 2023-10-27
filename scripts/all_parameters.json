@@ -240,8 +240,8 @@
         }
     },
     "arbitrum_goerli": {
-        "OverlayV1NFTPerpFeedFactory_600_3600": {
-            "contract_name": "OverlayV1NFTPerpFeedFactory",
+        "OverlayV1ChainlinkFeedFactory_600_3600": {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
             "feed_factory_parameters": {
                 "microWindow": 600,
                 "macroWindow": 3600
@@ -249,8 +249,7 @@
             "markets": {
                 "CSGO Feed": {
                     "feed_parameters": {
-                        "aggregator": "0xcca19736195F7104e031fEE5De794e3B5Cbf7AF2",
-                        "decimal": 6
+                        "aggregator": "0xcca19736195F7104e031fEE5De794e3B5Cbf7AF2"
                     },
                     "market_parameters": {
                         "k": 115740740740,
@@ -268,10 +267,12 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xeE878326772Ca2886D363Ec08b459cdCE46B497A",
+                    "market_address": "0x436a0f8F1967CD7db6bEF6E9774e46b1d47f685D"
                 }
             },
-            "feed_factory_address": "0x00B4E77071109d936491d67f1cd0D993B2455431"
+            "feed_factory_address": "0x3B43a7487f37FDb97992eBDBb33bc87Fb0bd14A5"
         }
     }
 }
