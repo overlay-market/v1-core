@@ -10,7 +10,6 @@ GOVERNOR_ROLE = web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 def deploy_w_eoa(eoa):
     ovl = eoa.deploy(OverlayV1Token)
-    ovl.grantRole(MINTER_ROLE, eoa, {"from": eoa})
     ovl.grantRole(GOVERNOR_ROLE, eoa, {"from": eoa})
     return ovl
 
