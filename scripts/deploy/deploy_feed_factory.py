@@ -102,9 +102,9 @@ def main(chain_id):
     all_params = OM.get_all_parameters(chain_id)
     deployable_ff = OM.get_deployable_feed_factory(chain_id)
     num_to_deploy = len(deployable_ff)
+    print(f'Feed factories to deploy: {num_to_deploy}')
     if num_to_deploy == 0:
         return
-    print(f'Feed factories to deploy: {num_to_deploy}')
     if chain_id == OM.ARB_TEST:
         eoa_name = input('Enter EOA name: ')
         eoa = accounts.load(eoa_name)
