@@ -18,12 +18,13 @@ abstract contract OverlayV1Feed is IOverlayV1Feed {
         feedFactory = msg.sender;
     }
 
-    /// @dev returns freshest possible data from oracle
+    /// @return Freshest possible data from oracle
     function latest() external view returns (Oracle.Data memory) {
         return _fetch();
     }
 
-    /// @dev fetches data from oracle. should be implemented differently
-    /// @dev for each feed type
+    /// @dev Fetches data from oracle.
+    /// @dev Should be implemented differently for every Oracle's feed type
+    /// @return Freshest possible data from oracle
     function _fetch() internal view virtual returns (Oracle.Data memory);
 }

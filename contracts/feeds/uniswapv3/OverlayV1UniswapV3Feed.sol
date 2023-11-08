@@ -27,8 +27,8 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     uint128 public immutable marketBaseAmount;
 
     // ovlXPool tokens
-    // @dev X is the common token between marketPool and ovlXPool
     address public immutable ovl;
+    // X is the common token between marketPool and ovlXPool
     address public immutable x;
 
     constructor(
