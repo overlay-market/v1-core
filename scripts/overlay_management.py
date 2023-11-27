@@ -12,7 +12,7 @@ class OM:  # Overlay Management
     # CHAINS:
     ETH_MAIN = 'ethereum_mainnet'
     ETH_TEST = 'ethereum_goerli'
-    ARB_TEST = 'arbitrum_goerli'
+    ARB_TEST = 'arbitrum_sepolia'
     ARB_MAIN = 'arbitrum_one'
 
     # CHAIN IDs: BROWNIE NETWORKS
@@ -20,7 +20,7 @@ class OM:  # Overlay Management
         ETH_MAIN: 'mainnet',
         ETH_TEST: 'goerli',
         ARB_MAIN: 'arbitrum-main',
-        ARB_TEST: 'arbitrum-goerli'
+        ARB_TEST: 'arbitrum-sepolia'
     }
 
     # SAFES
@@ -50,9 +50,9 @@ class OM:  # Overlay Management
             OVL_ADDRESS: '0xdc77acc82cce1cc095cba197474cc06824ade6f7'
         },
         ARB_TEST: {
-            FACTORY_ADDRESS: '0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1',
-            STATE_ADDRESS: '0xA9d9981974f0f6FB192275489053299B1b2502F6',
-            OVL_ADDRESS: '0x738C250ef3e490acC17A8552A0BF11BabB29613c'
+            FACTORY_ADDRESS: '0xa2dBe262D27647243Ac3187d05DBF6c3C6ECC14D',
+            STATE_ADDRESS: '',
+            OVL_ADDRESS: '0x3E27fAe625f25291bFda517f74bf41DC40721dA2'
         },
         ETH_TEST: {
             PROTOCOL_SAFE: '0x5ce44FF0C50f6a28f75932b8b12c5cbE9dEc343E',

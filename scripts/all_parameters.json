@@ -238,41 +238,5 @@
             },
             "feed_factory_address": "0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe"
         }
-    },
-    "arbitrum_goerli": {
-        "OverlayV1ChainlinkFeedFactory_600_3600": {
-            "contract_name": "OverlayV1ChainlinkFeedFactory",
-            "feed_factory_parameters": {
-                "microWindow": 600,
-                "macroWindow": 3600
-            },
-            "markets": {
-                "CSGO Feed": {
-                    "feed_parameters": {
-                        "aggregator": "0xcca19736195F7104e031fEE5De794e3B5Cbf7AF2"
-                    },
-                    "market_parameters": {
-                        "k": 115740740740,
-                        "lambda": 750000000000000000,
-                        "delta": 2475000000000000,
-                        "capPayoff": 5000000000000000000,
-                        "capNotional": 20000000000000000000000,
-                        "capLeverage": 10000000000000000000,
-                        "circuitBreakerWindow": 2592000,
-                        "circuitBreakerMintTarget": 1666666666666666666666,
-                        "maintenanceMarginFraction": 40000000000000000,
-                        "maintenanceMarginBurnRate": 50000000000000000,
-                        "liquidationFeeRate": 50000000000000000,
-                        "tradingFeeRate": 750000000000000,
-                        "minCollateral": 100000000000000,
-                        "priceDriftUpperLimit": 87000000000000,
-                        "averageBlockTime": 0
-                    },
-                    "feed_address": "0xeE878326772Ca2886D363Ec08b459cdCE46B497A",
-                    "market_address": "0x436a0f8F1967CD7db6bEF6E9774e46b1d47f685D"
-                }
-            },
-            "feed_factory_address": "0x3B43a7487f37FDb97992eBDBb33bc87Fb0bd14A5"
-        }
     }
 }
