@@ -28,4 +28,4 @@ def main(chain_id):
     #     safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
     #     factory_addr = deploy_w_safe(chain_id, safe)
     print(f'OverlayV1Factory deployed at {factory_addr}')
-    OM.get_verification_info(ovl, 'OverlayV1Factory')
+    OM.get_verification_info(OverlayV1Factory, 'OverlayV1Factory')

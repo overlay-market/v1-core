@@ -52,4 +52,4 @@ def main(chain_id):
         safe = ApeSafe(OM.const_addresses[chain_id][OM.PROTOCOL_SAFE])
         ovl_addr = deploy_w_safe(chain_id, safe)
     print(f'Overlay token deployed at {ovl_addr}')
-    OM.get_verification_info(ovl, 'OverlayV1Token')
+    OM.get_verification_info(OverlayV1Token, 'OverlayV1Token')
