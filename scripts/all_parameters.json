@@ -85,7 +85,9 @@
                         "minCollateral": 100000000000000,
                         "priceDriftUpperLimit": 87000000000000,
                         "averageBlockTime": 0
-                    }
+                    },
+                    "feed_address": "0xF8A365A9f190De4d553C917965Dc0e7e60AD0632",
+                    "market_address": "0x6aA41b8F2f858723Aafcf388A90D34d1CB1162d9"
                 }
             },
             "feed_factory_address": "0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1"
