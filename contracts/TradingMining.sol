@@ -18,7 +18,7 @@ contract TradingMining is Ownable {
 
     uint256 public immutable maxRewardPerEpochPerAddress;
 
-    mapping(address trader => mapping(uint256 epoch => bool claimed)) public claims;
+    mapping(address trader => mapping(uint256 epoch => bool claimed)) public hasClaimed;
 
     error InvalidPercentage();
     error InvalidRewardToken2();
@@ -49,10 +49,6 @@ contract TradingMining is Ownable {
 
     function getCurrentEpoch() public view returns (uint256) {
         return (block.timestamp - startTime) / epochDuration;
-    }
-
-    function claimed(address trader, uint256 epoch) public view returns (bool) {
-        return claims[trader][epoch];
     }
 
 }
