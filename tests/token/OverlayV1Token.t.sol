@@ -175,6 +175,8 @@ contract OverlayV1TokenTest is Test {
     }
 
     function testMint(address from, uint256 amount) public {
+        vm.assume(from != address(0));
+
         token.grantRole(TRANSFER_ROLE, from);
         token.mint(from, amount);
 
