@@ -88,6 +88,30 @@
                     },
                     "feed_address": "0xF8A365A9f190De4d553C917965Dc0e7e60AD0632",
                     "market_address": "0x6aA41b8F2f858723Aafcf388A90D34d1CB1162d9"
+                },
+                "ETH Burn": {
+                    "feed_parameters": {
+                        "aggregator": "0x5a663685693c79246f614811a6DF9ba2735D4932"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 750000000000000000,
+                        "delta": 2475000000000000,
+                        "capPayoff": 5000000000000000000,
+                        "capNotional": 20000000000000000000000,
+                        "capLeverage": 10000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 1666666666666666666666,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x1196143bFD2fB3527de321Db515F762bDA8DD508",
+                    "market_address": "0xf2DDF700fC481Be8CE1F228DA5c913f1A25a2d2D"
                 }
             },
             "feed_factory_address": "0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1"
