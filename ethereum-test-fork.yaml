@@ -3,11 +3,11 @@ development:
   cmd_settings:
     accounts: 10
     evm_version: istanbul
-    fork: arbitrum-sepolia
+    fork: ethereum-goerli
     gas_limit: 12000000
     mnemonic: brownie
     port: 8545
   host: http://127.0.0.1
-  id: arbitrum-sepolia-fork
-  name: Ganache-CLI (Arbitrum-Sepolia Fork)
+  id: ethereum-goerli-fork
+  name: Ganache-CLI (Ethereum-Goerli Fork)
   timeout: 120
