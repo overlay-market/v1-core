@@ -148,14 +148,14 @@ Follow the instructions here to fix it: https://github.com/banteg/ape-safe/issue
 #### Networks
 You will need a forked arbitrum mainnet network to test gnosis safe transactions before they're posted to the safe. This is in accordance with the [ape-safe](https://github.com/banteg/ape-safe) workflow. Briefly explained, prior to posting to safe, ape-safe will test whether the deployments are successful on a fork of the network. If the deployments are successful, ape-safe will take the tx data and submit that to safe using their API.
 
-Side note, when deploying to a testnet which doesn't have gnosis safe contracts, we use an EOA to act as the governor, minter, etc. See the section on Arbitrum Sepolia setup for more details. Since an EOA is used, we don't need to fork Arbitrum Sepolia. When testing on a testnet with safe contracts, we need to fork the network. Ethereum Sepolia does have the safe contracts, so we need to fork it.
+Side note, when deploying to a testnet which doesn't have gnosis safe contracts, we use an EOA to act as the governor, minter, etc. See the section on Arbitrum Sepolia setup for more details. Since an EOA is used, we don't need to fork Arbitrum Sepolia. When testing on a testnet with safe contracts, we need to fork the network. Ethereum Goerli does have the safe contracts, so we need to fork it.
 
 To fork arbitrum mainnet, run:
 ```
 brownie networks import arbitrum-fork.yaml
 ```
 
-To fork ethereum sepolia mainnet, run:
+To fork ethereum goerli mainnet, run:
 ```
 brownie networks import ethereum-test-fork.yaml
 ```
