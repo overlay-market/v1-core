@@ -160,6 +160,13 @@ To fork ethereum goerli mainnet, run:
 brownie networks import ethereum-test-fork.yaml
 ```
 
+As seen in the "Usage" section below, the network needs to specified when running the deployment scripts. Following are the keys:
+
+- arbitrum_one
+- arbitrum_sepolia
+- ethereum_mainnet
+- ethereum_goerli
+
 
 #### Usage
 #### For deploying feed factory:
