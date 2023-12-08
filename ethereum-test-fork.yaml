@@ -1,0 +1,13 @@
+development:
+- cmd: ganache-cli
+  cmd_settings:
+    accounts: 10
+    evm_version: istanbul
+    fork: goerli
+    gas_limit: 12000000
+    mnemonic: brownie
+    port: 8545
+  host: http://127.0.0.1
+  id: goerli-fork
+  name: Ganache-CLI (Goerli Fork)
+  timeout: 120

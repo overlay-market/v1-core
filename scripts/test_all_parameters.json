@@ -1,0 +1,120 @@
+{
+    "ethereum_goerli": {
+        "OverlayV1ChainlinkFeedFactory_600_3600": {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "feed_factory_parameters": {
+                "microWindow": 600,
+                "macroWindow": 3600
+            },
+            "markets": {
+                "JPY-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x85b008377a09A8fe8d191570E0E9A808108f07E3",
+                    "market_address": "0x5A9008bA39b0371AF9E580EB2364b91B1b689aEF"
+                },
+                "FORTH-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x7C8016b1a5f9fFE52571D052Ec3D3745549eeDC2",
+                    "market_address": "0x2Cdb02F488cc7Dd7598a6C5d53b941399D4ff1f5"
+                }
+            },
+            "feed_factory_address": "0x831C71d0faDC13c58f5Df2996ec90D5023EdCb35"
+        },
+        "OverlayV1ChainlinkFeedFactory_1200_3600": {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "feed_factory_parameters": {
+                "microWindow": 1200,
+                "macroWindow": 3600
+            },
+            "markets": {
+                "JPY-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x982B232303af1EFfB49939b81AD6866B2E4eeD0B"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x75044e05dE516581868f05267785ed2a2C5bad4B",
+                    "market_address": "0x142b72eE69048a85a4B555B85D8E49E3e1076d74"
+                },
+                "FORTH-USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x7A65Cf6C2ACE993f09231EC1Ea7363fb29C13f2F"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x0bc739B898E7d69f2366f80dA47082E60475d9AA",
+                    "market_address": "0xe2673dd84c462Cf7427Bd11f5Bb5d8a6828a20b3"
+                }
+            },
+            "feed_factory_address": "0x56ecC1eFE66D7704d9B314B163Ac0E22fd85942b"
+        }
+    }
+}

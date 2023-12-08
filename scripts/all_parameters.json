@@ -1,0 +1,288 @@
+{
+    "arbitrum_one": {
+        "OverlayV1ChainlinkFeedFactory_600_3600": {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "feed_factory_parameters": {
+                "microWindow": 600,
+                "macroWindow": 3600
+            },
+            "markets": {
+                "Crypto Volatility Index": {
+                    "feed_parameters": {
+                        "aggregator": "0xbcD8bEA7831f392bb019ef3a672CC15866004536"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 1490000000000000000,
+                        "delta": 7425000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 60000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 5000000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x8288Bfc751c7712F29B842F3FF9a59A7Fc929892",
+                    "market_address": "0x7C65c99bA1eDFC94C535b7aA2d72B0F7357a676B"
+                },
+                "BTC/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+                    },
+                    "market_parameters": {
+                        "k": 180015464900,
+                        "lambda": 483003000000000000,
+                        "delta": 2630000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 45703000000000000,
+                        "maintenanceMarginBurnRate": 56207000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0xDaBFD7C66477701e19F9471a2B4EaB0FC746A050",
+                    "market_address": "0xC28350047D006ED387b0f210d4ea3218137a8a38"
+                },
+                "LINK/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x86E53CF1B870786351Da77A57575e79CB55812CB"
+                    },
+                    "market_parameters": {
+                        "k": 227251742637,
+                        "lambda": 660296471176190208,
+                        "delta": 3674719286269547,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 66049328892001880,
+                        "maintenanceMarginBurnRate": 53007775975628776,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 100000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x659ADbb7E35E9561870BD18f7E8FF0f392684348",
+                    "market_address": "0x02E5938904014901C96F534B063ec732eA3B48D5"
+                },
+                "SOL/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x24ceA4b8ce57cdA5058b924B9B9987992450590c"
+                    },
+                    "market_parameters": {
+                        "k": 680187455489,
+                        "lambda": 1101276756574031744,
+                        "delta": 3825444954737599,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 77621507357346512,
+                        "maintenanceMarginBurnRate": 64852413396413568,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 100000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x6C4296156875dAb08Dd35A8E539E0aef6B88f459",
+                    "market_address": "0x1067B7DF86552A53D816CE3fed50d6D01310b48f"
+                },
+                "APE/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x221912ce795669f628c51c69b7d0873eDA9C03bB"
+                    },
+                    "market_parameters": {
+                        "k": 621553465627,
+                        "lambda": 1193139758316921088,
+                        "delta": 5873206728060581,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 102279446173743520,
+                        "maintenanceMarginBurnRate": 49909212108852160,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 100000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x543111C2945f86F16289Cc3146D21C8f50EbD5F4",
+                    "market_address": "0x33659282d39e62b62060c3f9fb2230e97db15f1e"
+                },
+                "AVAX/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x8bf61728eeDCE2F32c456454d87B5d6eD6150208"
+                    },
+                    "market_parameters": {
+                        "k": 372579665964,
+                        "lambda": 925589329624259840,
+                        "delta": 4572921261022407,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 84056242566041600,
+                        "maintenanceMarginBurnRate": 51645355470519736,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 100000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x23e11ceFE75e242507F2A89eeE4827c009cED053",
+                    "market_address": "0x833ba1a942dc6d33bc3e6959637ae00e0cdcb20b"
+                },
+                "MATIC/USD": {
+                    "feed_parameters": {
+                        "aggregator": "0x52099D4523531f678Dfc568a7B1e5038aadcE1d6"
+                    },
+                    "market_parameters": {
+                        "k": 214443204786,
+                        "lambda": 725673770858147328,
+                        "delta": 3813581704489073,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 800000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 66670000000000000000000,
+                        "maintenanceMarginFraction": 72427569355569376,
+                        "maintenanceMarginBurnRate": 53946782638906936,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 100000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0xFA261B7c48A7426E00385F2435963005A7675df3",
+                    "market_address": "0xa811698d855153cc7472d1fb356149a94bd618e7"
+                },
+                "BAYC/WETH": {
+                    "feed_parameters": {
+                        "aggregator": "0x352f2Bc3039429fC2fe62004a1575aE74001CfcE"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 954000000000000000,
+                        "delta": 5500000000000000,
+                        "capPayoff": 10000000000000000000,
+                        "capNotional": 80000000000000000000000,
+                        "capLeverage": 5000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 6667000000000000000000,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    }
+                }
+            },
+            "feed_factory_address": "0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe"
+        }
+    },
+    "arbitrum_sepolia": {
+        "OverlayV1ChainlinkFeedFactory_600_3600": {
+            "contract_name": "OverlayV1ChainlinkFeedFactory",
+            "feed_factory_parameters": {
+                "microWindow": 600,
+                "macroWindow": 3600
+            },
+            "markets": {
+                "CSGO Index": {
+                    "feed_parameters": {
+                        "aggregator": "0x91F9C89891575C2E41edfFB5953565A9aE2Dbd9F"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 750000000000000000,
+                        "delta": 2475000000000000,
+                        "capPayoff": 5000000000000000000,
+                        "capNotional": 20000000000000000000000,
+                        "capLeverage": 10000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 1666666666666666666666,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0xF8A365A9f190De4d553C917965Dc0e7e60AD0632",
+                    "market_address": "0x6aA41b8F2f858723Aafcf388A90D34d1CB1162d9"
+                },
+                "ETH Burn": {
+                    "feed_parameters": {
+                        "aggregator": "0x5a663685693c79246f614811a6DF9ba2735D4932"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 750000000000000000,
+                        "delta": 2475000000000000,
+                        "capPayoff": 5000000000000000000,
+                        "capNotional": 20000000000000000000000,
+                        "capLeverage": 10000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 1666666666666666666666,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x1196143bFD2fB3527de321Db515F762bDA8DD508",
+                    "market_address": "0xf2DDF700fC481Be8CE1F228DA5c913f1A25a2d2D"
+                },
+                "BTC Dominance": {
+                    "feed_parameters": {
+                        "aggregator": "0x667a18Ef90fe4DCF4f86B8471931A3e498fAD3BD"
+                    },
+                    "market_parameters": {
+                        "k": 115740740740,
+                        "lambda": 750000000000000000,
+                        "delta": 2475000000000000,
+                        "capPayoff": 5000000000000000000,
+                        "capNotional": 20000000000000000000000,
+                        "capLeverage": 10000000000000000000,
+                        "circuitBreakerWindow": 2592000,
+                        "circuitBreakerMintTarget": 1666666666666666666666,
+                        "maintenanceMarginFraction": 40000000000000000,
+                        "maintenanceMarginBurnRate": 50000000000000000,
+                        "liquidationFeeRate": 50000000000000000,
+                        "tradingFeeRate": 750000000000000,
+                        "minCollateral": 100000000000000,
+                        "priceDriftUpperLimit": 87000000000000,
+                        "averageBlockTime": 0
+                    },
+                    "feed_address": "0x9Fd37A845de55870c6606786985F544E7E2aA98b",
+                    "market_address": "0x553dE578E68a4FaA55d4522665CB2D2D53390D22"
+                }
+            },
+            "feed_factory_address": "0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1"
+        }
+    }
+}

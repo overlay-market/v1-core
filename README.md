@@ -27,6 +27,7 @@ To generate the required tokens, see
 - `ETHERSCAN_TOKEN`: Creating an API key in [Etherscan's API docs](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics)
 - `WEB3_INFURA_PROJECT_ID`: Getting Started in [Infura's API docs](https://infura.io/docs)
 
+For Overlay Management requirements, go to the end of this file.
 
 ## Diagram
 
@@ -126,3 +127,93 @@ The process to add a new market is as follows:
 2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
 3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OVL token prior to any markets being deployed, otherwise `deployMarket()` will revert.
+
+## Overlay Management
+#### Installation:
+Create a virutal environment with `virtualenv` and install requirements
+```
+virtualenv venv -p python3.9
+source venv/bin/activate
+pip install -r requirements.txt
+```
+#### Debugging:
+Some users might see the following error on using `brownie` cli:
+```
+<...>
+    class HashableRLP(rlp.Serializable):
+AttributeError: module 'rlp' has no attribute 'Serializable'
+```
+Follow the instructions here to fix it: https://github.com/banteg/ape-safe/issues/49
+
+#### Networks
+You will need a forked arbitrum mainnet network to test gnosis safe transactions before they're posted to the safe. This is in accordance with the [ape-safe](https://github.com/banteg/ape-safe) workflow. Briefly explained, prior to posting to safe, ape-safe will test whether the deployments are successful on a fork of the network. If the deployments are successful, ape-safe will take the tx data and submit that to safe using their API.
+
+Side note, when deploying to a testnet which doesn't have gnosis safe contracts, we use an EOA to act as the governor, minter, etc. See the section on Arbitrum Sepolia setup for more details. Since an EOA is used, we don't need to fork Arbitrum Sepolia. When testing on a testnet with safe contracts, we need to fork the network. Ethereum Goerli does have the safe contracts, so we need to fork it.
+
+To fork arbitrum mainnet, run:
+```
+brownie networks import arbitrum-fork.yaml
+```
+
+To fork ethereum goerli mainnet, run:
+```
+brownie networks import ethereum-test-fork.yaml
+```
+
+As seen in the "Usage" section below, the network needs to specified when running the deployment scripts. Following are the keys:
+
+- arbitrum_one
+- arbitrum_sepolia
+- ethereum_mainnet
+- ethereum_goerli
+
+
+#### Usage
+#### For deploying feed factory:
+
+First make modifications to all_parameters.json. Add the feed factory contract name and parameters (similar to the ones already present) to the json file. Then run:
+```
+brownie run scripts/deploy/deploy_feed_factory.py main arbitrum_one
+```
+#### For deploying feed and market:
+Add feed and market params to all_parameters.json (similar to the ones already present) and run:
+```
+brownie run scripts/deploy/deploy.py main arbitrum_one
+```
+
+#### Arbitrum Sepolia (testnet) setup
+Since Arbitrum Sepolia doesn't have Safe contracts, we use an EOA to act as the governor, minter, etc.
+
+So once you've activated the virtual environment, and before you have run any deployment scripts, make sure to add the correct governance EOA to your brownie installation:
+
+```
+brownie accounts new arb_test_gov
+```
+This will start the interactive prompt to add a new account, called `arb_test_gov` to your brownie installation. In the next step, you will be prompted to add the private key for this account, and then a password to protect your account (not to be confused with private key you just added; think of it like your metamask password). And that's it, you're set.
+
+#### For deploying OVL token:
+```
+brownie run scripts/deploy/deploy_token.py main arbitrum_sepolia
+```
+
+#### For minting OVL tokens
+```
+brownie run scripts/mint_tokens.py main arb_test_gov arbitrum_sepolia
+```
+
+#### For deploying factory:
+```
+brownie run scripts/deploy/deploy_factory.py main arbitrum_sepolia
+```
+
+#### For deploying periphery/state contract:
+The v1-periphery repo is separate and this repo (v1-core) doesn't support the deployment of the periphery contract right now. To deploy the periphery contract, clone the v1-periphery repo and deploy.
+
+#### For deploying feed factory, feed and market:
+As stated in the previous section, add the parameters to all_parameters.json and run:
+```
+# For feed factory
+brownie run scripts/deploy/deploy_feed_factory.py main arbitrum_sepolia
+# For feed and market
+brownie run scripts/deploy/deploy.py main arbitrum_sepolia
+```
