@@ -8,3 +8,5 @@ reports/
 *.sw[op]
 .DS_Store
 *.bk
+forge-cache
+out

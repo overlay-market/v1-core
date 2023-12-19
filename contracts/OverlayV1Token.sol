@@ -12,12 +12,17 @@ contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Over
     }
 
     modifier onlyMinter() {
-        require(hasRole(MINTER_ROLE, msg.sender), "ERC20: !minter");
+        if (!hasRole(MINTER_ROLE, msg.sender)) revert NotMinter();
         _;
     }
 
     modifier onlyBurner() {
-        require(hasRole(BURNER_ROLE, msg.sender), "ERC20: !burner");
+        if (!hasRole(BURNER_ROLE, msg.sender)) revert NotBurner();
+        _;
+    }
+
+    modifier onlyEmergency() {
+        if (!hasRole(EMERGENCY_ROLE, msg.sender)) revert NotEmergency();
         _;
     }
 
@@ -27,5 +32,10 @@ contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Over
 
     function burn(uint256 _amount) external onlyBurner {
         _burn(msg.sender, _amount);
+    }
+
+    function emergencyRoleRemoval(address _account) external onlyEmergency {
+        _revokeRole(BURNER_ROLE, _account);
+        _revokeRole(MINTER_ROLE, _account);
     }
 }
