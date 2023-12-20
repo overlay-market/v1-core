@@ -14,10 +14,14 @@ contract OverlayV1TokenTest is Test {
     address private immutable MARKET_TWO = makeAddr("MARKET_TWO");
     address private immutable MARKET_THREE = makeAddr("MARKET_THREE");
     address private immutable EMERGENCY = makeAddr("EMERGENCY");
+    address private immutable USER = makeAddr("USER");
 
     function setUp() public {
         vm.startPrank(ADMIN);
         token = new OverlayV1Token();
+
+        // grant EMERGENCY_ROLE to EMERGENCY
+        token.grantRole(EMERGENCY_ROLE, EMERGENCY);
 
         // grant MINTER_ROLE to MARKET_ONE, MARKET_TWO, MARKET_THREE
         token.grantRole(MINTER_ROLE, MARKET_ONE);
@@ -34,8 +38,25 @@ contract OverlayV1TokenTest is Test {
 
     function testMarketMint(uint256 amount) public {
         vm.startPrank(MARKET_ONE);
-        token.mint(MARKET_ONE, amount);
+        token.mint(USER, amount);
         vm.stopPrank();
-        assertEq(token.balanceOf(MARKET_ONE), amount);
+        assertEq(token.balanceOf(USER), amount);
+    }
+
+    function testEmergencyRoleRemoval() public {
+        vm.startPrank(EMERGENCY);
+        token.emergencyRoleRemoval(MARKET_ONE);
+        vm.stopPrank();
+        assertEq(token.hasRole(MINTER_ROLE, MARKET_ONE), false);
+        assertEq(token.hasRole(BURNER_ROLE, MARKET_ONE), false);
+
+        vm.startPrank(MARKET_ONE);
+        vm.expectRevert();
+        token.mint(MARKET_ONE, 100e18);
+
+        vm.startPrank(MARKET_TWO);
+        token.mint(USER, 100e18);
+
+        assertEq(token.balanceOf(USER), 100e18);
     }
 }
