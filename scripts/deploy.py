@@ -12,11 +12,16 @@ GOV = "0x95f972fc4D17a0D343Cd5eaD8d6DCBef5606CA66"
 # TODO: change
 FEE_RECIPIENT = "0xDFafdfF09C1d63257892A8d2F56483588B99315A"
 
+# emergency multisig
+# TODO: change
+EMERGENCY_MULTISIG = "0xDFafdfF09C1d63257892A8d2F56483588B99315A"
+
 # ROLES
 ADMIN = "ADMIN"
 GOVERNOR = "GOVERNOR"
 MINTER = "MINTER"
 BURNER = "BURNER"
+EMERGENCY = "EMERGENCY"
 
 
 def _role(name):
@@ -54,6 +59,7 @@ def main():
     ovl.grantRole(_role(ADMIN), GOV, {"from": dev})
     ovl.grantRole(_role(MINTER), GOV, {"from": dev})
     ovl.grantRole(_role(GOVERNOR), GOV, {"from": dev})
+    ovl.grantRole(_role(EMERGENCY), EMERGENCY_MULTISIG, {"from": dev})
     click.echo(f"OVL Token roles granted to [{GOV}]")
 
     # renounce admin rights so only gov has roles
