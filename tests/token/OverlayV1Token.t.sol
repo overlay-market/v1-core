@@ -43,6 +43,22 @@ contract OverlayV1TokenTest is Test {
         assertEq(token.balanceOf(USER), amount);
     }
 
+    function testMarketBurn(uint256 amount) public {
+        vm.startPrank(MARKET_ONE);
+        token.mint(MARKET_ONE, amount);
+        token.burn(amount);
+        assertEq(token.balanceOf(MARKET_ONE), 0);
+    }
+
+    function testUserBurn(uint256 amount) public {
+        vm.startPrank(MARKET_ONE);
+        token.mint(MARKET_ONE, amount);
+        vm.startPrank(USER);
+        vm.expectRevert();
+        token.burn(amount);
+        assertEq(token.balanceOf(USER), 0);
+    }
+
     function testEmergencyRoleRemoval() public {
         vm.startPrank(EMERGENCY);
         token.emergencyRoleRemoval(MARKET_ONE);
