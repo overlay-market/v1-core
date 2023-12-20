@@ -11,30 +11,15 @@ contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Over
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    modifier onlyMinter() {
-        if (!hasRole(MINTER_ROLE, msg.sender)) revert NotMinter();
-        _;
-    }
-
-    modifier onlyBurner() {
-        if (!hasRole(BURNER_ROLE, msg.sender)) revert NotBurner();
-        _;
-    }
-
-    modifier onlyEmergency() {
-        if (!hasRole(EMERGENCY_ROLE, msg.sender)) revert NotEmergency();
-        _;
-    }
-
-    function mint(address _recipient, uint256 _amount) external onlyMinter {
+    function mint(address _recipient, uint256 _amount) external onlyRole(MINTER_ROLE) {
         _mint(_recipient, _amount);
     }
 
-    function burn(uint256 _amount) external onlyBurner {
+    function burn(uint256 _amount) external onlyRole(BURNER_ROLE) {
         _burn(msg.sender, _amount);
     }
 
-    function emergencyRoleRemoval(address _account) external onlyEmergency {
+    function emergencyRoleRemoval(address _account) external onlyRole(EMERGENCY_ROLE) {
         _revokeRole(BURNER_ROLE, _account);
         _revokeRole(MINTER_ROLE, _account);
     }
