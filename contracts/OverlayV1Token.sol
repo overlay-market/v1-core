@@ -2,11 +2,11 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./interfaces/IOverlayV1Token.sol";
 
-contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OV") {
+contract OverlayV1Token is IOverlayV1Token, AccessControl, ERC20("Overlay", "OV") {
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
