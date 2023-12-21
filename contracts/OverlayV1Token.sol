@@ -28,4 +28,9 @@ contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Over
     function burn(uint256 _amount) external onlyBurner {
         _burn(msg.sender, _amount);
     }
+
+    function emergencyRoleRemoval(address _account) external onlyRole(EMERGENCY_ROLE) {
+        _revokeRole(BURNER_ROLE, _account);
+        _revokeRole(MINTER_ROLE, _account);
+    }
 }
