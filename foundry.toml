@@ -1,0 +1,11 @@
+[profile.default]
+src = "contracts"
+test = "tests"
+script = "scripts"
+out = "out"
+cache_path  = "forge-cache"
+libs = ["lib"]
+remappings = [
+    "@openzeppelin=lib/openzeppelin-contracts/",
+    "@uniswap/v3-core/=lib/v3-core/"
+]
