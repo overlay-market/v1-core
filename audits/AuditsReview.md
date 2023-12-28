@@ -4,7 +4,7 @@
 >[c480f6f9af526d4c15f16a3442b2d090197cfb76](https://github.com/overlay-market/v1-core/commit/c480f6f9af526d4c15f16a3442b2d090197cfb76)
 
 >For the verification, we examined the Git revision:
->      [24dffd529068cf3d3e8b3599a06d9aebfd212e37](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37)
+>[24dffd529068cf3d3e8b3599a06d9aebfd212e37](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37)
 
 ## Specific Issues & Suggestions Review
 
@@ -84,6 +84,8 @@ Github Message: This commit does not belong to any branch on this repository, an
 
 *Warning*: In commit [9b1865e](https://github.com/overlay-market/v1-core/tree/9b1865e) `Roller.sol` is "fixed" but when is compared against Main the modification is reverted 😨. [Check Diff](https://github.com/overlay-market/v1-core/compare/9b1865e..ad3d152).
 
+Update: This was removed in https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37
+
 ### 5.2.2 Verify pool legitimacy
 
 >Overlay: Fixed in commit [b889200](https://github.com/overlay-market/v1-core/pull/45/commits/b889200e87fc7c77ed8003a779ce4fb2068f8761).
@@ -114,6 +116,8 @@ Note: the segment of code fixed in the mentioned commit remains untouched in Mai
 >Overlay: Fixed in commit [44b419c](https://github.com/overlay-market/v1-core/pull/44/commits/44b419c254ebb532b844434ecdb248bacbf7bc73). Except for the 3rd recommendation.
 
 Note: the segment of code fixed in the mentioned commit is removed in Main branch 😨. [Check Diff](https://github.com/overlay-market/v1-core/compare/44b419c..main)
+
+Update: Removed from `contracts/feeds/OverlayV1Feed.sol` at https://github.com/overlay-market/v1-core/pull/45 but added in `contracts/feeds/OverlayV1Feed.sol`
 
 ### 5.3.5 Simplify `_midFromFeed()`
 
