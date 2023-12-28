@@ -1,3 +1,49 @@
+# [Least Authority Audit Review](https://github.com/overlay-market/v1-core/tree/main/audits/leastauthority)
+
+>Specifically, we examined the Git revision for our initial review:
+>[c480f6f9af526d4c15f16a3442b2d090197cfb76](https://github.com/overlay-market/v1-core/commit/c480f6f9af526d4c15f16a3442b2d090197cfb76)
+
+>For the verification, we examined the Git revision:
+>      [24dffd529068cf3d3e8b3599a06d9aebfd212e37](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37)
+
+## Specific Issues & Suggestions Review
+
+### Suggestion 1: Improve Error Handling
+
+Note: this suggestion was ignored.
+
+### Suggestion 2: Remove Unused Code
+
+Note: solved in [24dffd5](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37) and remains unchanged 😊
+
+### Suggestion 3: Remove Redundant Lines in OverlayV1Token Constructor
+
+Note: solved in [24dffd5](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37) and remains unchanged 😊
+
+### Suggestion 4: Simplify toInt192Bounded
+
+Note: solved in [24dffd5](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37) and remains unchanged 😊
+
+### Suggestion 5: Replace _setupRole with _grantRole
+
+Note: solved in [24dffd5](https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37) and remains unchanged 😊
+
+### Suggestion 6: Use Multiple Oracles for Feeds
+
+Note: this suggestion was ignored.
+
+### Suggestion 7: Create A Long-Duration Simulation to Test Properties
+
+Note: this suggestion was ignored. We could use Foundry or Echidna, to do it. Tool that at the moment of the audit were not available.
+
+### Suggestion 8: Make Positions Transferable
+
+Note: this suggestion was ignored.
+
+### Suggestion 9: Improve Documentation
+
+Note: this suggestion was ignored.
+
 # [Spearbit Audit Review](https://github.com/overlay-market/v1-core/blob/main/audits/spearbit/audit.pdf)
 
 ## Findings Review
@@ -58,7 +104,7 @@ Note: the segment of code fixed in the mentioned commit is modified in Main bran
 
 ### 5.3.3 Potential wrap of timestamp
 
-Overlay: Fixed in [7fe8ff3](https://github.com/overlay-market/v1-core/pull/44/commits/7fe8ff3a2155e67e15a0a6e88415bb400f140c68).
+>Overlay: Fixed in [7fe8ff3](https://github.com/overlay-market/v1-core/pull/44/commits/7fe8ff3a2155e67e15a0a6e88415bb400f140c68).
 
 Note: the segment of code fixed in the mentioned commit remains untouched in Main branch 😊. [Check Diff](https://github.com/overlay-market/v1-core/compare/1ce980a..main)
 
