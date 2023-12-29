@@ -15,7 +15,7 @@ Along the repository `block.number` is not used, so we are going to focus on `bl
 Contracts that uses `block.timestamp`:
 - OverlayV1Market.sol
 - OverlayV1NoReserveUniswapV3Feed.sol
-- OverlayV1UniswapV3Feed.sol
+- OverlayV1UniswapV3Feed.sol (Get info from the Oracle using `block.timestamp`)
 - OverlayV1FeedMock.sol
 
 __Check `_payFunding()` function.__
@@ -34,6 +34,13 @@ https://arbiscan.io/block/165062125
 This function uses `block.timestamp` to calculate the time elapsed since the last update. If two consecutive blocks have the same timestamp, the time elapsed will be 0 and the function will not apply the funding.
 
 Source: https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/block-numbers-and-time#block-timestamps-arbitrum-vs-ethereum
+
+### Solidity Version
+
+We are currently compiling the code with version 0.8.10 so this should not be a problem.
+
+    OPCODE PUSH0
+    This OPCODE is not yet supported, but will soon be available. This means that solidity version 0.8.20 or higher can only be used with an evm-version lower than the default shanghai (see instructions here to change that parameter in solc, or here to set the solidity or evmVersion configuration parameters in hardhat). Versions up to 0.8.19 (included) are fully compatible.
 
 ### Check whether the Arbitrum Sequencer is active
 
