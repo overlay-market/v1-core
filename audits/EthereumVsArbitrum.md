@@ -18,7 +18,20 @@ Contracts that uses `block.timestamp`:
 - OverlayV1UniswapV3Feed.sol
 - OverlayV1FeedMock.sol
 
-__TODO__: Check `_payFunding()` function.
+__Check `_payFunding()` function.__
+
+Found two random consecutive blocks with the same timestamp. 
+https://arbiscan.io/block/165062126
+https://arbiscan.io/block/165062125
+
+```solidity
+    function _payFunding() private {
+        // apply funding if at least one block has passed
+        uint256 timeElapsed = block.timestamp - timestampUpdateLast;
+        if (timeElapsed > 0) {
+```
+
+This function uses `block.timestamp` to calculate the time elapsed since the last update. If two consecutive blocks have the same timestamp, the time elapsed will be 0 and the function will not apply the funding.
 
 Source: https://docs.arbitrum.io/for-devs/concepts/differences-between-arbitrum-ethereum/block-numbers-and-time#block-timestamps-arbitrum-vs-ethereum
 
