@@ -1,3 +1,13 @@
+# Shutdown Analysis
+
+__Shutdown__ functionality was added after the audit. The following analysis is based on the current version of the code.
+
+[Line 66](https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L66) of `OverlayV1Market.sol`: Variable `isShutdown` could be private since it is only used internally in the contract.
+
+[Line 933](https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L933) of `OverlayV1Market.sol`: Function `shutdown()` does not need `notShutdown`modifier since it only set the variable `isShutdown` to true.
+
+[Line 946](https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L946) of `OverlayV1Market.sol`: Not necessary to cache `fraction` since it is only used once.
+
 # [Least Authority Audit Review](https://github.com/overlay-market/v1-core/tree/main/audits/leastauthority)
 
 >Specifically, we examined the Git revision for our initial review:
@@ -75,6 +85,32 @@ Note: We have custom versions of TickMath.sol and FullMath.sol but we have copy 
 Github Message: This commit does not belong to any branch on this repository, and may belong to a fork outside of the repository.
 
 *Warning*: function `liquidate()` has been changed after the audit 😔. [Check Diff](https://github.com/overlay-market/v1-core/compare/082c6c7..ad3d152).
+
+Review:
+
+- Added `notShutdown` modifier: https://github.com/overlay-market/v1-core/blob/main/contracts/OverlayV1Market.sol#L387
+
+- This check is duplicated in `liquidate()` and `unwind()` could be extracted to an internal function.
+
+    ```solidity
+    if (pos.isLong) {
+        oiLong = oiLong.subFloor(
+            pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+        );
+        oiLongShares -= pos.oiSharesCurrent(fraction);
+    } else {
+        oiShort = oiShort.subFloor(
+            pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
+        );
+        oiShortShares -= pos.oiSharesCurrent(fraction);
+    }
+    ```
+
+- Spearbit "5.4.2 Set pos.entryPrice to 0 after liquidation" recommendation is reverted.
+    
+    >Recommendation: Consider setting pos.entryPrice to 0. This is more in line with the rest of the code and can give a small gas refund.
+
+    In the updated version, `notionalInitial` and `debtInitial` could be set to 0, unless there is a reason to keep those values.
 
 ### 5.2.1 Rounding down of `snapAccumulator` might influence calculations
 
