@@ -120,7 +120,9 @@ Github Message: This commit does not belong to any branch on this repository, an
 
 *Warning*: In commit [9b1865e](https://github.com/overlay-market/v1-core/tree/9b1865e) `Roller.sol` is "fixed" but when is compared against Main the modification is reverted 😨. [Check Diff](https://github.com/overlay-market/v1-core/compare/9b1865e..ad3d152).
 
-Update: This was removed in https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37
+Update: This was removed in https://github.com/overlay-market/v1-core/commit/24dffd529068cf3d3e8b3599a06d9aebfd212e37 with this comment
+
+    * Rounding down of snapAccumulator might influence calculations (#41)
 
 ### 5.2.2 Verify pool legitimacy
 
