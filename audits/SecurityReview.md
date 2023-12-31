@@ -28,4 +28,13 @@ SUCCESS: A new network 'Ganache-CLI (Aribtrum-Mainnet Fork)' has been added
 
 ## Run Brownie Tests
 
+```
+165 passed, 97 warnings, 146 errors in 389.36s (0:06:29)
+```
 
+## Medusa Test
+
+### Use solidity Version 0.8.10
+
+`solc-select install 0.8.10`
+`solc-select use 0.8.10`
