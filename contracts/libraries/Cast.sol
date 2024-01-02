@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.19;
 
 library Cast {
     /// @dev casts an uint256 to an uint32 bounded by uint32 range of values

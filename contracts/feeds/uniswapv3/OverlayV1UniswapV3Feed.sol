@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity 0.8.10;
+pragma solidity 0.8.19;
 
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 
-// forks of uniswap libraries for solidity^0.8.10
+// forks of uniswap libraries for solidity^0.8.19
 import "../../libraries/uniswap/v3-core/FullMath.sol";
 import "../../libraries/uniswap/v3-core/TickMath.sol";
 

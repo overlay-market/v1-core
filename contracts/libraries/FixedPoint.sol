@@ -16,8 +16,8 @@
 // @balancer-v2-monorepo/pkg/solidity-utils/contracts/math/FixedPoint.sol
 // XXX for changes
 
-// XXX: 0.8.10; removed requires for overflow checks
-pragma solidity 0.8.10;
+// XXX: 0.8.19; removed requires for overflow checks
+pragma solidity 0.8.19;
 
 import "./LogExpMath.sol";
 

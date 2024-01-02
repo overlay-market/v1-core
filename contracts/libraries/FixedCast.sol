@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.19;
 
 library FixedCast {
     uint256 internal constant ONE_256 = 1e18; // 18 decimal places

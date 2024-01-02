@@ -20,8 +20,8 @@
 // @balancer-v2-monorepo/pkg/solidity-utils/contracts/math/LogExpMath.sol
 // XXX for changes
 
-// XXX: 0.8.10; unchecked functions
-pragma solidity 0.8.10;
+// XXX: 0.8.19; unchecked functions
+pragma solidity 0.8.19;
 
 import "../utils/Errors.sol";
 
