@@ -155,7 +155,7 @@ Note: the segment of code fixed in the mentioned commit remains untouched in Mai
 
 Note: the segment of code fixed in the mentioned commit is removed in Main branch 😨. [Check Diff](https://github.com/overlay-market/v1-core/compare/44b419c..main)
 
-Update: Removed from `contracts/feeds/OverlayV1Feed.sol` at https://github.com/overlay-market/v1-core/pull/45 but added in `contracts/feeds/OverlayV1Feed.sol`
+Update: Removed from `contracts/feeds/OverlayV1Feed.sol` at https://github.com/overlay-market/v1-core/pull/45 but added in `contracts/feeds/OverlayV1FeedFactory.sol`
 
 ### 5.3.5 Simplify `_midFromFeed()`
 
