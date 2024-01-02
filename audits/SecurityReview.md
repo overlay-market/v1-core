@@ -28,7 +28,7 @@ SUCCESS: A new network 'Ganache-CLI (Aribtrum-Mainnet Fork)' has been added
 
 Mod network config to use API key
 ```
-whitehat@c9a45d1457b3:~/v1-core$ brownie networks modify arbitrum-main host=https://arbitrum-mainnet.infura.io/v3/$WEB3_INFURA_PROJECT_ID provider=infura        
+whitehat@c9a45d1457b3:~/v1-core$ brownie networks modify arbitrum-main host="https://arbitrum-mainnet.infura.io/v3/\$WEB3_INFURA_PROJECT_ID" provider=infura
 Brownie v1.19.3 - Python development framework for Ethereum
 
 SUCCESS: Network 'Mainnet' has been modified
@@ -36,7 +36,7 @@ SUCCESS: Network 'Mainnet' has been modified
     ├─id: arbitrum-main
     ├─chainid: 42161
     ├─explorer: https://api.arbiscan.io/api
-    ├─host: https://arbitrum-mainnet.infura.io/v3/
+    ├─host: https://arbitrum-mainnet.infura.io/v3/$WEB3_INFURA_PROJECT_ID
     ├─multicall2: 0x5B5CFE992AdAC0C9D48E05854B2d91C73a003858
     └─provider: infura
 ```
