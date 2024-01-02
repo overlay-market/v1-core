@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
@@ -162,7 +163,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 leverage,
         bool isLong,
         uint256 priceLimit
-    ) external notShutdown returns (uint256 positionId_) {
+    ) external notShutdown whenNotPaused returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= params.get(Risk.Parameters.CapLeverage), "OVLV1:lev>max");
         require(collateral >= params.get(Risk.Parameters.MinCollateral), "OVLV1:collateral<min");
@@ -256,7 +257,7 @@ contract OverlayV1Market is IOverlayV1Market {
         uint256 positionId,
         uint256 fraction,
         uint256 priceLimit
-    ) external notShutdown {
+    ) external notShutdown whenNotPaused {
         require(fraction <= ONE, "OVLV1:fraction>max");
         // only keep 4 decimal precision (1 bps) for fraction given
         // pos.fractionRemaining only to 4 decimals
@@ -384,7 +385,7 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(address owner, uint256 positionId) external notShutdown {
+    function liquidate(address owner, uint256 positionId) external notShutdown whenNotPaused {
         uint256 value;
         uint256 cost;
         uint256 price;
@@ -488,7 +489,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
-    function update() public returns (Oracle.Data memory) {
+    function update() public whenNotPaused returns (Oracle.Data memory) {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 
@@ -926,6 +927,16 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
             dpUpperLimit = pow.expUp(); // e**(pow)
         }
+    }
+
+    /// @notice Pause functions: Build, Unwind, Update and Liquidate
+    function pause() external onlyFactory {
+        _pause();
+    }
+
+    /// @notice Unpause functions: Build, Unwind, Update and Liquidate
+    function unpause() external onlyFactory {
+        _unpause();
     }
 
     /// @notice Irreversibly shuts down the market. Can be triggered by

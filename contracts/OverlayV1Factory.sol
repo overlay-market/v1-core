@@ -194,6 +194,18 @@ contract OverlayV1Factory is IOverlayV1Factory {
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
     }
 
+    /// @notice Pause of market by governance in the event of an emergency
+    function pause(address feed) external onlyGuardian {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.pause();
+    }
+
+    /// @notice Unpause of market by governance in the event of an emergency
+    function unpause(address feed) external onlyGuardian {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.unpause();
+    }
+
     /// @notice Shut down of market by governance in the event of an emergency
     function shutdown(address feed) external onlyGuardian {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
