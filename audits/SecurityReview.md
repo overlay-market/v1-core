@@ -15,13 +15,13 @@ networks:
 
 And manually added Arbitrum Fork
 ```
-whitehat@c9a45d1457b3:~/v1-core$ brownie networks add Development arbitrum-main-fork name="Anvil (Aribtrum-Mainnet Fork)" host=http://127.0.0.1 cmd=anvil accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
+whitehat@c9a45d1457b3:~/v1-core$ brownie networks add Development arbitrum-main-fork name="Ganache-CLI (Aribtrum-Mainnet Fork)" host=http://127.0.0.1 cmd=ganache-cli accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
 Brownie v1.19.3 - Python development framework for Ethereum
 
-SUCCESS: A new network 'Anvil (Aribtrum-Mainnet Fork)' has been added
-  └─Anvil (Aribtrum-Mainnet Fork)
+SUCCESS: A new network 'Ganache-CLI (Aribtrum-Mainnet Fork)' has been added
+  └─Ganache-CLI (Aribtrum-Mainnet Fork)
     ├─id: arbitrum-main-fork
-    ├─cmd: anvil
+    ├─cmd: ganache-cli
     ├─cmd_settings: {'accounts': 10, 'evm_version': 'istanbul', 'fork': 'arbitrum-main', 'mnemonic': 'brownie', 'port': 8545}
     └─host: http://127.0.0.1
 ```
