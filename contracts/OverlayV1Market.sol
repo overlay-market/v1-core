@@ -930,7 +930,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @notice Irreversibly shuts down the market. Can be triggered by
     /// @notice governance through factory contract in the event of an emergency
-    function shutdown() external notShutdown onlyFactory {
+    function shutdown() external onlyFactory {
         isShutdown = true;
     }
 
@@ -943,8 +943,7 @@ contract OverlayV1Market is IOverlayV1Market {
         require(pos.exists(), "OVLV1:!position");
 
         // calculate remaining collateral backing position
-        uint256 fraction = ONE;
-        uint256 cost = pos.cost(fraction);
+        uint256 cost = pos.cost(ONE);
         cost = Math.min(ovl.balanceOf(address(this)), cost); // if cost > balance
 
         // set fraction remaining to zero so position no longer exists
