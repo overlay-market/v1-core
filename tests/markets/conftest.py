@@ -139,7 +139,7 @@ def pool_uniweth_30bps(abi=None):
     # to be used as example ovlweth pool
     with open(f'tests/abi/pool.json') as f:
         abi = json.load(f)
-    yield Contract.from_abi('Contract', "0xc24f7d8e51a64dc1238880bd00bb961d54cbeb29", abi)
+    yield Contract.from_abi('Contract', "0xC24f7d8E51A64dc1238880BD00bb961D54cbeb29", abi)
 
 
 # TODO: change params to (600, 3600, 300, 14)
