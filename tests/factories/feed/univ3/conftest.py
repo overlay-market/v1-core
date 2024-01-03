@@ -1,4 +1,5 @@
 import pytest
+import json
 from brownie import (
     Contract, OverlayV1UniswapV3Factory, OverlayV1NoReserveUniswapV3Factory
 )
@@ -41,14 +42,18 @@ def uni_factory():
 
 
 @pytest.fixture(scope="module")
-def pool_daiweth_30bps():
-    yield Contract.from_explorer("0x31Fa55e03bAD93C7f8AFfdd2eC616EbFde246001")
+def pool_daiweth_30bps(abi=None):
+    with open(f'tests/abi/pool.json') as f:
+        abi = json.load(f)
+    yield Contract.from_abi('Contract', "0x31Fa55e03bAD93C7f8AFfdd2eC616EbFde246001", abi)
 
 
 @pytest.fixture(scope="module")
-def pool_uniweth_30bps():
+def pool_uniweth_30bps(abi=None):
     # to be used as example ovlweth pool
-    yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
+    with open(f'tests/abi/pool.json') as f:
+        abi = json.load(f)
+    yield Contract.from_abi('Contract', "0xc24f7d8e51a64dc1238880bd00bb961d54cbeb29", abi)
 
 
 @pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
