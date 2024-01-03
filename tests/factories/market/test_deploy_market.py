@@ -34,7 +34,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
-    expect_average_block_time = 14
+    expect_average_block_time = 0
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -114,7 +114,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
-    expect_average_block_time = 14
+    expect_average_block_time = 0
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -163,7 +163,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
-    expect_average_block_time = 14
+    expect_average_block_time = 0
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -208,7 +208,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
-    expect_average_block_time = 14
+    expect_average_block_time = 0
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -251,7 +251,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
     expect_trading_fee_rate = 750000000000000
     expect_min_collateral = 100000000000000
     expect_price_drift_upper_limit = 100000000000000
-    expect_average_block_time = 14
+    expect_average_block_time = 0
 
     expect_params = [expect_k, expect_lmbda, expect_delta, expect_cap_payoff,
                      expect_cap_notional, expect_cap_leverage,
@@ -297,7 +297,7 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
         750000000000000,  # expect_trading_fee_rate
         100000000000000,  # expect_min_collateral
         100000000000000,  # expect_price_drift_upper_limit
-        14,  # expect_average_block_time
+        0,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):
@@ -352,7 +352,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
         750000000000000,  # expect_trading_fee_rate
         100000000000000,  # expect_min_collateral
         100000000000000,  # expect_price_drift_upper_limit
-        14,  # expect_average_block_time
+        0,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):

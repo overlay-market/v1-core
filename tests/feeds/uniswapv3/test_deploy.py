@@ -1,15 +1,18 @@
 import pytest
+import json
 from brownie import Contract, OverlayV1UniswapV3Feed, reverts
 
 
 @pytest.fixture
 def usdc():
-    yield Contract.from_explorer("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+    yield Contract.from_explorer("0xaf88d065e77c8cC2239327C5EDb3A432268e5831")
 
 
 @pytest.fixture
-def pool_daiusdc_5bps():
-    yield Contract.from_explorer("0x6c6Bc977E13Df9b0de53b251522280BB72383700")
+def pool_daiusdc_5bps(abi=None):
+    with open(f'tests/abi/pool.json') as f:
+        abi = json.load(f)
+    yield Contract.from_abi('Contract', "0x7CF803e8d82A50504180f417B8bC7a493C0a0503", abi)
 
 
 def test_deploy_feed_reverts_on_market_token_not_weth(gov, dai, usdc, uni,
