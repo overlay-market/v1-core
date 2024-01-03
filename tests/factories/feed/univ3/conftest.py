@@ -45,7 +45,7 @@ def uni_factory():
 def pool_daiweth_30bps(abi=None):
     with open(f'tests/abi/pool.json') as f:
         abi = json.load(f)
-    yield Contract.from_abi('Contract', "0x31Fa55e03bAD93C7f8AFfdd2eC616EbFde246001", abi)
+    yield Contract.from_abi('Contract', "0xA961F0473dA4864C5eD28e00FcC53a3AAb056c1b", abi)
 
 
 @pytest.fixture(scope="module")
