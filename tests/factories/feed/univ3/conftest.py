@@ -21,18 +21,18 @@ def bob(accounts):
 
 @pytest.fixture(scope="module")
 def dai():
-    yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
+    yield Contract.from_explorer("0xda10009cbd5d07dd0cecc66161fc93d7c9000da1")
 
 
 @pytest.fixture(scope="module")
 def weth():
-    yield Contract.from_explorer("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+    yield Contract.from_explorer("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1")
 
 
 @pytest.fixture(scope="module")
 def uni():
     # to be used as example ovl
-    yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+    yield Contract.from_explorer("0xfa7f8980b0f1e64a2062791cc3b0871572f1f7f0")
 
 
 @pytest.fixture(scope="module")
