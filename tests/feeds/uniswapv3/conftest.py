@@ -47,7 +47,7 @@ def uni_factory():
 
 @pytest.fixture(scope="module")
 def pool_daiweth_30bps():
-    yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
+    yield Contract.from_explorer("0x31Fa55e03bAD93C7f8AFfdd2eC616EbFde246001")
 
 
 @pytest.fixture(scope="module")

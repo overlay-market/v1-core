@@ -128,13 +128,13 @@ def uni_factory():
 
 @pytest.fixture(scope="module")
 def pool_daiweth_30bps():
-    yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
+    yield Contract.from_explorer("0x31Fa55e03bAD93C7f8AFfdd2eC616EbFde246001")
 
 
 @pytest.fixture(scope="module")
 def pool_uniweth_30bps():
     # to be used as example ovlweth pool
-    yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
+    yield Contract.from_explorer("0xc24f7d8e51a64dc1238880bd00bb961d54cbeb29")
 
 
 # TODO: change params to (600, 3600, 300, 14)
