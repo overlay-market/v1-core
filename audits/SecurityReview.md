@@ -49,6 +49,12 @@ https://github.com/eth-brownie/brownie/blob/bc7b511583060fdaff1d4b5269aedcc1cb71
 165 passed, 97 warnings, 146 errors in 389.36s (0:06:29)
 ```
 
+After https://github.com/overlay-market/v1-core/commit/928db2feec5a2e3566800f6c0984b53df460d9a3
+
+```
+201 passed, 1902 warnings, 110 errors in 957.30s (0:15:57)
+```
+
 ## Medusa Test
 
 ### Use solidity Version 0.8.10
