@@ -40,6 +40,8 @@ SUCCESS: Network 'Mainnet' has been modified
     ├─multicall2: 0x5B5CFE992AdAC0C9D48E05854B2d91C73a003858
     └─provider: infura
 ```
+We have to change the .env config to replacing ETHERSCAN_TOKEN with ARIBSCAN_TOKEN
+https://github.com/eth-brownie/brownie/blob/bc7b511583060fdaff1d4b5269aedcc1cb710bc6/brownie/network/contract.py#L84
 
 ## Run Brownie Tests
 
