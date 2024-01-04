@@ -342,7 +342,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract unwound open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            _reduceOIAndOIShares(pos, fraction, oiTotalOnSide, oiTotalSharesOnSide);
+            _reduceOIAndOIShares(pos, fraction);
 
             // register the amount to be minted/burned
             // capPayoff prevents overflow reverts with int256 cast
@@ -433,7 +433,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
             // subtract liquidated open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            _reduceOIAndOIShares(pos, fraction, oiTotalOnSide, oiTotalSharesOnSide);
+            _reduceOIAndOIShares(pos, fraction);
 
             // register the amount to be burned
             _registerMintOrBurn(int256(value) - int256(cost) - int256(marginToBurn));
@@ -731,19 +731,13 @@ contract OverlayV1Market is IOverlayV1Market {
     function _reduceOIAndOIShares(
         Position.Info memory pos,
         uint256 fraction,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide
     ) internal {
         // NOTE: use subFloor to avoid reverts with oi rounding issues
         if (pos.isLong) {
-            oiLong = oiLong.subFloor(
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-            );
+            oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiLong, oiLongShares));
             oiLongShares -= pos.oiSharesCurrent(fraction);
         } else {
-            oiShort = oiShort.subFloor(
-                pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-            );
+            oiShort = oiShort.subFloor(pos.oiCurrent(fraction, oiShort, oiShortShares));
             oiShortShares -= pos.oiSharesCurrent(fraction);
         }
     }
