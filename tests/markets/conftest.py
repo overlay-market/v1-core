@@ -119,7 +119,7 @@ def weth():
 @pytest.fixture(scope="module")
 def uni():
     # to be used as example ovl
-    yield Contract.from_explorer("0xfa7f8980b0f1e64a2062791cc3b0871572f1f7f0")
+    yield Contract.from_explorer("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0")
 
 
 @pytest.fixture(scope="module")
@@ -143,7 +143,7 @@ def pool_uniweth_30bps(abi=None):
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+@pytest.fixture(scope="module", params=[(600, 1500, 200, 15)])
 def create_feed_factory(gov, uni_factory, weth, uni, request):
     micro, macro, cardinality, block_time = request.param
     tok = uni.address
