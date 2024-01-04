@@ -163,7 +163,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         uint256 leverage,
         bool isLong,
         uint256 priceLimit
-    ) external notShutdown whenNotPaused returns (uint256 positionId_) {
+    ) external notShutdown returns (uint256 positionId_) {
         require(leverage >= ONE, "OVLV1:lev<min");
         require(leverage <= params.get(Risk.Parameters.CapLeverage), "OVLV1:lev>max");
         require(collateral >= params.get(Risk.Parameters.MinCollateral), "OVLV1:collateral<min");
@@ -257,7 +257,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         uint256 positionId,
         uint256 fraction,
         uint256 priceLimit
-    ) external notShutdown whenNotPaused {
+    ) external notShutdown {
         require(fraction <= ONE, "OVLV1:fraction>max");
         // only keep 4 decimal precision (1 bps) for fraction given
         // pos.fractionRemaining only to 4 decimals
@@ -385,7 +385,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(address owner, uint256 positionId) external notShutdown whenNotPaused {
+    function liquidate(address owner, uint256 positionId) external notShutdown {
         uint256 value;
         uint256 cost;
         uint256 price;
