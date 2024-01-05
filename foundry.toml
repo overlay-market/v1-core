@@ -1,0 +1,13 @@
+[profile.default]
+src = "contracts"
+test = "tests"
+script = "scripts"
+out = "forge-out"
+libs = ["lib"]
+
+remappings = [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "@uniswap/v3-core=lib/v3-core",
+]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
