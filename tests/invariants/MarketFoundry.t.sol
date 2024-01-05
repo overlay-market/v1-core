@@ -89,7 +89,9 @@ contract MarketFoundry is Test {
         (uint256 oiOverweightAfter, uint256 oiUnderweightAfter) = market.oiAfterFunding({
             oiOverweight: oiOverweightBefore,
             oiUnderweight: oiUnderweightBefore,
-            timeElapsed: block.timestamp - lastUpdate
+            // FIXME: block.timestamp is always 0 in the test
+            // timeElapsed: block.timestamp - lastUpdate
+            timeElapsed: 1
         });
 
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
