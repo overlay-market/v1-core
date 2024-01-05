@@ -15,11 +15,11 @@ def test_token_fixtures(dai, weth, uni):
 def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
                        pool_uniweth_30bps):
     assert pool_daiweth_30bps.fee() == 3000
-    assert pool_daiweth_30bps.token0() == dai
-    assert pool_daiweth_30bps.token1() == weth
+    assert pool_daiweth_30bps.token0() == weth
+    assert pool_daiweth_30bps.token1() == dai
     assert pool_daiweth_30bps == uni_factory.getPool(dai, weth, 3000)
 
     assert pool_uniweth_30bps.fee() == 3000
-    assert pool_uniweth_30bps.token0() == uni
-    assert pool_uniweth_30bps.token1() == weth
+    assert pool_uniweth_30bps.token0() == weth
+    assert pool_uniweth_30bps.token1() == uni
     assert pool_uniweth_30bps == uni_factory.getPool(uni, weth, 3000)
