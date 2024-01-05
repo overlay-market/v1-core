@@ -87,7 +87,7 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 1800, 1000000000000000000, 2000000000000000000000000)
+    (600, 1500, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_fake_feed(gov, request):
     micro, macro, p, r = request.param
@@ -203,7 +203,7 @@ def feed(create_feed):
     yield create_feed()
 
 
-@pytest.fixture(scope="module", params=[(600, 1800)])
+@pytest.fixture(scope="module", params=[(600, 1500)])
 def create_mock_feed_factory(gov, request):
     micro, macro = request.param
 

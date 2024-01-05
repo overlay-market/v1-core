@@ -56,7 +56,7 @@ def pool_uniweth_30bps(abi=None):
     yield Contract.from_abi('Contract', "0xC24f7d8E51A64dc1238880BD00bb961D54cbeb29", abi)
 
 
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+@pytest.fixture(scope="module", params=[(600, 1500, 240, 15)])
 def create_factory_without_reserve(gov, uni_factory, weth, request):
     micro, macro, cardinality, block_time = request.param
     uni_fact = uni_factory.address
@@ -81,7 +81,7 @@ def factory_without_reserve(create_factory_without_reserve):
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+@pytest.fixture(scope="module", params=[(600, 1500, 240, 15)])
 def create_factory(gov, uni_factory, weth, uni, request):
     micro, macro, cardinality, block_time = request.param
     uni_fact = uni_factory.address
