@@ -45,7 +45,10 @@ contract MarketFoundry is Test {
         // factory config
         ovl.grantRole(GOVERNOR_ROLE, address(this));
         ovl.grantRole(bytes32(0x00), address(factory)); // grant admin role
-        OverlayV1FeedFactoryMock feedFactory = new OverlayV1FeedFactoryMock(600, 1800);
+        OverlayV1FeedFactoryMock feedFactory = new OverlayV1FeedFactoryMock({
+            _microWindow: 600,
+            _macroWindow: 1800
+        });
         factory.addFeedFactory(address(feedFactory));
 
         // market config and deployment
@@ -73,8 +76,36 @@ contract MarketFoundry is Test {
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
     }
 
-    function invariant_ovl_decimals() public view {
-        assert(ovl.decimals() == 18);
+    // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
+    function invariant_oi_product_after_funding() public view {
+        uint256 lastUpdate = market.timestampUpdateLast();
+        uint256 oiLong = market.oiLong();
+        uint256 oiShort = market.oiShort();
+        uint256 oiOverweightBefore = oiLong > oiShort ? oiLong : oiShort;
+        uint256 oiUnderweightBefore = oiLong > oiShort ? oiShort : oiLong;
+
+        uint256 oiProductBefore = oiOverweightBefore * oiUnderweightBefore;
+
+        (uint256 oiOverweightAfter, uint256 oiUnderweightAfter) = market.oiAfterFunding({
+            oiOverweight: oiOverweightBefore,
+            oiUnderweight: oiUnderweightBefore,
+            timeElapsed: block.timestamp - lastUpdate
+        });
+
+        uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
+
+        assert(oiProductBefore == oiProductAfter);
+    }
+
+    function test_oiAfterFunding() public {
+        (uint256 oiOverweight, uint256 oiUnderweight) = market.oiAfterFunding({
+            oiOverweight: 203472,
+            oiUnderweight: 81976,
+            timeElapsed: 1
+        });
+
+        emit log_named_uint("oiOverweight", oiOverweight);
+        emit log_named_uint("oiUnderweight", oiUnderweight);
     }
 
 }
