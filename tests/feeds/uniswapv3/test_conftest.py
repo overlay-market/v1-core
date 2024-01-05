@@ -7,13 +7,13 @@ def test_token_fixtures(dai, weth, uni):
 def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
                        pool_uniweth_30bps):
     assert pool_daiweth_30bps.fee() == 3000
-    assert pool_daiweth_30bps.token0() == dai
-    assert pool_daiweth_30bps.token1() == weth
+    assert pool_daiweth_30bps.token0() == weth
+    assert pool_daiweth_30bps.token1() == dai
     assert pool_daiweth_30bps == uni_factory.getPool(dai, weth, 3000)
 
     assert pool_uniweth_30bps.fee() == 3000
-    assert pool_uniweth_30bps.token0() == uni
-    assert pool_uniweth_30bps.token1() == weth
+    assert pool_uniweth_30bps.token0() == weth
+    assert pool_uniweth_30bps.token1() == uni
     assert pool_uniweth_30bps == uni_factory.getPool(uni, weth, 3000)
 
 
@@ -26,8 +26,8 @@ def test_quanto_feed_fixture(dai, weth, uni, pool_daiweth_30bps,
     assert quanto_feed.marketPool() == pool_daiweth_30bps
     assert quanto_feed.ovlXPool() == pool_uniweth_30bps
 
-    assert quanto_feed.marketToken0() == dai
-    assert quanto_feed.marketToken1() == weth
+    assert quanto_feed.marketToken0() == weth
+    assert quanto_feed.marketToken1() == dai
 
     assert quanto_feed.marketBaseToken() == weth
     assert quanto_feed.marketQuoteToken() == dai
@@ -46,8 +46,8 @@ def test_inverse_feed_fixture(dai, weth, uni, pool_daiweth_30bps,
     assert inverse_feed.marketPool() == pool_uniweth_30bps
     assert inverse_feed.ovlXPool() == pool_uniweth_30bps
 
-    assert inverse_feed.marketToken0() == uni
-    assert inverse_feed.marketToken1() == weth
+    assert inverse_feed.marketToken0() == weth
+    assert inverse_feed.marketToken1() == uni
 
     assert inverse_feed.marketBaseToken() == weth
     assert inverse_feed.marketQuoteToken() == uni
