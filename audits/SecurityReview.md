@@ -61,6 +61,10 @@ After [ac43364](https://github.com/overlay-market/v1-core/commit/ac43364f5e17281
 23 failed, 288 passed, 5876 warnings in 5464.02s (1:31:04)
 ```
 
+Using `brownie test --failfast`
+```
+17 failed, 294 passed, 5227 warnings in 3495.36s (0:58:15)
+```
 ## Medusa Test
 
 ### Use solidity Version 0.8.10
