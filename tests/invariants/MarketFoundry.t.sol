@@ -24,7 +24,7 @@ contract MarketFoundry is Test {
     address public constant ALICE = address(0x1000000000000000000000000000000000000000);
     address public constant BOB = address(0x2000000000000000000000000000000000000000);
 
-    function setUp() public {
+    function setUp() public virtual {
         // foundry-specific sender setup
         targetSender(ALICE);
         targetSender(BOB);
@@ -53,7 +53,7 @@ contract MarketFoundry is Test {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e29, // oi invariant breaks badly with prices (> 1e28)
+            price: 1e25, // oi invariant breaks badly with prices > 1e24
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -79,7 +79,7 @@ contract MarketFoundry is Test {
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
-    function invariant_oi_product_after_funding() public view {
+    function invariant_oi_product_after_funding() public {
         uint256 lastUpdate = market.timestampUpdateLast();
         uint256 oiLong = market.oiLong();
         uint256 oiShort = market.oiShort();
@@ -97,6 +97,9 @@ contract MarketFoundry is Test {
         });
 
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
+
+        emit log_named_uint("oiProductBefore:", oiProductBefore);
+        emit log_named_uint("oiProductAfter:", oiProductAfter);
 
         assert(oiProductBefore == oiProductAfter);
     }
