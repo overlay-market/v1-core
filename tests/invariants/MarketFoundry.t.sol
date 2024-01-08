@@ -53,7 +53,7 @@ contract MarketFoundry is Test {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e18, // TODO: try more extreme prices
+            price: 1e29, // oi invariant breaks badly with prices (> 1e28)
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -74,6 +74,8 @@ contract MarketFoundry is Test {
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
+        vm.prank(ALICE); ovl.approve(address(market), ovlSupply / 2);
+        vm.prank(BOB); ovl.approve(address(market), ovlSupply / 2);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
@@ -99,15 +101,41 @@ contract MarketFoundry is Test {
         assert(oiProductBefore == oiProductAfter);
     }
 
-    function test_oiAfterFunding() public {
+    function test_break_oi_invariant() public {
+        // before the first build, both oi's are 0
+        vm.startPrank(ALICE);
+
+        market.build({
+            collateral: 20e18,
+            leverage: 1e18,
+            isLong: true,
+            priceLimit: type(uint256).max
+        });
+
+        market.build({
+            collateral: 100e18,
+            leverage: 1e18,
+            isLong: false,
+            priceLimit: 0
+        });
+
+        emit log_named_uint("oiLong after build:", market.oiLong());
+        emit log_named_uint("oiShort after build:", market.oiShort());
+        uint256 oiProductBefore = market.oiShort() * market.oiLong();
+        emit log_named_uint("oiInvariant after build:", oiProductBefore);
+
         (uint256 oiOverweight, uint256 oiUnderweight) = market.oiAfterFunding({
-            oiOverweight: 203472,
-            oiUnderweight: 81976,
+            oiOverweight: market.oiShort(),
+            oiUnderweight: market.oiLong(),
             timeElapsed: 1
         });
 
-        emit log_named_uint("oiOverweight", oiOverweight);
-        emit log_named_uint("oiUnderweight", oiUnderweight);
+        emit log_named_uint("oiLong after funding:", oiUnderweight);
+        emit log_named_uint("oiShort after funding:", oiOverweight);
+        uint256 oiProductAfter = oiOverweight * oiUnderweight;
+        emit log_named_uint("oiInvariant after funding:", oiProductAfter);
+
+        assertEq(oiProductBefore, oiProductAfter, "oi invariant broken");
     }
 
 }
