@@ -57,7 +57,7 @@ contract MarketEchidna {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e18, // TODO: try more extreme prices
+            price: 1e29, // oi invariant breaks badly with prices (> 1e28)
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -78,6 +78,8 @@ contract MarketEchidna {
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
+        hevm.prank(ALICE); ovl.approve(address(market), ovlSupply / 2);
+        hevm.prank(BOB); ovl.approve(address(market), ovlSupply / 2);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
