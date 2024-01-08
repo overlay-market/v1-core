@@ -57,7 +57,7 @@ contract MarketEchidna {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e29, // oi invariant breaks badly with prices (> 1e28)
+            price: 1e25, // oi invariant breaks badly with prices > 1e24
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -83,7 +83,11 @@ contract MarketEchidna {
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
-    function invariant_oi_product_after_funding() public view returns (bool) {
+
+    // event to raise if the invariant is broken
+    event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter);
+
+    function invariant_oi_product_after_funding() public returns (bool) {
         uint256 lastUpdate = market.timestampUpdateLast();
         uint256 oiLong = market.oiLong();
         uint256 oiShort = market.oiShort();
@@ -101,6 +105,9 @@ contract MarketEchidna {
         });
 
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
+
+        // only visible when invariant fails
+        emit OiAfterFunding(oiProductBefore, oiProductAfter);
 
         return(oiProductBefore == oiProductAfter);
     }
