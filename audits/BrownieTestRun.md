@@ -76,7 +76,7 @@ After Reducing 10x Max Notinal Value [2390368](https://github.com/overlay-market
 10 failed, 301 passed, 5788 warnings in 3759.36s (1:02:39)
 ```
 
-## Current Test Failing
+## Failing Tests
 
 ### tests/factories/feed/univ3/test_deploy_feed.py::test_deploy_feed_creates_quanto_feed_without_reserve
 
