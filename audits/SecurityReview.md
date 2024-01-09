@@ -65,9 +65,15 @@ Using `brownie test --failfast`
 ```
 17 failed, 294 passed, 5227 warnings in 3495.36s (0:58:15)
 ```
+After Reducing 10x Max Notinal Value [2390368](https://github.com/overlay-market/v1-core/commit/23903684738eff74d1063a472d6bab67efe31a04)
+
+```
+10 failed, 301 passed, 5788 warnings in 3759.36s (1:02:39
+```
 ## Medusa Test
 
 ### Use solidity Version 0.8.10
 
 `solc-select install 0.8.10`
+
 `solc-select use 0.8.10`
