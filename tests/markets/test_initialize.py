@@ -30,7 +30,7 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
-    average_block_time = 0
+    average_block_time = 1
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
@@ -84,7 +84,7 @@ def test_initialize_reverts_when_not_factory(fake_deployer, fake_feed,
         250000000000000,  # expect_trading_fee_rate
         500000000000000,  # expect_min_collateral
         50000000000000,  # expect_price_drift_upper_limit
-        0,  # expect_average_block_time
+        1,  # expect_average_block_time
     ]
 
     # deploy the market from the deployer
@@ -114,7 +114,7 @@ def test_initialize_reverts_when_price_is_zero(ovl, fake_deployer, fake_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
-    average_block_time = 0
+    average_block_time = 1
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
@@ -155,7 +155,7 @@ def test_deploy_reverts_when_max_leverage_is_liquidatable(ovl, fake_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000
-    average_block_time = 0
+    average_block_time = 1
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
@@ -192,7 +192,7 @@ def test_deploy_reverts_when_price_drift_exceeds_max_exp(ovl, fake_feed,
     trading_fee_rate = 750000000000000
     min_collateral = 100000000000000
     price_drift_upper_limit = 100000000000000000
-    average_block_time = 0
+    average_block_time = 1
 
     params = [k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
               circuit_breaker_window, circuit_breaker_mint_target,
