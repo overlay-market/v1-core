@@ -1,0 +1,6 @@
+{
+    "recommendations": [
+        "tintinweb.solidity-visual-auditor",
+        "nomicfoundation.hardhat-solidity"
+    ]
+}

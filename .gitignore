@@ -8,3 +8,11 @@ reports/
 *.sw[op]
 .DS_Store
 *.bk
+
+# Foundry
+cache
+forge-out
+
+# Echidna
+crytic-export
+coverage-echidna
