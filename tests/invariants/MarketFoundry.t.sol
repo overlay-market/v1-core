@@ -107,8 +107,10 @@ contract MarketFoundry is Test {
 
 
         // 0.1% tolerance
-        assertApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16, "oi invariant broken");
-        // assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 1e18));
+        assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16));
+        
+        // avoid Foundry specific assertions, so we can use this test in Echidna
+        // assertApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16, "oi invariant broken");
     }
 
     function test_break_oi_invariant() public {
