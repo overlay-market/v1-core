@@ -36,6 +36,9 @@ contract MarketFoundryAdvanced is MarketFoundry {
 
     // wrapper around market.build() to "guide" the fuzz test
     function buildWrapper(bool isLong, uint256 collateral) public {
+        // bound collateral to avoid reverts
+        collateral = TestUtils.clampBetween(collateral, MIN_COLLATERAL, CAP_NOTIONAL);
+
         // target senders are configured to be ALICE or BOB in `super.setUp()`
         vm.prank(msg.sender);
 

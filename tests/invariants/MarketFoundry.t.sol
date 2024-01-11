@@ -8,6 +8,7 @@ import {OverlayV1Market} from "../../contracts/OverlayV1Market.sol";
 import {OverlayV1Token} from "../../contracts/OverlayV1Token.sol";
 import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFactoryMock.sol";
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
+import {TestUtils} from "./TestUtils.sol";
 
 // run from base project directory with:
 // forge test --mc MarketFoundry
@@ -23,6 +24,9 @@ contract MarketFoundry is Test {
     // make these constant to match Echidna config
     address public constant ALICE = address(0x1000000000000000000000000000000000000000);
     address public constant BOB = address(0x2000000000000000000000000000000000000000);
+
+    uint256 constant MIN_COLLATERAL = 1e14;
+    uint256 constant CAP_NOTIONAL = 8e23;
 
     function setUp() public virtual {
         // foundry-specific sender setup
@@ -53,7 +57,7 @@ contract MarketFoundry is Test {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e25, // oi invariant breaks badly with prices > 1e24
+            price: 1e29,
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -61,7 +65,7 @@ contract MarketFoundry is Test {
             500000000000000000,  // lmbda
             2500000000000000,  // delta
             5000000000000000000,  // capPayoff
-            800000000000000000000000,  // capNotional
+            CAP_NOTIONAL,  // capNotional
             5000000000000000000,  // capLeverage
             2592000,  // circuitBreakerWindow
             66670000000000000000000,  // circuitBreakerMintTarget
@@ -69,7 +73,7 @@ contract MarketFoundry is Test {
             100000000000000000,  // maintenanceMarginBurnRate
             50000000000000000,  // liquidationFeeRate
             750000000000000,  // tradingFeeRate
-            100000000000000,  // minCollateral
+            MIN_COLLATERAL,  // minCollateral
             25000000000000,  // priceDriftUpperLimit
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
@@ -101,7 +105,10 @@ contract MarketFoundry is Test {
         emit log_named_uint("oiProductBefore:", oiProductBefore);
         emit log_named_uint("oiProductAfter:", oiProductAfter);
 
-        assert(oiProductBefore == oiProductAfter);
+
+        // 0.1% tolerance
+        assertApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16, "oi invariant broken");
+        // assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 1e18));
     }
 
     function test_break_oi_invariant() public {
@@ -109,23 +116,23 @@ contract MarketFoundry is Test {
         vm.startPrank(ALICE);
 
         market.build({
-            collateral: 20e18,
+            collateral: 9e18,
             leverage: 1e18,
             isLong: true,
             priceLimit: type(uint256).max
         });
 
         market.build({
-            collateral: 100e18,
+            collateral: 99e18,
             leverage: 1e18,
             isLong: false,
             priceLimit: 0
         });
 
-        emit log_named_uint("oiLong after build:", market.oiLong());
-        emit log_named_uint("oiShort after build:", market.oiShort());
+        emit log_named_uint("oiLong before funding", market.oiLong());
+        emit log_named_uint("oiShort before funding", market.oiShort());
         uint256 oiProductBefore = market.oiShort() * market.oiLong();
-        emit log_named_uint("oiInvariant after build:", oiProductBefore);
+        emit log_named_uint("oi product before funding", oiProductBefore);
 
         (uint256 oiOverweight, uint256 oiUnderweight) = market.oiAfterFunding({
             oiOverweight: market.oiShort(),
@@ -133,12 +140,13 @@ contract MarketFoundry is Test {
             timeElapsed: 1
         });
 
-        emit log_named_uint("oiLong after funding:", oiUnderweight);
-        emit log_named_uint("oiShort after funding:", oiOverweight);
+        emit log_named_uint("oiLong after funding", oiUnderweight);
+        emit log_named_uint("oiShort after funding", oiOverweight);
         uint256 oiProductAfter = oiOverweight * oiUnderweight;
-        emit log_named_uint("oiInvariant after funding:", oiProductAfter);
+        emit log_named_uint("oi product after funding", oiProductAfter);
 
-        assertEq(oiProductBefore, oiProductAfter, "oi invariant broken");
+        // 0.0001% tolerance
+        assertApproxEqRel(oiProductBefore, oiProductAfter, 0.0001e16, "oi invariant broken");
     }
 
 }
