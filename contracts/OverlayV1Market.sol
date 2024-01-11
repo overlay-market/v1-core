@@ -649,7 +649,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev Returns the open interest in number of contracts for a given notional
     /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
-    function oiFromNotional(uint256 notional, uint256 midPrice) public view returns (uint256) {
+    function oiFromNotional(uint256 notional, uint256 midPrice) public pure returns (uint256) {
         return notional.divDown(midPrice);
     }
 
@@ -681,7 +681,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev mid price without impact/spread given oracle data and recent volume
     /// @dev used for gas savings to avoid accessing storage for delta, lmbda
-    function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
+    function _midFromFeed(Oracle.Data memory data) private pure returns (uint256 mid_) {
         mid_ = Math.average(data.priceOverMicroWindow, data.priceOverMacroWindow);
     }
 
@@ -824,7 +824,7 @@ contract OverlayV1Market is IOverlayV1Market {
     }
 
     /// @notice Checks the governance per-market risk parameter is valid
-    function _checkRiskParam(Risk.Parameters name, uint256 value) private {
+    function _checkRiskParam(Risk.Parameters name, uint256 value) private view {
         // checks delta won't cause position to be immediately
         // liquidatable given current leverage cap (capLeverage),
         // liquidation fee rate (liquidationFeeRate), and

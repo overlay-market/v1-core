@@ -172,10 +172,7 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
         uint32[] memory windows,
         uint256[] memory nowIdxs
     ) public view returns (int24[] memory arithmeticMeanTicks_) {
-        (
-            int56[] memory tickCumulatives,
-            uint160[] memory secondsPerLiquidityCumulativeX128s
-        ) = IUniswapV3Pool(pool).observe(secondsAgos);
+        (int56[] memory tickCumulatives,) = IUniswapV3Pool(pool).observe(secondsAgos);
 
         uint256 nowIdxsLength = nowIdxs.length;
         arithmeticMeanTicks_ = new int24[](nowIdxsLength);
@@ -201,7 +198,7 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
         uint128 baseAmount,
         address baseToken,
         address quoteToken
-    ) public view returns (uint256 quoteAmount_) {
+    ) public pure returns (uint256 quoteAmount_) {
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
         // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by
