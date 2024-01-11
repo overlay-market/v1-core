@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "./MarketFoundry.t.sol";
+import {MarketFoundry} from "./MarketFoundry.t.sol";
+import {TestUtils} from "./TestUtils.sol";
 
 // run from base project directory with:
 // forge test --mc MarketFoundryAdvanced

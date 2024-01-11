@@ -15,3 +15,6 @@ corpusDir: "./tests/invariants/coverage-echidna"
 
 # use same prefix as Foundry invariant tests
 prefix: "invariant_"
+
+# increase number of works to speed up test
+workers: 10
