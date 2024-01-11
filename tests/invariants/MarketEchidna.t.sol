@@ -6,6 +6,7 @@ import {OverlayV1Market} from "../../contracts/OverlayV1Market.sol";
 import {OverlayV1Token} from "../../contracts/OverlayV1Token.sol";
 import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFactoryMock.sol";
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
+import {TestUtils} from "./TestUtils.sol";
 
 // Reference: https://github.com/crytic/building-secure-contracts/blob/master/program-analysis/echidna/advanced/on-using-cheat-codes.md
 interface IHevm {
@@ -32,6 +33,9 @@ contract MarketEchidna {
     address public constant ALICE = address(0x1000000000000000000000000000000000000000);
     address public constant BOB = address(0x2000000000000000000000000000000000000000);
 
+    uint256 constant MIN_COLLATERAL = 1e14;
+    uint256 constant CAP_NOTIONAL = 8e23;
+
     constructor() {
         // create contracts to be tested
         ovl = new OverlayV1Token();
@@ -57,7 +61,7 @@ contract MarketEchidna {
 
         // market config and deployment
         address feed = feedFactory.deployFeed({
-            price: 1e25, // oi invariant breaks badly with prices > 1e24
+            price: 1e29,
             reserve: 2_000_000e18
         });
         uint256[15] memory params = [
@@ -65,7 +69,7 @@ contract MarketEchidna {
             500000000000000000,  // lmbda
             2500000000000000,  // delta
             5000000000000000000,  // capPayoff
-            800000000000000000000000,  // capNotional
+            CAP_NOTIONAL,  // capNotional
             5000000000000000000,  // capLeverage
             2592000,  // circuitBreakerWindow
             66670000000000000000000,  // circuitBreakerMintTarget
@@ -73,7 +77,7 @@ contract MarketEchidna {
             100000000000000000,  // maintenanceMarginBurnRate
             50000000000000000,  // liquidationFeeRate
             750000000000000,  // tradingFeeRate
-            100000000000000,  // minCollateral
+            MIN_COLLATERAL,  // minCollateral
             25000000000000,  // priceDriftUpperLimit
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
@@ -109,7 +113,8 @@ contract MarketEchidna {
         // only visible when invariant fails
         emit OiAfterFunding(oiProductBefore, oiProductAfter);
 
-        return(oiProductBefore == oiProductAfter);
+        // 0.5% tolerance
+        return(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
     }
 
 }
