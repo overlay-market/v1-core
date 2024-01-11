@@ -31,7 +31,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
         0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OVL
         0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
-        0 // MIN_AVERAGE_BLOCK_TIME = 0s
+        1 // MIN_AVERAGE_BLOCK_TIME = 0s
     ];
     uint256[15] public PARAMS_MAX = [
         0.04e14, // MAX_K = ~ 1000 bps / 8 hr
@@ -52,12 +52,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     ];
 
     // event for risk param updates
-    event ParamUpdated(
-        address indexed user,
-        address indexed market,
-        Risk.Parameters name,
-        uint256 value
-    );
+    event ParamUpdated(address indexed user, address indexed market, Risk.Parameters name, uint256 value);
 
     // event for emergency shutdown
     event EmergencyShutdown(address indexed user, address indexed market);
@@ -125,11 +120,11 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @dev deploys a new market contract
     /// @return market_ address of the new market
-    function deployMarket(
-        address feedFactory,
-        address feed,
-        uint256[15] calldata params
-    ) external onlyGovernor returns (address market_) {
+    function deployMarket(address feedFactory, address feed, uint256[15] calldata params)
+        external
+        onlyGovernor
+        returns (address market_)
+    {
         // check feed and feed factory are available for a new market
         _checkFeed(feedFactory, feed);
 
@@ -176,11 +171,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Setter for per-market risk parameters adjustable by governance
-    function setRiskParam(
-        address feed,
-        Risk.Parameters name,
-        uint256 value
-    ) external onlyGovernor {
+    function setRiskParam(address feed, Risk.Parameters name, uint256 value) external onlyGovernor {
         _checkRiskParam(name, value);
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setRiskParam(name, value);

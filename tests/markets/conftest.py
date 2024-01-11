@@ -1,4 +1,5 @@
 import pytest
+import json
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
     OverlayV1UniswapV3Factory, OverlayV1FeedFactoryMock,
@@ -86,7 +87,7 @@ def ovl(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 1800, 1000000000000000000, 2000000000000000000000000)
+    (600, 1500, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_fake_feed(gov, request):
     micro, macro, p, r = request.param
@@ -107,18 +108,18 @@ def fake_feed(create_fake_feed):
 
 @pytest.fixture(scope="module")
 def dai():
-    yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
+    yield Contract.from_explorer("0xda10009cbd5d07dd0cecc66161fc93d7c9000da1")
 
 
 @pytest.fixture(scope="module")
 def weth():
-    yield Contract.from_explorer("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+    yield Contract.from_explorer("0x82aF49447D8a07e3bd95BD0d56f35241523fBab1")
 
 
 @pytest.fixture(scope="module")
 def uni():
     # to be used as example ovl
-    yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+    yield Contract.from_explorer("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0")
 
 
 @pytest.fixture(scope="module")
@@ -127,18 +128,22 @@ def uni_factory():
 
 
 @pytest.fixture(scope="module")
-def pool_daiweth_30bps():
-    yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
+def pool_daiweth_30bps(abi=None):
+    with open(f'tests/abi/pool.json') as f:
+        abi = json.load(f)
+    yield Contract.from_abi('Contract', "0xA961F0473dA4864C5eD28e00FcC53a3AAb056c1b", abi)
 
 
 @pytest.fixture(scope="module")
-def pool_uniweth_30bps():
+def pool_uniweth_30bps(abi=None):
     # to be used as example ovlweth pool
-    yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
+    with open(f'tests/abi/pool.json') as f:
+        abi = json.load(f)
+    yield Contract.from_abi('Contract', "0xC24f7d8E51A64dc1238880BD00bb961D54cbeb29", abi)
 
 
 # TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
+@pytest.fixture(scope="module", params=[(600, 1500, 200, 15)])
 def create_feed_factory(gov, uni_factory, weth, uni, request):
     micro, macro, cardinality, block_time = request.param
     tok = uni.address
@@ -198,7 +203,7 @@ def feed(create_feed):
     yield create_feed()
 
 
-@pytest.fixture(scope="module", params=[(600, 1800)])
+@pytest.fixture(scope="module", params=[(600, 1500)])
 def create_mock_feed_factory(gov, request):
     micro, macro = request.param
 
@@ -305,7 +310,7 @@ def create_market(gov, ovl):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
                 create_market, request):
@@ -330,7 +335,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def market(gov, feed, feed_factory, factory, ovl, create_market, request):
     risk_params = request.param
