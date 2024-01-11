@@ -23,7 +23,7 @@ library TestUtils {
     ) internal pure returns (bool) {
         if (b == 0) return a == b; // if the right is 0, left must be too.
 
-        return percentDelta(a, b) > maxPercentDelta;
+        return percentDelta(a, b) <= maxPercentDelta;
     }
 
     function percentDelta(uint256 a, uint256 b) internal pure returns (uint256) {
