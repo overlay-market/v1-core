@@ -146,6 +146,12 @@ interface IOverlayV1Market {
     // risk parameter setter
     function setRiskParam(Risk.Parameters name, uint256 value) external;
 
+    // pause market
+    function pause() external;
+
+    // unpause market
+    function unpause() external;
+
     // emergency shutdown market
     function shutdown() external;
 

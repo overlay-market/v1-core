@@ -98,6 +98,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _;
     }
 
+    // pauser modifier for pausable functions
+    modifier onlyPauser() {
+        require(ovl.hasRole(PAUSER_ROLE, msg.sender), "OVLV1: !pauser");
+        _;
+    }
+
     constructor(address _ovl, address _feeRecipient) {
         // set ovl
         ovl = IOverlayV1Token(_ovl);
@@ -192,6 +198,18 @@ contract OverlayV1Factory is IOverlayV1Factory {
         require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
+    }
+
+    /// @notice Pause of market by governance in the event of an emergency
+    function pause(address feed) external onlyPauser {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.pause();
+    }
+
+    /// @notice Unpause of market by governance in the event of an emergency
+    function unpause(address feed) external onlyPauser {
+        OverlayV1Market market = OverlayV1Market(getMarket[feed]);
+        market.unpause();
     }
 
     /// @notice Shut down of market by governance in the event of an emergency
