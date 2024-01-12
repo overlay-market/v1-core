@@ -20,7 +20,7 @@ contract MarketTest is Test {
     address immutable PAUSER = makeAddr("pauser");
     address immutable USER = makeAddr("user");
     address constant FEED_FACTORY = 0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe;
-    address constant ORACLE = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
+    address constant FEED = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
 
     OverlayV1Token ov;
     OverlayV1Factory factory;
@@ -63,7 +63,7 @@ contract MarketTest is Test {
         market = OverlayV1Market(
             factory.deployMarket(
                 FEED_FACTORY,
-                ORACLE,
+                FEED,
                 params
             )
         );
@@ -85,7 +85,7 @@ contract MarketTest is Test {
         market.unwind(0, 1e18, 0);
 
         vm.startPrank(PAUSER);
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(USER);
         vm.expectRevert("Pausable: paused");
@@ -97,7 +97,7 @@ contract MarketTest is Test {
         
         vm.startPrank(PAUSER);
 
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(USER);
         market.build(1e18, 1e18, true, type(uint256).max);
@@ -108,25 +108,25 @@ contract MarketTest is Test {
     function testRoles() public {
         vm.startPrank(USER);
         vm.expectRevert();
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(GOVERNOR);
         vm.expectRevert();
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(PAUSER);
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(USER);
         vm.expectRevert();
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(GOVERNOR);
         vm.expectRevert();
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(PAUSER);
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
     }
 
@@ -153,10 +153,10 @@ contract MarketTest is Test {
 
         vm.startPrank(GOVERNOR);
         vm.expectRevert("OVLV1: !guardian");
-        factory.shutdown(ORACLE);
+        factory.shutdown(FEED);
 
         ov.grantRole(GUARDIAN_ROLE, GOVERNOR);
-        factory.shutdown(ORACLE);
+        factory.shutdown(FEED);
 
         vm.startPrank(USER);
         vm.expectRevert("OVLV1: shutdown");
