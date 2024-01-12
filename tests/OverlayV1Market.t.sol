@@ -84,12 +84,15 @@ contract MarketTest is Test {
         factory.pause(ORACLE);
 
         vm.startPrank(USER);
-        vm.expectRevert();
+        vm.expectRevert("Pausable: paused");
         market.build(1e18, 1e18, true, type(uint256).max);
-        vm.expectRevert();
+        vm.expectRevert("Pausable: paused");
         market.unwind(1, 1e18, 0);
-
+        vm.expectRevert("Pausable: paused");
+        market.liquidate(USER, 1);
+        
         vm.startPrank(PAUSER);
+
         factory.unpause(ORACLE);
 
         vm.startPrank(USER);
