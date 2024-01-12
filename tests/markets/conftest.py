@@ -81,7 +81,7 @@ def create_token(gov, alice, bob, minter_role, request):
 
 
 @pytest.fixture(scope="module")
-def ovl(create_token):
+def ov(create_token):
     yield create_token()
 
 
@@ -117,7 +117,7 @@ def weth():
 
 @pytest.fixture(scope="module")
 def uni():
-    # to be used as example ovl
+    # to be used as example ov
     yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
 
 
@@ -133,7 +133,7 @@ def pool_daiweth_30bps():
 
 @pytest.fixture(scope="module")
 def pool_uniweth_30bps():
-    # to be used as example ovlweth pool
+    # to be used as example ovweth pool
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
@@ -144,11 +144,11 @@ def create_feed_factory(gov, uni_factory, weth, uni, request):
     tok = uni.address
     uni_fact = uni_factory
 
-    def create_feed_factory(univ3_factory=uni_fact, ovl=tok,
+    def create_feed_factory(univ3_factory=uni_fact, ov=tok,
                             micro_window=micro, macro_window=macro,
                             cardinality_min=cardinality,
                             avg_block_time=block_time):
-        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ovl,
+        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ov,
                                   univ3_factory, micro_window, macro_window,
                                   cardinality_min, avg_block_time)
         return feed_factory
@@ -166,26 +166,26 @@ def feed_factory(create_feed_factory):
 @pytest.fixture(scope="module")
 def create_feed(gov, feed_factory, pool_daiweth_30bps, pool_uniweth_30bps,
                 uni, dai, weth, request):
-    # ovlweth treated as uniweth for test purposes, feed ovl treated as uni
+    # ovweth treated as uniweth for test purposes, feed ov treated as uni
     mkt_fee = pool_daiweth_30bps.fee()
     mkt_base_tok = weth.address
     mkt_quote_tok = dai.address
     mkt_base_amt = 1 * 10 ** weth.decimals()
 
-    ovlweth_base_tok = weth.address
-    ovlweth_quote_tok = uni.address
-    ovlweth_fee = pool_uniweth_30bps.fee()
+    ovweth_base_tok = weth.address
+    ovweth_quote_tok = uni.address
+    ovweth_fee = pool_uniweth_30bps.fee()
 
     def create_feed(market_base_token=mkt_base_tok,
                     market_quote_token=mkt_quote_tok,
                     market_fee=mkt_fee,
                     market_base_amount=mkt_base_amt,
-                    ovlx_base_token=ovlweth_base_tok,
-                    ovlx_quote_token=ovlweth_quote_tok,
-                    ovlx_fee=ovlweth_fee):
+                    ovx_base_token=ovweth_base_tok,
+                    ovx_quote_token=ovweth_quote_tok,
+                    ovx_fee=ovweth_fee):
         tx = feed_factory.deployFeed(
             market_base_token, market_quote_token, market_fee,
-            market_base_amount, ovlx_base_token, ovlx_quote_token, ovlx_fee)
+            market_base_amount, ovx_base_token, ovx_quote_token, ovx_fee)
         feed_addr = tx.return_value
         feed = OverlayV1UniswapV3Feed.at(feed_addr)
         return feed
@@ -237,9 +237,9 @@ def mock_feed(create_mock_feed):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
+def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
                    guardian_role, feed_factory, mock_feed_factory):
-    def create_factory(tok=ovl, recipient=fee_recipient):
+    def create_factory(tok=ov, recipient=fee_recipient):
         # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok, recipient)
 
@@ -265,9 +265,9 @@ def factory(create_factory):
 
 
 @pytest.fixture(scope="module")
-def create_fake_deployer(fake_factory, ovl):
-    def create_fake_deployer(fake_factory=fake_factory, ovl=ovl):
-        return fake_factory.deploy(OverlayV1Deployer, ovl)
+def create_fake_deployer(fake_factory, ov):
+    def create_fake_deployer(fake_factory=fake_factory, ov=ov):
+        return fake_factory.deploy(OverlayV1Deployer, ov)
 
     yield create_fake_deployer
 
@@ -278,9 +278,9 @@ def fake_deployer(create_fake_deployer):
 
 
 @pytest.fixture(scope="module")
-def create_market(gov, ovl):
+def create_market(gov, ov):
     def create_market(feed, factory, feed_factory, risk_params,
-                      governance=gov, ovl=ovl):
+                      governance=gov, ov=ov):
         tx = factory.deployMarket(
             feed_factory, feed, risk_params, {"from": gov})
         market_addr = tx.return_value
@@ -307,12 +307,12 @@ def create_market(gov, ovl):
     25000000000000,  # priceDriftUpperLimit
     14,  # averageBlockTime
 )])
-def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
+def mock_market(gov, mock_feed, mock_feed_factory, factory, ov,
                 create_market, request):
     risk_params = request.param
     yield create_market(feed=mock_feed, feed_factory=mock_feed_factory,
                         factory=factory, risk_params=risk_params,
-                        governance=gov, ovl=ovl)
+                        governance=gov, ov=ov)
 
 
 @pytest.fixture(scope="module", params=[(
@@ -332,8 +332,8 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ovl,
     25000000000000,  # priceDriftUpperLimit
     14,  # averageBlockTime
 )])
-def market(gov, feed, feed_factory, factory, ovl, create_market, request):
+def market(gov, feed, feed_factory, factory, ov, create_market, request):
     risk_params = request.param
     yield create_market(feed=feed, feed_factory=feed_factory,
                         factory=factory, risk_params=risk_params,
-                        governance=gov, ovl=ovl)
+                        governance=gov, ov=ov)

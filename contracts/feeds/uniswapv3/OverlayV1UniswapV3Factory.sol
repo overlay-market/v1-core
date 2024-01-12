@@ -10,26 +10,26 @@ import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1UniswapV3Feed.sol";
 
 contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1FeedFactory {
-    address public immutable ovl;
+    address public immutable ov;
     address public immutable uniV3Factory;
 
     // @dev minimum observationCardinality needed for micro and macro windows
     uint16 public immutable observationCardinalityMinimum;
 
-    // registry of feeds; for a given (pool, base, amount, ovlX) pair,
+    // registry of feeds; for a given (pool, base, amount, ovX) pair,
     // returns associated feed
     mapping(address => mapping(address => mapping(uint128 => mapping(address => address))))
         public getFeed;
 
     constructor(
-        address _ovl,
+        address _ov,
         address _uniV3Factory,
         uint256 _microWindow,
         uint256 _macroWindow,
         uint16 _observationCardinalityMinimum,
         uint256 _averageBlockTime
     ) OverlayV1FeedFactory(_microWindow, _macroWindow) {
-        ovl = _ovl;
+        ov = _ov;
         uniV3Factory = _uniV3Factory;
 
         // sanity check on cardinality, given writes happen max once per block
@@ -37,22 +37,22 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         // SEE: Uniswap/v3-core/blob/main/contracts/libraries/Oracle.sol#L90
         require(
             _averageBlockTime * uint256(_observationCardinalityMinimum) >= 2 * _macroWindow,
-            "OVLV1: cardinality < 2 * macroWindow"
+            "OVV1: cardinality < 2 * macroWindow"
         );
         observationCardinalityMinimum = _observationCardinalityMinimum;
     }
 
     /// @dev deploys a new feed contract
-    /// @dev X is the common currency between market and ovl pools
+    /// @dev X is the common currency between market and ov pools
     /// @return feed_ address of the new feed
     function deployFeed(
         address marketBaseToken,
         address marketQuoteToken,
         uint24 marketFee,
         uint128 marketBaseAmount,
-        address ovlXBaseToken,
-        address ovlXQuoteToken,
-        uint24 ovlXFee
+        address ovXBaseToken,
+        address ovXQuoteToken,
+        uint24 ovXFee
     ) external returns (address feed_) {
         // get the pool address for market tokens
         address marketPool = IUniswapV3Factory(uniV3Factory).getPool(
@@ -60,20 +60,20 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
             marketQuoteToken,
             marketFee
         );
-        require(marketPool != address(0), "OVLV1: !marketPool");
+        require(marketPool != address(0), "OVV1: !marketPool");
 
-        // get the pool address for ovl/x tokens
-        address ovlXPool = IUniswapV3Factory(uniV3Factory).getPool(
-            ovlXBaseToken,
-            ovlXQuoteToken,
-            ovlXFee
+        // get the pool address for ov/x tokens
+        address ovXPool = IUniswapV3Factory(uniV3Factory).getPool(
+            ovXBaseToken,
+            ovXQuoteToken,
+            ovXFee
         );
-        require(ovlXPool != address(0), "OVLV1: !ovlXPool");
+        require(ovXPool != address(0), "OVV1: !ovXPool");
 
         // check feed doesn't already exist
         require(
-            getFeed[marketPool][marketBaseToken][marketBaseAmount][ovlXPool] == address(0),
-            "OVLV1: feed already exists"
+            getFeed[marketPool][marketBaseToken][marketBaseAmount][ovXPool] == address(0),
+            "OVV1: feed already exists"
         );
 
         // Create a new Feed contract
@@ -83,8 +83,8 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
                 marketBaseToken,
                 marketQuoteToken,
                 marketBaseAmount,
-                ovlXPool,
-                ovl,
+                ovXPool,
+                ov,
                 microWindow,
                 macroWindow,
                 observationCardinalityMinimum,
@@ -93,9 +93,9 @@ contract OverlayV1UniswapV3Factory is IOverlayV1UniswapV3FeedFactory, OverlayV1F
         );
 
         // store feed registry record for
-        // (marketPool, marketBaseToken, marketBaseAmount, ovlXPool) combo
+        // (marketPool, marketBaseToken, marketBaseAmount, ovXPool) combo
         // and record address as deployed feed
-        getFeed[marketPool][marketBaseToken][marketBaseAmount][ovlXPool] = feed_;
+        getFeed[marketPool][marketBaseToken][marketBaseAmount][ovXPool] = feed_;
         isFeed[feed_] = true;
         emit FeedDeployed(msg.sender, feed_);
     }

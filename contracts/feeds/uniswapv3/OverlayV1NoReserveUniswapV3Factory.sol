@@ -36,7 +36,7 @@ contract OverlayV1NoReserveUniswapV3Factory is
         // SEE: Uniswap/v3-core/blob/main/contracts/libraries/Oracle.sol#L90
         require(
             _averageBlockTime * uint256(_observationCardinalityMinimum) >= 2 * _macroWindow,
-            "OVLV1: cardinality < 2 * macroWindow"
+            "OVV1: cardinality < 2 * macroWindow"
         );
         observationCardinalityMinimum = _observationCardinalityMinimum;
     }
@@ -55,12 +55,12 @@ contract OverlayV1NoReserveUniswapV3Factory is
             marketQuoteToken,
             marketFee
         );
-        require(marketPool != address(0), "OVLV1: !marketPool");
+        require(marketPool != address(0), "OVV1: !marketPool");
 
         // check feed doesn't already exist
         require(
             getFeed[marketPool][marketBaseToken][marketBaseAmount] == address(0),
-            "OVLV1: feed already exists"
+            "OVV1: feed already exists"
         );
 
         // Create a new Feed contract
@@ -77,7 +77,7 @@ contract OverlayV1NoReserveUniswapV3Factory is
         );
 
         // store feed registry record for
-        // (marketPool, marketBaseToken, marketBaseAmount, ovlXPool) combo
+        // (marketPool, marketBaseToken, marketBaseAmount, ovXPool) combo
         // and record address as deployed feed
         getFeed[marketPool][marketBaseToken][marketBaseAmount] = feed_;
         isFeed[feed_] = true;

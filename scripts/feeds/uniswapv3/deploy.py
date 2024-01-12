@@ -16,7 +16,7 @@ def main():
         "Account", type=click.Choice(accounts.load())))
 
     # assemble constructor params
-    params = ["ovl (address)", "uniV3Factory (address)",
+    params = ["ov (address)", "uniV3Factory (address)",
               "microWindow (uint256)", "macroWindow (uint256)",
               "observationCardinalityMinimum (uint16)",
               "averageBlockTime (uint256)"]

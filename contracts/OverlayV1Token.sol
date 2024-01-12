@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 import "./interfaces/IOverlayV1Token.sol";
 
-contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OVL") {
+contract OverlayV1Token is IOverlayV1Token, AccessControlEnumerable, ERC20("Overlay", "OV") {
     constructor() {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }

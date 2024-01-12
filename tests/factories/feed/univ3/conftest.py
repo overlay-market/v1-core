@@ -31,7 +31,7 @@ def weth():
 
 @pytest.fixture(scope="module")
 def uni():
-    # to be used as example ovl
+    # to be used as example ov
     yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
 
 
@@ -47,7 +47,7 @@ def pool_daiweth_30bps():
 
 @pytest.fixture(scope="module")
 def pool_uniweth_30bps():
-    # to be used as example ovlweth pool
+    # to be used as example ovweth pool
     yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
@@ -82,10 +82,10 @@ def create_factory(gov, uni_factory, weth, uni, request):
     uni_fact = uni_factory.address
     tok = uni.address
 
-    def create_factory(univ3_factory=uni_fact, ovl=tok, micro_window=micro,
+    def create_factory(univ3_factory=uni_fact, ov=tok, micro_window=micro,
                        macro_window=macro, cardinality_min=cardinality,
                        avg_block_time=block_time):
-        factory = gov.deploy(OverlayV1UniswapV3Factory, ovl, univ3_factory,
+        factory = gov.deploy(OverlayV1UniswapV3Factory, ov, univ3_factory,
                              micro_window, macro_window, cardinality_min,
                              avg_block_time)
         return factory
