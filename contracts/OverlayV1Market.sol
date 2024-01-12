@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
@@ -16,7 +17,7 @@ import "./libraries/Risk.sol";
 import "./libraries/Roller.sol";
 import "./libraries/Tick.sol";
 
-contract OverlayV1Market is IOverlayV1Market {
+contract OverlayV1Market is IOverlayV1Market, Pausable {
     using FixedCast for uint16;
     using FixedCast for uint256;
     using FixedPoint for uint256;
@@ -488,7 +489,7 @@ contract OverlayV1Market is IOverlayV1Market {
 
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
-    function update() public returns (Oracle.Data memory) {
+    function update() public whenNotPaused returns (Oracle.Data memory) {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 
@@ -926,6 +927,16 @@ contract OverlayV1Market is IOverlayV1Market {
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
             dpUpperLimit = pow.expUp(); // e**(pow)
         }
+    }
+
+    /// @notice Pause functions: Build, Unwind, Update and Liquidate
+    function pause() external onlyFactory {
+        _pause();
+    }
+
+    /// @notice Unpause functions: Build, Unwind, Update and Liquidate
+    function unpause() external onlyFactory {
+        _unpause();
     }
 
     /// @notice Irreversibly shuts down the market. Can be triggered by
