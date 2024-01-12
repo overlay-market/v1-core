@@ -8,3 +8,7 @@ reports/
 *.sw[op]
 .DS_Store
 *.bk
+
+# Foundry
+cache
+forge-out
