@@ -1,0 +1,39 @@
+name: Overlay V1 Core Test Forge
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          export RPC="https://arbitrum-mainnet.infura.io/v3/${{ secrets.WEB3_INFURA_PROJECT_ID }}"
+          forge test -vvv
+        id: test
