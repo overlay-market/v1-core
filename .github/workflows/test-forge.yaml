@@ -1,4 +1,4 @@
-name: Overlay V1 Core Test Python
+name: Overlay V1 Core Test Forge
 
 on:
   pull_request:
@@ -34,5 +34,6 @@ jobs:
 
       - name: Run Forge tests
         run: |
+          export RPC="https://arbitrum-mainnet.infura.io/v3/${{ secrets.WEB3_INFURA_PROJECT_ID }}"
           forge test -vvv
         id: test
