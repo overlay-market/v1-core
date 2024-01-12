@@ -132,7 +132,8 @@ contract MarketTest is Test {
 
     // Test shutdown markets
 
-    function testShutdown() public {
+    function testShutdown(uint256 _fraction) public {
+        _fraction = bound(_fraction, 1e14, 9999e14);
 
         vm.startPrank(USER);
         ov.approve(address(market), type(uint256).max);
@@ -144,8 +145,8 @@ contract MarketTest is Test {
         market.build(1e18, 1e18, true, type(uint256).max);
         // Unwind postion 0
         market.unwind(0, 1e18, 0);
-        // Unwind half of postion 1
-        market.unwind(1, 5e17, 0);
+        // Unwind _fraction of postion 1
+        market.unwind(1, _fraction, 0);
 
         vm.expectRevert("OVLV1: !shutdown");
         market.emergencyWithdraw(1);
