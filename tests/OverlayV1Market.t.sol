@@ -72,6 +72,7 @@ contract MarketTest is Test {
 
     }
 
+    // Test pausable markets
 
     function testPause() public {
         vm.startPrank(USER);
@@ -126,6 +127,46 @@ contract MarketTest is Test {
 
         vm.startPrank(PAUSER);
         factory.unpause(ORACLE);
+
+    }
+
+    // Test shutdown markets
+
+    function testShutdown() public {
+
+        vm.startPrank(USER);
+        ov.approve(address(market), type(uint256).max);
+        // Build postion 0
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Build postion 1
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Build postion 2
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Unwind postion 0
+        market.unwind(0, 1e18, 0);
+        // Unwind half of postion 1
+        market.unwind(1, 5e17, 0);
+
+        vm.expectRevert("OVLV1: !shutdown");
+        market.emergencyWithdraw(1);
+
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("OVLV1: !guardian");
+        factory.shutdown(ORACLE);
+
+        ov.grantRole(GUARDIAN_ROLE, GOVERNOR);
+        factory.shutdown(ORACLE);
+
+        vm.startPrank(USER);
+        vm.expectRevert("OVLV1: shutdown");
+        market.build(1e18, 1e18, true, type(uint256).max);
+        vm.expectRevert("OVLV1: shutdown");
+        market.unwind(1, 1e18, 0);
+        vm.expectRevert("OVLV1: shutdown");
+        market.liquidate(USER, 1);
+        
+        market.emergencyWithdraw(1);
+        market.emergencyWithdraw(2);
 
     }
 }
