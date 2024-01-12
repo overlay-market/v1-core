@@ -76,8 +76,11 @@ contract MarketTest is Test {
     function testPause() public {
         vm.startPrank(USER);
         ov.approve(address(market), type(uint256).max);
+        // Build postion 0
         market.build(1e18, 1e18, true, type(uint256).max);
+        // Build postion 1
         market.build(1e18, 1e18, true, type(uint256).max);
+        // Unwind postion 0
         market.unwind(0, 1e18, 0);
 
         vm.startPrank(PAUSER);
@@ -101,4 +104,28 @@ contract MarketTest is Test {
 
     }
 
+    function testRoles() public {
+        vm.startPrank(USER);
+        vm.expectRevert();
+        factory.pause(ORACLE);
+
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert();
+        factory.pause(ORACLE);
+
+        vm.startPrank(PAUSER);
+        factory.pause(ORACLE);
+
+        vm.startPrank(USER);
+        vm.expectRevert();
+        factory.unpause(ORACLE);
+
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert();
+        factory.unpause(ORACLE);
+
+        vm.startPrank(PAUSER);
+        factory.unpause(ORACLE);
+
+    }
 }
