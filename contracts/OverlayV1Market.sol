@@ -731,7 +731,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @notice and decrease number of oi shares issued
     function _reduceOIAndOIShares(
         Position.Info memory pos,
-        uint256 fraction,
+        uint256 fraction
     ) internal {
         // NOTE: use subFloor to avoid reverts with oi rounding issues
         if (pos.isLong) {
