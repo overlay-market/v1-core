@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import { Test, console2 } from "forge-std/Test.sol";
-import { OverlayV1Market } from "contracts/OverlayV1Market.sol";
-import { OverlayV1Factory } from "contracts/OverlayV1Factory.sol";
-import { OverlayV1Token} from "contracts/OverlayV1Token.sol";
-import { OverlayV1Deployer } from "contracts/OverlayV1Deployer.sol";
+import {Test, console2} from "forge-std/Test.sol";
+import {OverlayV1Market} from "contracts/OverlayV1Market.sol";
+import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
+import {OverlayV1Token} from "contracts/OverlayV1Token.sol";
+import {OverlayV1Deployer} from "contracts/OverlayV1Deployer.sol";
 
 contract MarketTest is Test {
     bytes32 constant ADMIN = 0x00;
@@ -56,20 +56,11 @@ contract MarketTest is Test {
         params[14] = uint256(0x0000000000000000000000000000000000000000000000000000000000000000);
 
         vm.startPrank(GOVERNOR);
-        factory.addFeedFactory(
-            FEED_FACTORY
-        );
+        factory.addFeedFactory(FEED_FACTORY);
 
-        market = OverlayV1Market(
-            factory.deployMarket(
-                FEED_FACTORY,
-                FEED,
-                params
-            )
-        );
+        market = OverlayV1Market(factory.deployMarket(FEED_FACTORY, FEED, params));
 
         ov.mint(USER, 100e18);
-
     }
 
     // Test pausable markets
@@ -94,7 +85,7 @@ contract MarketTest is Test {
         market.unwind(1, 1e18, 0);
         vm.expectRevert("Pausable: paused");
         market.liquidate(USER, 1);
-        
+
         vm.startPrank(PAUSER);
 
         factory.unpause(FEED);
@@ -102,7 +93,6 @@ contract MarketTest is Test {
         vm.startPrank(USER);
         market.build(1e18, 1e18, true, type(uint256).max);
         market.unwind(1, 1e18, 0);
-
     }
 
     function testRoles() public {
@@ -127,7 +117,6 @@ contract MarketTest is Test {
 
         vm.startPrank(PAUSER);
         factory.unpause(FEED);
-
     }
 
     // Test shutdown markets
@@ -165,9 +154,12 @@ contract MarketTest is Test {
         market.unwind(1, 1e18, 0);
         vm.expectRevert("OVLV1: shutdown");
         market.liquidate(USER, 1);
-        
+
+        uint256 balanceBefore = ov.balanceOf(USER);
         market.emergencyWithdraw(1);
+        assertEq(balanceBefore + 1e18, ov.balanceOf(USER));
         market.emergencyWithdraw(2);
 
+        assertEq(ov.balanceOf(address(market)), 0);
     }
 }
