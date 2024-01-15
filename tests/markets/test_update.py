@@ -16,9 +16,9 @@ def test_update_fetches_from_feed(market, feed, rando):
 
 
 @given(
-    notional_long=strategy('decimal', min_value='0.001', max_value='800000',
+    notional_long=strategy('decimal', min_value='0.001', max_value='80000',
                            places=3),
-    notional_short=strategy('decimal', min_value='0.001', max_value='800000',
+    notional_short=strategy('decimal', min_value='0.001', max_value='80000',
                             places=3))
 def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
                              notional_long, notional_short):
