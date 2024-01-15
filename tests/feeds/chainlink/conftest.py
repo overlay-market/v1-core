@@ -24,8 +24,9 @@ def rando(accounts):
 
 @pytest.fixture(scope="module")
 def chainlink_aggregator():
-    # to be used as example aggregator
-    yield Contract.from_explorer("0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419")
+    # to be used as example aggregator (Arbitrum One)
+    # corresponds to the feed 0x46b4143caf2fe2965349fca53730e83f91247e2c
+    yield Contract.from_explorer("0x91F9C89891575C2E41edfFB5953565A9aE2Dbd9F")
 
 
 @pytest.fixture(scope="module")
