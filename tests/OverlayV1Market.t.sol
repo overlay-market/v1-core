@@ -6,6 +6,7 @@ import {OverlayV1Market} from "contracts/OverlayV1Market.sol";
 import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
 import {OverlayV1Token} from "contracts/OverlayV1Token.sol";
 import {OverlayV1Deployer} from "contracts/OverlayV1Deployer.sol";
+import {Position} from "contracts/libraries/Position.sol";
 
 contract MarketTest is Test {
     bytes32 constant ADMIN = 0x00;
@@ -125,6 +126,7 @@ contract MarketTest is Test {
         _fraction = bound(_fraction, 1e14, 9999e14);
 
         vm.startPrank(USER);
+        
         ov.approve(address(market), type(uint256).max);
         // Build postion 0
         market.build(1e18, 1e18, true, type(uint256).max);
@@ -137,29 +139,33 @@ contract MarketTest is Test {
         // Unwind _fraction of postion 1
         market.unwind(1, _fraction, 0);
 
-        vm.expectRevert("OVLV1: !shutdown");
+        vm.expectRevert("OVV1: !shutdown");
         market.emergencyWithdraw(1);
 
         vm.startPrank(GOVERNOR);
-        vm.expectRevert("OVLV1: !guardian");
+        vm.expectRevert("OVV1: !guardian");
         factory.shutdown(FEED);
 
         ov.grantRole(GUARDIAN_ROLE, GOVERNOR);
         factory.shutdown(FEED);
 
         vm.startPrank(USER);
-        vm.expectRevert("OVLV1: shutdown");
+        vm.expectRevert("OVV1: shutdown");
         market.build(1e18, 1e18, true, type(uint256).max);
-        vm.expectRevert("OVLV1: shutdown");
+        vm.expectRevert("OVV1: shutdown");
         market.unwind(1, 1e18, 0);
-        vm.expectRevert("OVLV1: shutdown");
+        vm.expectRevert("OVV1: shutdown");
         market.liquidate(USER, 1);
 
         uint256 balanceBefore = ov.balanceOf(USER);
+        (uint96 notionalInitial,,,,,,,uint16 fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(1))));
         market.emergencyWithdraw(1);
-        assertEq(balanceBefore + 1e18, ov.balanceOf(USER));
+        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
+        balanceBefore = ov.balanceOf(USER);
+        (notionalInitial,,,,,,,fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(2))));
         market.emergencyWithdraw(2);
-
+        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
+        
         assertEq(ov.balanceOf(address(market)), 0);
     }
 }

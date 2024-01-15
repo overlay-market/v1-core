@@ -853,7 +853,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
         // calculate remaining collateral backing position
         uint256 cost = pos.cost(ONE);
-        cost = Math.min(ovl.balanceOf(address(this)), cost); // if cost > balance
+        cost = Math.min(ov.balanceOf(address(this)), cost); // if cost > balance
 
         // set fraction remaining to zero so position no longer exists
         pos.fractionRemaining = 0;
