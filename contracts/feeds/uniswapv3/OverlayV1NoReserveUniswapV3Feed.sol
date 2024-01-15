@@ -37,11 +37,11 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
 
         require(
             _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1: marketToken != marketBaseToken"
+            "OVV1: marketToken != marketBaseToken"
         );
         require(
             _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-            "OVLV1: marketToken != marketQuoteToken"
+            "OVV1: marketToken != marketQuoteToken"
         );
 
         marketToken0 = _marketToken0;
@@ -54,7 +54,7 @@ contract OverlayV1NoReserveUniswapV3Feed is IOverlayV1NoReserveUniswapV3Feed, Ov
         (, , , uint16 observationCardinalityMarket, , , ) = IUniswapV3Pool(_marketPool).slot0();
         require(
             observationCardinalityMarket >= _cardinalityMarketMinimum,
-            "OVLV1: marketCardinality < min"
+            "OVV1: marketCardinality < min"
         );
 
         marketPool = _marketPool;

@@ -11,11 +11,11 @@ import "../../interfaces/feeds/uniswapv3/IOverlayV1UniswapV3Feed.sol";
 import "../OverlayV1Feed.sol";
 
 contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
-    uint128 internal constant ONE = 1e18; // 18 decimal places for ovl
+    uint128 internal constant ONE = 1e18; // 18 decimal places for ov
 
     // relevant pools for the feed
     address public immutable marketPool;
-    address public immutable ovlXPool;
+    address public immutable ovXPool;
 
     // marketPool tokens
     address public immutable marketToken0;
@@ -26,9 +26,9 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     address public immutable marketQuoteToken;
     uint128 public immutable marketBaseAmount;
 
-    // ovlXPool tokens
-    // @dev X is the common token between marketPool and ovlXPool
-    address public immutable ovl;
+    // ovXPool tokens
+    // @dev X is the common token between marketPool and ovXPool
+    address public immutable ov;
     address public immutable x;
 
     constructor(
@@ -36,62 +36,62 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         address _marketBaseToken,
         address _marketQuoteToken,
         uint128 _marketBaseAmount,
-        address _ovlXPool,
-        address _ovl,
+        address _ovXPool,
+        address _ov,
         uint256 _microWindow,
         uint256 _macroWindow,
         uint256 _cardinalityMarketMinimum,
         uint256 _cardinalityOvlXMinimum
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         // determine X token
-        // need OVL/X pool for ovl vs X price to make reserve conversion from X => OVL
-        address _ovlXToken0 = IUniswapV3Pool(_ovlXPool).token0();
-        address _ovlXToken1 = IUniswapV3Pool(_ovlXPool).token1();
-        require(_ovlXToken0 == _ovl || _ovlXToken1 == _ovl, "OVLV1: ovlXToken != OVL");
-        x = _ovlXToken0 == _ovl ? _ovlXToken1 : _ovlXToken0;
+        // need OV/X pool for ov vs X price to make reserve conversion from X => OV
+        address _ovXToken0 = IUniswapV3Pool(_ovXPool).token0();
+        address _ovXToken1 = IUniswapV3Pool(_ovXPool).token1();
+        require(_ovXToken0 == _ov || _ovXToken1 == _ov, "OVV1: ovXToken != OV");
+        x = _ovXToken0 == _ov ? _ovXToken1 : _ovXToken0;
 
-        // need X in market pool to make reserve conversion from X => OVL
+        // need X in market pool to make reserve conversion from X => OV
         address _marketToken0 = IUniswapV3Pool(_marketPool).token0();
         address _marketToken1 = IUniswapV3Pool(_marketPool).token1();
 
-        require(_marketToken0 == x || _marketToken1 == x, "OVLV1: marketToken != X");
+        require(_marketToken0 == x || _marketToken1 == x, "OVV1: marketToken != X");
         marketToken0 = _marketToken0;
         marketToken1 = _marketToken1;
 
         require(
             _marketToken0 == _marketBaseToken || _marketToken1 == _marketBaseToken,
-            "OVLV1: marketToken != marketBaseToken"
+            "OVV1: marketToken != marketBaseToken"
         );
         require(
             _marketToken0 == _marketQuoteToken || _marketToken1 == _marketQuoteToken,
-            "OVLV1: marketToken != marketQuoteToken"
+            "OVV1: marketToken != marketQuoteToken"
         );
         marketBaseToken = _marketBaseToken;
         marketQuoteToken = _marketQuoteToken;
         marketBaseAmount = _marketBaseAmount;
 
         // check observation cardinality large enough for market and
-        // ovl pool on deploy
-        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_ovlXPool).slot0();
+        // ov pool on deploy
+        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_ovXPool).slot0();
         require(
             observationCardinalityOvlX >= _cardinalityOvlXMinimum,
-            "OVLV1: ovlXCardinality < min"
+            "OVV1: ovXCardinality < min"
         );
 
         (, , , uint16 observationCardinalityMarket, , , ) = IUniswapV3Pool(_marketPool).slot0();
         require(
             observationCardinalityMarket >= _cardinalityMarketMinimum,
-            "OVLV1: marketCardinality < min"
+            "OVV1: marketCardinality < min"
         );
 
         marketPool = _marketPool;
-        ovlXPool = _ovlXPool;
-        ovl = _ovl;
+        ovXPool = _ovXPool;
+        ov = _ov;
     }
 
     /// @dev fetches TWAP, liquidity data from the univ3 pool oracle
     /// @dev for micro and macro window averaging intervals.
-    /// @dev market pool and ovlX pool have different consult inputs
+    /// @dev market pool and ovX pool have different consult inputs
     /// @dev to minimize accumulator snapshot queries with consult
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
         // consult to market pool
@@ -133,15 +133,15 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         );
 
         // reserve calculation done over window: [now - microWindow, now]
-        // needs ovlX price over micro to convert into OVL terms from X
-        // get mean ticks of X in OVL to convert reserveInX to reserveInOvl
+        // needs ovX price over micro to convert into OV terms from X
+        // get mean ticks of X in OV to convert reserveInX to reserveInOvl
         int24 arithmeticMeanTickOvlX;
-        if (marketPool == ovlXPool) {
+        if (marketPool == ovXPool) {
             // simply mean ticks over the micro window of market pool
-            // NOTE: saves the additional consult call to ovlXPool
+            // NOTE: saves the additional consult call to ovXPool
             arithmeticMeanTickOvlX = arithmeticMeanTicksMarket[2];
         } else {
-            // consult to ovlX pool
+            // consult to ovX pool
             // secondsAgo.length = 2; twaps.length = liqs.length = 1
             (
                 uint32[] memory secondsAgosOvlX,
@@ -149,7 +149,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
                 uint256[] memory nowIdxsOvlX
             ) = _inputsToConsultOvlXPool(microWindow);
             (int24[] memory arithmeticMeanTicksOvlX, ) = consult(
-                ovlXPool,
+                ovXPool,
                 secondsAgosOvlX,
                 windowsOvlX,
                 nowIdxsOvlX
@@ -224,7 +224,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         return (secondsAgos, windows, nowIdxs);
     }
 
-    /// @dev returns input params needed for call to ovlXPool consult
+    /// @dev returns input params needed for call to ovXPool consult
     function _inputsToConsultOvlXPool(uint256 _microWindow)
         private
         pure
@@ -331,14 +331,14 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         }
     }
 
-    /// @dev virtual balance of X in the pool in OVL terms
+    /// @dev virtual balance of X in the pool in OV terms
     function getReserveInOvl(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
         int24 arithmeticMeanTickOvlX
     ) public view returns (uint256 reserveInOvl_) {
         uint256 reserveInX = getReserveInX(arithmeticMeanTickMarket, harmonicMeanLiquidityMarket);
-        uint256 amountOfXPerOvl = getQuoteAtTick(arithmeticMeanTickOvlX, ONE, ovl, x);
+        uint256 amountOfXPerOvl = getQuoteAtTick(arithmeticMeanTickOvlX, ONE, ov, x);
         reserveInOvl_ = FullMath.mulDiv(reserveInX, uint256(ONE), amountOfXPerOvl);
     }
 

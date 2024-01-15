@@ -15,7 +15,7 @@ library FixedCast {
     function toUint16Fixed(uint256 value) internal pure returns (uint16) {
         uint256 divisor = ONE_256 / ONE_16;
         uint256 ret256 = value / divisor;
-        require(ret256 <= type(uint16).max, "OVLV1: FixedCast out of bounds");
+        require(ret256 <= type(uint16).max, "OVV1: FixedCast out of bounds");
         return uint16(ret256);
     }
 }

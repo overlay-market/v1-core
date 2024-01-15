@@ -39,7 +39,7 @@ V1 core relies on three modules:
 
 - [Markets Module](#markets-module)
 - [Feeds Module](#feeds-module)
-- [OVL Module](#ovl-module)
+- [OV Module](#ov-module)
 
 
 ### Markets Module
@@ -51,9 +51,9 @@ Traders interact directly with the market contract to take positions on a data s
 - `liquidate()`
 - `update()`
 
-Traders transfer OVL collateral to the market contract to back a position. This collateral is held in the market contract until the trader unwinds their position when exiting the trade. OVL is the only collateral supported for V1.
+Traders transfer OV collateral to the market contract to back a position. This collateral is held in the market contract until the trader unwinds their position when exiting the trade. OV is the only collateral supported for V1.
 
-The market contract tracks the current open interest for all outstanding positions on a market as well as [information about each position](./contracts/libraries/Position.sol), that is needed in order to calculate the current value of the position in OVL terms:
+The market contract tracks the current open interest for all outstanding positions on a market as well as [information about each position](./contracts/libraries/Position.sol), that is needed in order to calculate the current value of the position in OV terms:
 
 ```
 library Position {
@@ -100,7 +100,7 @@ library Oracle {
       uint256 priceOverMicroWindow; // p(now) averaged over micro
       uint256 priceOverMacroWindow; // p(now) averaged over macro
       uint256 priceOneMacroWindowAgo; // p(now - macro) avg over macro
-      uint256 reserveOverMicroWindow; // r(now) in ovl averaged over micro
+      uint256 reserveOverMicroWindow; // r(now) in ov averaged over micro
       bool hasReserve; // whether oracle has manipulable reserve pool
   }
 }
@@ -110,11 +110,11 @@ from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data`
 For each oracle provider supported, there should be a specific implementation of a feed contract that inherits from `OverlayV1Feed.sol` (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools).
 
 
-### OVL Module
+### OV Module
 
-The OVL module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OVL to compensate traders for their PnL on positions.
+The OV module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OV to compensate traders for their PnL on positions.
 
-[`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol) grants these mint and burn permissions on a call to `deployMarket()`. Because of this, the factory contract must have admin privileges on the OVL token prior to deploying markets.
+[`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol) grants these mint and burn permissions on a call to `deployMarket()`. Because of this, the factory contract must have admin privileges on the OV token prior to deploying markets.
 
 
 ## Deployment Process
@@ -125,4 +125,4 @@ The process to add a new market is as follows:
 
 2. Deploy an [`OverlayV1Market.sol`](./contracts/OverlayV1Market.sol) contract referencing the previously deployed feed from 1 as the `feed` constructor parameter. This is accomplished by governance calling `deployMarket()` on the market factory contract [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol). Traders interact directly with the newly deployed market contract to take positions out. The market contract stores the active positions and open interest for all outstanding trades on the data stream.
 
-3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OVL token prior to any markets being deployed, otherwise `deployMarket()` will revert.
+3. The market factory contract grants the newly deployed market contract mint and burn privileges on the sole instance of the [`OverlayV1Token.sol`](./contracts/OverlayV1Token.sol) token. Governance should grant the market factory contract admin privileges on the OV token prior to any markets being deployed, otherwise `deployMarket()` will revert.

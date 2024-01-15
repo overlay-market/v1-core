@@ -15,7 +15,7 @@ def isolation(fn_isolation):
 
 
 @given(is_long=strategy('bool'))
-def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
+def test_build_when_price_limit_is_breached(market, feed, alice, ov, is_long):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
 
@@ -55,11 +55,11 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
 
     # check build reverts when price surpasses limit
     input_price_limit = price * (1 - tol) if is_long else price * (1 + tol)
-    with reverts("OVLV1:slippage>max"):
+    with reverts("OVV1:slippage>max"):
         market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
@@ -74,7 +74,7 @@ def test_build_when_price_limit_is_breached(market, feed, alice, ovl, is_long):
 
 
 @given(is_long=strategy('bool'))
-def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
+def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ov,
                                              is_long):
     # build attributes
     notional = Decimal(100)
@@ -102,7 +102,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -132,7 +132,7 @@ def test_unwind_when_price_limit_is_breached(market, feed, alice, factory, ovl,
 
     # check unwind reverts when price surpasses limit
     input_price_limit = price * (1 + tol) if is_long else price * (1 - tol)
-    with reverts("OVLV1:slippage>max"):
+    with reverts("OVV1:slippage>max"):
         market.unwind(input_pos_id, input_fraction, input_price_limit,
                       {"from": alice})
 

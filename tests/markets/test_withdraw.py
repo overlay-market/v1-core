@@ -14,7 +14,7 @@ def isolation(fn_isolation):
 
 
 # shutdown tests
-def test_shutdown(market, factory, ovl, alice):
+def test_shutdown(market, factory, ov, alice):
     # shutdown the market through factory
     market.shutdown({"from": factory})
 
@@ -28,24 +28,24 @@ def test_shutdown(market, factory, ovl, alice):
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(market, 2**256 - 1, {"from": alice})
-    with reverts("OVLV1: shutdown"):
+    ov.approve(market, 2**256 - 1, {"from": alice})
+    with reverts("OVV1: shutdown"):
         market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
     # check can't shutdown again
-    with reverts("OVLV1: shutdown"):
+    with reverts("OVV1: shutdown"):
         market.shutdown({"from": factory})
 
 
 def test_shutdown_reverts_when_not_factory(market, rando):
-    with reverts("OVLV1: !factory"):
+    with reverts("OVV1: !factory"):
         market.shutdown({"from": rando})
 
 
 # emergency withdraw tests
 def test_emergency_withdraw_transfers_collateral(
-        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
+        mock_market, mock_feed, factory, ov, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -53,7 +53,7 @@ def test_emergency_withdraw_transfers_collateral(
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+    ov.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # build a position
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -81,9 +81,9 @@ def test_emergency_withdraw_transfers_collateral(
         Decimal(input_collateral) * (Decimal(1e18) - Decimal(fraction))
         / Decimal(1e18))
 
-    # cache alice and market balances of ovl prior
-    expect_balance_alice = ovl.balanceOf(alice)
-    expect_balance_market = ovl.balanceOf(mock_market)
+    # cache alice and market balances of ov prior
+    expect_balance_alice = ov.balanceOf(alice)
+    expect_balance_market = ov.balanceOf(mock_market)
 
     # emergency withdraw collateral
     tx = mock_market.emergencyWithdraw(input_pos_id, {"from": alice})
@@ -93,8 +93,8 @@ def test_emergency_withdraw_transfers_collateral(
     expect_balance_alice += expect_collateral_out
     expect_balance_market -= expect_collateral_out
 
-    actual_balance_alice = ovl.balanceOf(alice)
-    actual_balance_market = ovl.balanceOf(mock_market)
+    actual_balance_alice = ov.balanceOf(alice)
+    actual_balance_market = ov.balanceOf(mock_market)
 
     # check balances match expectations
     assert actual_balance_alice == expect_balance_alice
@@ -109,7 +109,7 @@ def test_emergency_withdraw_transfers_collateral(
 
 
 def test_emergency_withdraw_updates_position(
-        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
+        mock_market, mock_feed, factory, ov, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -117,7 +117,7 @@ def test_emergency_withdraw_updates_position(
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+    ov.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # build a position
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -157,7 +157,7 @@ def test_emergency_withdraw_updates_position(
 
 
 def test_emergency_withdraw_executes_transfers(
-        mock_market, mock_feed, factory, ovl, alice, guardian, rando):
+        mock_market, mock_feed, factory, ov, alice, guardian, rando):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -165,7 +165,7 @@ def test_emergency_withdraw_executes_transfers(
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+    ov.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # build a position
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -204,7 +204,7 @@ def test_emergency_withdraw_executes_transfers(
     assert tx.events["Transfer"]["value"] == expect_collateral_out
 
 
-def test_emergency_withdraw_reverts_when_not_shutdown(market, ovl, alice):
+def test_emergency_withdraw_reverts_when_not_shutdown(market, ov, alice):
     # input build parameters
     input_collateral = int(1e18)
     input_leverage = int(1e18)
@@ -212,7 +212,7 @@ def test_emergency_withdraw_reverts_when_not_shutdown(market, ovl, alice):
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(market, 2**256 - 1, {"from": alice})
+    ov.approve(market, 2**256 - 1, {"from": alice})
 
     # build a position
     tx = market.build(input_collateral, input_leverage, input_is_long,
@@ -220,11 +220,11 @@ def test_emergency_withdraw_reverts_when_not_shutdown(market, ovl, alice):
     input_pos_id = tx.return_value
 
     # check can't withdraw collateral from built position when not shutdown
-    with reverts("OVLV1: !shutdown"):
+    with reverts("OVV1: !shutdown"):
         market.emergencyWithdraw(input_pos_id, {"from": alice})
 
 
-def test_emergency_withdraw_reverts_when_position_not_exists(market, feed, ovl,
+def test_emergency_withdraw_reverts_when_position_not_exists(market, feed, ov,
                                                              factory, alice,
                                                              guardian):
     input_pos_id = 100
@@ -234,12 +234,12 @@ def test_emergency_withdraw_reverts_when_position_not_exists(market, feed, ovl,
     factory.shutdown(feed, {"from": guardian})
 
     # check can't withdraw collateral when no position exists
-    with reverts("OVLV1:!position"):
+    with reverts("OVV1:!position"):
         market.emergencyWithdraw(input_pos_id, {"from": alice})
 
 
 def test_multiple_emergency_withdraw(
-        mock_market, mock_feed, factory, ovl, alice, bob, guardian, rando):
+        mock_market, mock_feed, factory, ov, alice, bob, guardian, rando):
     # loop through 10 times
     n = 10
     total_collateral_long = Decimal(10000)
@@ -249,8 +249,8 @@ def test_multiple_emergency_withdraw(
     leverage_cap = Decimal(mock_market.params(idx_cap_leverage) / 1e18)
 
     # approve market for spending then build
-    ovl.approve(mock_market, 2**256-1, {"from": alice})
-    ovl.approve(mock_market, 2**256-1, {"from": bob})
+    ov.approve(mock_market, 2**256-1, {"from": alice})
+    ov.approve(mock_market, 2**256-1, {"from": bob})
 
     # per trade collateral values
     collateral_alice = total_collateral_long / Decimal(n)
@@ -349,7 +349,7 @@ def test_multiple_emergency_withdraw(
         # check revert happens on withdrawal and continue loop
         # if trader has already unwound entire position
         if expect_fraction_remaining == 0:
-            with reverts("OVLV1:!position"):
+            with reverts("OVV1:!position"):
                 mock_market.emergencyWithdraw(id, {"from": trader})
 
             # continue the loop after revert goes through
@@ -357,8 +357,8 @@ def test_multiple_emergency_withdraw(
 
         # for other case when position still has collateral left ...
         # cache balances prior to withdraw
-        expect_balance_trader = ovl.balanceOf(trader)
-        expect_balance_market = ovl.balanceOf(mock_market)
+        expect_balance_trader = ov.balanceOf(trader)
+        expect_balance_market = ov.balanceOf(mock_market)
 
         # calculate amount of collateral expect to be withdrawn
         expect_collateral_out = (expect_notional - expect_debt) * \
@@ -381,8 +381,8 @@ def test_multiple_emergency_withdraw(
         expect_balance_market -= expect_collateral_out
 
         # get balances after withdraw
-        actual_balance_trader = ovl.balanceOf(trader)
-        actual_balance_market = ovl.balanceOf(mock_market)
+        actual_balance_trader = ov.balanceOf(trader)
+        actual_balance_market = ov.balanceOf(mock_market)
 
         # check balances for market and trader match expectations
         assert actual_balance_trader == expect_balance_trader

@@ -22,8 +22,8 @@ def main():
     # assemble params for deployFeed
     params = ["marketBaseToken (address)", "marketQuoteToken (address)",
               "marketFee (uint24)", "marketBaseAmount (uint128)",
-              "ovlXBaseToken (address)", "ovlXQuoteToken (address)",
-              "ovlXFee (uint24)"]
+              "ovXBaseToken (address)", "ovXQuoteToken (address)",
+              "ovXFee (uint24)"]
     args = [click.prompt(f"{param}") for param in params]
 
     click.echo(
@@ -34,9 +34,9 @@ def main():
         marketQuoteToken (address): {args[1]}
         marketFee (uint24): {args[2]}
         marketBaseAmount (uint128): {args[3]}
-        ovlXBaseToken (address): {args[4]}
-        ovlXQuoteToken (address): {args[5]}
-        ovlXFee (uint24): {args[6]}
+        ovXBaseToken (address): {args[4]}
+        ovXQuoteToken (address): {args[5]}
+        ovXFee (uint24): {args[6]}
         """
     )
 

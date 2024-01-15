@@ -53,7 +53,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
 
     market_avg_ticks, market_avg_liqs = quanto_feed.consult(
         pool_daiweth_30bps, seconds_agos, windows, now_idxs)
-    ovlweth_avg_ticks, ovlweth_avg_liqs = quanto_feed.consult(
+    ovweth_avg_ticks, ovweth_avg_liqs = quanto_feed.consult(
         pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
     prices = []
@@ -65,7 +65,7 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
             market_avg_ticks[i], market_base_amount,
             market_base_token, market_quote_token)
         reserve = quanto_feed.getReserveInOvl(
-            market_avg_ticks[i], market_avg_liqs[i], ovlweth_avg_ticks[i])
+            market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
         prices.append(price)
         reserves.append(reserve)
@@ -95,7 +95,7 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
 
     market_avg_ticks, market_avg_liqs = inverse_feed.consult(
         pool_uniweth_30bps, seconds_agos, windows, now_idxs)
-    ovlweth_avg_ticks, ovlweth_avg_liqs = inverse_feed.consult(
+    ovweth_avg_ticks, ovweth_avg_liqs = inverse_feed.consult(
         pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
     prices = []
@@ -107,7 +107,7 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
             market_avg_ticks[i], market_base_amount,
             market_base_token, market_quote_token)
         reserve = inverse_feed.getReserveInOvl(
-            market_avg_ticks[i], market_avg_liqs[i], ovlweth_avg_ticks[i])
+            market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
         prices.append(price)
         reserves.append(reserve)
@@ -141,7 +141,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
 
         market_avg_ticks, market_avg_liqs = quanto_feed.consult(
             pool_daiweth_30bps, seconds_agos, windows, now_idxs)
-        ovlweth_avg_ticks, ovlweth_avg_liqs = quanto_feed.consult(
+        ovweth_avg_ticks, ovweth_avg_liqs = quanto_feed.consult(
             pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
         prices = []
@@ -153,7 +153,7 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
                 market_avg_ticks[i], market_base_amount,
                 market_base_token, market_quote_token)
             reserve = quanto_feed.getReserveInOvl(
-                market_avg_ticks[i], market_avg_liqs[i], ovlweth_avg_ticks[i])
+                market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
             prices.append(price)
             reserves.append(reserve)
@@ -222,7 +222,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
 
         market_avg_ticks, market_avg_liqs = inverse_feed.consult(
             pool_uniweth_30bps, seconds_agos, windows, now_idxs)
-        ovlweth_avg_ticks, ovlweth_avg_liqs = inverse_feed.consult(
+        ovweth_avg_ticks, ovweth_avg_liqs = inverse_feed.consult(
             pool_uniweth_30bps, seconds_agos, windows, now_idxs)
 
         prices = []
@@ -234,7 +234,7 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
                 market_avg_ticks[i], market_base_amount,
                 market_base_token, market_quote_token)
             reserve = inverse_feed.getReserveInOvl(
-                market_avg_ticks[i], market_avg_liqs[i], ovlweth_avg_ticks[i])
+                market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
             prices.append(price)
             reserves.append(reserve)

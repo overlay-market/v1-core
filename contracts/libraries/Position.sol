@@ -102,7 +102,7 @@ library Position {
         pure
         returns (uint16)
     {
-        require(fractionRemoved <= ONE, "OVLV1:fraction>max");
+        require(fractionRemoved <= ONE, "OVV1:fraction>max");
         uint256 fractionRemaining = _fractionRemaining(self).mulDown(ONE - fractionRemoved);
         return fractionRemaining.toUint16Fixed();
     }
