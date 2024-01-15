@@ -26,12 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Create env file
+      - name: Export Environment Variables
         run: |
-          touch .env
-          echo WEB3_INFURA_PROJECT_ID=${{ secrets.WEB3_INFURA_PROJECT_ID }} >> .env
-          echo ETHERSCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }} >> .env
-          cat .env
+          export WEB3_INFURA_PROJECT_ID=${{ secrets.WEB3_INFURA_PROJECT_ID }}
+          export ARBISCAN_TOKEN=${{ secrets.ETHERSCAN_TOKEN }}
       - name: Cache Compiler Installations
         uses: actions/cache@v2
         with:
@@ -57,5 +55,9 @@ jobs:
       - name: Compile Code
         run: brownie compile --size
 
+      - name: Configure Arbitrum
+        run: |
+          brownie networks add Development arbitrum-main-fork name="Ganache-CLI (Aribtrum-Mainnet Fork)" host=http://127.0.0.1 cmd=ganache-cli accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
+          brownie networks modify arbitrum-main host="https://arbitrum-mainnet.infura.io/v3/\$WEB3_INFURA_PROJECT_ID" provider=infura
       - name: Run Tests
         run: brownie test -vv -s --gas
