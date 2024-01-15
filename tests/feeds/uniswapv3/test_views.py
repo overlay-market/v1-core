@@ -84,9 +84,9 @@ def test_get_reserve_in_weth_for_uniweth(weth, inverse_feed):
     assert approx(expect_reserve) == actual_reserve
 
 
-def test_get_reserve_in_ovl(uni, weth, quanto_feed):
+def test_get_reserve_in_ov(uni, weth, quanto_feed):
     tick_market = -82944  # num_dai / num_weth ~ 4000
-    tick_ovlweth = -54262  # num_weth / num_uni ~ 0.0044
+    tick_ovweth = -54262  # num_weth / num_uni ~ 0.0044
     liquidity = 12264526708744935729288014  # market liquidity
 
     # get the expect market reserves in WETH
@@ -96,23 +96,23 @@ def test_get_reserve_in_ovl(uni, weth, quanto_feed):
     expect_y = int(liquidity * sqrt_price_market)
     expect_reserve = expect_x if quanto_feed.marketToken0 == weth else expect_y
 
-    # get the price of UNI/WETH (ovl=UNI in tests)
-    base_amount_ovlweth = 1e18
-    base_token_ovlweth = uni
-    quote_token_ovlweth = weth
+    # get the price of UNI/WETH (ov=UNI in tests)
+    base_amount_ovweth = 1e18
+    base_token_ovweth = uni
+    quote_token_ovweth = weth
 
     # flip expect tick based off uniswap convention of base/quote if need to
-    sign = -1 if base_token_ovlweth.address > quote_token_ovlweth.address \
+    sign = -1 if base_token_ovweth.address > quote_token_ovweth.address \
         else 1
 
     # num of WETH / num of UNI
-    price_ovlweth = int(base_amount_ovlweth * 1.0001 ** (sign * tick_ovlweth))
+    price_ovweth = int(base_amount_ovweth * 1.0001 ** (sign * tick_ovweth))
 
-    expect_reserve_in_ovl = int(expect_reserve
-                                * base_amount_ovlweth / price_ovlweth)
-    actual_reserve_in_ovl = quanto_feed.getReserveInOvl(tick_market, liquidity,
-                                                        tick_ovlweth)
-    assert approx(expect_reserve_in_ovl) == actual_reserve_in_ovl
+    expect_reserve_in_ov = int(expect_reserve
+                                * base_amount_ovweth / price_ovweth)
+    actual_reserve_in_ov = quanto_feed.getReserveInOvl(tick_market, liquidity,
+                                                        tick_ovweth)
+    assert approx(expect_reserve_in_ov) == actual_reserve_in_ov
 
 
 # TODO: tests if have WETH as token0 vs token1

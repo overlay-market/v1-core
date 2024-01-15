@@ -55,7 +55,7 @@ def test_price_to_tick_reverts_when_lt_min(tick_mock):
 
     # check reverts when input price 1 less (equal to zero)
     input_price = 1
-    with reverts("OVLV1: tick out of bounds"):
+    with reverts("OVV1: tick out of bounds"):
         tick_mock.priceToTick(input_price)
 
 
@@ -69,14 +69,14 @@ def test_price_to_tick_reverts_when_gt_max(tick_mock):
 
     # check reverts when input price is 1 bps less
     input_price = int(input_price * (1.0001))
-    with reverts("OVLV1: tick out of bounds"):
+    with reverts("OVV1: tick out of bounds"):
         tick_mock.priceToTick(input_price)
 
 
 def test_tick_to_price_reverts_when_lt_min(tick_mock):
     # reverts when smaller than min tick
     input_tick = -(410000 + 1)
-    with reverts("OVLV1: tick out of bounds"):
+    with reverts("OVV1: tick out of bounds"):
         tick_mock.tickToPrice(input_tick)
 
     # doesn't revert when equal to min tick
@@ -90,7 +90,7 @@ def test_tick_to_price_reverts_when_gt_max(tick_mock):
     base = Decimal(1.0001)
     # reverts when larger than max tick
     input_tick = (1200000 + 1)
-    with reverts("OVLV1: tick out of bounds"):
+    with reverts("OVV1: tick out of bounds"):
         tick_mock.tickToPrice(input_tick)
 
     # doesn't revert when equal to max tick
