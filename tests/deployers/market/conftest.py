@@ -62,7 +62,7 @@ def create_token(gov, alice, bob, minter_role, request):
 
 
 @pytest.fixture(scope="module")
-def ovl(create_token):
+def ov(create_token):
     yield create_token()
 
 
@@ -85,9 +85,9 @@ def feed(create_feed):
 
 
 @pytest.fixture(scope="module")
-def create_deployer(factory, ovl):
+def create_deployer(factory, ov):
     def create_deployer():
-        deployer = factory.deploy(OverlayV1Deployer, ovl)
+        deployer = factory.deploy(OverlayV1Deployer, ov)
         return deployer
     yield create_deployer
 

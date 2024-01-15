@@ -6,31 +6,31 @@ import "./OverlayV1Market.sol";
 
 contract OverlayV1Deployer is IOverlayV1Deployer {
     address public immutable factory; // factory that has gov permissions
-    address public immutable ovl; // ovl token
+    address public immutable ov; // ov token
 
     address public feed; // cached feed deploying market on
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
-        require(msg.sender == factory, "OVLV1: !factory");
+        require(msg.sender == factory, "OVV1: !factory");
         _;
     }
 
-    constructor(address _ovl) {
+    constructor(address _ov) {
         factory = msg.sender;
-        ovl = _ovl;
+        ov = _ov;
     }
 
     function parameters()
         external
         view
         returns (
-            address ovl_,
+            address ov_,
             address feed_,
             address factory_
         )
     {
-        ovl_ = ovl;
+        ov_ = ov;
         feed_ = feed;
         factory_ = factory;
     }

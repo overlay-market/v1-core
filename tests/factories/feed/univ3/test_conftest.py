@@ -1,6 +1,6 @@
 def test_factory_fixture(factory, uni_factory, weth, uni):
     assert factory.uniV3Factory() == uni_factory
-    assert factory.ovl() == uni  # UNI acts as ovl for testing
+    assert factory.ov() == uni  # UNI acts as ov for testing
     assert factory.microWindow() == 600
     assert factory.macroWindow() == 1800
     assert factory.observationCardinalityMinimum() == 240
