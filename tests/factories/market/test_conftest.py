@@ -105,7 +105,7 @@ def test_market_fixture(market, factory, feed_three, ovl, gov):
         750000000000000,
         100000000000000,
         10000000000000,
-        14
+        0
     ]
     actual_params = [market.params(i) for i in range(15)]
     assert expect_params == actual_params

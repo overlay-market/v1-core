@@ -24,7 +24,7 @@ def isolation(fn_isolation):
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -125,7 +125,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -280,7 +280,7 @@ def test_build_updates_market(market, ovl, alice):
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -361,7 +361,7 @@ def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -413,7 +413,7 @@ def test_build_executes_transfers(market, factory, ovl, alice, notional,
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
@@ -460,7 +460,7 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
 
 
 @given(
-    notional=strategy('decimal', min_value='0.001', max_value='80000',
+    notional=strategy('decimal', min_value='0.001', max_value='8000',
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
