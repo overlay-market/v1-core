@@ -147,7 +147,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
                 uint32[] memory secondsAgosOvX,
                 uint32[] memory windowsOvX,
                 uint256[] memory nowIdxsOvX
-            ) = _inputsToConsultOvXPool(microWindow, macroWindow);
+            ) = _inputsToConsultOvXPool(microWindow);
             (int24[] memory arithmeticMeanTicksOvX, ) = consult(
                 ovXPool,
                 secondsAgosOvX,
