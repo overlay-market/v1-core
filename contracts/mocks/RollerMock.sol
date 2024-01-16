@@ -6,7 +6,7 @@ import "../libraries/Roller.sol";
 contract RollerMock {
     using Roller for Roller.Snapshot;
 
-    function cumulative(Roller.Snapshot memory snap) external view returns (int256) {
+    function cumulative(Roller.Snapshot memory snap) external pure returns (int256) {
         return snap.cumulative();
     }
 
@@ -15,7 +15,7 @@ contract RollerMock {
         uint256 timestamp,
         uint256 window,
         int256 value
-    ) external view returns (Roller.Snapshot memory) {
+    ) external pure returns (Roller.Snapshot memory) {
         return snap.transform(timestamp, window, value);
     }
 }
