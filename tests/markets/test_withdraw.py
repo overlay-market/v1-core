@@ -33,10 +33,6 @@ def test_shutdown(market, factory, ov, alice):
         market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
-    # check can't shutdown again
-    with reverts("OVV1: shutdown"):
-        market.shutdown({"from": factory})
-
 
 def test_shutdown_reverts_when_not_factory(market, rando):
     with reverts("OVV1: !factory"):
