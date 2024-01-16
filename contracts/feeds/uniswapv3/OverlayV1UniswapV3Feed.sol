@@ -41,7 +41,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         uint256 _microWindow,
         uint256 _macroWindow,
         uint256 _cardinalityMarketMinimum,
-        uint256 _cardinalityOvlXMinimum
+        uint256 _cardinalityOvXMinimum
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         // determine X token
         // need OV/X pool for ov vs X price to make reserve conversion from X => OV
@@ -72,9 +72,9 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // check observation cardinality large enough for market and
         // ov pool on deploy
-        (, , , uint16 observationCardinalityOvlX, , , ) = IUniswapV3Pool(_ovXPool).slot0();
+        (, , , uint16 observationCardinalityOvX, , , ) = IUniswapV3Pool(_ovXPool).slot0();
         require(
-            observationCardinalityOvlX >= _cardinalityOvlXMinimum,
+            observationCardinalityOvX >= _cardinalityOvXMinimum,
             "OVV1: ovXCardinality < min"
         );
 
@@ -134,35 +134,35 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // reserve calculation done over window: [now - microWindow, now]
         // needs ovX price over micro to convert into OV terms from X
-        // get mean ticks of X in OV to convert reserveInX to reserveInOvl
-        int24 arithmeticMeanTickOvlX;
+        // get mean ticks of X in OV to convert reserveInX to reserveInOv
+        int24 arithmeticMeanTickOvX;
         if (marketPool == ovXPool) {
             // simply mean ticks over the micro window of market pool
             // NOTE: saves the additional consult call to ovXPool
-            arithmeticMeanTickOvlX = arithmeticMeanTicksMarket[2];
+            arithmeticMeanTickOvX = arithmeticMeanTicksMarket[2];
         } else {
             // consult to ovX pool
             // secondsAgo.length = 2; twaps.length = liqs.length = 1
             (
-                uint32[] memory secondsAgosOvlX,
-                uint32[] memory windowsOvlX,
-                uint256[] memory nowIdxsOvlX
-            ) = _inputsToConsultOvlXPool(microWindow, macroWindow);
-            (int24[] memory arithmeticMeanTicksOvlX, ) = consult(
+                uint32[] memory secondsAgosOvX,
+                uint32[] memory windowsOvX,
+                uint256[] memory nowIdxsOvX
+            ) = _inputsToConsultOvXPool(microWindow, macroWindow);
+            (int24[] memory arithmeticMeanTicksOvX, ) = consult(
                 ovXPool,
-                secondsAgosOvlX,
-                windowsOvlX,
-                nowIdxsOvlX
+                secondsAgosOvX,
+                windowsOvX,
+                nowIdxsOvX
             );
-            arithmeticMeanTickOvlX = arithmeticMeanTicksOvlX[0];
+            arithmeticMeanTickOvX = arithmeticMeanTicksOvX[0];
         }
 
         // reserve is the reserve in marketPool over micro window
         // window: [now - microWindow, now]
-        uint256 reserve = getReserveInOvl(
+        uint256 reserve = getReserveInOv(
             arithmeticMeanTicksMarket[2],
             harmonicMeanLiquiditiesMarket[2],
-            arithmeticMeanTickOvlX
+            arithmeticMeanTickOvX
         );
 
         return
@@ -225,7 +225,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     }
 
     /// @dev returns input params needed for call to ovXPool consult
-    function _inputsToConsultOvlXPool(uint256 _microWindow, uint256 _macroWindow)
+    function _inputsToConsultOvXPool(uint256 _microWindow, uint256 _macroWindow)
         private
         pure
         returns (
@@ -247,7 +247,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
 
         // window lengths for each cumulative differencing
         // in terms of prices, will use for indexes
-        //  0: priceOvlXOverMicroWindow
+        //  0: priceOvXOverMicroWindow
         windows[0] = uint32(_microWindow);
 
         // index in secondsAgos which we treat as current time when differencing
@@ -332,14 +332,14 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     }
 
     /// @dev virtual balance of X in the pool in OV terms
-    function getReserveInOvl(
+    function getReserveInOv(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
-        int24 arithmeticMeanTickOvlX
-    ) public view returns (uint256 reserveInOvl_) {
+        int24 arithmeticMeanTickOvX
+    ) public view returns (uint256 reserveInOv_) {
         uint256 reserveInX = getReserveInX(arithmeticMeanTickMarket, harmonicMeanLiquidityMarket);
-        uint256 amountOfXPerOvl = getQuoteAtTick(arithmeticMeanTickOvlX, ONE, ov, x);
-        reserveInOvl_ = FullMath.mulDiv(reserveInX, uint256(ONE), amountOfXPerOvl);
+        uint256 amountOfXPerOv = getQuoteAtTick(arithmeticMeanTickOvX, ONE, ov, x);
+        reserveInOv_ = FullMath.mulDiv(reserveInX, uint256(ONE), amountOfXPerOv);
     }
 
     /// @dev virtual balance of X in the pool

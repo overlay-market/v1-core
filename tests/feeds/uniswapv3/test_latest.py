@@ -60,11 +60,11 @@ def test_latest_updates_data_on_first_call_for_quanto_feed(pool_daiweth_30bps,
     reserves = []
     has_reserve = True
     for i in range(len(now_idxs)):
-        # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
+        # NOTE: getQuoteAtTick(), getReserveInOv() tested in test_views.py
         price = quanto_feed.getQuoteAtTick(
             market_avg_ticks[i], market_base_amount,
             market_base_token, market_quote_token)
-        reserve = quanto_feed.getReserveInOvl(
+        reserve = quanto_feed.getReserveInOv(
             market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
         prices.append(price)
@@ -102,11 +102,11 @@ def test_latest_updates_data_on_first_call_for_inverse_feed(pool_uniweth_30bps,
     reserves = []
     has_reserve = True
     for i in range(len(now_idxs)):
-        # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
+        # NOTE: getQuoteAtTick(), getReserveInOv() tested in test_views.py
         price = inverse_feed.getQuoteAtTick(
             market_avg_ticks[i], market_base_amount,
             market_base_token, market_quote_token)
-        reserve = inverse_feed.getReserveInOvl(
+        reserve = inverse_feed.getReserveInOv(
             market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
         prices.append(price)
@@ -148,11 +148,11 @@ def test_latest_updates_data_on_many_calls_for_quanto_feed(pool_daiweth_30bps,
         reserves = []
         has_reserve = True
         for i in range(len(now_idxs)):
-            # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
+            # NOTE: getQuoteAtTick(), getReserveInOv() tested in test_views.py
             price = quanto_feed.getQuoteAtTick(
                 market_avg_ticks[i], market_base_amount,
                 market_base_token, market_quote_token)
-            reserve = quanto_feed.getReserveInOvl(
+            reserve = quanto_feed.getReserveInOv(
                 market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
             prices.append(price)
@@ -229,11 +229,11 @@ def test_latest_updates_data_on_many_calls_for_inverse_feed(pool_uniweth_30bps,
         reserves = []
         has_reserve = True
         for i in range(len(now_idxs)):
-            # NOTE: getQuoteAtTick(), getReserveInOvl() tested in test_views.py
+            # NOTE: getQuoteAtTick(), getReserveInOv() tested in test_views.py
             price = inverse_feed.getQuoteAtTick(
                 market_avg_ticks[i], market_base_amount,
                 market_base_token, market_quote_token)
-            reserve = inverse_feed.getReserveInOvl(
+            reserve = inverse_feed.getReserveInOv(
                 market_avg_ticks[i], market_avg_liqs[i], ovweth_avg_ticks[i])
 
             prices.append(price)
