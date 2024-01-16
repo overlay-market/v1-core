@@ -611,14 +611,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @dev bound on notional cap to mitigate front-running attack
-    /// @dev bound = lmbda * reserveInOvl
+    /// @dev bound = lmbda * reserveInOv
     function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 lmbda = params.get(Risk.Parameters.Lmbda);
         return lmbda.mulDown(data.reserveOverMicroWindow);
     }
 
     /// @dev bound on notional cap to mitigate back-running attack
-    /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
+    /// @dev bound = macroWindowInBlocks * reserveInOv * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
         uint256 window = (data.macroWindow * ONE) / averageBlockTime;
@@ -628,7 +628,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev Returns the open interest in number of contracts for a given notional
     /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
-    function oiFromNotional(uint256 notional, uint256 midPrice) public view returns (uint256) {
+    function oiFromNotional(uint256 notional, uint256 midPrice) public pure returns (uint256) {
         return notional.divDown(midPrice);
     }
 
@@ -660,7 +660,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev mid price without impact/spread given oracle data and recent volume
     /// @dev used for gas savings to avoid accessing storage for delta, lmbda
-    function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
+    function _midFromFeed(Oracle.Data memory data) private pure returns (uint256 mid_) {
         mid_ = Math.average(data.priceOverMicroWindow, data.priceOverMacroWindow);
     }
 
@@ -819,7 +819,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @notice Checks the governance per-market risk parameter is valid
-    function _checkRiskParam(Risk.Parameters name, uint256 value) private {
+    function _checkRiskParam(Risk.Parameters name, uint256 value) private view {
         // checks delta won't cause position to be immediately
         // liquidatable given current leverage cap (capLeverage),
         // liquidation fee rate (liquidationFeeRate), and
