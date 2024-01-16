@@ -43,11 +43,11 @@ interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
     ) external view returns (uint256 quoteAmount_);
 
     // virtual balance of X in the pool in OV terms
-    function getReserveInOvl(
+    function getReserveInOv(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,
-        int24 arithmeticMeanTickOvlX
-    ) external view returns (uint256 reserveInOvl_);
+        int24 arithmeticMeanTickOvX
+    ) external view returns (uint256 reserveInOv_);
 
     // virtual balance of X in the pool
     function getReserveInX(int24 arithmeticMeanTickMarket, uint128 harmonicMeanLiquidityMarket)

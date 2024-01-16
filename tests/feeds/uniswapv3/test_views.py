@@ -110,7 +110,7 @@ def test_get_reserve_in_ov(uni, weth, quanto_feed):
 
     expect_reserve_in_ov = int(expect_reserve
                                 * base_amount_ovweth / price_ovweth)
-    actual_reserve_in_ov = quanto_feed.getReserveInOvl(tick_market, liquidity,
+    actual_reserve_in_ov = quanto_feed.getReserveInOv(tick_market, liquidity,
                                                         tick_ovweth)
     assert approx(expect_reserve_in_ov) == actual_reserve_in_ov
 
