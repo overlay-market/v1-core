@@ -24,14 +24,14 @@ def test_feed_fixture(feed):
 
 def test_mock_feed_fixture(mock_feed):
     assert mock_feed.microWindow() == 600
-    assert mock_feed.macroWindow() == 1500
+    assert mock_feed.macroWindow() == 1800
     assert mock_feed.price() == 1000000000000000000
     assert mock_feed.reserve() == 2000000000000000000000000
 
 
 def test_fake_feed_fixture(fake_feed):
     assert fake_feed.microWindow() == 600
-    assert fake_feed.macroWindow() == 1500
+    assert fake_feed.macroWindow() == 1800
     assert fake_feed.price() == 1000000000000000000
     assert fake_feed.reserve() == 2000000000000000000000000
 
