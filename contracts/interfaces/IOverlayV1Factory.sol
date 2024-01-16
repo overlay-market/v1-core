@@ -13,7 +13,7 @@ interface IOverlayV1Factory {
     function PARAMS_MAX(uint256 idx) external view returns (uint256);
 
     // immutables
-    function ovl() external view returns (IOverlayV1Token);
+    function ov() external view returns (IOverlayV1Token);
 
     function deployer() external view returns (IOverlayV1Deployer);
 

@@ -35,7 +35,7 @@ def test_set_fee_recipient_reverts_when_not_gov(factory, alice):
     expect_fee_recipient = alice
 
     # check can't set fee recipient with non gov account
-    with reverts("OVLV1: !governor"):
+    with reverts("OVV1: !governor"):
         _ = factory.setFeeRecipient(expect_fee_recipient, {"from": alice})
 
 
@@ -43,7 +43,7 @@ def test_set_fee_recipient_reverts_when_zero_address(factory, gov):
     expect_fee_recipient = "0x0000000000000000000000000000000000000000"
 
     # check can't set fee recipient as zero address
-    with reverts("OVLV1: feeRecipient should not be zero address"):
+    with reverts("OVV1: feeRecipient should not be zero address"):
         _ = factory.setFeeRecipient(expect_fee_recipient, {"from": gov})
 
 
@@ -96,7 +96,7 @@ def test_set_risk_param_reverts_when_not_gov(factory, market, alice):
     expect_k = 361250000000
 
     # check can't set k with non gov account
-    with reverts("OVLV1: !governor"):
+    with reverts("OVV1: !governor"):
         _ = factory.setRiskParam(feed, 0, expect_k, {"from": alice})
 
 
@@ -108,7 +108,7 @@ def test_set_risk_param_reverts_when_less_than_min(factory, market, gov):
 
         if expect_param >= 0:
             # check can't set param less than min
-            with reverts("OVLV1: param out of bounds"):
+            with reverts("OVV1: param out of bounds"):
                 _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to min
@@ -129,7 +129,7 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
         expect_param = factory.PARAMS_MAX(i) + 1
 
         # check can't set param greater than max
-        with reverts("OVLV1: param out of bounds"):
+        with reverts("OVV1: param out of bounds"):
             _ = factory.setRiskParam(feed, i, expect_param, {"from": gov})
 
         # check can set param when equal to max
@@ -170,5 +170,5 @@ def test_shutdown_reverts_when_not_guardian(factory, market, rando):
     feed = market.feed()
 
     # can't shutdown when not a guardian
-    with reverts("OVLV1: !guardian"):
+    with reverts("OVV1: !guardian"):
         _ = factory.shutdown(feed, {"from": rando})

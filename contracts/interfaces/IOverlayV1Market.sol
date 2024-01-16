@@ -9,7 +9,7 @@ import "./IOverlayV1Token.sol";
 
 interface IOverlayV1Market {
     // immutables
-    function ovl() external view returns (IOverlayV1Token);
+    function ov() external view returns (IOverlayV1Token);
 
     function feed() external view returns (address);
 

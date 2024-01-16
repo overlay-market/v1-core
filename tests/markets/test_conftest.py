@@ -1,19 +1,19 @@
 from .utils import RiskParameter
 
 
-def test_ovl_fixture(ovl):
-    assert ovl.decimals() == 18
-    assert ovl.name() == "Overlay"
-    assert ovl.symbol() == "OVL"
-    assert ovl.totalSupply() == 8000000000000000000000000
+def test_ov_fixture(ov):
+    assert ov.decimals() == 18
+    assert ov.name() == "Overlay"
+    assert ov.symbol() == "OV"
+    assert ov.totalSupply() == 8000000000000000000000000
 
 
 def test_token_fixtures(uni):
     assert uni.name() == "Uniswap"
 
 
-def test_factory_fixture(factory, ovl, fee_recipient):
-    assert factory.ovl() == ovl
+def test_factory_fixture(factory, ov, fee_recipient):
+    assert factory.ov() == ov
     assert factory.feeRecipient() == fee_recipient
 
 
@@ -36,20 +36,20 @@ def test_fake_feed_fixture(fake_feed):
     assert fake_feed.reserve() == 2000000000000000000000000
 
 
-def test_fake_deployer_fixture(fake_deployer, fake_factory, ovl):
+def test_fake_deployer_fixture(fake_deployer, fake_factory, ov):
     assert fake_deployer.factory() == fake_factory
-    assert fake_deployer.ovl() == ovl
+    assert fake_deployer.ov() == ov
 
     tok, feed, fact = fake_deployer.parameters()
-    assert tok == ovl
+    assert tok == ov
     assert feed == "0x0000000000000000000000000000000000000000"
     assert fact == fake_factory
 
 
-def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
+def test_mock_market_fixture(mock_market, mock_feed, ov, factory,
                              minter_role, burner_role, gov):
     # check addresses set properly
-    assert mock_market.ovl() == ovl
+    assert mock_market.ov() == ov
     assert mock_market.feed() == mock_feed
     assert mock_market.factory() == factory
 
@@ -74,9 +74,9 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     actual_params = [mock_market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
 
-    # check mock market has minter and burner roles on ovl token
-    assert ovl.hasRole(minter_role, mock_market) is True
-    assert ovl.hasRole(burner_role, mock_market) is True
+    # check mock market has minter and burner roles on ov token
+    assert ov.hasRole(minter_role, mock_market) is True
+    assert ov.hasRole(burner_role, mock_market) is True
 
     # check oi related quantities are zero
     assert mock_market.oiLong() == 0
@@ -92,10 +92,10 @@ def test_mock_market_fixture(mock_market, mock_feed, ovl, factory,
     assert mock_market.timestampUpdateLast() != 0
 
 
-def test_market_fixture(market, feed, ovl, factory, minter_role,
+def test_market_fixture(market, feed, ov, factory, minter_role,
                         burner_role, gov):
     # check addresses set properly
-    assert market.ovl() == ovl
+    assert market.ov() == ov
     assert market.feed() == feed
     assert market.factory() == factory
 
@@ -120,9 +120,9 @@ def test_market_fixture(market, feed, ovl, factory, minter_role,
     actual_params = [market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
 
-    # check market has minter and burner roles on ovl token
-    assert ovl.hasRole(minter_role, market) is True
-    assert ovl.hasRole(burner_role, market) is True
+    # check market has minter and burner roles on ov token
+    assert ov.hasRole(minter_role, market) is True
+    assert ov.hasRole(burner_role, market) is True
 
     # check oi related quantities are zero
     assert market.oiLong() == 0
