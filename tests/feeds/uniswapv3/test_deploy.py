@@ -16,8 +16,8 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, dai, usdc, uni,
                                                       pool_daiusdc_5bps,
                                                       pool_uniweth_30bps):
     market_pool = pool_daiusdc_5bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = uni
+    ovweth_pool = pool_uniweth_30bps
+    ov = uni
     market_base_token = dai
     market_quote_token = usdc
     market_base_amount = 1000000000000000000
@@ -25,10 +25,10 @@ def test_deploy_feed_reverts_on_market_token_not_weth(gov, dai, usdc, uni,
     macro_window = 3600
     cardinality = 200
 
-    with reverts("OVLV1: marketToken != X"):
+    with reverts("OVV1: marketToken != X"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window, cardinality, cardinality)
 
 
@@ -37,8 +37,8 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
                                                       pool_daiweth_30bps,
                                                       pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = uni
+    ovweth_pool = pool_uniweth_30bps
+    ov = uni
     market_base_token = rando
     market_quote_token = weth
     market_base_amount = 1000000
@@ -46,10 +46,10 @@ def test_deploy_feed_reverts_on_market_token_not_base(gov, weth,
     macro_window = 3600
     cardinality = 200
 
-    with reverts("OVLV1: marketToken != marketBaseToken"):
+    with reverts("OVV1: marketToken != marketBaseToken"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window, cardinality, cardinality)
 
 
@@ -57,8 +57,8 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, dai, rando, uni,
                                                        pool_daiweth_30bps,
                                                        pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = uni
+    ovweth_pool = pool_uniweth_30bps
+    ov = uni
     market_base_token = dai
     market_quote_token = rando
     market_base_amount = 1000000
@@ -66,19 +66,19 @@ def test_deploy_feed_reverts_on_market_token_not_quote(gov, dai, rando, uni,
     macro_window = 3600
     cardinality = 200
 
-    with reverts("OVLV1: marketToken != marketQuoteToken"):
+    with reverts("OVV1: marketToken != marketQuoteToken"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window, cardinality, cardinality)
 
 
-def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai,
+def test_deploy_feed_reverts_on_weth_not_in_ovweth_pool(gov, weth, dai,
                                                          pool_daiweth_30bps,
                                                          pool_daiusdc_5bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_daiusdc_5bps
-    ovl = dai
+    ovweth_pool = pool_daiusdc_5bps
+    ov = dai
     market_base_token = dai
     market_quote_token = weth
     market_base_amount = 1000000
@@ -86,19 +86,19 @@ def test_deploy_feed_reverts_on_weth_not_in_ovlweth_pool(gov, weth, dai,
     macro_window = 3600
     cardinality = 200
 
-    with reverts("OVLV1: marketToken != X"):
+    with reverts("OVV1: marketToken != X"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window, cardinality, cardinality)
 
 
-def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
+def test_deploy_feed_reverts_on_ov_not_in_ovweth_pool(gov, weth, dai,
                                                         pool_daiweth_30bps,
                                                         pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = dai
+    ovweth_pool = pool_uniweth_30bps
+    ov = dai
     market_base_token = dai
     market_quote_token = weth
     market_base_amount = 1000000
@@ -106,10 +106,10 @@ def test_deploy_feed_reverts_on_ovl_not_in_ovlweth_pool(gov, weth, dai,
     macro_window = 3600
     cardinality = 200
 
-    with reverts("OVLV1: ovlXToken != OVL"):
+    with reverts("OVV1: ovXToken != OV"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window, cardinality, cardinality)
 
 
@@ -117,8 +117,8 @@ def test_deploy_feed_reverts_on_cardinal_in_market_pool(gov, weth, dai, uni,
                                                         pool_daiweth_30bps,
                                                         pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = uni
+    ovweth_pool = pool_uniweth_30bps
+    ov = uni
     market_base_token = weth
     market_quote_token = dai
     market_base_amount = 1000000
@@ -126,22 +126,22 @@ def test_deploy_feed_reverts_on_cardinal_in_market_pool(gov, weth, dai, uni,
     macro_window = 3600
 
     cardinality_market = market_pool.slot0()[3] + 100
-    cardinality_ovlweth = 300
+    cardinality_ovweth = 300
 
-    with reverts("OVLV1: marketCardinality < min"):
+    with reverts("OVV1: marketCardinality < min"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window,
-                   cardinality_market, cardinality_ovlweth)
+                   cardinality_market, cardinality_ovweth)
 
 
-def test_deploy_feed_reverts_on_cardinal_in_ovlweth_pool(gov, weth, dai, uni,
+def test_deploy_feed_reverts_on_cardinal_in_ovweth_pool(gov, weth, dai, uni,
                                                          pool_daiweth_30bps,
                                                          pool_uniweth_30bps):
     market_pool = pool_daiweth_30bps
-    ovlweth_pool = pool_uniweth_30bps
-    ovl = uni
+    ovweth_pool = pool_uniweth_30bps
+    ov = uni
     market_base_token = weth
     market_quote_token = dai
     market_base_amount = 1000000
@@ -149,11 +149,11 @@ def test_deploy_feed_reverts_on_cardinal_in_ovlweth_pool(gov, weth, dai, uni,
     macro_window = 3600
 
     cardinality_market = 200
-    cardinality_ovlweth = ovlweth_pool.slot0()[3] + 100
+    cardinality_ovweth = ovweth_pool.slot0()[3] + 100
 
-    with reverts("OVLV1: ovlXCardinality < min"):
+    with reverts("OVV1: ovXCardinality < min"):
         gov.deploy(OverlayV1UniswapV3Feed, market_pool,
                    market_base_token, market_quote_token,
-                   market_base_amount, ovlweth_pool, ovl,
+                   market_base_amount, ovweth_pool, ov,
                    micro_window, macro_window,
-                   cardinality_market, cardinality_ovlweth)
+                   cardinality_market, cardinality_ovweth)

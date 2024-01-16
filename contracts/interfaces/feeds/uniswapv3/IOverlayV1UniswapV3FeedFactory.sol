@@ -5,7 +5,7 @@ import "../IOverlayV1FeedFactory.sol";
 
 interface IOverlayV1UniswapV3FeedFactory is IOverlayV1FeedFactory {
     // immutables
-    function ovl() external view returns (address);
+    function ov() external view returns (address);
 
     function uniV3Factory() external view returns (address);
 
@@ -17,7 +17,7 @@ interface IOverlayV1UniswapV3FeedFactory is IOverlayV1FeedFactory {
         address marketPool,
         address marketBaseToken,
         uint128 marketBaseAmount,
-        address ovlXPool
+        address ovXPool
     ) external view returns (address feed_);
 
     /// @dev deploys a new feed contract
@@ -27,8 +27,8 @@ interface IOverlayV1UniswapV3FeedFactory is IOverlayV1FeedFactory {
         address marketQuoteToken,
         uint24 marketFee,
         uint128 marketBaseAmount,
-        address ovlXBaseToken,
-        address ovlXQuoteToken,
-        uint24 ovlXFee
+        address ovXBaseToken,
+        address ovXQuoteToken,
+        uint24 ovXFee
     ) external returns (address feed_);
 }

@@ -6,7 +6,7 @@ import "../IOverlayV1Feed.sol";
 interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
     function marketPool() external view returns (address);
 
-    function ovlXPool() external view returns (address);
+    function ovXPool() external view returns (address);
 
     function marketToken0() external view returns (address);
 
@@ -18,9 +18,9 @@ interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
 
     function marketBaseAmount() external view returns (uint128);
 
-    function ovl() external view returns (address);
+    function ov() external view returns (address);
 
-    // @dev X is the common token between marketPool and ovlXPool
+    // @dev X is the common token between marketPool and ovXPool
     function x() external view returns (address);
 
     // COPIED AND MODIFIED FROM: Uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol
@@ -42,7 +42,7 @@ interface IOverlayV1UniswapV3Feed is IOverlayV1Feed {
         address quoteToken
     ) external view returns (uint256 quoteAmount_);
 
-    // virtual balance of X in the pool in OVL terms
+    // virtual balance of X in the pool in OV terms
     function getReserveInOvl(
         int24 arithmeticMeanTickMarket,
         uint128 harmonicMeanLiquidityMarket,

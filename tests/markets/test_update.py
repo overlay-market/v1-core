@@ -20,7 +20,7 @@ def test_update_fetches_from_feed(market, feed, rando):
                            places=3),
     notional_short=strategy('decimal', min_value='0.001', max_value='800000',
                             places=3))
-def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
+def test_update_pays_funding(market, feed, ov, alice, bob, rando,
                              notional_long, notional_short):
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
 
@@ -33,8 +33,8 @@ def test_update_pays_funding(market, feed, ovl, alice, bob, rando,
     approve_collateral_short = notional_short * (1 + trading_fee_rate)
 
     # approve collateral amounts
-    ovl.approve(market, approve_collateral_long, {"from": alice})
-    ovl.approve(market, approve_collateral_short, {"from": bob})
+    ov.approve(market, approve_collateral_long, {"from": alice})
+    ov.approve(market, approve_collateral_short, {"from": bob})
 
     # build long and short positions for oi
     # NOTE: build() tests in test_build.py

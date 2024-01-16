@@ -94,7 +94,7 @@ def test_updated_fraction_remaining_reverts_when_gt_max(position):
 
     # check fails when greater than ONE
     fraction_removed = 1000000000000000001  # 1 greater than ONE (18 decimals)
-    with reverts("OVLV1:fraction>max"):
+    with reverts("OVV1:fraction>max"):
         position.updatedFractionRemaining(pos, fraction_removed)
 
     # check succeeds when equal to ONE
