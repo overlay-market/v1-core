@@ -81,7 +81,7 @@ def create_token(gov, alice, bob, minter_role, request):
 
 
 @pytest.fixture(scope="module")
-def ovl(create_token):
+def ov(create_token):
     yield create_token()
 
 
@@ -90,7 +90,7 @@ def ovl(create_token):
      2000000000000000000, 2000000000000000000, 3000000000000000000,
      3000000000000000000)
 ])
-def create_feed_factory(gov, request, ovl):
+def create_feed_factory(gov, request, ov):
     """
     Creates a new feed factory and deploys three mock feeds for testing.
     Below, third mock is used in creating a market for test_setters.py
@@ -98,7 +98,7 @@ def create_feed_factory(gov, request, ovl):
     (micro, macro, price_one, reserve_one, price_two,
      reserve_two, price_three, reserve_three) = request.param
 
-    def create_feed_factory(tok=ovl, micro_window=micro, macro_window=macro,
+    def create_feed_factory(tok=ov, micro_window=micro, macro_window=macro,
                             mock_price_one=price_one,
                             mock_reserve_one=reserve_one,
                             mock_price_two=price_two,
@@ -142,10 +142,10 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
+def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
                    guardian_role, feed_factory, feed_three):
 
-    def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
+    def create_factory(tok=ov, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
         # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok, recipient)

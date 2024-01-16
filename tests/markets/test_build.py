@@ -28,7 +28,7 @@ def isolation(fn_isolation):
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
+def test_build_creates_position(market, feed, ov, alice, notional, leverage,
                                 is_long):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
@@ -52,7 +52,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -129,7 +129,7 @@ def test_build_creates_position(market, feed, ovl, alice, notional, leverage,
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
+def test_build_adds_oi(market, feed, ov, alice, notional, leverage, is_long):
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
     trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
@@ -155,7 +155,7 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
         if is_long else market.oiShortShares()
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -199,7 +199,7 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
         if is_long else market.oiShortShares()
 
     # approve market for spending then build again
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -235,7 +235,7 @@ def test_build_adds_oi(market, feed, ovl, alice, notional, leverage, is_long):
     assert actual_oi_shares == actual_total_pos_oi_shares
 
 
-def test_build_updates_market(market, ovl, alice):
+def test_build_updates_market(market, ov, alice):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -267,7 +267,7 @@ def test_build_updates_market(market, ovl, alice):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -284,7 +284,7 @@ def test_build_updates_market(market, ovl, alice):
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
+def test_build_registers_volume(market, feed, ov, alice, notional, leverage,
                                 is_long):
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
@@ -313,7 +313,7 @@ def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
     last_timestamp, last_window, last_volume = snapshot_volume
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -365,7 +365,7 @@ def test_build_registers_volume(market, feed, ovl, alice, notional, leverage,
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_executes_transfers(market, factory, ovl, alice, notional,
+def test_build_executes_transfers(market, factory, ov, alice, notional,
                                   leverage, is_long):
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
@@ -387,7 +387,7 @@ def test_build_executes_transfers(market, factory, ovl, alice, notional,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
 
@@ -417,7 +417,7 @@ def test_build_executes_transfers(market, factory, ovl, alice, notional,
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
+def test_build_transfers_collateral_to_market(market, ov, alice, notional,
                                               leverage, is_long):
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
@@ -439,11 +439,11 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
     approve_collateral = int((collateral + trade_fee) * Decimal(1e18))
 
     # priors actual values
-    expect_balance_alice = ovl.balanceOf(alice)
-    expect_balance_market = ovl.balanceOf(market)
+    expect_balance_alice = ov.balanceOf(alice)
+    expect_balance_market = ov.balanceOf(market)
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
@@ -452,8 +452,8 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
     expect_balance_alice -= expect_collateral_in
     expect_balance_market += int(collateral * Decimal(1e18))
 
-    actual_balance_alice = ovl.balanceOf(alice)
-    actual_balance_market = ovl.balanceOf(market)
+    actual_balance_alice = ov.balanceOf(alice)
+    actual_balance_market = ov.balanceOf(market)
 
     assert int(actual_balance_alice) == approx(expect_balance_alice)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -464,7 +464,7 @@ def test_build_transfers_collateral_to_market(market, ovl, alice, notional,
                       places=3),
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_transfers_trading_fees(market, factory, ovl, alice, notional,
+def test_build_transfers_trading_fees(market, factory, ov, alice, notional,
                                       leverage, is_long):
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
@@ -487,20 +487,20 @@ def test_build_transfers_trading_fees(market, factory, ovl, alice, notional,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect = ovl.balanceOf(recipient)
+    expect = ov.balanceOf(recipient)
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral, {"from": alice})
+    ov.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
     expect += int(trade_fee * Decimal(1e18))
-    actual = ovl.balanceOf(recipient)
+    actual = ov.balanceOf(recipient)
 
     assert int(actual) == approx(expect)
 
 
-def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
+def test_build_reverts_when_leverage_less_than_one(market, ov, alice):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
 
@@ -512,11 +512,11 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
     input_price_limit = 2**256-1 if input_is_long else 0
 
     # approve market for spending before build
-    ovl.approve(market, 2**256-1, {"from": alice})
+    ov.approve(market, 2**256-1, {"from": alice})
 
     # check build reverts when input leverage is less than one (ONE = 1e18)
     input_leverage = int(Decimal(1e18) - 1)
-    with reverts("OVLV1:lev<min"):
+    with reverts("OVV1:lev<min"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
@@ -530,7 +530,7 @@ def test_build_reverts_when_leverage_less_than_one(market, ovl, alice):
     assert expect_pos_id == actual_pos_id
 
 
-def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
+def test_build_reverts_when_leverage_greater_than_cap(market, ov, alice):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
 
@@ -542,12 +542,12 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
     input_price_limit = 2**256-1 if input_is_long else 0
 
     # approve market for spending before build. Use the max just for here
-    ovl.approve(market, 2**256 - 1, {"from": alice})
+    ov.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts when input leverage is less than one (ONE = 1e18)
     cap_leverage = market.params(RiskParameter.CAP_LEVERAGE.value)
     input_leverage = cap_leverage + 1
-    with reverts("OVLV1:lev>max"):
+    with reverts("OVV1:lev>max"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
@@ -564,7 +564,7 @@ def test_build_reverts_when_leverage_greater_than_cap(market, ovl, alice):
 @given(
     leverage=strategy('decimal', min_value='1.0', max_value='5.0', places=3),
     is_long=strategy('bool'))
-def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
+def test_build_reverts_when_collateral_less_than_min(market, ov, alice,
                                                      leverage, is_long):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
@@ -579,10 +579,10 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
     input_price_limit = 2**256-1 if is_long else 0
 
     # approve market for spending then build. use max
-    ovl.approve(market, 2**256 - 1, {"from": alice})
+    ov.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts for min_collat > collat
-    with reverts("OVLV1:collateral<min"):
+    with reverts("OVV1:collateral<min"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
@@ -597,7 +597,7 @@ def test_build_reverts_when_collateral_less_than_min(market, ovl, alice,
 
 
 @given(is_long=strategy('bool'))
-def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
+def test_build_reverts_when_oi_greater_than_cap(market, ov, alice, is_long):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
 
@@ -611,12 +611,12 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
     input_price_limit = 2**256-1 if is_long else 0
 
     # approve market for spending before build. use max
-    ovl.approve(market, 2**256 - 1, {"from": alice})
+    ov.approve(market, 2**256 - 1, {"from": alice})
 
     # check build reverts when notional is greater than static cap
     cap_notional = market.params(RiskParameter.CAP_NOTIONAL.value)
     input_collateral = cap_notional * (1 + tol)
-    with reverts("OVLV1:oi>cap"):
+    with reverts("OVV1:oi>cap"):
         _ = market.build(input_collateral, input_leverage, input_is_long,
                          input_price_limit, {"from": alice})
 
@@ -631,7 +631,7 @@ def test_build_reverts_when_oi_greater_than_cap(market, ovl, alice, is_long):
 
 
 def test_build_reverts_when_oi_greater_than_cap_w_circuit_breaker(
-        mock_market, mock_feed, factory, ovl, alice, rando, gov):
+        mock_market, mock_feed, factory, ov, alice, rando, gov):
     # set circuit breaker mint target much lower to see effects
     idx_mint = RiskParameter.CIRCUIT_BREAKER_MINT_TARGET.value
     mint_target = int(Decimal(1000) * Decimal(1e18))
@@ -663,7 +663,7 @@ def test_build_reverts_when_oi_greater_than_cap_w_circuit_breaker(
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    ov.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -717,8 +717,8 @@ def test_build_reverts_when_oi_greater_than_cap_w_circuit_breaker(
 
     # approve then test build fails when greater than circuited cap
     # NOTE: build() tests in test_build.py
-    ovl.approve(mock_market, approve_collateral, {"from": alice})
-    with reverts("OVLV1:oi>cap"):
+    ov.approve(mock_market, approve_collateral, {"from": alice})
+    with reverts("OVV1:oi>cap"):
         _ = mock_market.build(input_collateral, input_leverage, input_is_long,
                               input_price_limit, {"from": alice})
 
@@ -734,7 +734,7 @@ def test_build_reverts_when_oi_greater_than_cap_w_circuit_breaker(
 
 # NOTE: use mock_market so price doesn't move during test
 @given(is_long=strategy('bool'))
-def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
+def test_build_reverts_when_liquidatable(mock_market, feed, ov, alice,
                                          is_long):
     idx_delta = RiskParameter.DELTA.value
     idx_lmbda = RiskParameter.LMBDA.value
@@ -792,12 +792,12 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     input_price_limit = 2**256-1 if is_long else 0
 
     # approve market for spending before build. use max
-    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+    ov.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # check build reverts when position is liquidatable
     input_notional = Decimal(cap_notional) * volume * Decimal(1 + tol)
     input_collateral = int((input_notional / leverage))
-    with reverts("OVLV1:liquidatable"):
+    with reverts("OVV1:liquidatable"):
         _ = mock_market.build(input_collateral, input_leverage, input_is_long,
                               input_price_limit, {"from": alice})
 
@@ -811,7 +811,7 @@ def test_build_reverts_when_liquidatable(mock_market, feed, ovl, alice,
     assert tx.return_value == expect_pos_id
 
 
-def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
+def test_build_reverts_when_oi_zero(mock_market, mock_feed, ov, alice, bob):
     # NOTE: current position id is zero given isolation fixture
     expect_pos_id = 0
 
@@ -826,7 +826,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
+    ov.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # check build reverts when price so large that
     # notional / price rounds down to zero
@@ -834,7 +834,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
                 * Decimal(input_leverage) * Decimal(1 + tol))
     mock_feed.setPrice(price, {"from": bob})
 
-    with reverts("OVLV1:oi==0"):
+    with reverts("OVV1:oi==0"):
         _ = mock_market.build(input_collateral, input_leverage, input_is_long,
                               input_price_limit, {"from": alice})
 
@@ -851,7 +851,7 @@ def test_build_reverts_when_oi_zero(mock_market, mock_feed, ovl, alice, bob):
     assert expect_pos_id == actual_pos_id
 
 
-def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
+def test_build_reverts_when_has_shutdown(factory, feed, market, ov,
                                          alice, guardian):
     # build inputs
     input_collateral = int(1e18)
@@ -863,7 +863,7 @@ def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ovl.approve(market, 2**256 - 1, {"from": alice})
+    ov.approve(market, 2**256 - 1, {"from": alice})
 
     # build one position prior to shutdown
     market.build(input_collateral, input_leverage, input_is_long,
@@ -874,12 +874,12 @@ def test_build_reverts_when_has_shutdown(factory, feed, market, ovl,
     factory.shutdown(feed, {"from": guardian})
 
     # attempt to build again
-    with reverts("OVLV1: shutdown"):
+    with reverts("OVV1: shutdown"):
         market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
 
-def test_multiple_build_creates_multiple_positions(market, factory, ovl,
+def test_multiple_build_creates_multiple_positions(market, factory, ov,
                                                    feed, alice, bob):
     # loop through 10 times
     n = 10
@@ -906,8 +906,8 @@ def test_multiple_build_creates_multiple_positions(market, factory, ovl,
                                   * (1 + trading_fee_rate)))
 
     # approve market for spending then build
-    ovl.approve(market, approve_collateral_alice, {"from": alice})
-    ovl.approve(market, approve_collateral_bob, {"from": bob})
+    ov.approve(market, approve_collateral_alice, {"from": alice})
+    ov.approve(market, approve_collateral_bob, {"from": bob})
 
     # per trade notional values
     notional_alice = total_notional_long / Decimal(n)

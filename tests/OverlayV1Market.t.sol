@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import { Test, console2 } from "forge-std/Test.sol";
-import { OverlayV1Market } from "contracts/OverlayV1Market.sol";
-import { OverlayV1Factory } from "contracts/OverlayV1Factory.sol";
-import { OverlayV1Token} from "contracts/OverlayV1Token.sol";
-import { OverlayV1Deployer } from "contracts/OverlayV1Deployer.sol";
+import {Test, console2} from "forge-std/Test.sol";
+import {OverlayV1Market} from "contracts/OverlayV1Market.sol";
+import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
+import {OverlayV1Token} from "contracts/OverlayV1Token.sol";
+import {OverlayV1Deployer} from "contracts/OverlayV1Deployer.sol";
+import {Position} from "contracts/libraries/Position.sol";
 
 contract MarketTest is Test {
     bytes32 constant ADMIN = 0x00;
@@ -20,7 +21,7 @@ contract MarketTest is Test {
     address immutable PAUSER = makeAddr("pauser");
     address immutable USER = makeAddr("user");
     address constant FEED_FACTORY = 0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe;
-    address constant ORACLE = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
+    address constant FEED = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
 
     OverlayV1Token ov;
     OverlayV1Factory factory;
@@ -56,22 +57,14 @@ contract MarketTest is Test {
         params[14] = uint256(0x0000000000000000000000000000000000000000000000000000000000000000);
 
         vm.startPrank(GOVERNOR);
-        factory.addFeedFactory(
-            FEED_FACTORY
-        );
+        factory.addFeedFactory(FEED_FACTORY);
 
-        market = OverlayV1Market(
-            factory.deployMarket(
-                FEED_FACTORY,
-                ORACLE,
-                params
-            )
-        );
+        market = OverlayV1Market(factory.deployMarket(FEED_FACTORY, FEED, params));
 
         ov.mint(USER, 100e18);
-
     }
 
+    // Test pausable markets
 
     function testPause() public {
         vm.startPrank(USER);
@@ -84,7 +77,7 @@ contract MarketTest is Test {
         market.unwind(0, 1e18, 0);
 
         vm.startPrank(PAUSER);
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(USER);
         vm.expectRevert("Pausable: paused");
@@ -93,39 +86,86 @@ contract MarketTest is Test {
         market.unwind(1, 1e18, 0);
         vm.expectRevert("Pausable: paused");
         market.liquidate(USER, 1);
-        
+
         vm.startPrank(PAUSER);
 
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(USER);
         market.build(1e18, 1e18, true, type(uint256).max);
         market.unwind(1, 1e18, 0);
-
     }
 
     function testRoles() public {
         vm.startPrank(USER);
         vm.expectRevert();
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(GOVERNOR);
         vm.expectRevert();
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(PAUSER);
-        factory.pause(ORACLE);
+        factory.pause(FEED);
 
         vm.startPrank(USER);
         vm.expectRevert();
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(GOVERNOR);
         vm.expectRevert();
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
 
         vm.startPrank(PAUSER);
-        factory.unpause(ORACLE);
+        factory.unpause(FEED);
+    }
 
+    // Test shutdown markets
+
+    function testShutdown(uint256 _fraction) public {
+        _fraction = bound(_fraction, 1e14, 9999e14);
+
+        vm.startPrank(USER);
+        
+        ov.approve(address(market), type(uint256).max);
+        // Build postion 0
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Build postion 1
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Build postion 2
+        market.build(1e18, 1e18, true, type(uint256).max);
+        // Unwind postion 0
+        market.unwind(0, 1e18, 0);
+        // Unwind _fraction of postion 1
+        market.unwind(1, _fraction, 0);
+
+        vm.expectRevert("OVV1: !shutdown");
+        market.emergencyWithdraw(1);
+
+        vm.startPrank(GOVERNOR);
+        vm.expectRevert("OVV1: !guardian");
+        factory.shutdown(FEED);
+
+        ov.grantRole(GUARDIAN_ROLE, GOVERNOR);
+        factory.shutdown(FEED);
+
+        vm.startPrank(USER);
+        vm.expectRevert("OVV1: shutdown");
+        market.build(1e18, 1e18, true, type(uint256).max);
+        vm.expectRevert("OVV1: shutdown");
+        market.unwind(1, 1e18, 0);
+        vm.expectRevert("OVV1: shutdown");
+        market.liquidate(USER, 1);
+
+        uint256 balanceBefore = ov.balanceOf(USER);
+        (uint96 notionalInitial,,,,,,,uint16 fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(1))));
+        market.emergencyWithdraw(1);
+        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
+        balanceBefore = ov.balanceOf(USER);
+        (notionalInitial,,,,,,,fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(2))));
+        market.emergencyWithdraw(2);
+        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
+        
+        assertEq(ov.balanceOf(address(market)), 0);
     }
 }
