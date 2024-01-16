@@ -19,7 +19,7 @@ library Roller {
     }
 
     /// @dev returns the stored accumulator value as an int256
-    function cumulative(Snapshot memory self) internal view returns (int256) {
+    function cumulative(Snapshot memory self) internal pure returns (int256) {
         return int256(self.accumulator);
     }
 
@@ -30,7 +30,7 @@ library Roller {
         uint256 timestamp,
         uint256 window,
         int256 value
-    ) internal view returns (Snapshot memory) {
+    ) internal pure returns (Snapshot memory) {
         uint32 timestamp32 = uint32(timestamp); // truncated by compiler
 
         // int/uint256 values to use in calculations

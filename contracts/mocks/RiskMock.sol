@@ -17,7 +17,7 @@ contract RiskMock {
         params.set(name, value);
     }
 
-    function getEnumFromUint(uint256 idx) external view returns (Risk.Parameters name) {
+    function getEnumFromUint(uint256 idx) external pure returns (Risk.Parameters name) {
         return Risk.Parameters(idx);
     }
 }

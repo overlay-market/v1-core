@@ -30,7 +30,7 @@ contract PositionMock {
                      POSITION EXISTENCE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function exists(Position.Info memory pos) external view returns (bool) {
+    function exists(Position.Info memory pos) external pure returns (bool) {
         return pos.exists();
     }
 
@@ -38,13 +38,13 @@ contract PositionMock {
                  POSITION FRACTION REMAINING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getFractionRemaining(Position.Info memory pos) external view returns (uint256) {
+    function getFractionRemaining(Position.Info memory pos) external pure returns (uint256) {
         return pos.getFractionRemaining();
     }
 
     function updatedFractionRemaining(Position.Info memory pos, uint256 fractionRemoved)
         external
-        view
+        pure
         returns (uint16)
     {
         return pos.updatedFractionRemaining(fractionRemoved);
@@ -54,11 +54,11 @@ contract PositionMock {
                     POSITION PRICE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function midPriceAtEntry(Position.Info memory pos) external view returns (uint256) {
+    function midPriceAtEntry(Position.Info memory pos) external pure returns (uint256) {
         return pos.midPriceAtEntry();
     }
 
-    function entryPrice(Position.Info memory pos) external view returns (uint256) {
+    function entryPrice(Position.Info memory pos) external pure returns (uint256) {
         return pos.entryPrice();
     }
 
@@ -70,7 +70,7 @@ contract PositionMock {
         uint256 oi,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide
-    ) external view returns (uint256) {
+    ) external pure returns (uint256) {
         return Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
@@ -80,7 +80,7 @@ contract PositionMock {
 
     function notionalInitial(Position.Info memory pos, uint256 fraction)
         external
-        view
+        pure
         returns (uint256)
     {
         return Position.notionalInitial(pos, fraction);
@@ -88,7 +88,7 @@ contract PositionMock {
 
     function oiInitial(Position.Info memory pos, uint256 fraction)
         external
-        view
+        pure
         returns (uint256)
     {
         return pos.oiInitial(fraction);
@@ -96,7 +96,7 @@ contract PositionMock {
 
     function oiSharesCurrent(Position.Info memory pos, uint256 fraction)
         external
-        view
+        pure
         returns (uint256)
     {
         return pos.oiSharesCurrent(fraction);
@@ -104,7 +104,7 @@ contract PositionMock {
 
     function debtInitial(Position.Info memory pos, uint256 fraction)
         external
-        view
+        pure
         returns (uint256)
     {
         return Position.debtInitial(pos, fraction);
@@ -115,11 +115,11 @@ contract PositionMock {
         uint256 fraction,
         uint256 oiTotalOnSide,
         uint256 oiTotalSharesOnSide
-    ) external view returns (uint256) {
+    ) external pure returns (uint256) {
         return pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
-    function cost(Position.Info memory pos, uint256 fraction) external view returns (uint256) {
+    function cost(Position.Info memory pos, uint256 fraction) external pure returns (uint256) {
         return pos.cost(fraction);
     }
 
@@ -134,7 +134,7 @@ contract PositionMock {
         uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
-    ) external view returns (uint256) {
+    ) external pure returns (uint256) {
         return pos.value(fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
     }
 
@@ -145,7 +145,7 @@ contract PositionMock {
         uint256 oiTotalSharesOnSide,
         uint256 currentPrice,
         uint256 capPayoff
-    ) external view returns (uint256) {
+    ) external pure returns (uint256) {
         return
             pos.notionalWithPnl(
                 fraction,
@@ -164,7 +164,7 @@ contract PositionMock {
         uint256 currentPrice,
         uint256 capPayoff,
         uint256 tradingFeeRate
-    ) external view returns (uint256) {
+    ) external pure returns (uint256) {
         return
             pos.tradingFee(
                 fraction,
@@ -184,7 +184,7 @@ contract PositionMock {
         uint256 capPayoff,
         uint256 maintenanceMarginFraction,
         uint256 liquidationFeeRate
-    ) external view returns (bool) {
+    ) external pure returns (bool) {
         return
             pos.liquidatable(
                 oiTotalOnSide,
