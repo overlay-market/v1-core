@@ -44,9 +44,14 @@ To generate the required tokens, see
 
 V1 core relies on three modules:
 
-- [Markets Module](#markets-module)
-- [Feeds Module](#feeds-module)
-- [OV Module](#ov-module)
+- [v1-core](#v1-core)
+  - [Requirements](#requirements)
+  - [Diagram](#diagram)
+  - [Modules](#modules)
+    - [Markets Module](#markets-module)
+    - [Feeds Module](#feeds-module)
+    - [OV Module](#ov-module)
+  - [Deployment Process](#deployment-process)
 
 ### Markets Module
 

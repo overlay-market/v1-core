@@ -110,7 +110,7 @@ def fake_feed(create_fake_feed):
 @pytest.fixture(scope="module")
 def uni():
     # to be used as example ov
-    yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+    yield Contract.from_explorer("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0")
 
 
 @pytest.fixture(scope="module")
@@ -124,7 +124,7 @@ def feed():
     yield Contract.from_explorer("0x46B4143CAf2fE2965349FCa53730e83f91247E2C")
 
 
-@pytest.fixture(scope="module", params=[(600, 1500)])
+@pytest.fixture(scope="module", params=[(600, 1800)])
 def create_mock_feed_factory(gov, request):
     micro, macro = request.param
 
