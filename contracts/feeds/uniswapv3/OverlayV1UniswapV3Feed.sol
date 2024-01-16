@@ -225,7 +225,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
     }
 
     /// @dev returns input params needed for call to ovXPool consult
-    function _inputsToConsultOvXPool(uint256 _microWindow, uint256 _macroWindow)
+    function _inputsToConsultOvXPool(uint256 _microWindow)
         private
         pure
         returns (
@@ -313,7 +313,7 @@ contract OverlayV1UniswapV3Feed is IOverlayV1UniswapV3Feed, OverlayV1Feed {
         uint128 baseAmount,
         address baseToken,
         address quoteToken
-    ) public view returns (uint256 quoteAmount_) {
+    ) public pure returns (uint256 quoteAmount_) {
         uint160 sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
 
         // Calculate quoteAmount with better precision if it doesn't overflow when multiplied by
