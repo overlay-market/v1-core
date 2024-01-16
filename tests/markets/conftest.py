@@ -105,36 +105,46 @@ def fake_feed(create_fake_feed):
     yield create_fake_feed()
 
 
+def load_contract(address):
+    '''
+    Contract load faster on re-runs of test suite
+    '''
+    try:
+        return Contract(address)
+    except ValueError:
+        return Contract.from_explorer(address)
+
+
 @pytest.fixture(scope="module")
 def dai():
-    yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
+    yield load_contract("0x6B175474E89094C44Da98b954EedeAC495271d0F")
 
 
 @pytest.fixture(scope="module")
 def weth():
-    yield Contract.from_explorer("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
+    yield load_contract("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
 
 
 @pytest.fixture(scope="module")
 def uni():
     # to be used as example ovl
-    yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+    yield load_contract("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
 
 
 @pytest.fixture(scope="module")
 def uni_factory():
-    yield Contract.from_explorer("0x1F98431c8aD98523631AE4a59f267346ea31F984")
+    yield load_contract("0x1F98431c8aD98523631AE4a59f267346ea31F984")
 
 
 @pytest.fixture(scope="module")
 def pool_daiweth_30bps():
-    yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
+    yield load_contract("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
 
 
 @pytest.fixture(scope="module")
 def pool_uniweth_30bps():
     # to be used as example ovlweth pool
-    yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
+    yield load_contract("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
 
 
 # TODO: change params to (600, 3600, 300, 14)
@@ -283,7 +293,7 @@ def create_market(gov, ovl):
                       governance=gov, ovl=ovl):
         tx = factory.deployMarket(
             feed_factory, feed, risk_params, {"from": gov})
-        market_addr = tx.return_value
+        market_addr = tx.events['MarketDeployed']['market']
         market = OverlayV1Market.at(market_addr)
         return market
 
