@@ -120,7 +120,7 @@ def feed_factory():
 
 @pytest.fixture(scope="module")
 def feed():
-    # to be used as example ov
+    # to be used as example - deployed CS2 feed
     yield Contract.from_explorer("0x46B4143CAf2fE2965349FCa53730e83f91247E2C")
 
 
