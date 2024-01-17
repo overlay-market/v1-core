@@ -115,7 +115,7 @@ def uni():
 
 @pytest.fixture(scope="module")
 def feed_factory():
-    # to be used as example 
+    # to be used as example - deployed OverlayV1ChainlinkFeedFactory
     yield Contract.from_explorer("0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe")
 
 @pytest.fixture(scope="module")
