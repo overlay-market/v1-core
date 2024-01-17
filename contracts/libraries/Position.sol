@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "../libraries/uniswap/v3-core/FullMath.sol";
+import "solady/src/utils/FixedPointMathLib.sol";
 import "./FixedCast.sol";
 import "./FixedPoint.sol";
 import "./Tick.sol";
@@ -141,7 +141,7 @@ library Position {
     ) internal pure returns (uint256 oiShares_) {
         oiShares_ = (oiTotalOnSide == 0 || oiTotalSharesOnSide == 0)
             ? oi
-            : FullMath.mulDiv(oi, oiTotalSharesOnSide, oiTotalOnSide);
+            : FixedPointMathLib.fullMulDiv(oi, oiTotalSharesOnSide, oiTotalOnSide);
     }
 
     /// @notice Computes the position's initial open interest cast to uint256
@@ -208,7 +208,7 @@ library Position {
     ) internal pure returns (uint256) {
         uint256 oiShares = oiSharesCurrent(self, fraction);
         if (oiShares == 0 || oiTotalOnSide == 0 || oiTotalSharesOnSide == 0) return 0;
-        return FullMath.mulDiv(oiShares, oiTotalOnSide, oiTotalSharesOnSide);
+        return FixedPointMathLib.fullMulDiv(oiShares, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
     /// @notice Computes the remaining position's cost cast to uint256
