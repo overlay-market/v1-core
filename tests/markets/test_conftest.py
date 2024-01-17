@@ -69,7 +69,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ov, factory,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        1
     ]
     actual_params = [mock_market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
@@ -115,7 +115,7 @@ def test_market_fixture(market, feed, ov, factory, minter_role,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        1
     ]
     actual_params = [market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params

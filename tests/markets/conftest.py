@@ -88,7 +88,7 @@ def ov(create_token):
 
 
 @pytest.fixture(scope="module", params=[
-    (600, 1500, 1000000000000000000, 2000000000000000000000000)
+    (600, 1800, 1000000000000000000, 2000000000000000000000000)
 ])
 def create_fake_feed(gov, request):
     micro, macro, p, r = request.param
@@ -115,12 +115,12 @@ def uni():
 
 @pytest.fixture(scope="module")
 def feed_factory():
-    # to be used as example ov
+    # to be used as example - deployed OverlayV1ChainlinkFeedFactory
     yield Contract.from_explorer("0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe")
 
 @pytest.fixture(scope="module")
 def feed():
-    # to be used as example ov
+    # to be used as example - deployed CS2 feed
     yield Contract.from_explorer("0x46B4143CAf2fE2965349FCa53730e83f91247E2C")
 
 
@@ -231,7 +231,7 @@ def create_market(gov, ov):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def mock_market(gov, mock_feed, mock_feed_factory, factory, ov,
                 create_market, request):
@@ -256,7 +256,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ov,
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def market(gov, feed, feed_factory, factory, ov, create_market, request):
     risk_params = request.param

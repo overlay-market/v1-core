@@ -15,15 +15,15 @@ contract AggregatorMock is AggregatorV3Interface {
 
     uint80 public latestRoundId;
 
-    function version() public view override returns (uint256) {
+    function version() public pure override returns (uint256) {
         return 1;
     }
 
-    function description() public view override returns (string memory) {
+    function description() public pure override returns (string memory) {
         return "Mock Desc";
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 8;
     }
 
