@@ -39,7 +39,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
         100000000000000,  # MIN_TRADING_FEE_RATE = 0.01 % (1 bps)
         1000000000000,  # MIN_MINIMUM_COLLATERAL= 1e-6 OV
         1000000000000,  # MIN_PRICE_DRIFT_UPPER_LIMIT= 0.01 bps/s
-        0  # MIN_AVERAGE_BLOCK_TIME = 0s
+        1  # MIN_AVERAGE_BLOCK_TIME = 1s
     ]
     actual_params_min = [
         factory.PARAMS_MIN(i) for i in range(len(expect_params_min))
@@ -105,7 +105,7 @@ def test_market_fixture(market, factory, feed_three, ov, gov):
         750000000000000,
         100000000000000,
         10000000000000,
-        0
+        1
     ]
     actual_params = [market.params(i) for i in range(15)]
     assert expect_params == actual_params
