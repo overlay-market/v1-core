@@ -5,10 +5,9 @@ import "./interfaces/IOverlayV1Deployer.sol";
 import "./OverlayV1Market.sol";
 
 contract OverlayV1Deployer is IOverlayV1Deployer {
-    address public immutable factory; // factory that has gov permissions
-    address public immutable ov; // ov token
-
-    address public feed; // cached feed deploying market on
+    address private immutable factory; // factory that has gov permissions
+    address private immutable ov; // ov token
+    address private feed; // cached feed deploying market on
 
     // factory modifier for governance sensitive functions
     modifier onlyFactory() {
