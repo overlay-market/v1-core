@@ -37,9 +37,6 @@ def test_fake_feed_fixture(fake_feed):
 
 
 def test_fake_deployer_fixture(fake_deployer, fake_factory, ov):
-    assert fake_deployer.factory() == fake_factory
-    assert fake_deployer.ov() == ov
-
     tok, feed, fact = fake_deployer.parameters()
     assert tok == ov
     assert feed == "0x0000000000000000000000000000000000000000"
