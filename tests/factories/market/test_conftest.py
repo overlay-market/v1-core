@@ -8,7 +8,7 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
 
     # check deployer contract deployed on factory deploy
     assert factory.deployer() != "0x0000000000000000000000000000000000000000"
-    assert deployer.factory() == factory
+    assert deployer.parameters()[2] == factory
 
     # check factory has been given admin role on ov token
     assert ov.hasRole(ov.DEFAULT_ADMIN_ROLE(), factory) is True
