@@ -6,7 +6,6 @@
 
 V1 core smart contracts
 
-
 ## Requirements
 
 To run the project you need:
@@ -19,28 +18,40 @@ To run the project you need:
 ```
 # required environment variables
 export WEB3_INFURA_PROJECT_ID=<INFURA_TOKEN>
-export ETHERSCAN_TOKEN=<ETHERSCAN_TOKEN>
+export ARBISCAN_TOKEN=<ETHERSCAN_TOKEN>
+```
+
+```
+# add Arbitrum Fork
+brownie networks add Development arbitrum-main-fork name="Ganache-CLI (Aribtrum-Mainnet Fork)" host=http://127.0.0.1 cmd=ganache-cli accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
+```
+
+```
+# modify network configuration to use API key
+brownie networks modify arbitrum-main host="https://arbitrum-mainnet.infura.io/v3/\$WEB3_INFURA_PROJECT_ID" provider=infura
 ```
 
 To generate the required tokens, see
 
-- `ETHERSCAN_TOKEN`: Creating an API key in [Etherscan's API docs](https://docs.etherscan.io/getting-started/viewing-api-usage-statistics)
+- `ARBISCAN_TOKEN`: Creating an API key in [Arbiscan's API docs](https://docs.arbiscan.io/getting-started/viewing-api-usage-statistics)
 - `WEB3_INFURA_PROJECT_ID`: Getting Started in [Infura's API docs](https://infura.io/docs)
-
 
 ## Diagram
 
 ![diagram](./docs/assets/diagram.svg)
 
-
 ## Modules
 
 V1 core relies on three modules:
 
-- [Markets Module](#markets-module)
-- [Feeds Module](#feeds-module)
-- [OV Module](#ov-module)
-
+- [v1-core](#v1-core)
+  - [Requirements](#requirements)
+  - [Diagram](#diagram)
+  - [Modules](#modules)
+    - [Markets Module](#markets-module)
+    - [Feeds Module](#feeds-module)
+    - [OV Module](#ov-module)
+  - [Deployment Process](#deployment-process)
 
 ### Markets Module
 
@@ -76,7 +87,6 @@ For each market contract, there is an associated feed contract that delivers the
 
 All markets are implemented by the contract `OverlayV1Market.sol`, regardless of the underlying feed type.
 
-
 ### Feeds Module
 
 The feed contract ingests the data stream directly from the oracle provider and formats the data in a format consumable by any market contract. The feed contract is limited to a single core external view function
@@ -105,6 +115,7 @@ library Oracle {
   }
 }
 ```
+
 from the [`Oracle.sol`](./contracts/libraries/Oracle.sol) library. `Oracle.Data` is consumed by each deployment of `OverlayV1Market.sol` for traders to take positions on the market of interest.
 
 For each oracle provider supported, there should be a specific implementation of a feed contract that inherits from `OverlayV1Feed.sol` (e.g. [`OverlayV1UniswapV3Feed.sol`](./contracts/feeds/uniswapv3/OverlayV1UniswapV3Feed.sol) for Uniswap V3 pools).
@@ -115,7 +126,6 @@ For each oracle provider supported, there should be a specific implementation of
 The OV module consists of an ERC20 token with permissioned mint and burn functions. Upon initialization, markets must be given permission to mint and burn OV to compensate traders for their PnL on positions.
 
 [`OverlayV1Factory.sol`](./contracts/OverlayV1Factory.sol) grants these mint and burn permissions on a call to `deployMarket()`. Because of this, the factory contract must have admin privileges on the OV token prior to deploying markets.
-
 
 ## Deployment Process
 

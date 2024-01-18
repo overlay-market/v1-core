@@ -31,7 +31,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
         0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OV
         0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
-        0 // MIN_AVERAGE_BLOCK_TIME = 0s
+        1 // MIN_AVERAGE_BLOCK_TIME = 1s
     ];
     uint256[15] public PARAMS_MAX = [
         0.04e14, // MAX_K = ~ 1000 bps / 8 hr
