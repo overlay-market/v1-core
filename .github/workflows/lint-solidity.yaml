@@ -1,4 +1,4 @@
-name: Overlay V1 Core Lint Solidity
+name: Overlay V1 Core Format Solidity
 
 on:
   push:
@@ -11,9 +11,9 @@ on:
       - staging
 
 jobs:
-  solidity-lint:
+  solidity-format:
     runs-on: ubuntu-latest
-    name: Solidity Lint
+    name: Solidity Format
     steps:
       - uses: actions/checkout@v4
         with:
