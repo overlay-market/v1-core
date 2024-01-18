@@ -50,13 +50,8 @@ contract AggregatorMock is AggregatorV3Interface {
         )
     {
         RoundData memory round = roundData[latestRoundId];
-        return (
-            latestRoundId,
-            round.answer,
-            round.startedAt,
-            round.updatedAt,
-            round.answeredInRound
-        );
+        return
+            (latestRoundId, round.answer, round.startedAt, round.updatedAt, round.answeredInRound);
     }
 
     function getRoundData(uint80 _roundId)
