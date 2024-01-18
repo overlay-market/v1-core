@@ -8,23 +8,8 @@ def test_ov_fixture(ov):
     assert ov.totalSupply() == 8000000000000000000000000
 
 
-def test_token_fixtures(dai, weth, uni):
-    assert dai.name() == "Dai Stablecoin"
-    assert weth.name() == "Wrapped Ether"
+def test_token_fixtures(uni):
     assert uni.name() == "Uniswap"
-
-
-def test_pool_fixtures(dai, weth, uni, uni_factory, pool_daiweth_30bps,
-                       pool_uniweth_30bps):
-    assert pool_daiweth_30bps.fee() == 3000
-    assert pool_daiweth_30bps.token0() == dai
-    assert pool_daiweth_30bps.token1() == weth
-    assert pool_daiweth_30bps == uni_factory.getPool(dai, weth, 3000)
-
-    assert pool_uniweth_30bps.fee() == 3000
-    assert pool_uniweth_30bps.token0() == uni
-    assert pool_uniweth_30bps.token1() == weth
-    assert pool_uniweth_30bps == uni_factory.getPool(uni, weth, 3000)
 
 
 def test_factory_fixture(factory, ov, fee_recipient):
@@ -32,17 +17,9 @@ def test_factory_fixture(factory, ov, fee_recipient):
     assert factory.feeRecipient() == fee_recipient
 
 
-def test_feed_fixture(feed, pool_daiweth_30bps, pool_uniweth_30bps, dai, weth,
-                      uni):
-    assert feed.marketPool() == pool_daiweth_30bps
-    assert feed.ovXPool() == pool_uniweth_30bps
-    assert feed.ov() == uni
-    assert feed.x() == weth
-    assert feed.marketBaseAmount() == 1000000000000000000
-    assert feed.marketBaseToken() == weth
-    assert feed.marketQuoteToken() == dai
+def test_feed_fixture(feed):
     assert feed.microWindow() == 600
-    assert feed.macroWindow() == 1800
+    assert feed.macroWindow() == 3600
 
 
 def test_mock_feed_fixture(mock_feed):
@@ -92,7 +69,7 @@ def test_mock_market_fixture(mock_market, mock_feed, ov, factory,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        1
     ]
     actual_params = [mock_market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params
@@ -138,7 +115,7 @@ def test_market_fixture(market, feed, ov, factory, minter_role,
         750000000000000,
         100000000000000,
         25000000000000,
-        14
+        1
     ]
     actual_params = [market.params(name.value) for name in RiskParameter]
     assert expect_params == actual_params

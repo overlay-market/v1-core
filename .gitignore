@@ -12,3 +12,7 @@ reports/
 # Foundry
 cache
 forge-out
+
+# Echidna
+crytic-export
+coverage-echidna

@@ -343,18 +343,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
             // subtract unwound open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // NOTE: use subFloor to avoid reverts with oi rounding issues
-            if (pos.isLong) {
-                oiLong = oiLong.subFloor(
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-                );
-                oiLongShares -= pos.oiSharesCurrent(fraction);
-            } else {
-                oiShort = oiShort.subFloor(
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-                );
-                oiShortShares -= pos.oiSharesCurrent(fraction);
-            }
+            _reduceOIAndOIShares(pos, fraction);
 
             // register the amount to be minted/burned
             // capPayoff prevents overflow reverts with int256 cast
@@ -445,18 +434,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
             // subtract liquidated open interest from the side's aggregate oi value
             // and decrease number of oi shares issued
-            // NOTE: use subFloor to avoid reverts with oi rounding issues
-            if (pos.isLong) {
-                oiLong = oiLong.subFloor(
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-                );
-                oiLongShares -= pos.oiSharesCurrent(fraction);
-            } else {
-                oiShort = oiShort.subFloor(
-                    pos.oiCurrent(fraction, oiTotalOnSide, oiTotalSharesOnSide)
-                );
-                oiShortShares -= pos.oiSharesCurrent(fraction);
-            }
+            _reduceOIAndOIShares(pos, fraction);
 
             // register the amount to be burned
             _registerMintOrBurn(int256(value) - int256(cost) - int256(marginToBurn));
@@ -535,7 +513,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     ) public view returns (uint256, uint256) {
         uint256 oiTotal = oiOverweight + oiUnderweight;
         uint256 oiImbalance = oiOverweight - oiUnderweight;
-        uint256 oiInvariant = oiUnderweight.mulUp(oiOverweight);
+        uint256 oiInvariant = oiUnderweight * oiOverweight;
 
         // If no OI or imbalance, no funding occurs. Handles div by zero case below
         if (oiTotal == 0 || oiImbalance == 0) {
@@ -574,7 +552,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // potential overflow reverts
         oiOverweight = (oiTotal + oiImbalance) / 2;
         if (oiOverweight != 0) {
-            oiUnderweight = oiInvariant.divUp(oiOverweight);
+            oiUnderweight = oiInvariant == 0 ? 0 : (oiInvariant - 1) / oiOverweight + 1; // round up
         }
         return (oiOverweight, oiUnderweight);
     }
@@ -633,14 +611,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @dev bound on notional cap to mitigate front-running attack
-    /// @dev bound = lmbda * reserveInOvl
+    /// @dev bound = lmbda * reserveInOv
     function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 lmbda = params.get(Risk.Parameters.Lmbda);
         return lmbda.mulDown(data.reserveOverMicroWindow);
     }
 
     /// @dev bound on notional cap to mitigate back-running attack
-    /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
+    /// @dev bound = macroWindowInBlocks * reserveInOv * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
         uint256 window = (data.macroWindow * ONE) / averageBlockTime;
@@ -650,7 +628,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev Returns the open interest in number of contracts for a given notional
     /// @dev Uses _midFromFeed(data) price to calculate oi: OI = Q / P
-    function oiFromNotional(uint256 notional, uint256 midPrice) public view returns (uint256) {
+    function oiFromNotional(uint256 notional, uint256 midPrice) public pure returns (uint256) {
         return notional.divDown(midPrice);
     }
 
@@ -682,7 +660,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev mid price without impact/spread given oracle data and recent volume
     /// @dev used for gas savings to avoid accessing storage for delta, lmbda
-    function _midFromFeed(Oracle.Data memory data) private view returns (uint256 mid_) {
+    function _midFromFeed(Oracle.Data memory data) private pure returns (uint256 mid_) {
         mid_ = Math.average(data.priceOverMicroWindow, data.priceOverMacroWindow);
     }
 
@@ -747,6 +725,22 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // return the cumulative mint amount
         int256 minted = snapshot.cumulative();
         return minted;
+    }
+
+    /// @notice subtract open interest from the side's aggregate oi value
+    /// @notice and decrease number of oi shares issued
+    function _reduceOIAndOIShares(
+        Position.Info memory pos,
+        uint256 fraction
+    ) internal {
+        // NOTE: use subFloor to avoid reverts with oi rounding issues
+        if (pos.isLong) {
+            oiLong = oiLong.subFloor(pos.oiCurrent(fraction, oiLong, oiLongShares));
+            oiLongShares -= pos.oiSharesCurrent(fraction);
+        } else {
+            oiShort = oiShort.subFloor(pos.oiCurrent(fraction, oiShort, oiShortShares));
+            oiShortShares -= pos.oiSharesCurrent(fraction);
+        }
     }
 
     /// @notice Updates the market for funding changes to open interest
@@ -825,7 +819,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @notice Checks the governance per-market risk parameter is valid
-    function _checkRiskParam(Risk.Parameters name, uint256 value) private {
+    function _checkRiskParam(Risk.Parameters name, uint256 value) private view {
         // checks delta won't cause position to be immediately
         // liquidatable given current leverage cap (capLeverage),
         // liquidation fee rate (liquidationFeeRate), and

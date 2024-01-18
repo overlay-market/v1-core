@@ -1,8 +1,10 @@
 import pytest
+import json
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
-    OverlayV1UniswapV3Factory, OverlayV1FeedFactoryMock,
-    OverlayV1FeedMock, OverlayV1Deployer, OverlayV1UniswapV3Feed, web3
+    OverlayV1FeedFactoryMock,
+    OverlayV1FeedMock, OverlayV1Deployer, web3, 
+    OverlayV1ChainlinkFeed, OverlayV1ChainlinkFeedFactory
 )
 
 
@@ -106,96 +108,20 @@ def fake_feed(create_fake_feed):
 
 
 @pytest.fixture(scope="module")
-def dai():
-    yield Contract.from_explorer("0x6B175474E89094C44Da98b954EedeAC495271d0F")
-
-
-@pytest.fixture(scope="module")
-def weth():
-    yield Contract.from_explorer("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2")
-
-
-@pytest.fixture(scope="module")
 def uni():
     # to be used as example ov
-    yield Contract.from_explorer("0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984")
+    yield Contract.from_explorer("0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0")
 
 
 @pytest.fixture(scope="module")
-def uni_factory():
-    yield Contract.from_explorer("0x1F98431c8aD98523631AE4a59f267346ea31F984")
-
-
-@pytest.fixture(scope="module")
-def pool_daiweth_30bps():
-    yield Contract.from_explorer("0xC2e9F25Be6257c210d7Adf0D4Cd6E3E881ba25f8")
-
+def feed_factory():
+    # to be used as example - deployed OverlayV1ChainlinkFeedFactory
+    yield Contract.from_explorer("0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe")
 
 @pytest.fixture(scope="module")
-def pool_uniweth_30bps():
-    # to be used as example ovweth pool
-    yield Contract.from_explorer("0x1d42064Fc4Beb5F8aAF85F4617AE8b3b5B8Bd801")
-
-
-# TODO: change params to (600, 3600, 300, 14)
-@pytest.fixture(scope="module", params=[(600, 1800, 240, 15)])
-def create_feed_factory(gov, uni_factory, weth, uni, request):
-    micro, macro, cardinality, block_time = request.param
-    tok = uni.address
-    uni_fact = uni_factory
-
-    def create_feed_factory(univ3_factory=uni_fact, ov=tok,
-                            micro_window=micro, macro_window=macro,
-                            cardinality_min=cardinality,
-                            avg_block_time=block_time):
-        feed_factory = gov.deploy(OverlayV1UniswapV3Factory, ov,
-                                  univ3_factory, micro_window, macro_window,
-                                  cardinality_min, avg_block_time)
-        return feed_factory
-
-    yield create_feed_factory
-
-
-@pytest.fixture(scope="module")
-def feed_factory(create_feed_factory):
-    yield create_feed_factory()
-
-
-# TODO: params for different OverlayV1Feed types ... (to test BalancerV2
-# and UniswapV3 in same test run)
-@pytest.fixture(scope="module")
-def create_feed(gov, feed_factory, pool_daiweth_30bps, pool_uniweth_30bps,
-                uni, dai, weth, request):
-    # ovweth treated as uniweth for test purposes, feed ov treated as uni
-    mkt_fee = pool_daiweth_30bps.fee()
-    mkt_base_tok = weth.address
-    mkt_quote_tok = dai.address
-    mkt_base_amt = 1 * 10 ** weth.decimals()
-
-    ovweth_base_tok = weth.address
-    ovweth_quote_tok = uni.address
-    ovweth_fee = pool_uniweth_30bps.fee()
-
-    def create_feed(market_base_token=mkt_base_tok,
-                    market_quote_token=mkt_quote_tok,
-                    market_fee=mkt_fee,
-                    market_base_amount=mkt_base_amt,
-                    ovx_base_token=ovweth_base_tok,
-                    ovx_quote_token=ovweth_quote_tok,
-                    ovx_fee=ovweth_fee):
-        tx = feed_factory.deployFeed(
-            market_base_token, market_quote_token, market_fee,
-            market_base_amount, ovx_base_token, ovx_quote_token, ovx_fee)
-        feed_addr = tx.return_value
-        feed = OverlayV1UniswapV3Feed.at(feed_addr)
-        return feed
-
-    yield create_feed
-
-
-@pytest.fixture(scope="module")
-def feed(create_feed):
-    yield create_feed()
+def feed():
+    # to be used as example - deployed CS2 feed
+    yield Contract.from_explorer("0x46B4143CAf2fE2965349FCa53730e83f91247E2C")
 
 
 @pytest.fixture(scope="module", params=[(600, 1800)])
@@ -305,7 +231,7 @@ def create_market(gov, ov):
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def mock_market(gov, mock_feed, mock_feed_factory, factory, ov,
                 create_market, request):
@@ -330,7 +256,7 @@ def mock_market(gov, mock_feed, mock_feed_factory, factory, ov,
     750000000000000,  # tradingFeeRate
     100000000000000,  # minCollateral
     25000000000000,  # priceDriftUpperLimit
-    14,  # averageBlockTime
+    1,  # averageBlockTime
 )])
 def market(gov, feed, feed_factory, factory, ov, create_market, request):
     risk_params = request.param

@@ -31,7 +31,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
         0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OV
         0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
-        0 // MIN_AVERAGE_BLOCK_TIME = 0s
+        1 // MIN_AVERAGE_BLOCK_TIME = 1s
     ];
     uint256[15] public PARAMS_MAX = [
         0.04e14, // MAX_K = ~ 1000 bps / 8 hr
@@ -160,14 +160,14 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice checks market doesn't exist on feed and feed is from a supported factory
-    function _checkFeed(address feedFactory, address feed) private {
+    function _checkFeed(address feedFactory, address feed) private view {
         require(getMarket[feed] == address(0), "OVV1: market already exists");
         require(isFeedFactory[feedFactory], "OVV1: feed factory not supported");
         require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVV1: feed does not exist");
     }
 
     /// @notice Checks all risk params are within acceptable bounds
-    function _checkRiskParams(uint256[15] calldata params) private {
+    function _checkRiskParams(uint256[15] calldata params) private view{
         uint256 length = params.length;
         for (uint256 i = 0; i < length; i++) {
             _checkRiskParam(Risk.Parameters(i), params[i]);
@@ -175,7 +175,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Checks risk param is within acceptable bounds
-    function _checkRiskParam(Risk.Parameters name, uint256 value) private {
+    function _checkRiskParam(Risk.Parameters name, uint256 value) private view{
         uint256 minValue = PARAMS_MIN.get(name);
         uint256 maxValue = PARAMS_MAX.get(name);
         require(value >= minValue && value <= maxValue, "OVV1: param out of bounds");

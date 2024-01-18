@@ -67,7 +67,7 @@ def test_set_risk_param(factory, market, gov):
         550000000000000,  # expect_trading_fee_rate
         200000000000000,  # expect_min_collateral
         12000000000000,  # expect_price_drift_upper_limit
-        14,  # expect_average_block_time
+        1,  # expect_average_block_time
     ]
 
     for i in range(len(default_params)):
