@@ -26,5 +26,5 @@ jobs:
 
       - name: Run Forge fmt
         run: |
-          forge --version
+          forge fmt
         id: format
