@@ -18,11 +18,7 @@ contract PositionMock {
         return position;
     }
 
-    function set(
-        address owner,
-        uint256 id,
-        Position.Info memory pos
-    ) external {
+    function set(address owner, uint256 id, Position.Info memory pos) external {
         positions.set(owner, id, pos);
     }
 
@@ -66,11 +62,11 @@ contract PositionMock {
                         POSITION OI FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function calcOiShares(
-        uint256 oi,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide
-    ) external pure returns (uint256) {
+    function calcOiShares(uint256 oi, uint256 oiTotalOnSide, uint256 oiTotalSharesOnSide)
+        external
+        pure
+        returns (uint256)
+    {
         return Position.calcOiShares(oi, oiTotalOnSide, oiTotalSharesOnSide);
     }
 
@@ -146,14 +142,9 @@ contract PositionMock {
         uint256 currentPrice,
         uint256 capPayoff
     ) external pure returns (uint256) {
-        return
-            pos.notionalWithPnl(
-                fraction,
-                oiTotalOnSide,
-                oiTotalSharesOnSide,
-                currentPrice,
-                capPayoff
-            );
+        return pos.notionalWithPnl(
+            fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff
+        );
     }
 
     function tradingFee(
@@ -165,15 +156,9 @@ contract PositionMock {
         uint256 capPayoff,
         uint256 tradingFeeRate
     ) external pure returns (uint256) {
-        return
-            pos.tradingFee(
-                fraction,
-                oiTotalOnSide,
-                oiTotalSharesOnSide,
-                currentPrice,
-                capPayoff,
-                tradingFeeRate
-            );
+        return pos.tradingFee(
+            fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff, tradingFeeRate
+        );
     }
 
     function liquidatable(
@@ -185,14 +170,13 @@ contract PositionMock {
         uint256 maintenanceMarginFraction,
         uint256 liquidationFeeRate
     ) external pure returns (bool) {
-        return
-            pos.liquidatable(
-                oiTotalOnSide,
-                oiTotalSharesOnSide,
-                currentPrice,
-                capPayoff,
-                maintenanceMarginFraction,
-                liquidationFeeRate
-            );
+        return pos.liquidatable(
+            oiTotalOnSide,
+            oiTotalSharesOnSide,
+            currentPrice,
+            capPayoff,
+            maintenanceMarginFraction,
+            liquidationFeeRate
+        );
     }
 }

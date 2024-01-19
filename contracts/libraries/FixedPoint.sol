@@ -163,7 +163,7 @@ library FixedPoint {
         if (x == 0) {
             return ONE;
         }
-        require(x < 2**255, "FixedPoint: x out of bounds");
+        require(x < 2 ** 255, "FixedPoint: x out of bounds");
 
         int256 x_int256 = int256(x);
         uint256 raw = uint256(LogExpMath.exp(x_int256));
@@ -186,7 +186,7 @@ library FixedPoint {
         if (x == 0) {
             return ONE;
         }
-        require(x < 2**255, "FixedPoint: x out of bounds");
+        require(x < 2 ** 255, "FixedPoint: x out of bounds");
 
         int256 x_int256 = int256(x);
         uint256 raw = uint256(LogExpMath.exp(x_int256));
@@ -202,8 +202,8 @@ library FixedPoint {
      * XXX: logDown implementation
      */
     function logDown(uint256 a, uint256 b) internal pure returns (int256) {
-        require(a > 0 && a < 2**255, "FixedPoint: a out of bounds");
-        require(b > 0 && b < 2**255, "FixedPoint: b out of bounds");
+        require(a > 0 && a < 2 ** 255, "FixedPoint: a out of bounds");
+        require(b > 0 && b < 2 ** 255, "FixedPoint: b out of bounds");
 
         int256 arg = int256(a);
         int256 base = int256(b);
@@ -225,8 +225,8 @@ library FixedPoint {
      * XXX: logUp implementation
      */
     function logUp(uint256 a, uint256 b) internal pure returns (int256) {
-        require(a > 0 && a < 2**255, "FixedPoint: a out of bounds");
-        require(b > 0 && b < 2**255, "FixedPoint: b out of bounds");
+        require(a > 0 && a < 2 ** 255, "FixedPoint: a out of bounds");
+        require(b > 0 && b < 2 ** 255, "FixedPoint: b out of bounds");
 
         int256 arg = int256(a);
         int256 base = int256(b);

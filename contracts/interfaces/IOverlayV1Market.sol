@@ -31,29 +31,17 @@ interface IOverlayV1Market {
     function snapshotVolumeBid()
         external
         view
-        returns (
-            uint32 timestamp_,
-            uint32 window_,
-            int192 accumulator_
-        );
+        returns (uint32 timestamp_, uint32 window_, int192 accumulator_);
 
     function snapshotVolumeAsk()
         external
         view
-        returns (
-            uint32 timestamp_,
-            uint32 window_,
-            int192 accumulator_
-        );
+        returns (uint32 timestamp_, uint32 window_, int192 accumulator_);
 
     function snapshotMinted()
         external
         view
-        returns (
-            uint32 timestamp_,
-            uint32 window_,
-            int192 accumulator_
-        );
+        returns (uint32 timestamp_, uint32 window_, int192 accumulator_);
 
     // positions
     function positions(bytes32 key)
@@ -83,18 +71,11 @@ interface IOverlayV1Market {
     function initialize(uint256[15] memory params) external;
 
     // position altering functions
-    function build(
-        uint256 collateral,
-        uint256 leverage,
-        bool isLong,
-        uint256 priceLimit
-    ) external returns (uint256 positionId_);
+    function build(uint256 collateral, uint256 leverage, bool isLong, uint256 priceLimit)
+        external
+        returns (uint256 positionId_);
 
-    function unwind(
-        uint256 positionId,
-        uint256 fraction,
-        uint256 priceLimit
-    ) external;
+    function unwind(uint256 positionId, uint256 fraction, uint256 priceLimit) external;
 
     function liquidate(address owner, uint256 positionId) external;
 
@@ -105,11 +86,10 @@ interface IOverlayV1Market {
     function dataIsValid(Oracle.Data memory) external view returns (bool);
 
     // current open interest after funding payments transferred
-    function oiAfterFunding(
-        uint256 oiOverweight,
-        uint256 oiUnderweight,
-        uint256 timeElapsed
-    ) external view returns (uint256 oiOverweight_, uint256 oiUnderweight_);
+    function oiAfterFunding(uint256 oiOverweight, uint256 oiUnderweight, uint256 timeElapsed)
+        external
+        view
+        returns (uint256 oiOverweight_, uint256 oiUnderweight_);
 
     // current open interest cap with adjustments for circuit breaker if market has
     // printed a lot in recent past

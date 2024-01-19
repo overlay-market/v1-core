@@ -21,15 +21,7 @@ contract OverlayV1Deployer is IOverlayV1Deployer {
         ov = _ov;
     }
 
-    function parameters()
-        external
-        view
-        returns (
-            address ov_,
-            address feed_,
-            address factory_
-        )
-    {
+    function parameters() external view returns (address ov_, address feed_, address factory_) {
         ov_ = ov;
         feed_ = feed;
         factory_ = factory;
