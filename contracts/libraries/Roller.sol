@@ -25,29 +25,27 @@ library Roller {
 
     /// @dev adjusts accumulator value downward linearly over time.
     /// @dev accumulator should go to zero as one window passes
-    function transform(
-        Snapshot memory self,
-        uint256 timestamp,
-        uint256 window,
-        int256 value
-    ) internal pure returns (Snapshot memory) {
+    function transform(Snapshot memory self, uint256 timestamp, uint256 window, int256 value)
+        internal
+        pure
+        returns (Snapshot memory)
+    {
         uint32 timestamp32 = uint32(timestamp); // truncated by compiler
 
         // int/uint256 values to use in calculations
         uint256 dt = timestamp32 >= self.timestamp
             ? uint256(timestamp32 - self.timestamp)
-            : uint256(2**32) + uint256(timestamp32) - uint256(self.timestamp);
+            : uint256(2 ** 32) + uint256(timestamp32) - uint256(self.timestamp);
         uint256 snapWindow = uint256(self.window);
         int256 snapAccumulator = cumulative(self);
 
         if (dt >= snapWindow || snapWindow == 0) {
             // if one window has passed, prior value has decayed to zero
-            return
-                Snapshot({
-                    timestamp: timestamp32,
-                    window: window.toUint32Bounded(),
-                    accumulator: value.toInt192Bounded()
-                });
+            return Snapshot({
+                timestamp: timestamp32,
+                window: window.toUint32Bounded(),
+                accumulator: value.toInt192Bounded()
+            });
         }
 
         // otherwise, calculate fraction of value remaining given linear decay.
@@ -59,12 +57,11 @@ library Roller {
         int256 accumulatorNow = snapAccumulator + value;
         if (accumulatorNow == 0) {
             // if accumulator now is zero, windowNow is simply window
-            return
-                Snapshot({
-                    timestamp: timestamp32,
-                    window: window.toUint32Bounded(),
-                    accumulator: 0
-                });
+            return Snapshot({
+                timestamp: timestamp32,
+                window: window.toUint32Bounded(),
+                accumulator: 0
+            });
         }
 
         // recalculate windowNow_ for future decay as a value weighted average time
@@ -74,11 +71,10 @@ library Roller {
         uint256 w1 = snapAccumulator.abs();
         uint256 w2 = value.abs();
         uint256 windowNow = (w1 * (snapWindow - dt) + w2 * window) / (w1 + w2);
-        return
-            Snapshot({
-                timestamp: timestamp32,
-                window: windowNow.toUint32Bounded(),
-                accumulator: accumulatorNow.toInt192Bounded()
-            });
+        return Snapshot({
+            timestamp: timestamp32,
+            window: windowNow.toUint32Bounded(),
+            accumulator: accumulatorNow.toInt192Bounded()
+        });
     }
 }
