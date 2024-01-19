@@ -4,7 +4,8 @@ pragma solidity 0.8.10;
 import {Test, console2} from "forge-std/Test.sol";
 import {AggregatorMock} from "contracts/mocks/AggregatorMock.sol";
 import {OverlayV1ChainlinkFeed} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeed.sol";
-import {OverlayV1ChainlinkFeedFactory} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
+import {OverlayV1ChainlinkFeedFactory} from
+    "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
 
 contract MarketTest is Test {
     AggregatorMock aggregator;
@@ -17,10 +18,9 @@ contract MarketTest is Test {
         aggregator = new AggregatorMock();
         feedFactory = new OverlayV1ChainlinkFeedFactory(600, 3600);
         feed = OverlayV1ChainlinkFeed(feedFactory.deployFeed(address(aggregator), 60 minutes));
-
     }
 
-    function testStalePrice() public{
+    function testStalePrice() public {
         aggregator.setData(1, 105);
 
         skip(59 minutes);
