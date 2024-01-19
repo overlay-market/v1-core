@@ -15,7 +15,6 @@ import {TestUtils} from "./TestUtils.sol";
 //
 // Reference: https://github.com/overlay-market/v1-core/blob/main/tests/markets/conftest.py
 contract MarketFoundry is Test {
-
     // contracts required for test
     OverlayV1Factory factory;
     OverlayV1Market market;
@@ -49,37 +48,34 @@ contract MarketFoundry is Test {
         // factory config
         ovl.grantRole(GOVERNOR_ROLE, address(this));
         ovl.grantRole(bytes32(0x00), address(factory)); // grant admin role
-        OverlayV1FeedFactoryMock feedFactory = new OverlayV1FeedFactoryMock({
-            _microWindow: 600,
-            _macroWindow: 1800
-        });
+        OverlayV1FeedFactoryMock feedFactory =
+            new OverlayV1FeedFactoryMock({_microWindow: 600, _macroWindow: 1800});
         factory.addFeedFactory(address(feedFactory));
 
         // market config and deployment
-        address feed = feedFactory.deployFeed({
-            price: 1e29,
-            reserve: 2_000_000e18
-        });
+        address feed = feedFactory.deployFeed({price: 1e29, reserve: 2_000_000e18});
         uint256[15] memory params = [
-            uint256(122000000000),  // k
-            500000000000000000,  // lmbda
-            2500000000000000,  // delta
-            5000000000000000000,  // capPayoff
-            CAP_NOTIONAL,  // capNotional
-            5000000000000000000,  // capLeverage
-            2592000,  // circuitBreakerWindow
-            66670000000000000000000,  // circuitBreakerMintTarget
-            100000000000000000,  // maintenanceMargin
-            100000000000000000,  // maintenanceMarginBurnRate
-            50000000000000000,  // liquidationFeeRate
-            750000000000000,  // tradingFeeRate
-            MIN_COLLATERAL,  // minCollateral
-            25000000000000,  // priceDriftUpperLimit
+            uint256(122000000000), // k
+            500000000000000000, // lmbda
+            2500000000000000, // delta
+            5000000000000000000, // capPayoff
+            CAP_NOTIONAL, // capNotional
+            5000000000000000000, // capLeverage
+            2592000, // circuitBreakerWindow
+            66670000000000000000000, // circuitBreakerMintTarget
+            100000000000000000, // maintenanceMargin
+            100000000000000000, // maintenanceMarginBurnRate
+            50000000000000000, // liquidationFeeRate
+            750000000000000, // tradingFeeRate
+            MIN_COLLATERAL, // minCollateral
+            25000000000000, // priceDriftUpperLimit
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
-        vm.prank(ALICE); ovl.approve(address(market), ovlSupply / 2);
-        vm.prank(BOB); ovl.approve(address(market), ovlSupply / 2);
+        vm.prank(ALICE);
+        ovl.approve(address(market), ovlSupply / 2);
+        vm.prank(BOB);
+        ovl.approve(address(market), ovlSupply / 2);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
@@ -105,10 +101,9 @@ contract MarketFoundry is Test {
         emit log_named_uint("oiProductBefore:", oiProductBefore);
         emit log_named_uint("oiProductAfter:", oiProductAfter);
 
-
         // 0.1% tolerance
         assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16));
-        
+
         // avoid Foundry specific assertions, so we can use this test in Echidna
         // assertApproxEqRel(oiProductBefore, oiProductAfter, 0.1e16, "oi invariant broken");
     }
@@ -124,12 +119,7 @@ contract MarketFoundry is Test {
             priceLimit: type(uint256).max
         });
 
-        market.build({
-            collateral: 99e18,
-            leverage: 1e18,
-            isLong: false,
-            priceLimit: 0
-        });
+        market.build({collateral: 99e18, leverage: 1e18, isLong: false, priceLimit: 0});
 
         emit log_named_uint("oiLong before funding", market.oiLong());
         emit log_named_uint("oiShort before funding", market.oiShort());
@@ -150,5 +140,4 @@ contract MarketFoundry is Test {
         // 0.0001% tolerance
         assertApproxEqRel(oiProductBefore, oiProductAfter, 0.0001e16, "oi invariant broken");
     }
-
 }

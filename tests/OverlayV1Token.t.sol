@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import { Test, console2 } from "forge-std/Test.sol";
-import { OverlayV1Token} from "contracts/OverlayV1Token.sol";
-
+import {Test, console2} from "forge-std/Test.sol";
+import {OverlayV1Token} from "contracts/OverlayV1Token.sol";
 
 contract TokenTest is Test {
     OverlayV1Token ov;
@@ -42,11 +41,15 @@ contract TokenTest is Test {
         assertEq(ov.balanceOf(USER), 100);
 
         vm.startPrank(USER);
-        vm.expectRevert("AccessControl: account 0x6ca6d1e2d5347bfab1d91e883f1915560e09129d is missing role 0xf0887ba65ee2024ea881d91b74c2450ef19e1557f03bed3ea9f16b037cbe2dc9");
+        vm.expectRevert(
+            "AccessControl: account 0x6ca6d1e2d5347bfab1d91e883f1915560e09129d is missing role 0xf0887ba65ee2024ea881d91b74c2450ef19e1557f03bed3ea9f16b037cbe2dc9"
+        );
         ov.mint(USER, 100);
         assertEq(ov.balanceOf(USER), 100);
 
-        vm.expectRevert("AccessControl: account 0x6ca6d1e2d5347bfab1d91e883f1915560e09129d is missing role 0x9667e80708b6eeeb0053fa0cca44e028ff548e2a9f029edfeac87c118b08b7c8");
+        vm.expectRevert(
+            "AccessControl: account 0x6ca6d1e2d5347bfab1d91e883f1915560e09129d is missing role 0x9667e80708b6eeeb0053fa0cca44e028ff548e2a9f029edfeac87c118b08b7c8"
+        );
         ov.burn(100);
         assertEq(ov.balanceOf(USER), 100);
     }

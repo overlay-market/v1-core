@@ -36,18 +36,12 @@ interface IOverlayV1Factory {
     function removeFeedFactory(address feedFactory) external;
 
     // deploy new market
-    function deployMarket(
-        address feedFactory,
-        address feed,
-        uint256[15] calldata params
-    ) external returns (address market_);
+    function deployMarket(address feedFactory, address feed, uint256[15] calldata params)
+        external
+        returns (address market_);
 
     // per-market risk parameter setters
-    function setRiskParam(
-        address feed,
-        Risk.Parameters name,
-        uint256 value
-    ) external;
+    function setRiskParam(address feed, Risk.Parameters name, uint256 value) external;
 
     // fee repository setter
     function setFeeRecipient(address _feeRecipient) external;

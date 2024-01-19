@@ -53,10 +53,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     // event for risk param updates
     event ParamUpdated(
-        address indexed user,
-        address indexed market,
-        Risk.Parameters name,
-        uint256 value
+        address indexed user, address indexed market, Risk.Parameters name, uint256 value
     );
 
     // event for emergency shutdown
@@ -131,11 +128,11 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @dev deploys a new market contract
     /// @return market_ address of the new market
-    function deployMarket(
-        address feedFactory,
-        address feed,
-        uint256[15] calldata params
-    ) external onlyGovernor returns (address market_) {
+    function deployMarket(address feedFactory, address feed, uint256[15] calldata params)
+        external
+        onlyGovernor
+        returns (address market_)
+    {
         // check feed and feed factory are available for a new market
         _checkFeed(feedFactory, feed);
 
@@ -167,7 +164,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Checks all risk params are within acceptable bounds
-    function _checkRiskParams(uint256[15] calldata params) private view{
+    function _checkRiskParams(uint256[15] calldata params) private view {
         uint256 length = params.length;
         for (uint256 i = 0; i < length; i++) {
             _checkRiskParam(Risk.Parameters(i), params[i]);
@@ -175,18 +172,17 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Checks risk param is within acceptable bounds
-    function _checkRiskParam(Risk.Parameters name, uint256 value) private view{
+    function _checkRiskParam(Risk.Parameters name, uint256 value) private view {
         uint256 minValue = PARAMS_MIN.get(name);
         uint256 maxValue = PARAMS_MAX.get(name);
         require(value >= minValue && value <= maxValue, "OVV1: param out of bounds");
     }
 
     /// @notice Setter for per-market risk parameters adjustable by governance
-    function setRiskParam(
-        address feed,
-        Risk.Parameters name,
-        uint256 value
-    ) external onlyGovernor {
+    function setRiskParam(address feed, Risk.Parameters name, uint256 value)
+        external
+        onlyGovernor
+    {
         _checkRiskParam(name, value);
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.setRiskParam(name, value);

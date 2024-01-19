@@ -64,7 +64,7 @@ library LogExpMath {
     int256 constant LN_36_LOWER_BOUND = ONE_18 - 1e17;
     int256 constant LN_36_UPPER_BOUND = ONE_18 + 1e17;
 
-    uint256 constant MILD_EXPONENT_BOUND = 2**254 / uint256(ONE_20);
+    uint256 constant MILD_EXPONENT_BOUND = 2 ** 254 / uint256(ONE_20);
 
     // 18 decimal constants
     int256 constant x0 = 128000000000000000000; // 2ˆ7
@@ -115,7 +115,7 @@ library LogExpMath {
             // x^y = exp(y * ln(x)).
 
             // The ln function takes a signed value, so we need to make sure x fits in the signed 256 bit range.
-            _require(x < 2**255, Errors.X_OUT_OF_BOUNDS);
+            _require(x < 2 ** 255, Errors.X_OUT_OF_BOUNDS);
             int256 x_int256 = int256(x);
 
             // We will compute y * ln(x) in a single step. Depending on the value of x, we can either use ln or ln_36. In
@@ -133,10 +133,8 @@ library LogExpMath {
                 // bring y_int256 to 36 decimal places, as it might overflow. Instead, we perform two 18 decimal
                 // multiplications and add the results: one with the first 18 decimals of ln_36_x, and one with the
                 // (downscaled) last 18 decimals.
-                logx_times_y = ((ln_36_x / ONE_18) *
-                    y_int256 +
-                    ((ln_36_x % ONE_18) * y_int256) /
-                    ONE_18);
+                logx_times_y =
+                    ((ln_36_x / ONE_18) * y_int256 + ((ln_36_x % ONE_18) * y_int256) / ONE_18);
             } else {
                 logx_times_y = _ln(x_int256) * y_int256;
             }
