@@ -13,7 +13,6 @@ import {TestUtils} from "./TestUtils.sol";
 // 3) open tests/invariants/coverage-foundry-advanced/index.html in your browser and
 //    navigate to the relevant source file to see line-by-line execution records
 contract MarketFoundryAdvanced is MarketFoundry {
-
     function setUp() public override {
         // call parent first to setup test environment
         super.setUp();
@@ -29,10 +28,7 @@ contract MarketFoundryAdvanced is MarketFoundry {
         bytes4[] memory selectors = new bytes4[](1);
         selectors[0] = this.buildWrapper.selector;
 
-        targetSelector(FuzzSelector({
-            addr: address(this),
-            selectors: selectors
-        }));
+        targetSelector(FuzzSelector({addr: address(this), selectors: selectors}));
     }
 
     // wrapper around market.build() to "guide" the fuzz test

@@ -21,10 +21,7 @@ contract OverlayV1FeedFactoryMock is OverlayV1FeedFactory {
         // deploy with it twice.
         feed_ = address(
             new OverlayV1FeedMock{salt: keccak256(abi.encode())}(
-                microWindow,
-                macroWindow,
-                price,
-                reserve
+                microWindow, macroWindow, price, reserve
             )
         );
 

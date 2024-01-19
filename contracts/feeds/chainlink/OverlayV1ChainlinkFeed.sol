@@ -9,11 +9,9 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     string public description;
     uint8 public decimals;
 
-    constructor(
-        address _aggregator,
-        uint256 _microWindow,
-        uint256 _macroWindow
-    ) OverlayV1Feed(_microWindow, _macroWindow) {
+    constructor(address _aggregator, uint256 _microWindow, uint256 _macroWindow)
+        OverlayV1Feed(_microWindow, _macroWindow)
+    {
         require(_aggregator != address(0), "Invalid feed");
 
         aggregator = AggregatorV3Interface(_aggregator);
@@ -22,7 +20,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        (uint80 roundId, , , , ) = aggregator.latestRoundData();
+        (uint80 roundId,,,,) = aggregator.latestRoundData();
 
         (
             uint256 priceOverMicroWindow,
@@ -30,17 +28,16 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             uint256 priceOneMacroWindowAgo
         ) = _getAveragePrice(roundId);
 
-        return
-            Oracle.Data({
-                timestamp: block.timestamp,
-                microWindow: microWindow,
-                macroWindow: macroWindow,
-                priceOverMicroWindow: priceOverMicroWindow,
-                priceOverMacroWindow: priceOverMacroWindow,
-                priceOneMacroWindowAgo: priceOneMacroWindowAgo,
-                reserveOverMicroWindow: 0,
-                hasReserve: false
-            });
+        return Oracle.Data({
+            timestamp: block.timestamp,
+            microWindow: microWindow,
+            macroWindow: macroWindow,
+            priceOverMicroWindow: priceOverMicroWindow,
+            priceOverMacroWindow: priceOverMacroWindow,
+            priceOneMacroWindowAgo: priceOneMacroWindowAgo,
+            reserveOverMicroWindow: 0,
+            hasReserve: false
+        });
     }
 
     function _getAveragePrice(uint80 roundId)
@@ -66,7 +63,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         uint256 sumOfPriceMacroWindowAgo;
 
         while (true) {
-            (, int256 answer, , uint256 updatedAt, ) = aggregator.getRoundData(roundId);
+            (, int256 answer,, uint256 updatedAt,) = aggregator.getRoundData(roundId);
 
             if (_microWindow > 0) {
                 uint256 dt = nextTimestamp - updatedAt < _microWindow
@@ -92,8 +89,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
                     sumOfPriceMacroWindowAgo += (startTime - updatedAt) * uint256(answer);
                 } else {
                     sumOfPriceMacroWindowAgo +=
-                        (startTime - macroAgoTargetTimestamp) *
-                        uint256(answer);
+                        (startTime - macroAgoTargetTimestamp) * uint256(answer);
                     break;
                 }
             }
@@ -103,13 +99,10 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         }
 
         priceOverMicroWindow =
-            (sumOfPriceMicroWindow * (10**18)) /
-            (microWindow * 10**aggregator.decimals());
+            (sumOfPriceMicroWindow * (10 ** 18)) / (microWindow * 10 ** aggregator.decimals());
         priceOverMacroWindow =
-            (sumOfPriceMacroWindow * (10**18)) /
-            (macroWindow * 10**aggregator.decimals());
+            (sumOfPriceMacroWindow * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
         priceOneMacroWindowAgo =
-            (sumOfPriceMacroWindowAgo * (10**18)) /
-            (macroWindow * 10**aggregator.decimals());
+            (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
     }
 }

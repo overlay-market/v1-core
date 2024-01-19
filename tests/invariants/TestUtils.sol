@@ -2,13 +2,12 @@
 pragma solidity ^0.8.10;
 
 library TestUtils {
-
     // Reference: https://github.com/crytic/properties/blob/main/contracts/util/PropertiesHelper.sol#L240-L259
-    function clampBetween(
-        uint256 value,
-        uint256 low,
-        uint256 high
-    ) internal pure returns (uint256) {
+    function clampBetween(uint256 value, uint256 low, uint256 high)
+        internal
+        pure
+        returns (uint256)
+    {
         if (value < low || value > high) {
             return (low + (value % (high - low + 1)));
         }
@@ -35,5 +34,4 @@ library TestUtils {
     function delta(uint256 a, uint256 b) internal pure returns (uint256) {
         return a > b ? a - b : b - a;
     }
-
 }

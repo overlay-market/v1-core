@@ -58,10 +58,8 @@ function _revert(uint256 errorCode) pure {
         // per character = 56) to locate it in the most significant part of the 256 slot (the beginning of a byte
         // array).
 
-        let revertReason := shl(
-            200,
-            add(0x42414c23000000, add(add(units, shl(8, tenths)), shl(16, hundreds)))
-        )
+        let revertReason :=
+            shl(200, add(0x42414c23000000, add(add(units, shl(8, tenths)), shl(16, hundreds))))
 
         // We can now encode the reason in memory, which can be safely overwritten as we're about to revert. The encoded
         // message will have the following layout:

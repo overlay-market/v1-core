@@ -11,9 +11,9 @@ import {TestUtils} from "./TestUtils.sol";
 // run from base project directory with:
 // echidna tests/invariants/MarketEchidnaAdvanced.t.sol --contract MarketEchidnaAdvanced --config tests/invariants/MarketEchidnaAdvanced.yaml
 contract MarketEchidnaAdvanced is MarketEchidna {
-
     // wrapper around market.build() to "guide" the fuzz test
     event BuildWrapper(bool isLong, uint256 collateral);
+
     function buildWrapper(bool isLong, uint256 collateral) public {
         // bound collateral to avoid reverts
         collateral = TestUtils.clampBetween(collateral, MIN_COLLATERAL, CAP_NOTIONAL);
