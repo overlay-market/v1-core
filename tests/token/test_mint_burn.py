@@ -2,13 +2,21 @@ import brownie
 
 
 def test_only_minter_on_mint(token, alice, bob):
-    EXPECTED_ERROR_MSG = 'AccessControl: account 0x33a4622b82d4c04a53e170c638b944ce27cffce3 is missing role 0xf0887ba65ee2024ea881d91b74c2450ef19e1557f03bed3ea9f16b037cbe2dc9'
+    EXPECTED_ERROR_MSG = (
+        'AccessControl: account 0x33a4622b82d4c04a53e170c638b944ce27cffce3 '
+        'is missing role '
+        '0xf0887ba65ee2024ea881d91b74c2450ef19e1557f03bed3ea9f16b037cbe2dc9'
+    )
     with brownie.reverts(EXPECTED_ERROR_MSG):
         token.mint(bob, 1 * 10 ** token.decimals(), {"from": alice})
 
 
 def test_only_burner_on_burn(token, alice):
-    EXPECTED_ERROR_MSG = 'AccessControl: account 0x33a4622b82d4c04a53e170c638b944ce27cffce3 is missing role 0x9667e80708b6eeeb0053fa0cca44e028ff548e2a9f029edfeac87c118b08b7c8'
+    EXPECTED_ERROR_MSG = (
+        'AccessControl: account 0x33a4622b82d4c04a53e170c638b944ce27cffce3 '
+        'is missing role '
+        '0x9667e80708b6eeeb0053fa0cca44e028ff548e2a9f029edfeac87c118b08b7c8'
+    )
     with brownie.reverts(EXPECTED_ERROR_MSG):
         token.burn(1 * 10 ** token.decimals(), {"from": alice})
 

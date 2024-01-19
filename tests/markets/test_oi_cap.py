@@ -53,7 +53,7 @@ def test_cap_notional_adjusted_for_bounds(market, feed):
 
         # expect is the min of all cap quantities
         expect = min(cap_notional, cap_notional_front_run_bound,
-                    cap_notional_back_run_bound)
+                     cap_notional_back_run_bound)
         actual = market.capNotionalAdjustedForBounds(data, cap_notional)
         assert actual == expect
 
