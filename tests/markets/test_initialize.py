@@ -1,13 +1,15 @@
 import pytest
-from brownie import reverts, OverlayV1Market
+from brownie import chain, reverts, OverlayV1Market
 from decimal import Decimal
 from math import exp
 from pytest import approx
 
-from .utils import RiskParameter
+from .utils import RiskParameter, mid_from_feed
 
 
 # NOTE: Tests passing with isolation fixture
+
+
 @pytest.fixture(autouse=True)
 def isolation(fn_isolation):
     pass
@@ -49,7 +51,7 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
     assert market.factory() == fake_factory
 
     # initialize market with risk params
-    market.initialize(params, {"from": fake_factory})
+    tx = market.initialize(params, {"from": fake_factory})
 
     # check market deployed correctly with risk params
     expect_params = params
@@ -61,9 +63,20 @@ def test_initialize_creates_market(fake_deployer, ovl, fake_feed,
     (_, _, macro_window, _, _, _, _, _) = data
     drift = Decimal(price_drift_upper_limit) / Decimal(1e18)
     pow = drift * Decimal(macro_window)
+
     expect_drift = int(Decimal(exp(pow)) * Decimal(1e18))
     actual_drift = market.dpUpperLimit()
     assert expect_drift == approx(actual_drift)
+
+    # check update last quantities are set to data from last block
+    expect_timestamp_update_last = chain[tx.block_number]['timestamp']
+    actual_timestamp_update_last = market.timestampUpdateLast()
+    assert actual_timestamp_update_last == expect_timestamp_update_last
+
+    data = fake_feed.latest()
+    expect_mid_price_last = int(mid_from_feed(data))
+    actual_mid_price_last = int(market.midPriceLast())
+    assert actual_mid_price_last == expect_mid_price_last
 
 
 def test_initialize_reverts_when_not_factory(fake_deployer, fake_feed,

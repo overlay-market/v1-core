@@ -4,7 +4,7 @@ from decimal import Decimal
 from math import exp
 from pytest import approx
 
-from .utils import calculate_position_info, RiskParameter
+from .utils import calculate_position_info, mid_from_feed, RiskParameter
 
 
 # NOTE: Use isolation fixture to avoid possible revert with max
@@ -101,6 +101,7 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
     prior_oi_long = market.oiLong()
     prior_oi_short = market.oiShort()
     prior_timestamp_update_last = market.timestampUpdateLast()
+    prior_mid_price_last = market.midPriceLast()
 
     for i in range(len(RiskParameter)):
         # mine the chain forward for some funding
@@ -115,10 +116,12 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
         # NOTE: oiAfterFunding() tests in test_funding.py
         if (prior_oi_long > prior_oi_short):
             expect_oi_long, expect_oi_short = market.oiAfterFunding(
-                prior_oi_long, prior_oi_short, time_elapsed)
+                prior_oi_long, prior_oi_short, time_elapsed,
+                prior_mid_price_last)
         else:
             expect_oi_short, expect_oi_long = market.oiAfterFunding(
-                prior_oi_short, prior_oi_long, time_elapsed)
+                prior_oi_short, prior_oi_long, time_elapsed,
+                prior_mid_price_last)
 
         # set the risk param
         expect_param = expect_params[i]
@@ -128,13 +131,20 @@ def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
         timestamp_now = chain[tx.block_number]['timestamp']
         expect_timestamp_update_last = timestamp_now
 
+        # check expect funding calc used correct mid price given chain mine
+        data = feed.latest()
+        expect_mid_price_last = int(mid_from_feed(data))
+
         # get actual updated storage vars
         actual_timestamp_update_last = market.timestampUpdateLast()
+        actual_mid_price_last = int(market.midPriceLast())
         actual_oi_long = market.oiLong()
         actual_oi_short = market.oiShort()
 
         assert actual_timestamp_update_last == expect_timestamp_update_last
         assert actual_timestamp_update_last != prior_timestamp_update_last
+
+        assert actual_mid_price_last == approx(expect_mid_price_last)
 
         assert int(expect_oi_long) == approx(int(actual_oi_long))
         assert int(expect_oi_short) == approx(int(actual_oi_short))

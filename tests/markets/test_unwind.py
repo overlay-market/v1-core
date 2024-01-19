@@ -283,7 +283,7 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     assert actual_unwound_oi_shares == actual_unwound_pos_oi_shares
 
 
-def test_unwind_updates_market(market, alice, ovl):
+def test_unwind_updates_market(market, feed, alice, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -340,6 +340,12 @@ def test_unwind_updates_market(market, alice, ovl):
 
     assert actual_timestamp_update_last == expect_timestamp_update_last
     assert actual_timestamp_update_last != prior_timestamp_update_last
+
+    # get the expected mid price and check equal to actual
+    data = feed.latest()
+    expect_mid_update_last = int(mid_from_feed(data))
+    actual_mid_update_last = int(market.midPriceLast())
+    assert actual_mid_update_last == approx(expect_mid_update_last)
 
 
 @given(
