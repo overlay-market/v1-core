@@ -1,10 +1,8 @@
 import pytest
-import json
 from brownie import (
     Contract, OverlayV1Token, OverlayV1Market, OverlayV1Factory,
     OverlayV1FeedFactoryMock,
-    OverlayV1FeedMock, OverlayV1Deployer, web3, 
-    OverlayV1ChainlinkFeed, OverlayV1ChainlinkFeedFactory
+    OverlayV1FeedMock, OverlayV1Deployer, web3
 )
 
 
@@ -117,6 +115,7 @@ def uni():
 def feed_factory():
     # to be used as example - deployed OverlayV1ChainlinkFeedFactory
     yield Contract.from_explorer("0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe")
+
 
 @pytest.fixture(scope="module")
 def feed():
