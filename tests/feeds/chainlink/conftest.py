@@ -53,7 +53,7 @@ def create_chainlink_feed(gov, mock_aggregator, request):
     def create_chainlink_feed(aggregator=aggregator_address,
                               micro_window=micro, macro_window=macro):
         feed = gov.deploy(OverlayV1ChainlinkFeed, aggregator,
-                          micro_window, macro_window)
+                          micro_window, macro_window, 3600)
         return feed
 
     yield create_chainlink_feed
