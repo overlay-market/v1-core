@@ -16,12 +16,12 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
     /// @dev deploys a new feed contract
     /// @param _aggregator chainlink price feed
     /// @return _feed address of the new feed
-    function deployFeed(address _aggregator) external returns (address _feed) {
+    function deployFeed(address _aggregator, uint256 _heartbeat) external returns (address _feed) {
         // check feed doesn't already exist
         require(getFeed[_aggregator] == address(0), "OVLV1: feed already exists");
 
         // Create a new Feed contract
-        _feed = address(new OverlayV1ChainlinkFeed(_aggregator, microWindow, macroWindow));
+        _feed = address(new OverlayV1ChainlinkFeed(_aggregator, microWindow, macroWindow, _heartbeat));
 
         // store feed registry record for _aggregator and record address as deployed feed
         getFeed[_aggregator] = _feed;

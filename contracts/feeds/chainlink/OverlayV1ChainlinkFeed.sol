@@ -6,23 +6,30 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     AggregatorV3Interface public immutable aggregator;
+    uint256 public heartbeat;
     string public description;
     uint8 public decimals;
 
     constructor(
         address _aggregator,
         uint256 _microWindow,
-        uint256 _macroWindow
+        uint256 _macroWindow,
+        uint256 _heartbeat
     ) OverlayV1Feed(_microWindow, _macroWindow) {
         require(_aggregator != address(0), "Invalid feed");
 
         aggregator = AggregatorV3Interface(_aggregator);
         decimals = aggregator.decimals();
         description = aggregator.description();
+        heartbeat = _heartbeat;
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        (uint80 roundId, , , , ) = aggregator.latestRoundData();
+        (uint80 roundId, , , uint256 updatedAt, ) = aggregator.latestRoundData();
+
+        if (updatedAt < block.timestamp - heartbeat) {
+            revert("stale price feed");
+        }
 
         (
             uint256 priceOverMicroWindow,
