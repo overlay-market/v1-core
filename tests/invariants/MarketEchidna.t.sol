@@ -53,37 +53,34 @@ contract MarketEchidna {
         // factory config
         ovl.grantRole(GOVERNOR_ROLE, address(this));
         ovl.grantRole(bytes32(0x00), address(factory)); // grant admin role
-        OverlayV1FeedFactoryMock feedFactory = new OverlayV1FeedFactoryMock({
-            _microWindow: 600,
-            _macroWindow: 1800
-        });
+        OverlayV1FeedFactoryMock feedFactory =
+            new OverlayV1FeedFactoryMock({_microWindow: 600, _macroWindow: 1800});
         factory.addFeedFactory(address(feedFactory));
 
         // market config and deployment
-        address feed = feedFactory.deployFeed({
-            price: 1e29,
-            reserve: 2_000_000e18
-        });
+        address feed = feedFactory.deployFeed({price: 1e29, reserve: 2_000_000e18});
         uint256[15] memory params = [
-            uint256(122000000000),  // k
-            500000000000000000,  // lmbda
-            2500000000000000,  // delta
-            5000000000000000000,  // capPayoff
-            CAP_NOTIONAL,  // capNotional
-            5000000000000000000,  // capLeverage
-            2592000,  // circuitBreakerWindow
-            66670000000000000000000,  // circuitBreakerMintTarget
-            100000000000000000,  // maintenanceMargin
-            100000000000000000,  // maintenanceMarginBurnRate
-            50000000000000000,  // liquidationFeeRate
-            750000000000000,  // tradingFeeRate
-            MIN_COLLATERAL,  // minCollateral
-            25000000000000,  // priceDriftUpperLimit
+            uint256(122000000000), // k
+            500000000000000000, // lmbda
+            2500000000000000, // delta
+            5000000000000000000, // capPayoff
+            CAP_NOTIONAL, // capNotional
+            5000000000000000000, // capLeverage
+            2592000, // circuitBreakerWindow
+            66670000000000000000000, // circuitBreakerMintTarget
+            100000000000000000, // maintenanceMargin
+            100000000000000000, // maintenanceMarginBurnRate
+            50000000000000000, // liquidationFeeRate
+            750000000000000, // tradingFeeRate
+            MIN_COLLATERAL, // minCollateral
+            25000000000000, // priceDriftUpperLimit
             12 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
-        hevm.prank(ALICE); ovl.approve(address(market), ovlSupply / 2);
-        hevm.prank(BOB); ovl.approve(address(market), ovlSupply / 2);
+        hevm.prank(ALICE);
+        ovl.approve(address(market), ovlSupply / 2);
+        hevm.prank(BOB);
+        ovl.approve(address(market), ovlSupply / 2);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
@@ -114,7 +111,6 @@ contract MarketEchidna {
         emit OiAfterFunding(oiProductBefore, oiProductAfter);
 
         // 0.5% tolerance
-        return(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
+        return (TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
     }
-
 }

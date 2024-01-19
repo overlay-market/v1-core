@@ -1,3 +1,9 @@
+[fmt]
+line_length = 99
+tab_width = 4
+bracket_spacing = false
+quote_style = "double"
+
 [profile.default]
 src = "contracts"
 test = "tests"

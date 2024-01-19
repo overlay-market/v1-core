@@ -126,7 +126,7 @@ contract MarketTest is Test {
         _fraction = bound(_fraction, 1e14, 9999e14);
 
         vm.startPrank(USER);
-        
+
         ov.approve(address(market), type(uint256).max);
         // Build postion 0
         market.build(1e18, 1e18, true, type(uint256).max);
@@ -158,14 +158,16 @@ contract MarketTest is Test {
         market.liquidate(USER, 1);
 
         uint256 balanceBefore = ov.balanceOf(USER);
-        (uint96 notionalInitial,,,,,,,uint16 fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(1))));
+        (uint96 notionalInitial,,,,,,, uint16 fractionRemaining) =
+            market.positions(keccak256(abi.encodePacked(USER, uint256(1))));
         market.emergencyWithdraw(1);
-        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
+        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ov.balanceOf(USER));
         balanceBefore = ov.balanceOf(USER);
-        (notionalInitial,,,,,,,fractionRemaining) = market.positions(keccak256(abi.encodePacked(USER, uint256(2))));
+        (notionalInitial,,,,,,, fractionRemaining) =
+            market.positions(keccak256(abi.encodePacked(USER, uint256(2))));
         market.emergencyWithdraw(2);
-        assertEq(balanceBefore + notionalInitial*fractionRemaining/1e4, ov.balanceOf(USER));
-        
+        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ov.balanceOf(USER));
+
         assertEq(ov.balanceOf(address(market)), 0);
     }
 }
