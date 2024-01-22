@@ -11,8 +11,8 @@ on:
       - staging
 
 env:
-    # increasing available memory for node reduces issues with ganache crashing
-    # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+  # increasing available memory for node reduces issues with ganache crashing
+  # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
   NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
@@ -24,7 +24,17 @@ jobs:
         python-version: [3.9]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge install
+        run: forge install
 
       - name: Create .env
         run: |
