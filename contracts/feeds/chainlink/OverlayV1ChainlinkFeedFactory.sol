@@ -18,7 +18,7 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
     /// @param _heartbeat expected update frequency of the feed
     /// @return _feed address of the new feed
     /// TODO: deploy can be front-run to deploy a low heartbeat creating a DoS vector
-    function deployFeed(address _aggregator, uint256 _heartbeat)
+    function deployFeed(address _ov, address _aggregator, uint256 _heartbeat)
         external
         returns (address _feed)
     {
@@ -26,8 +26,9 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
         require(getFeed[_aggregator] == address(0), "OVV1: feed already exists");
 
         // Create a new Feed contract
-        _feed =
-            address(new OverlayV1ChainlinkFeed(_aggregator, microWindow, macroWindow, _heartbeat));
+        _feed = address(
+            new OverlayV1ChainlinkFeed(_ov, _aggregator, microWindow, macroWindow, _heartbeat)
+        );
 
         // store feed registry record for _aggregator and record address as deployed feed
         getFeed[_aggregator] = _feed;

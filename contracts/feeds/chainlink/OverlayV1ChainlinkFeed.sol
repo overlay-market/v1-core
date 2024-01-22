@@ -2,15 +2,23 @@
 pragma solidity 0.8.10;
 
 import "../OverlayV1Feed.sol";
+import "../../interfaces/IOverlayV1Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
+    IOverlayV1Token public immutable ov;
     AggregatorV3Interface public immutable aggregator;
     uint8 public immutable decimals;
     uint256 public heartbeat;
     string public description;
 
+    modifier onlyGovernor() {
+        require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
+        _;
+    }
+
     constructor(
+        address _ov,
         address _aggregator,
         uint256 _microWindow,
         uint256 _macroWindow,
@@ -22,6 +30,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         decimals = aggregator.decimals();
         description = aggregator.description();
         heartbeat = _heartbeat;
+        ov = IOverlayV1Token(_ov);
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
@@ -111,5 +120,9 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             (sumOfPriceMacroWindow * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
         priceOneMacroWindowAgo =
             (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
+    }
+
+    function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
+        heartbeat = _heartbeat;
     }
 }
