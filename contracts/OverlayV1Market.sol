@@ -18,7 +18,6 @@ import "./libraries/Roller.sol";
 import "./libraries/Tick.sol";
 
 contract OverlayV1Market is IOverlayV1Market, Pausable {
-    using FixedCast for uint16;
     using FixedCast for uint256;
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
