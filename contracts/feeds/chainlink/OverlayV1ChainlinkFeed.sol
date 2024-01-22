@@ -6,8 +6,8 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     AggregatorV3Interface public immutable aggregator;
+    uint8 public immutable decimals;
     string public description;
-    uint8 public decimals;
 
     constructor(address _aggregator, uint256 _microWindow, uint256 _macroWindow)
         OverlayV1Feed(_microWindow, _macroWindow)
