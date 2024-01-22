@@ -8,11 +8,6 @@ autofetch_sources: True
 # automatically load the local .env file
 dotenv: .env
 
-# require OpenZepplin, Uniswap Contracts
-dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.5.0
-  - smartcontractkit/chainlink-brownie-contracts@0.4.2
-
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
@@ -20,5 +15,5 @@ compiler:
     optimizer:
       runs: 800
     remappings:
-      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.5.0"
-      - "@chainlink=smartcontractkit/chainlink-brownie-contracts@0.4.2"
+      - "@openzeppelin/=lib/openzeppelin-contracts/"
+      - "@chainlink/=lib/chainlink/"
