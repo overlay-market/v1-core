@@ -176,7 +176,7 @@ def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
         trade_fee = 750000000000000
         min_collateral = 100000000000000
         price_drift_upper_limit = 10000000000000  # 0.001% per sec
-        average_block_time = 1
+        average_block_time = 250
 
         params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,

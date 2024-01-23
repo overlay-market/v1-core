@@ -31,7 +31,7 @@ def test_set_risk_param(market, factory):
         250000000000000,  # expect_trading_fee_rate
         500000000000000,  # expect_min_collateral
         50000000000000,  # expect_price_drift_upper_limit
-        1,  # expect_average_block_time
+        250,  # expect_average_block_time
     ]
 
     for i in range(len(RiskParameter)):
@@ -64,7 +64,7 @@ def test_set_risk_param_pays_funding(market, feed, factory, ov, alice):
         250000000000000,  # expect_trading_fee_rate
         500000000000000,  # expect_min_collateral
         50000000000000,  # expect_price_drift_upper_limit
-        1,  # expect_average_block_time
+        250,  # expect_average_block_time
     ]
 
     # build some positions

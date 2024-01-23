@@ -29,6 +29,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     // internal constants
     uint256 internal constant ONE = 1e18; // 18 decimal places
+    uint256 internal constant TO_MS = 1e3; // convert seconds to milliseconds
 
     // cap for euler exponent powers; SEE: ./libraries/LogExpMath.sol::pow
     // using ~ 1/2 library max for substantial padding
@@ -620,7 +621,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @dev bound = macroWindowInBlocks * reserveInOv * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
-        uint256 window = (data.macroWindow * ONE) / averageBlockTime;
+        uint256 window = (data.macroWindow * ONE * TO_MS) / averageBlockTime;
         uint256 delta = params.get(Risk.Parameters.Delta);
         return delta.mulDown(data.reserveOverMicroWindow).mulDown(window).mulDown(2 * ONE);
     }
