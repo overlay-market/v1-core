@@ -1,5 +1,5 @@
 import pytest
-from brownie import ( 
+from brownie import (
     Contract, OverlayV1ChainlinkFeed, OverlayV1Token,
     AggregatorMock, web3
 )
@@ -85,7 +85,7 @@ def create_chainlink_feed(ov, gov, mock_aggregator, request):
     def create_chainlink_feed(tok=ov, aggregator=aggregator_address,
                               micro_window=micro, macro_window=macro):
         feed = gov.deploy(OverlayV1ChainlinkFeed, tok, aggregator,
-                          micro_window, macro_window, 3600)
+                          micro_window, macro_window, 3601)
         return feed
 
     yield create_chainlink_feed
