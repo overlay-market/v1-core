@@ -83,7 +83,7 @@ library Position {
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or fraction remaining == 0
     function exists(Info memory self) internal pure returns (bool exists_) {
-        return (!self.liquidated && self.fractionRemaining > 0);
+        return (self.fractionRemaining > 0);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -317,7 +317,7 @@ library Position {
         uint256 fraction = ONE;
         uint256 posNotionalInitial = notionalInitial(self, fraction);
 
-        if (self.liquidated || self.fractionRemaining == 0) {
+        if (self.fractionRemaining == 0) {
             // already been liquidated or doesn't exist
             // latter covers edge case of val == 0 and MM + liq fee == 0
             return false;
