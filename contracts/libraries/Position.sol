@@ -162,8 +162,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function notionalInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 notionalForRemaining = _notionalInitial(self).mulUp(fractionRemaining);
+        uint256 notionalForRemaining = _notionalInitial(self).mulUp(_fractionRemaining(self));
         return notionalForRemaining.mulUp(fraction);
     }
 
@@ -171,8 +170,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function oiInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(fractionRemaining);
+        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(_fractionRemaining(self));
         return oiInitialForRemaining.mulUp(fraction);
     }
 
@@ -189,8 +187,7 @@ library Position {
     /// @notice for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function debtInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 debtForRemaining = _debtInitial(self).mulUp(fractionRemaining);
+        uint256 debtForRemaining = _debtInitial(self).mulUp(_fractionRemaining(self));
         return debtForRemaining.mulUp(fraction);
     }
 
