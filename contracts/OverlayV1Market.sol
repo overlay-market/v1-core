@@ -506,7 +506,11 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @notice Current open interest after funding payments transferred
     /// @notice from overweight oi side to underweight oi side
+    /// @return New rebalanced (oiOverweight, oiUnderweight) after funding payments
     /// @dev The value of oiOverweight must be >= oiUnderweight
+    /// @dev The oiOverweight returned will be <= the oiOverweight passed in.
+    /// @dev The oiUnderweight returned will be >= the oiUnderweight passed in.
+    /// For further reference see Section II (Funding Payments) of the whitepaper.
     function oiAfterFunding(uint256 oiOverweight, uint256 oiUnderweight, uint256 timeElapsed)
         public
         view
@@ -514,6 +518,8 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     {
         uint256 oiTotal = oiOverweight + oiUnderweight;
         uint256 oiImbalance = oiOverweight - oiUnderweight;
+
+        // This invariant must hold after updating both oiOverweight and oiUnderweight
         uint256 oiInvariant = oiUnderweight * oiOverweight;
 
         // If no OI or imbalance, no funding occurs. Handles div by zero case below
@@ -551,7 +557,8 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // potential overflow reverts
         oiOverweight = (oiTotal + oiImbalance) / 2;
         if (oiOverweight != 0) {
-            oiUnderweight = oiInvariant == 0 ? 0 : (oiInvariant - 1) / oiOverweight + 1; // round up
+            // oiUnderweight = oiInvariant / oiOverweight, rounding up
+            oiUnderweight = oiInvariant == 0 ? 0 : (oiInvariant - 1) / oiOverweight + 1;
         }
         return (oiOverweight, oiUnderweight);
     }
@@ -737,20 +744,26 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
     }
 
-    /// @notice Updates the market for funding changes to open interest
-    /// @notice since last time market was interacted with
+    /// @notice Updates the market for funding changes to open interest (oi)
+    /// since last time market was interacted with.
+    /// @dev Funding payments are used to decrease open interest imbalance over time.
+    /// @dev Rebalances oiLong and oiShort:
+    /// If oiLong > oiShort, then oiLong pays funding to oiShort (ie. oiLong decreases and oiShort increases)
+    /// If oiShort > oiLong, then oiShort pays funding to oiLong (ie. oiShort decreases and oiLong increases)
     function _payFunding() private {
-        // apply funding if at least one block has passed
+        // apply funding if at least one second has passed since last update
         uint256 timeElapsed = block.timestamp - timestampUpdateLast;
         if (timeElapsed > 0) {
             // calculate adjustments to oi due to funding
             bool isLongOverweight = oiLong > oiShort;
             uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
             uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+
+            // calculate new oi values after funding
             (oiOverweight, oiUnderweight) =
                 oiAfterFunding(oiOverweight, oiUnderweight, timeElapsed);
 
-            // pay funding
+            // pay funding (ie. update market ois)
             oiLong = isLongOverweight ? oiOverweight : oiUnderweight;
             oiShort = isLongOverweight ? oiUnderweight : oiOverweight;
 
