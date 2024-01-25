@@ -1,10 +1,6 @@
 name: Overlay V1 Core Lint Python
 
 on:
-  push:
-    branches:
-      - main
-      - staging
   pull_request:
     branches:
       - main
@@ -16,7 +12,7 @@ jobs:
     name: Lint
     steps:
       - name: Check out source repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python environment
         uses: actions/setup-python@v1
         with:

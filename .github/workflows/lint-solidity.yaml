@@ -1,10 +1,6 @@
 name: Overlay V1 Core Format Solidity
 
 on:
-  push:
-    branches:
-      - main
-      - staging
   pull_request:
     branches:
       - main
