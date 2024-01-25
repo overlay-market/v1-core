@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "../libraries/uniswap/v3-core/FullMath.sol";
+import "v3-core/libraries/FullMath.sol";
 import "./FixedCast.sol";
 import "./FixedPoint.sol";
 import "./Tick.sol";
