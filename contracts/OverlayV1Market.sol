@@ -18,7 +18,6 @@ import "./libraries/Roller.sol";
 import "./libraries/Tick.sol";
 
 contract OverlayV1Market is IOverlayV1Market, Pausable {
-    using FixedCast for uint16;
     using FixedCast for uint256;
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
@@ -271,7 +270,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         require(fraction <= ONE, "OVV1:fraction>max");
         // only keep 4 decimal precision (1 bps) for fraction given
         // pos.fractionRemaining only to 4 decimals
-        fraction = fraction.toUint16Fixed().toUint256Fixed();
+        fraction -= fraction % 1e14;
         require(fraction > 0, "OVV1:fraction<min");
 
         uint256 value;
