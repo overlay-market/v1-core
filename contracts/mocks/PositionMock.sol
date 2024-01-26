@@ -34,10 +34,6 @@ contract PositionMock {
                  POSITION FRACTION REMAINING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function getFractionRemaining(Position.Info memory pos) external pure returns (uint256) {
-        return pos.getFractionRemaining();
-    }
-
     function updatedFractionRemaining(Position.Info memory pos, uint256 fractionRemoved)
         external
         pure

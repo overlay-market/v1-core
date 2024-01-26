@@ -90,11 +90,6 @@ library Position {
                  POSITION FRACTION REMAINING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Gets the current fraction remaining of the initial position
-    function getFractionRemaining(Info memory self) internal pure returns (uint256) {
-        return _fractionRemaining(self);
-    }
-
     /// @notice Computes an updated fraction remaining of the initial position
     /// @notice given fractionRemoved unwound/liquidated from remaining position
     function updatedFractionRemaining(Info memory self, uint256 fractionRemoved)
