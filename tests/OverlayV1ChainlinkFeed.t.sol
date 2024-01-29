@@ -20,10 +20,8 @@ contract MarketTest is Test {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
         ov = new OverlayV1Token();
         aggregator = new AggregatorMock();
-        feedFactory = new OverlayV1ChainlinkFeedFactory(600, 3600);
-        feed = OverlayV1ChainlinkFeed(
-            feedFactory.deployFeed(address(ov), address(aggregator), 60 minutes)
-        );
+        feedFactory = new OverlayV1ChainlinkFeedFactory(address(ov), 600, 3600);
+        feed = OverlayV1ChainlinkFeed(feedFactory.deployFeed(address(aggregator), 60 minutes));
         ov.grantRole(GOVERNOR_ROLE, GOVERNOR);
     }
 
