@@ -17,7 +17,6 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
     /// @param _aggregator chainlink price feed
     /// @param _heartbeat expected update frequency of the feed
     /// @return _feed address of the new feed
-    /// TODO: deploy can be front-run to deploy a low heartbeat creating a DoS vector
     function deployFeed(address _ov, address _aggregator, uint256 _heartbeat)
         external
         returns (address _feed)
