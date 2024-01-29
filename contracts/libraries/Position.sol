@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "../libraries/uniswap/v3-core/FullMath.sol";
+import "v3-core/libraries/FullMath.sol";
 import "./FixedCast.sol";
 import "./FixedPoint.sol";
 import "./Tick.sol";
@@ -83,7 +83,7 @@ library Position {
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or fraction remaining == 0
     function exists(Info memory self) internal pure returns (bool exists_) {
-        return (!self.liquidated && self.fractionRemaining > 0);
+        return (self.fractionRemaining > 0);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -102,7 +102,6 @@ library Position {
         pure
         returns (uint16)
     {
-        require(fractionRemoved <= ONE, "OVV1:fraction>max");
         uint256 fractionRemaining = _fractionRemaining(self).mulDown(ONE - fractionRemoved);
         return fractionRemaining.toUint16Fixed();
     }
@@ -163,8 +162,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function notionalInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 notionalForRemaining = _notionalInitial(self).mulUp(fractionRemaining);
+        uint256 notionalForRemaining = _notionalInitial(self).mulUp(_fractionRemaining(self));
         return notionalForRemaining.mulUp(fraction);
     }
 
@@ -172,8 +170,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function oiInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(fractionRemaining);
+        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(_fractionRemaining(self));
         return oiInitialForRemaining.mulUp(fraction);
     }
 
@@ -190,8 +187,7 @@ library Position {
     /// @notice for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function debtInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 debtForRemaining = _debtInitial(self).mulUp(fractionRemaining);
+        uint256 debtForRemaining = _debtInitial(self).mulUp(_fractionRemaining(self));
         return debtForRemaining.mulUp(fraction);
     }
 
@@ -317,7 +313,7 @@ library Position {
         uint256 fraction = ONE;
         uint256 posNotionalInitial = notionalInitial(self, fraction);
 
-        if (self.liquidated || self.fractionRemaining == 0) {
+        if (self.fractionRemaining == 0) {
             // already been liquidated or doesn't exist
             // latter covers edge case of val == 0 and MM + liq fee == 0
             return false;

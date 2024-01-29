@@ -14,6 +14,7 @@ libs = ["lib"]
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
     "@chainlink/=lib/chainlink/",
+    "v3-core/=lib/v3-core/contracts/"
 ]
 
 [fuzz]
