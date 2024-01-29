@@ -33,7 +33,6 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         ov = IOverlayV1Token(_ov);
     }
 
-    /// @notice Arbitrum Sequencer not checked due to Chainlink Sequencer not working.
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
         (uint80 roundId,,, uint256 updatedAt,) = aggregator.latestRoundData();
 
