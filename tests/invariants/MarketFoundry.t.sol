@@ -69,7 +69,7 @@ contract MarketFoundry is Test {
             750000000000000, // tradingFeeRate
             MIN_COLLATERAL, // minCollateral
             25000000000000, // priceDriftUpperLimit
-            12 // averageBlockTime // FIXME: this will be different in Arbitrum
+            250 // averageBlockTime // FIXME: this will be different in Arbitrum
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
         vm.prank(ALICE);
