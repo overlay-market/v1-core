@@ -2,25 +2,41 @@
 pragma solidity 0.8.10;
 
 import "../OverlayV1Feed.sol";
+import "../../interfaces/IOverlayV1Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
+    IOverlayV1Token public immutable ov;
     AggregatorV3Interface public immutable aggregator;
     uint8 public immutable decimals;
+    uint256 public heartbeat;
     string public description;
 
-    constructor(address _aggregator, uint256 _microWindow, uint256 _macroWindow)
-        OverlayV1Feed(_microWindow, _macroWindow)
-    {
+    modifier onlyGovernor() {
+        require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
+        _;
+    }
+
+    constructor(
+        address _ov,
+        address _aggregator,
+        uint256 _microWindow,
+        uint256 _macroWindow,
+        uint256 _heartbeat
+    ) OverlayV1Feed(_microWindow, _macroWindow) {
         require(_aggregator != address(0), "Invalid feed");
 
         aggregator = AggregatorV3Interface(_aggregator);
         decimals = aggregator.decimals();
         description = aggregator.description();
+        heartbeat = _heartbeat;
+        ov = IOverlayV1Token(_ov);
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        (uint80 roundId,,,,) = aggregator.latestRoundData();
+        (uint80 roundId,,, uint256 updatedAt,) = aggregator.latestRoundData();
+
+        if (updatedAt < block.timestamp - heartbeat) revert("stale price feed");
 
         (
             uint256 priceOverMicroWindow,
@@ -104,5 +120,9 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             (sumOfPriceMacroWindow * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
         priceOneMacroWindowAgo =
             (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
+    }
+
+    function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
+        heartbeat = _heartbeat;
     }
 }

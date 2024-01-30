@@ -9,5 +9,7 @@ interface IOverlayV1ChainlinkFeedFactory is IOverlayV1FeedFactory {
 
     /// @dev deploys a new feed contract
     /// @return _feed address of the new feed
-    function deployFeed(address _aggregator) external returns (address _feed);
+    function deployFeed(address _aggregator, uint256 _heartbeat)
+        external
+        returns (address _feed);
 }
