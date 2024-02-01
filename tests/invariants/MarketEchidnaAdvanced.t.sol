@@ -57,6 +57,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         assert(oiAfter > oiBefore);
         assert(oiSharesAfter > oiSharesBefore);
+
+        revert(); // revert state changes during the invariant check
     }
 
     // Invariant 3) Market's oi and oi shares should decrease after an unwind
@@ -74,6 +76,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         assert(oiAfter < oiBefore);
         assert(oiSharesAfter < oiSharesBefore);
+
+        revert(); // revert state changes during the invariant check
     }
 
     // Invariant 4) Market's oi and oi shares should decrease after a liquidation
@@ -91,12 +95,11 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         // liquidate the position
         market.liquidate(msg.sender, posId);
 
-        // reset the price to keep the test environment consistent
-        feed.setPrice(originalPrice);
-
         (uint256 oiAfter, uint256 oiSharesAfter) = _getOiAndShares(isLong);
 
         assert(oiAfter < oiBefore);
         assert(oiSharesAfter < oiSharesBefore);
+
+        revert(); // revert state changes during the invariant check
     }
 }

@@ -108,5 +108,7 @@ contract MarketEchidna {
 
         // 0.5% tolerance
         assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
+
+        revert(); // revert state changes during the invariant check
     }
 }
