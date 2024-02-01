@@ -33,4 +33,4 @@ jobs:
         files: .
         contract: MarketEchidnaAdvanced
         config: tests/invariants/MarketEchidnaAdvanced.yaml
-        crytic-args: --ignore-compile
+        crytic-args: --ignore-compile --foundry-out-directory forge-out
