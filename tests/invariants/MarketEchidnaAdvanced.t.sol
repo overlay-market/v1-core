@@ -18,6 +18,7 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         collateral = TestUtils.clampBetween(collateral, MIN_COLLATERAL, CAP_NOTIONAL);
 
         // use the senders specified in the yaml config
+        ovl.mint(msg.sender, collateral);
         hevm.prank(msg.sender);
 
         return market.build({

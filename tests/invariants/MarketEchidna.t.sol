@@ -44,13 +44,10 @@ contract MarketEchidna {
         factory = new OverlayV1Factory(address(ovl), address(0x111));
         // market will be later deployed by factory
 
-        // ovl config
-        uint256 ovlSupply = 8_000_000e18;
+        // ovl config; fund test accounts
         ovl.grantRole(MINTER_ROLE, address(this));
-        ovl.mint(address(this), ovlSupply);
-        ovl.renounceRole(MINTER_ROLE, address(this));
-        ovl.transfer(ALICE, ovlSupply / 2);
-        ovl.transfer(BOB, ovlSupply / 2);
+        ovl.mint(ALICE, 4_000_000e18);
+        ovl.mint(BOB, 4_000_000e18);
 
         // factory config
         ovl.grantRole(GOVERNOR_ROLE, address(this));
@@ -76,13 +73,13 @@ contract MarketEchidna {
             750000000000000, // tradingFeeRate
             MIN_COLLATERAL, // minCollateral
             25000000000000, // priceDriftUpperLimit
-            250 // averageBlockTime // FIXME: this will be different in Arbitrum
+            250 // averageBlockTime
         ];
         market = OverlayV1Market(factory.deployMarket(address(feedFactory), address(feed), params));
         hevm.prank(ALICE);
-        ovl.approve(address(market), ovlSupply / 2);
+        ovl.approve(address(market), type(uint256).max);
         hevm.prank(BOB);
-        ovl.approve(address(market), ovlSupply / 2);
+        ovl.approve(address(market), type(uint256).max);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
