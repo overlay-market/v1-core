@@ -85,7 +85,7 @@ contract MarketEchidna {
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
 
     // event to raise if the invariant is broken
-    event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter);
+    event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter, uint256 price);
 
     function check_oi_product_after_funding(uint256 timeElapsed) public {
         uint256 oiLong = market.oiLong();
@@ -104,7 +104,7 @@ contract MarketEchidna {
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
 
         // only visible when invariant fails
-        emit OiAfterFunding(oiProductBefore, oiProductAfter);
+        emit OiAfterFunding(oiProductBefore, oiProductAfter, feed.price());
 
         // 0.5% tolerance
         assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));

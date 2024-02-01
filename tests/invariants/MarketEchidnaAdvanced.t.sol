@@ -11,8 +11,10 @@ import {TestUtils} from "./TestUtils.sol";
 // run from base project directory with:
 // echidna tests/invariants/MarketEchidnaAdvanced.t.sol --contract MarketEchidnaAdvanced --config tests/invariants/MarketEchidnaAdvanced.yaml
 contract MarketEchidnaAdvanced is MarketEchidna {
-    // wrapper around market.build() to "guide" the fuzz test
-    // note: wrappers have to be public in order to be called by Echidna
+    // Handler functions to "guide" the stateful fuzz test
+    // Note: handlers have to be public in order to be called by Echidna
+
+    // wrapper around market.build()
     function buildWrapper(bool isLong, uint256 collateral) public returns (uint256) {
         // bound collateral to avoid reverts
         collateral = TestUtils.clampBetween(collateral, MIN_COLLATERAL, CAP_NOTIONAL);
@@ -27,6 +29,12 @@ contract MarketEchidnaAdvanced is MarketEchidna {
             isLong: isLong,
             priceLimit: isLong ? type(uint256).max : 0
         });
+    }
+
+    function setPrice(uint256 price) public {
+        // bound market price to a reasonable range
+        price = TestUtils.clampBetween(price, 1, 1e29);
+        feed.setPrice(price);
     }
 
     // Helper functions
