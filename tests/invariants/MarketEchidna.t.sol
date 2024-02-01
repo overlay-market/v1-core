@@ -22,7 +22,7 @@ interface IHevm {
 //
 // Reference: https://github.com/overlay-market/v1-core/blob/main/tests/markets/conftest.py
 contract MarketEchidna {
-    IHevm hevm = IHevm(address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
+    IHevm hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
     // contracts required for test
     OverlayV1Factory factory;
@@ -30,8 +30,8 @@ contract MarketEchidna {
     OverlayV1Token ovl;
 
     // make these constant to match Echidna config
-    address public constant ALICE = address(0x1000000000000000000000000000000000000000);
-    address public constant BOB = address(0x2000000000000000000000000000000000000000);
+    address constant ALICE = address(0x1000000000000000000000000000000000000000);
+    address constant BOB = address(0x2000000000000000000000000000000000000000);
 
     uint256 constant MIN_COLLATERAL = 1e14;
     uint256 constant CAP_NOTIONAL = 8e23;
@@ -88,8 +88,7 @@ contract MarketEchidna {
     // event to raise if the invariant is broken
     event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter);
 
-    function invariant_oi_product_after_funding() public returns (bool) {
-        uint256 lastUpdate = market.timestampUpdateLast();
+    function check_oi_product_after_funding(uint256 timeElapsed) public {
         uint256 oiLong = market.oiLong();
         uint256 oiShort = market.oiShort();
         uint256 oiOverweightBefore = oiLong > oiShort ? oiLong : oiShort;
@@ -100,9 +99,7 @@ contract MarketEchidna {
         (uint256 oiOverweightAfter, uint256 oiUnderweightAfter) = market.oiAfterFunding({
             oiOverweight: oiOverweightBefore,
             oiUnderweight: oiUnderweightBefore,
-            // FIXME: block.timestamp is always 0 in the test
-            // timeElapsed: block.timestamp - lastUpdate
-            timeElapsed: 1
+            timeElapsed: timeElapsed
         });
 
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
@@ -111,6 +108,10 @@ contract MarketEchidna {
         emit OiAfterFunding(oiProductBefore, oiProductAfter);
 
         // 0.5% tolerance
-        return (TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
+        assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
     }
+
+    // Invariant 2) Market's oi and oi shares should increase after a build
+
+    // TODO: implement invariant_oi_increase_after_build
 }
