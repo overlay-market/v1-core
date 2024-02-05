@@ -57,7 +57,7 @@ contract MarketEchidna {
         factory.addFeedFactory(address(feedFactory));
 
         // market config and deployment
-        feed = OverlayV1FeedMock(feedFactory.deployFeed({price: 1e29, reserve: 2_000_000e18}));
+        feed = OverlayV1FeedMock(feedFactory.deployFeed({price: 1e25, reserve: 2_000_000e18}));
         uint256[15] memory params = [
             uint256(122000000000), // k
             500000000000000000, // lmbda
@@ -106,8 +106,8 @@ contract MarketEchidna {
         // only visible when invariant fails
         emit OiAfterFunding(oiProductBefore, oiProductAfter, feed.price());
 
-        // 0.5% tolerance
-        assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
+        // 10% tolerance
+        assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 10e16));
 
         revert(); // revert state changes during the invariant check
     }

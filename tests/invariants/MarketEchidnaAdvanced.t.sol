@@ -39,7 +39,7 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
     function setPrice(uint256 price) public {
         // bound market price to a reasonable range
-        price = TestUtils.clampBetween(price, 1, 1e29);
+        price = TestUtils.clampBetween(price, 1e1, 1e25);
         feed.setPrice(price);
     }
 
@@ -94,6 +94,9 @@ contract MarketEchidnaAdvanced is MarketEchidna {
     // Invariant 2) Market's oi and oi shares should increase after a build
 
     function check_oi_after_build(bool isLong, uint256 collateral) public {
+        // bound collateral here to use in oi calculations
+        collateral = TestUtils.clampBetween(collateral, MIN_COLLATERAL, CAP_NOTIONAL);
+
         // trigger funding payment so that it doesn't affect the test
         market.update();
 
@@ -102,10 +105,16 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         // build a position
         buildWrapper(isLong, collateral);
 
+        // calculate the expected oi and oi shares
+        uint256 posOi = collateral * 1e18 / feed.price();
+        uint256 posOiShares = (oiBefore == 0 || oiSharesBefore == 0)
+            ? posOi
+            : oiSharesBefore * posOi / oiBefore;
+
         (uint256 oiAfter, uint256 oiSharesAfter) = _getOiAndShares(isLong);
 
-        assert(oiAfter > oiBefore);
-        assert(oiSharesAfter > oiSharesBefore);
+        assert(oiAfter == oiBefore + posOi);
+        assert(oiSharesAfter == oiSharesBefore + posOiShares);
 
         revert(); // revert state changes during the invariant check
     }
@@ -118,14 +127,17 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         (uint256 oiBefore, uint256 oiSharesBefore) = _getOiAndShares(isLong);
 
+        (,,,,,,uint240 posOiShares,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        uint256 posOi = oiSharesBefore == 0 ? 0 : oiBefore * posOiShares / oiSharesBefore;
+
         // unwind the whole position
         hevm.prank(msg.sender);
         market.unwind(posId, 1e18, isLong ? 0 : type(uint256).max);
 
         (uint256 oiAfter, uint256 oiSharesAfter) = _getOiAndShares(isLong);
 
-        assert(oiAfter < oiBefore);
-        assert(oiSharesAfter < oiSharesBefore);
+        assert(oiAfter == oiBefore - posOi);
+        assert(oiSharesAfter == oiSharesBefore - posOiShares);
 
         revert(); // revert state changes during the invariant check
     }
@@ -138,6 +150,9 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         (uint256 oiBefore, uint256 oiSharesBefore) = _getOiAndShares(isLong);
 
+        (,,,,,,uint240 posOiShares,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        uint256 posOi = oiSharesBefore == 0 ? 0 : oiBefore * posOiShares / oiSharesBefore;
+
         // adjust the price so that position becomes liquidatable
         feed.setPrice(isLong ? feed.price() / 2 : feed.price() * 2);
 
@@ -146,8 +161,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         (uint256 oiAfter, uint256 oiSharesAfter) = _getOiAndShares(isLong);
 
-        assert(oiAfter < oiBefore);
-        assert(oiSharesAfter < oiSharesBefore);
+        assert(oiAfter == oiBefore - posOi);
+        assert(oiSharesAfter == oiSharesBefore - posOiShares);
 
         revert(); // revert state changes during the invariant check
     }
