@@ -169,7 +169,8 @@ def mock_feed(create_mock_feed):
 
 @pytest.fixture(scope="module")
 def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
-                   guardian_role, feed_factory, mock_feed_factory, sequencer_aggregator):
+                   guardian_role, feed_factory, mock_feed_factory,
+                   sequencer_aggregator):
     def create_factory(tok=ov, recipient=fee_recipient):
         # create the market factory
         factory = gov.deploy(OverlayV1Factory, tok, recipient,
