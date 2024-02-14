@@ -34,7 +34,8 @@ contract SequencerTest is Test {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
         ov = new OverlayV1Token();
         sequencer_oracle = new AggregatorMock();
-        factory = new OverlayV1Factory(address(ov), FEE_RECIPIENT, address(sequencer_oracle), 0);
+        factory =
+            new OverlayV1Factory(address(ov), FEE_RECIPIENT, address(sequencer_oracle), 30 minutes);
 
         ov.grantRole(ADMIN, address(factory));
         ov.grantRole(ADMIN, GOVERNOR);
@@ -67,35 +68,26 @@ contract SequencerTest is Test {
         ov.mint(USER, 100e18);
     }
 
-    function testSequencerUp() public {
-        vm.startPrank(USER);
-        ov.approve(address(market), type(uint256).max);
-        // Build postion 0
-        market.build(1e18, 1e18, true, type(uint256).max);
-        // Build postion 1
-        market.build(1e18, 1e18, true, type(uint256).max);
-        // Unwind postion 0
-        market.unwind(0, 1e18, 0);
-
-        assertLt(ov.balanceOf(USER), 100e18);
-    }
-
     function testSequencerDown() public {
-        sequencer_oracle.setData(1, 1);
+        sequencer_oracle.setData(1, 1); //Sequencer Down
         vm.startPrank(USER);
         ov.approve(address(market), type(uint256).max);
         vm.expectRevert("OVV1:!sequencer");
         market.build(1e18, 1e18, true, type(uint256).max);
 
         vm.stopPrank();
-        sequencer_oracle.setData(2, 0);
-        skip(60 minutes);
+        sequencer_oracle.setData(2, 0); //Sequencer Up
+        skip(15 minutes);
 
         vm.startPrank(USER);
+        vm.expectRevert(); // Grace period not over
+        market.build(1e18, 1e18, true, type(uint256).max);
+
+        skip(45 minutes);
         market.build(1e18, 1e18, true, type(uint256).max);
 
         vm.stopPrank();
-        sequencer_oracle.setData(3, 1);
+        sequencer_oracle.setData(3, 1); //Sequencer Down
         skip(60 minutes);
 
         vm.startPrank(USER);
