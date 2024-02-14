@@ -16,3 +16,6 @@ forge-out
 # Echidna
 crytic-export
 coverage-echidna
+
+# Data
+*.csv

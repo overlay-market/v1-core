@@ -17,6 +17,8 @@ remappings = [
     "v3-core/=lib/v3-core/contracts/"
 ]
 
+fs_permissions = [{ access = "read-write", path = "./"}]
+
 [fuzz]
 runs = 1000
 
