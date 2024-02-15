@@ -2,8 +2,14 @@ import pytest
 from brownie import (
     OverlayV1Factory, OverlayV1Market,
     OverlayV1Deployer, OverlayV1Token, OverlayV1FeedFactoryMock,
-    web3
+    web3, Contract
 )
+
+
+@pytest.fixture(scope="module")
+def sequencer_aggregator():
+    # Arbitrum One sequencer aggregator
+    yield Contract.from_explorer("0xFdB631F5EE196F0ed6FAa767959853A9F217697D")
 
 
 @pytest.fixture(scope="module")
@@ -143,12 +149,14 @@ def feed_three(feed_factory):
 
 @pytest.fixture(scope="module")
 def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
-                   guardian_role, feed_factory, feed_three):
+                   guardian_role, feed_factory, feed_three,
+                   sequencer_aggregator):
 
     def create_factory(tok=ov, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
         # create the market factory
-        factory = gov.deploy(OverlayV1Factory, tok, recipient)
+        factory = gov.deploy(OverlayV1Factory, tok, recipient,
+                             sequencer_aggregator.address, 0)
 
         # grant market factory token admin role
         tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})

@@ -22,6 +22,7 @@ contract MarketTest is Test {
     address immutable USER = makeAddr("user");
     address constant FEED_FACTORY = 0x92ee7A26Dbc18E9C0157831d79C2906A02fD1FAe;
     address constant FEED = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
+    address constant SEQUENCER_ORACLE = 0xFdB631F5EE196F0ed6FAa767959853A9F217697D;
 
     OverlayV1Token ov;
     OverlayV1Factory factory;
@@ -31,7 +32,7 @@ contract MarketTest is Test {
     function setUp() public {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
         ov = new OverlayV1Token();
-        factory = new OverlayV1Factory(address(ov), FEE_RECIPIENT);
+        factory = new OverlayV1Factory(address(ov), FEE_RECIPIENT, SEQUENCER_ORACLE, 0);
 
         ov.grantRole(ADMIN, address(factory));
         ov.grantRole(ADMIN, GOVERNOR);

@@ -472,6 +472,10 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 
+        // check Arbitrum sequencer is up and grace period has
+        // passed before fetching new data from feed
+        require(IOverlayV1Factory(factory).isUpAndGracePeriodPassed(), "OVV1:!sequencer");
+
         // fetch new oracle data from feed
         // applies sanity check in case of data manipulation
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
