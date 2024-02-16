@@ -10,6 +10,17 @@ import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFacto
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
 import {Risk} from "../../contracts/libraries/Risk.sol";
 
+/// @notice Creates a `pnl.csv` [and `pnl_single.csv`] file with the following columns:
+/// param_name;param_value;collateral;leverage;isLong;pnl
+/// @dev run with `PRINT_PNL=true forge test -vvv --mc RiskParamAnalysisFork`
+/// @dev the following env variables have to be set for the test to run:
+/// - SEPOLIA_PROVIDER_URL: the url of the sepolia rpc provider
+/// - MARKET_ADDRESS: the address of the market contract to test
+/// @dev the following env variables have to be set to analyze a single parameter in detail:
+/// - PARAM_INDEX: the index of the parameter to test
+/// - FROM_VALUE: the starting value of the parameter
+/// - TO_VALUE: the ending value of the parameter
+/// - STEPS: the number of steps to take between `FROM_VALUE` and `TO_VALUE`
 contract RiskParamAnalysisFork is Test {
     OverlayV1Factory factory;
     address feed;
@@ -53,6 +64,7 @@ contract RiskParamAnalysisFork is Test {
 
         // remove previous files
         try vm.removeFile("pnl.csv") {} catch {}
+        try vm.removeFile("pnl_single.csv") {} catch {}
 
         // set the header line
         string memory line = string(abi.encodePacked(
@@ -66,36 +78,68 @@ contract RiskParamAnalysisFork is Test {
         
         bool printToFile = vm.envOr("PRINT_PNL", false);
         if (printToFile) vm.writeLine("pnl.csv", line);
+        if (printToFile) vm.writeLine("pnl_single.csv", line);
     }
 
-    /// @notice Creates a `pnl.csv` file with the following columns:
-    /// TradingFeeRate;pnl
-    /// @dev run `PRINT_PNL=true forge test -vvv --mc RiskParamAnalysisFork` to create the file.
     function test() public {
         bool printToFile = vm.envOr("PRINT_PNL", false);
         // only run this test if we want to print to file
         if (!printToFile) return;
 
         for (uint256 i = 0; i < marketParamsNames.length; i++) {
-            _analyzeRiskPnl(Risk.Parameters(i), marketParamsNames[i], int256(market.params(i)));
+            uint256 baseParamValue = market.params(i);
+            uint256 fromValue = baseParamValue * 90 / 100; // 90% of the base value
+            uint256 toValue = baseParamValue * 110 / 100;  // 110% of the base value
+            uint256 step = (toValue - fromValue) / 9;      // 9 steps
+            _analyzeRiskPnl({
+                param: Risk.Parameters(i),
+                paramName: marketParamsNames[i],
+                outPath: "pnl.csv",
+                fromValue: fromValue,
+                toValue: toValue,
+                step: step
+            });
         }
     }
 
-    function _analyzeRiskPnl(Risk.Parameters param, string memory paramName, int256 baseParamValue) internal {
+    function testSingleParam() public {
+        bool printToFile = vm.envOr("PRINT_PNL", false);
+        // only run this test if we want to print to file
+        if (!printToFile) return;
+
+        uint256 idx = vm.envUint("PARAM_INDEX");
+        uint256 fromValue = vm.envUint("FROM_VALUE");
+        uint256 toValue = vm.envUint("TO_VALUE");
+        uint256 steps = vm.envUint("STEPS");
+        _analyzeRiskPnl({
+            param: Risk.Parameters(idx),
+            paramName: marketParamsNames[idx],
+            outPath: "pnl_single.csv",
+            fromValue: fromValue,
+            toValue: toValue,
+            step: (toValue - fromValue) / steps
+        });
+    }
+
+    function _analyzeRiskPnl(
+        Risk.Parameters param,
+        string memory paramName,
+        string memory outPath,
+        uint256 fromValue,
+        uint256 toValue,
+        uint256 step
+    ) internal {
         // build options
         uint256 collateral = 10e18;
         uint256 leverage = 1e18;
         bool isLong = true;
 
         // compute pnl by building and unwinding a position
-        int256 step = baseParamValue * 25 / 1000; // 2.5% step
-        // analyze 4 steps up and 4 steps down from `baseParamValue`
-        for (int256 i = -4; i <= 4; i++) {
+        for (uint256 paramValue = fromValue; paramValue <= toValue; paramValue += step) {
             // reset market
             _resetMarket();
 
             // update risk param
-            uint256 paramValue = uint256(baseParamValue + i * step);
             vm.prank(GOVERNOR);
             factory.setRiskParam(feed, param, paramValue);
 
@@ -125,7 +169,9 @@ contract RiskParamAnalysisFork is Test {
                 vm.toString(pnl)
             ));
 
-            vm.writeLine("pnl.csv", line);
+            vm.writeLine(outPath, line);
+
+            if (step == 0) break; // avoid infinite loop
         }
     }
 
