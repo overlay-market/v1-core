@@ -96,7 +96,7 @@ def test_set_risk_param_reverts_when_not_gov(factory, market, alice):
     expect_k = 361250000000
 
     # check can't set k with non gov account
-    with reverts("OVV1: !governor"):
+    with reverts("OVV1: !riskManager"):
         _ = factory.setRiskParam(feed, 0, expect_k, {"from": alice})
 
 

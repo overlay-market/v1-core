@@ -67,12 +67,19 @@ def guardian_role():
     yield web3.solidityKeccak(['string'], ["GUARDIAN"])
 
 
+@pytest.fixture(scope="module")
+def risk_manager_role():
+    yield web3.solidityKeccak(['string'], ["RISK_MANAGER"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, minter_role, request):
+def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        tok.grantRole(risk_manager_role, gov, {"from": gov})
 
         # mint the token then renounce minter role
         tok.grantRole(minter_role, gov, {"from": gov})
