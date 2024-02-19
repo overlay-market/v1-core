@@ -78,7 +78,7 @@ def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
-        
+
         tok.grantRole(risk_manager_role, gov, {"from": gov})
 
         # mint the token then renounce minter role
