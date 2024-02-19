@@ -21,6 +21,7 @@ import {Risk} from "../../contracts/libraries/Risk.sol";
 /// - FROM_VALUE: the starting value of the parameter
 /// - TO_VALUE: the ending value of the parameter
 /// - STEPS: the number of steps to take between `FROM_VALUE` and `TO_VALUE`
+/// - REMOVE_FEES: boolean to indicate to change fee recipient to this account to remove the incidence of fees
 contract RiskParamAnalysisFork is Test {
     OverlayV1Factory factory;
     address feed;
@@ -181,5 +182,11 @@ contract RiskParamAnalysisFork is Test {
         // deal ovl token
         deal(address(ovl), address(this), 8_000_000e18);
         ovl.approve(address(market), type(uint256).max);
+        bool removeIncidenceOfFees = vm.envOr("REMOVE_FEES", false);
+        if (removeIncidenceOfFees) {
+            address thisAddress = address(this);
+            vm.prank(GOVERNOR);
+            factory.setFeeRecipient(thisAddress);
+        }
     }
 }
