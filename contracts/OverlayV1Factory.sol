@@ -110,6 +110,12 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _;
     }
 
+    // risk manager modifier for risk parameters
+    modifier onlyRiskManager() {
+        require(ov.hasRole(RISK_MANAGER_ROLE, msg.sender), "OVV1: !riskManager");
+        _;
+    }
+
     constructor(
         address _ov,
         address _feeRecipient,
@@ -199,7 +205,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     /// @notice Setter for per-market risk parameters adjustable by governance
     function setRiskParam(address feed, Risk.Parameters name, uint256 value)
         external
-        onlyGovernor
+        onlyRiskManager
     {
         _checkRiskParam(name, value);
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
