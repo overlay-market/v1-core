@@ -6,7 +6,8 @@ import "forge-std/Test.sol";
 import {OverlayV1Factory} from "../../contracts/OverlayV1Factory.sol";
 import {OverlayV1Market} from "../../contracts/OverlayV1Market.sol";
 import {IOverlayV1Token} from "../../contracts/interfaces/IOverlayV1Token.sol";
-import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFactoryMock.sol";
+import {IOverlayV1Feed} from "../../contracts/interfaces/feeds/IOverlayV1Feed.sol";
+import {Oracle} from "../../contracts/libraries/Oracle.sol";
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
 import {Risk} from "../../contracts/libraries/Risk.sol";
 
@@ -21,11 +22,13 @@ import {Risk} from "../../contracts/libraries/Risk.sol";
 /// - FROM_VALUE: the starting value of the parameter
 /// - TO_VALUE: the ending value of the parameter
 /// - STEPS: the number of steps to take between `FROM_VALUE` and `TO_VALUE`
+/// @dev the following are optional env variables that apply for both tests:
 /// - REMOVE_FEES: boolean to indicate to change fee recipient to this account to remove the incidence of fees
 /// - TIME_BEFORE_UNWIND: seconds to wait in between building and unwinding a position
+/// - PRICE_MOVE_PERCENT: percentage to move the price by (eg. -5 to decrease by 5%) between building and unwinding a position
 contract RiskParamAnalysisFork is Test {
     OverlayV1Factory factory;
-    address feed;
+    IOverlayV1Feed feed;
     OverlayV1Market market;
     IOverlayV1Token ovl;
 
@@ -58,7 +61,7 @@ contract RiskParamAnalysisFork is Test {
         (, bytes memory data) = address(market).call(abi.encodeWithSignature("ovl()"));
         ovl = IOverlayV1Token(abi.decode(data, (address)));
         factory = OverlayV1Factory(market.factory());
-        feed = market.feed();
+        feed = IOverlayV1Feed(market.feed());
 
         // deal ovl token
         deal(address(ovl), address(this), 8_000_000e18);
@@ -76,6 +79,7 @@ contract RiskParamAnalysisFork is Test {
             "leverage", ";",
             "is_long", ";",
             "seconds_elapsed", ";",
+            "price_move_percent", ";",
             "pnl"
         ));
         
@@ -162,7 +166,7 @@ contract RiskParamAnalysisFork is Test {
         uint256 collateral = 10e18;
         uint256 leverage = 1e18;
 
-         for (uint256 collateralMultiplier = 0; collateralMultiplier <= fuzzCollateral - 1; collateralMultiplier++) {
+        for (uint256 collateralMultiplier = 0; collateralMultiplier <= fuzzCollateral - 1; collateralMultiplier++) {
             // compute pnl by building and unwinding a position
             for (uint256 paramValue = fromValue; paramValue <= toValue; paramValue += step) {
                 // reset market
@@ -170,7 +174,7 @@ contract RiskParamAnalysisFork is Test {
 
                 // update risk param
                 vm.prank(GOVERNOR);
-                factory.setRiskParam(feed, param, paramValue);
+                factory.setRiskParam(address(feed), param, paramValue);
 
                 // get OV balance before
                 uint256 ovBalanceBefore = ovl.balanceOf(address(this));
@@ -186,6 +190,22 @@ contract RiskParamAnalysisFork is Test {
                 // skip some time before unwindg to take funding payments into account
                 skip(vm.envOr("TIME_BEFORE_UNWIND", uint256(0)));
 
+                // move the price informed by the feed
+                {
+                    Oracle.Data memory data = feed.latest();
+                    uint256 priceBefore = data.priceOverMacroWindow; // likely to be the same as `priceOverMicroWindow`
+                    int256 priceMovement = vm.envOr("PRICE_MOVE_PERCENT", int256(0));
+                    uint256 newPrice = priceBefore * (uint256(100 + priceMovement))/100;
+                    data.priceOverMacroWindow = newPrice;
+                    data.priceOverMicroWindow = newPrice;
+                    data.priceOneMacroWindowAgo = newPrice;
+                    vm.mockCall(
+                        address(feed),
+                        abi.encodeWithSelector(IOverlayV1Feed.latest.selector),
+                        abi.encode(data)
+                    );
+                }
+
                 // unwind the whole position
                 market.unwind(posId, 1e18, isLong ? 0 : type(uint256).max);
 
@@ -199,6 +219,7 @@ contract RiskParamAnalysisFork is Test {
                     vm.toString(leverage), ";",
                     vm.toString(isLong), ";",
                     vm.toString(vm.envOr("TIME_BEFORE_UNWIND", uint256(0))), ";", // seconds_elapsed
+                    vm.toString(vm.envOr("PRICE_MOVE_PERCENT", int256(0))), ";", // price_move_percent
                     vm.toString(pnl)
                 ));
 
@@ -210,6 +231,8 @@ contract RiskParamAnalysisFork is Test {
     }
 
     function _resetMarket() internal {
+        // clear mocked calls (eg. feed price)
+        vm.clearMockedCalls();
         // create a new fork, since each one has its own state
         vm.createSelectFork(vm.envString("SEPOLIA_PROVIDER_URL"), 14594566);
         // deal ovl token
@@ -217,9 +240,8 @@ contract RiskParamAnalysisFork is Test {
         ovl.approve(address(market), type(uint256).max);
         bool removeIncidenceOfFees = vm.envOr("REMOVE_FEES", false);
         if (removeIncidenceOfFees) {
-            address thisAddress = address(this);
             vm.prank(GOVERNOR);
-            factory.setFeeRecipient(thisAddress);
+            factory.setFeeRecipient(address(this));
         }
     }
 }
