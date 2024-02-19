@@ -22,6 +22,7 @@ import {Risk} from "../../contracts/libraries/Risk.sol";
 /// - TO_VALUE: the ending value of the parameter
 /// - STEPS: the number of steps to take between `FROM_VALUE` and `TO_VALUE`
 /// - REMOVE_FEES: boolean to indicate to change fee recipient to this account to remove the incidence of fees
+/// - TIME_BEFORE_UNWIND: seconds to wait in between building and unwinding a position
 contract RiskParamAnalysisFork is Test {
     OverlayV1Factory factory;
     address feed;
@@ -73,7 +74,8 @@ contract RiskParamAnalysisFork is Test {
             "param_value", ";",
             "collateral", ";",
             "leverage", ";",
-            "isLong", ";",
+            "is_long", ";",
+            "seconds_elapsed", ";",
             "pnl"
         ));
         
@@ -181,6 +183,9 @@ contract RiskParamAnalysisFork is Test {
                     priceLimit: isLong ? type(uint256).max : 0
                 });
 
+                // skip some time before unwindg to take funding payments into account
+                skip(vm.envOr("TIME_BEFORE_UNWIND", uint256(0)));
+
                 // unwind the whole position
                 market.unwind(posId, 1e18, isLong ? 0 : type(uint256).max);
 
@@ -190,9 +195,10 @@ contract RiskParamAnalysisFork is Test {
                 string memory line = string(abi.encodePacked(
                     paramName, ";",
                     vm.toString(paramValue), ";",
-                    vm.toString(collateral * (1 + collateralMultiplier)), ";",
+                    vm.toString(collateral * (1 + collateralMultiplier)), ";", // collateral
                     vm.toString(leverage), ";",
                     vm.toString(isLong), ";",
+                    vm.toString(vm.envOr("TIME_BEFORE_UNWIND", uint256(0))), ";", // seconds_elapsed
                     vm.toString(pnl)
                 ));
 
@@ -215,9 +221,5 @@ contract RiskParamAnalysisFork is Test {
             vm.prank(GOVERNOR);
             factory.setFeeRecipient(thisAddress);
         }
-        // vm.prank(GOVERNOR);
-        // factory.setRiskParam(feed, Risk.Parameters(1), 0.01e18);
-        // vm.prank(GOVERNOR);
-        // factory.setRiskParam(feed, Risk.Parameters(4), 0);
     }
 }
