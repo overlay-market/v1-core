@@ -112,14 +112,18 @@ contract RiskParamAnalysisFork is Test {
         uint256 fromValue = vm.envUint("FROM_VALUE");
         uint256 toValue = vm.envUint("TO_VALUE");
         uint256 steps = vm.envUint("STEPS");
-        _analyzeRiskPnl({
-            param: Risk.Parameters(idx),
-            paramName: marketParamsNames[idx],
-            outPath: "pnl_single.csv",
-            fromValue: fromValue,
-            toValue: toValue,
-            step: (toValue - fromValue) / steps
-        });
+        for (uint256 i = 0; i <= 1; i++) {
+            _analyzeRiskPnl({
+                param: Risk.Parameters(idx),
+                paramName: marketParamsNames[idx],
+                outPath: "pnl_single.csv",
+                fromValue: fromValue,
+                toValue: toValue,
+                step: (toValue - fromValue) / steps,
+                fuzzCollateral: 3,
+                isLong: i == 0 ? true : false
+            });
+        }
     }
 
     function _analyzeRiskPnl(
@@ -130,49 +134,72 @@ contract RiskParamAnalysisFork is Test {
         uint256 toValue,
         uint256 step
     ) internal {
+        _analyzeRiskPnl(
+            param,
+            paramName,
+            outPath,
+            fromValue,
+            toValue,
+            step,
+            1,
+            true
+        );
+    }
+
+    function _analyzeRiskPnl(
+        Risk.Parameters param,
+        string memory paramName,
+        string memory outPath,
+        uint256 fromValue,
+        uint256 toValue,
+        uint256 step,
+        uint256 fuzzCollateral,
+        bool isLong
+    ) internal {
         // build options
         uint256 collateral = 10e18;
         uint256 leverage = 1e18;
-        bool isLong = true;
 
-        // compute pnl by building and unwinding a position
-        for (uint256 paramValue = fromValue; paramValue <= toValue; paramValue += step) {
-            // reset market
-            _resetMarket();
+         for (uint256 collateralMultiplier = 0; collateralMultiplier <= fuzzCollateral - 1; collateralMultiplier++) {
+            // compute pnl by building and unwinding a position
+            for (uint256 paramValue = fromValue; paramValue <= toValue; paramValue += step) {
+                // reset market
+                _resetMarket();
 
-            // update risk param
-            vm.prank(GOVERNOR);
-            factory.setRiskParam(feed, param, paramValue);
+                // update risk param
+                vm.prank(GOVERNOR);
+                factory.setRiskParam(feed, param, paramValue);
 
-            // get OV balance before
-            uint256 ovBalanceBefore = ovl.balanceOf(address(this));
+                // get OV balance before
+                uint256 ovBalanceBefore = ovl.balanceOf(address(this));
 
-            // build a position
-            uint256 posId = market.build({
-                collateral: collateral,
-                leverage: leverage,
-                isLong: isLong,
-                priceLimit: type(uint256).max
-            });
+                // build a position
+                uint256 posId = market.build({
+                    collateral: collateral * (1 + collateralMultiplier),
+                    leverage: leverage,
+                    isLong: isLong,
+                    priceLimit: isLong ? type(uint256).max : 0
+                });
 
-            // unwind the whole position
-            market.unwind(posId, 1e18, 0);
+                // unwind the whole position
+                market.unwind(posId, 1e18, isLong ? 0 : type(uint256).max);
 
-            // compute pnl
-            int256 pnl = int256(ovl.balanceOf(address(this))) - int256(ovBalanceBefore);
+                // compute pnl
+                int256 pnl = int256(ovl.balanceOf(address(this))) - int256(ovBalanceBefore);
 
-            string memory line = string(abi.encodePacked(
-                paramName, ";",
-                vm.toString(paramValue), ";",
-                vm.toString(collateral), ";",
-                vm.toString(leverage), ";",
-                vm.toString(isLong), ";",
-                vm.toString(pnl)
-            ));
+                string memory line = string(abi.encodePacked(
+                    paramName, ";",
+                    vm.toString(paramValue), ";",
+                    vm.toString(collateral * (1 + collateralMultiplier)), ";",
+                    vm.toString(leverage), ";",
+                    vm.toString(isLong), ";",
+                    vm.toString(pnl)
+                ));
 
-            vm.writeLine(outPath, line);
+                vm.writeLine(outPath, line);
 
-            if (step == 0) break; // avoid infinite loop
+                if (step == 0) break; // avoid infinite loop
+            }
         }
     }
 
@@ -188,5 +215,9 @@ contract RiskParamAnalysisFork is Test {
             vm.prank(GOVERNOR);
             factory.setFeeRecipient(thisAddress);
         }
+        // vm.prank(GOVERNOR);
+        // factory.setRiskParam(feed, Risk.Parameters(1), 0.01e18);
+        // vm.prank(GOVERNOR);
+        // factory.setRiskParam(feed, Risk.Parameters(4), 0);
     }
 }
