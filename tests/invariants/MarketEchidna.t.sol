@@ -18,8 +18,11 @@ interface IHevm {
 // solc-select install 0.8.10
 // solc-select use 0.8.10
 //
-// run from base project directory with:
+// run with echidna from base project directory with:
 // echidna tests/invariants/MarketEchidna.t.sol --contract MarketEchidna --config tests/invariants/MarketEchidna.yaml
+//
+// run with medusa from base project directory with:
+// medusa fuzz
 //
 // Reference: https://github.com/overlay-market/v1-core/blob/main/tests/markets/conftest.py
 contract MarketEchidna {

@@ -8,8 +8,11 @@ import {TestUtils} from "./TestUtils.sol";
 // solc-select install 0.8.10
 // solc-select use 0.8.10
 //
-// run from base project directory with:
+// run with echidna from base project directory with:
 // echidna tests/invariants/MarketEchidnaAdvanced.t.sol --contract MarketEchidnaAdvanced --config tests/invariants/MarketEchidnaAdvanced.yaml
+//
+// run with medusa from base project directory with:
+// medusa fuzz
 contract MarketEchidnaAdvanced is MarketEchidna {
     // ghost variables used to verify invariants
     mapping(address => uint256[]) positions; // owner => positionIds
