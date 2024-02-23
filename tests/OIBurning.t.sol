@@ -66,25 +66,27 @@ contract OIBurningTest is Test {
         market = OverlayV1Market(factory.deployMarket(FEED_FACTORY, FEED, params));
 
         ov.mint(USER, 100e30);
-        skip(60 minutes);
     }
 
     function testTokenLeft() public {
         vm.startPrank(USER);
         ov.approve(address(market), type(uint256).max);
-        console2.log("Positions build -------------------------------------------------");
-        console2.log("TimeStamp", block.timestamp);
-        console2.log("market.build(1e18, 1e18, true, type(uint256).max); // Long");
-        market.build(1e18, 1e18, true, type(uint256).max);
-        console2.log("market.build(100e18, 1e18, false, type(uint256).min); // Short");
-        market.build(100e18, 1e18, false, type(uint256).min);
+        console2.log("Positions build --------------------------------------------------");
         skip(60 minutes);
-        console2.log("TimeStamp", block.timestamp);
+        console2.log("TimeStamp:", block.timestamp);
         console2.log("market.build(1e18, 1e18, true, type(uint256).max); // Long");
-        market.build(1e18, 1e18, true, type(uint256).max);
+        market.build(50e18, 1e18, true, type(uint256).max);
+        skip(60 minutes);
+        console2.log("TimeStamp:", block.timestamp);
         console2.log("market.build(100e18, 1e18, false, type(uint256).min); // Short");
         market.build(100e18, 1e18, false, type(uint256).min);
 
+        console2.log("\n");
+        console2.log("OI State ---------------------------------------------------------");
+        console2.log("market.oiLong();", market.oiLong());
+        console2.log("market.oiShort();", market.oiShort());
+
+        console2.log("\n");
         console2.log("Balances ---------------------------------------------------------");
         console2.log("ov.balanceOf(USER)", ov.balanceOf(USER));
         console2.log("ov.balanceOf(FEE_RECIPIENT)", ov.balanceOf(address(FEE_RECIPIENT)));
@@ -92,21 +94,29 @@ contract OIBurningTest is Test {
 
         uint256 totalBefore = ov.totalSupply();
 
+        console2.log("\n");
         console2.log("Positions unwind -------------------------------------------------");
+        skip(60 minutes);
+        console2.log("TimeStamp:", block.timestamp);
         console2.log("market.unwind(0, 1e18, type(uint256).min);");
         market.unwind(0, 1e18, type(uint256).min);
+        skip(60 minutes);
+        console2.log("TimeStamp:", block.timestamp);
         console2.log("market.unwind(1, 1e18, type(uint256).max);");
         market.unwind(1, 1e18, type(uint256).max);
-        console2.log("market.unwind(2, 1e18, type(uint256).min);");
-        market.unwind(2, 1e18, type(uint256).min);
-        console2.log("market.unwind(3, 1e18, type(uint256).max);");
-        market.unwind(3, 1e18, type(uint256).max);
 
+        console2.log("\n");
+        console2.log("OI State ---------------------------------------------------------");
+        console2.log("market.oiLong();", market.oiLong());
+        console2.log("market.oiShort();", market.oiShort());
+
+        console2.log("\n");
         console2.log("Balances ---------------------------------------------------------");
         console2.log("ov.balanceOf(USER)", ov.balanceOf(USER));
         console2.log("ov.balanceOf(FEE_RECIPIENT)", ov.balanceOf(address(FEE_RECIPIENT)));
         console2.log("ov.balanceOf(market)", ov.balanceOf(address(market)));
 
+        console2.log("\n");
         console2.log("Total Supply Change-----------------------------------------------");
         console2.log("ov.totalSupply() before", totalBefore);
         console2.log("ov.totalSupply() after", ov.totalSupply());
