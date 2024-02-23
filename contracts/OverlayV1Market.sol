@@ -125,6 +125,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param collateral total amount of collateral withdrawn
     event EmergencyWithdraw(address indexed sender, uint256 positionId, uint256 collateral);
 
+    /// @dev event for _update function
+    event Update();
+
     constructor() {
         (address _ov, address _feed, address _factory) =
             IOverlayV1Deployer(msg.sender).parameters();
@@ -480,6 +483,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // applies sanity check in case of data manipulation
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVV1:!data");
+
+        //Emit event
+        emit Update();
 
         // return the latest data from feed
         return data;
