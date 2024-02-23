@@ -32,7 +32,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         aggregator = AggregatorV3Interface(_aggregator);
         decimals = aggregator.decimals();
         description = aggregator.description();
-        heartbeat = _heartbeat;
+        _setHeartbeat(_heartbeat);
         ov = IOverlayV1Token(_ov);
     }
 
@@ -126,6 +126,10 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     }
 
     function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
+        _setHeartbeat(_heartbeat);
+    }
+
+    function _setHeartbeat(uint256 _heartbeat) internal {
         heartbeat = _heartbeat;
         emit HeartbeatSet(_heartbeat);
     }
