@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@ironblocks/cli": "^1.0.4"
+  },
+  "dependencies": {
+    "@ironblocks/firewall-consumer": "^1.0.5"
+  }
+}

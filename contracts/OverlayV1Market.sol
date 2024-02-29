@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
@@ -17,7 +18,7 @@ import "./libraries/Risk.sol";
 import "./libraries/Roller.sol";
 import "./libraries/Tick.sol";
 
-contract OverlayV1Market is IOverlayV1Market, Pausable {
+contract OverlayV1Market is FirewallConsumer, IOverlayV1Market, Pausable {
     using FixedCast for uint256;
     using FixedPoint for uint256;
     using Oracle for Oracle.Data;
@@ -135,7 +136,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @notice initializes the market and its risk params
     /// @notice called only once by factory on deployment
-    function initialize(uint256[15] memory _params) external onlyFactory {
+    function initialize(uint256[15] memory _params) external onlyFactory firewallProtected {
         // initialize update data
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(_midFromFeed(data) > 0, "OVV1:!data");
@@ -172,6 +173,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     function build(uint256 collateral, uint256 leverage, bool isLong, uint256 priceLimit)
         external
         notShutdown
+        firewallProtected
         returns (uint256 positionId_)
     {
         require(leverage >= ONE, "OVV1:lev<min");
@@ -267,6 +269,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     function unwind(uint256 positionId, uint256 fraction, uint256 priceLimit)
         external
         notShutdown
+        firewallProtected
     {
         require(fraction <= ONE, "OVV1:fraction>max");
         // only keep 4 decimal precision (1 bps) for fraction given
@@ -376,7 +379,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @dev liquidates a liquidatable position
-    function liquidate(address owner, uint256 positionId) external notShutdown {
+    function liquidate(address owner, uint256 positionId) external notShutdown firewallProtected {
         uint256 value;
         uint256 cost;
         uint256 price;
@@ -928,25 +931,25 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @notice Pause functions: Build, Unwind, Update and Liquidate
-    function pause() external onlyFactory {
+    function pause() external onlyFactory firewallProtected {
         _pause();
     }
 
     /// @notice Unpause functions: Build, Unwind, Update and Liquidate
-    function unpause() external onlyFactory {
+    function unpause() external onlyFactory firewallProtected {
         _unpause();
     }
 
     /// @notice Irreversibly shuts down the market. Can be triggered by
     /// @notice governance through factory contract in the event of an emergency
-    function shutdown() external onlyFactory {
+    function shutdown() external onlyFactory firewallProtected {
         isShutdown = true;
     }
 
     /// @notice Allows emergency withdrawal of remaining collateral
     /// @notice associated with position. Ignores any outstanding PnL and
     /// @notice funding considerations
-    function emergencyWithdraw(uint256 positionId) external hasShutdown {
+    function emergencyWithdraw(uint256 positionId) external hasShutdown firewallProtected {
         // check position exists
         Position.Info memory pos = positions.get(msg.sender, positionId);
         require(pos.exists(), "OVV1:!position");

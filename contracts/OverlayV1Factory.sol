@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "./interfaces/IOverlayV1Deployer.sol";
 import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
@@ -12,7 +13,7 @@ import "./libraries/Risk.sol";
 
 import "./OverlayV1Deployer.sol";
 
-contract OverlayV1Factory is IOverlayV1Factory {
+contract OverlayV1Factory is FirewallConsumer, IOverlayV1Factory {
     using Risk for uint256[15];
 
     // risk param bounds
@@ -137,14 +138,14 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @dev adds a supported feed factory
-    function addFeedFactory(address feedFactory) external onlyGovernor {
+    function addFeedFactory(address feedFactory) external onlyGovernor firewallProtected {
         require(!isFeedFactory[feedFactory], "OVV1: feed factory already supported");
         isFeedFactory[feedFactory] = true;
         emit FeedFactoryAdded(msg.sender, feedFactory);
     }
 
     /// @dev removes a supported feed factory
-    function removeFeedFactory(address feedFactory) external onlyGovernor {
+    function removeFeedFactory(address feedFactory) external onlyGovernor firewallProtected {
         require(isFeedFactory[feedFactory], "OVV1: address not feed factory");
         isFeedFactory[feedFactory] = false;
         emit FeedFactoryRemoved(msg.sender, feedFactory);
@@ -155,6 +156,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function deployMarket(address feedFactory, address feed, uint256[15] calldata params)
         external
         onlyGovernor
+        firewallProtected
         returns (address market_)
     {
         // check feed and feed factory are available for a new market
@@ -214,26 +216,26 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     /// @notice Setter for fee repository
-    function setFeeRecipient(address _feeRecipient) external onlyGovernor {
+    function setFeeRecipient(address _feeRecipient) external onlyGovernor firewallProtected {
         require(_feeRecipient != address(0), "OVV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
     }
 
     /// @notice Pause of market by governance in the event of an emergency
-    function pause(address feed) external onlyPauser {
+    function pause(address feed) external onlyPauser firewallProtected {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.pause();
     }
 
     /// @notice Unpause of market by governance in the event of an emergency
-    function unpause(address feed) external onlyPauser {
+    function unpause(address feed) external onlyPauser firewallProtected {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.unpause();
     }
 
     /// @notice Shut down of market by governance in the event of an emergency
-    function shutdown(address feed) external onlyGuardian {
+    function shutdown(address feed) external onlyGuardian firewallProtected {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.shutdown();
         emit EmergencyShutdown(msg.sender, address(market));
