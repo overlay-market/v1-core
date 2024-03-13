@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "./interfaces/IOverlayV1Deployer.sol";
 import "./OverlayV1Market.sol";
 
-contract OverlayV1Deployer is IOverlayV1Deployer {
+contract OverlayV1Deployer is FirewallConsumer, IOverlayV1Deployer {
     address public immutable factory; // factory that has gov permissions
     address public immutable ov; // ov token
 
@@ -27,7 +28,7 @@ contract OverlayV1Deployer is IOverlayV1Deployer {
         factory_ = factory;
     }
 
-    function deploy(address _feed) external onlyFactory returns (address market_) {
+    function deploy(address _feed) external onlyFactory firewallProtected returns (address market_) {
         // Use the CREATE2 opcode to deploy a new Market contract.
         // Will revert if market which accepts feed in its constructor has already
         // been deployed since salt would be the same and can't deploy with it twice.

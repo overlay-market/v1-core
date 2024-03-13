@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.10;
 
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "../OverlayV1Feed.sol";
 import "../../interfaces/IOverlayV1Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-contract OverlayV1ChainlinkFeed is OverlayV1Feed {
+contract OverlayV1ChainlinkFeed is FirewallConsumer, OverlayV1Feed {
     IOverlayV1Token public immutable ov;
     AggregatorV3Interface public immutable aggregator;
     uint8 public immutable decimals;
@@ -122,7 +123,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
     }
 
-    function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
+    function setHeartbeat(uint256 _heartbeat) external onlyGovernor firewallProtected {
         heartbeat = _heartbeat;
     }
 }

@@ -10,6 +10,7 @@ test = "tests"
 script = "scripts"
 out = "forge-out"
 libs = ["lib"]
+via-ir = true
 
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
