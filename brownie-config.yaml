@@ -12,6 +12,7 @@ dotenv: .env
 compiler:
   solc:
     version: 0.8.10
+    viaIR: True
     optimizer:
       runs: 800
     remappings:
