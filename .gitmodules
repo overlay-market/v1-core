@@ -11,3 +11,6 @@
 	branch = 0.8
 	path = lib/v3-core
 	url = https://github.com/Uniswap/v3-core
+[submodule "lib/@ironblocks/firewall-consumer"]
+	path = lib/@ironblocks/firewall-consumer
+	url = https://github.com/ironblocks/firewall-consumer

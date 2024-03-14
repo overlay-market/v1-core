@@ -10,9 +10,11 @@ test = "tests"
 script = "scripts"
 out = "forge-out"
 libs = ["lib"]
+via-ir = true
 
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
+    "@ironblocks/firewall-consumer=lib/@ironblocks/firewall-consumer/",
     "@chainlink/=lib/chainlink/",
     "v3-core/=lib/v3-core/contracts/"
 ]

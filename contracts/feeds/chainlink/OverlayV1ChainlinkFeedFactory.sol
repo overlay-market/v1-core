@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.10;
 
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "../OverlayV1FeedFactory.sol";
 import "./OverlayV1ChainlinkFeed.sol";
 import "../../interfaces/feeds/chainlink/IOverlayV1ChainlinkFeedFactory.sol";
 
-contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, OverlayV1FeedFactory {
+contract OverlayV1ChainlinkFeedFactory is FirewallConsumer, IOverlayV1ChainlinkFeedFactory, OverlayV1FeedFactory {
     address public immutable OV;
     // registry of feeds; for a given aggregator pair, returns associated feed
     mapping(address => address) public getFeed;
@@ -22,7 +23,7 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
     /// @param _heartbeat expected update frequency of the feed
     /// @return _feed address of the new feed
     function deployFeed(address _aggregator, uint256 _heartbeat)
-        external
+        external firewallProtected
         returns (address _feed)
     {
         // check feed doesn't already exist
