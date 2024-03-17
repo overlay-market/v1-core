@@ -133,7 +133,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
         // set the sequencer oracle
         sequencerOracle = AggregatorV3Interface(_sequencerOracle);
-        gracePeriod = _gracePeriod;
+        setGracePeriod(_gracePeriod);
     }
 
     /// @dev adds a supported feed factory
