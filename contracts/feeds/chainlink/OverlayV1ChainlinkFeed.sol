@@ -12,7 +12,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     uint256 public heartbeat;
     string public description;
 
-    event HeartbeatUpdated(uint256 heartbeat);
+    event HeartbeatSet(uint256 heartbeat);
 
     modifier onlyGovernor() {
         require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
@@ -31,7 +31,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         aggregator = AggregatorV3Interface(_aggregator);
         decimals = aggregator.decimals();
         description = aggregator.description();
-        heartbeat = _heartbeat;
+        _setHeartbeat(_heartbeat);
         ov = IOverlayV1Token(_ov);
     }
 
@@ -125,7 +125,11 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     }
 
     function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
+        _setHeartbeat(_heartbeat);
+    }
+
+    function _setHeartbeat(uint256 _heartbeat) internal {
         heartbeat = _heartbeat;
-        emit HeartbeatUpdated(_heartbeat);
+        emit HeartbeatSet(_heartbeat);
     }
 }
