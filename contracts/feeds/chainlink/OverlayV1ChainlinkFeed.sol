@@ -12,6 +12,8 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     uint256 public heartbeat;
     string public description;
 
+    event HeartbeatUpdated(uint256 heartbeat);
+
     modifier onlyGovernor() {
         require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
         _;
@@ -124,5 +126,6 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
 
     function setHeartbeat(uint256 _heartbeat) external onlyGovernor {
         heartbeat = _heartbeat;
+        emit HeartbeatUpdated(_heartbeat);
     }
 }
