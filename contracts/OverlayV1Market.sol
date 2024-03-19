@@ -91,21 +91,34 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param debt debt of position at build
     /// @param isLong whether is long or short
     /// @param price entry price
+    /// @param oiAfterBuild oi after build
+    /// @param oiSharesAfterBuild oi shares after build
     event Build(
         address indexed sender,
         uint256 positionId,
         uint256 oi,
         uint256 debt,
         bool isLong,
-        uint256 price
+        uint256 price,
+        uint256 oiAfterBuild,
+        uint256 oiSharesAfterBuild
     );
+
     /// @param sender address that initiated unwind (owns position)
     /// @param positionId id of unwound position
     /// @param fraction fraction of position unwound
     /// @param mint total amount minted (+/-) at unwind
     /// @param price exit price
+    /// @param oiAfterUnwind oi after unwind
+    /// @param oiSharesAfterUnwind oi shares after unwind
     event Unwind(
-        address indexed sender, uint256 positionId, uint256 fraction, int256 mint, uint256 price
+        address indexed sender,
+        uint256 positionId,
+        uint256 fraction,
+        int256 mint,
+        uint256 price,
+        uint256 oiAfterUnwind,
+        uint256 oiSharesAfterUnwind
     );
 
     /// @param sender address that initiated liquidate
@@ -113,13 +126,18 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param positionId id of the liquidated position
     /// @param mint total amount burned (-) at liquidate
     /// @param price liquidation price
+    /// @param oiAfterLiquidate oi after liquidate
+    /// @param oiSharesAfterLiquidate oi shares after liquidate
     event Liquidate(
         address indexed sender,
         address indexed owner,
         uint256 positionId,
         int256 mint,
-        uint256 price
+        uint256 price,
+        uint256 oiAfterLiquidate,
+        uint256 oiSharesAfterLiquidate
     );
+
     /// @param sender address that initiated withdraw (owns position)
     /// @param positionId id of withdrawn position
     /// @param collateral total amount of collateral withdrawn
