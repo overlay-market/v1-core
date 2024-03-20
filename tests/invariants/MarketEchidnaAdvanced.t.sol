@@ -17,6 +17,9 @@ contract MarketEchidnaAdvanced is MarketEchidna {
     // ghost variables used to verify invariants
     mapping(address => uint256[]) positions; // owner => positionIds
 
+    // same as the ones specified in the fuzzer config
+    address[] senders = [ALICE, BOB];
+
     // Handler functions to "guide" the stateful fuzz test
     // Note: handlers have to be public in order to be called by Echidna
 
@@ -66,7 +69,7 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
     function liquidate() public {
         uint256[] storage posIds = positions[msg.sender];
-        require(posIds.length > 0, "No positions to unwind");
+        require(posIds.length > 0, "No positions to liquidate");
         uint256 posId = posIds[posIds.length - 1];
 
         (,,,,bool isLong,,,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
@@ -168,5 +171,49 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         assert(oiSharesAfter == oiSharesBefore - posOiShares);
 
         revert(); // revert state changes during the invariant check
+    }
+
+    // Invariant 5) Sum of open position's oi shares should be equal to market's total oi shares
+    
+    event InvariantOiSharesSum(uint256 numPositions, uint256 sumLongExpected, uint256 sumLong, uint256 sumShortExpected, uint256 sumShort);
+
+    function check_oi_shares_sum() public {
+        uint256 numPositions;
+        uint256 sumOiLongShares;
+        uint256 sumOiShortShares;
+
+        // iterate over all the senders
+        for (uint256 i = 0; i < senders.length; i++) {
+            // iterate over all the positions of the sender
+            for (uint256 j = 0; j < positions[senders[i]].length; j++) {
+                (,,,,bool isLong,,uint240 oiShares,) = market.positions(keccak256(
+                    abi.encodePacked(senders[i], positions[senders[i]][j])
+                ));
+
+                if (isLong)
+                    sumOiLongShares += oiShares;
+                else
+                    sumOiShortShares += oiShares;
+
+                numPositions++;
+            }
+        }
+
+        // FIXME: echidna breaks the invariant (parameters are not bounded on this output).
+        // check_oi_shares_sum(): failed!💥  
+        //   Call sequence, shrinking 1675/5000:
+        //     buildWrapper(false,0)
+        //     unwind(29678335934853632302057079988033485840348142661768149768981112452983)
+        //     unwind(7311677140176116913925425463138979182172112599739844530104983646231913891)
+        //     check_oi_shares_sum()
+        // Event sequence:
+        // InvariantOiSharesSum(0, 0, 0, 275, 0)
+        //
+        // The issue is that, after unwinding a position, its fractionRemaining can be set to 0 (ie. the position is effectively closed) while its oiShares are still greater than 0.
+        // Example position: fractionRemaining = 0 ; oiShares = 1.73e12
+        emit InvariantOiSharesSum(numPositions, market.oiLongShares(), sumOiLongShares, market.oiShortShares(), sumOiShortShares);
+
+        assert(sumOiLongShares == market.oiLongShares());
+        assert(sumOiShortShares == market.oiShortShares());
     }
 }
