@@ -272,11 +272,16 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit build event
-        if (isLong) {
-            emit Build(msg.sender, positionId_, oi, debt, isLong, price, oiLong, oiLongShares);
-        } else {
-            emit Build(msg.sender, positionId_, oi, debt, isLong, price, oiShort, oiShortShares);
-        }
+        emit Build(
+            msg.sender,
+            positionId_,
+            oi,
+            debt,
+            isLong,
+            price,
+            isLong ? oiLong : oiShort,
+            isLong ? oiLongShares : oiShortShares
+        );
 
         // transfer in the OV collateral needed to back the position + fees
         // trading fees charged as a percentage on notional size of position
@@ -383,27 +388,17 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit unwind event
-        if (pos.isLong) {
-            emit Unwind(
-                msg.sender,
-                positionId,
-                fraction,
-                int256(value) - int256(cost),
-                price,
-                oiLong,
-                oiLongShares
-            );
-        } else {
-            emit Unwind(
-                msg.sender,
-                positionId,
-                fraction,
-                int256(value) - int256(cost),
-                price,
-                oiShort,
-                oiShortShares
-            );
-        }
+        bool isLong = pos.isLong;
+
+        emit Unwind(
+            msg.sender,
+            positionId,
+            fraction,
+            int256(value) - int256(cost),
+            price,
+            isLong ? oiLong : oiShort,
+            isLong ? oiLongShares : oiShortShares
+        );
 
         // mint or burn the pnl for the position
         if (value >= cost) {
@@ -493,27 +488,17 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit liquidate event
-        if (pos.isLong) {
-            emit Liquidate(
-                msg.sender,
-                owner,
-                positionId,
-                int256(value) - int256(cost) - int256(marginToBurn),
-                price,
-                oiLong,
-                oiLongShares
-            );
-        } else {
-            emit Liquidate(
-                msg.sender,
-                owner,
-                positionId,
-                int256(value) - int256(cost) - int256(marginToBurn),
-                price,
-                oiShort,
-                oiShortShares
-            );
-        }
+        bool isLong = pos.isLong;
+
+        emit Liquidate(
+            msg.sender,
+            owner,
+            positionId,
+            int256(value) - int256(cost) - int256(marginToBurn),
+            price,
+            isLong ? oiLong : oiShort,
+            isLong ? oiLongShares : oiShortShares
+        );
 
         // burn the pnl for the position + insurance margin
         ov.burn(cost - value + marginToBurn);
