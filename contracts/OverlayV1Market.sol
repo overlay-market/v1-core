@@ -388,16 +388,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit unwind event
-        bool isLong = pos.isLong;
-
         emit Unwind(
             msg.sender,
             positionId,
             fraction,
             int256(value) - int256(cost),
             price,
-            isLong ? oiLong : oiShort,
-            isLong ? oiLongShares : oiShortShares
+            pos.isLong ? oiLong : oiShort,
+            pos.isLong ? oiLongShares : oiShortShares
         );
 
         // mint or burn the pnl for the position
@@ -488,16 +486,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit liquidate event
-        bool isLong = pos.isLong;
-
         emit Liquidate(
             msg.sender,
             owner,
             positionId,
             int256(value) - int256(cost) - int256(marginToBurn),
             price,
-            isLong ? oiLong : oiShort,
-            isLong ? oiLongShares : oiShortShares
+            pos.isLong ? oiLong : oiShort,
+            pos.isLong ? oiLongShares : oiShortShares
         );
 
         // burn the pnl for the position + insurance margin
