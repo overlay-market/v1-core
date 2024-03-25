@@ -359,7 +359,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             pos.oiShares -= uint240(pos.oiSharesCurrent(fraction));
             pos.fractionRemaining = pos.updatedFractionRemaining(fraction);
             // ensure there are no dead shares left
-            if (pos.fractionRemaining == 0) {
+            if (pos.fractionRemaining == 0 && pos.oiShares > 0) {
                 _reduceOIAndOIShares(pos, ONE);
                 pos.oiShares = 0;
             }
