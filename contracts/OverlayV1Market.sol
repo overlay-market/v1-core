@@ -91,21 +91,34 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param debt debt of position at build
     /// @param isLong whether is long or short
     /// @param price entry price
+    /// @param oiAfterBuild oi after build
+    /// @param oiSharesAfterBuild oi shares after build
     event Build(
         address indexed sender,
         uint256 positionId,
         uint256 oi,
         uint256 debt,
         bool isLong,
-        uint256 price
+        uint256 price,
+        uint256 oiAfterBuild,
+        uint256 oiSharesAfterBuild
     );
+
     /// @param sender address that initiated unwind (owns position)
     /// @param positionId id of unwound position
     /// @param fraction fraction of position unwound
     /// @param mint total amount minted (+/-) at unwind
     /// @param price exit price
+    /// @param oiAfterUnwind oi after unwind
+    /// @param oiSharesAfterUnwind oi shares after unwind
     event Unwind(
-        address indexed sender, uint256 positionId, uint256 fraction, int256 mint, uint256 price
+        address indexed sender,
+        uint256 positionId,
+        uint256 fraction,
+        int256 mint,
+        uint256 price,
+        uint256 oiAfterUnwind,
+        uint256 oiSharesAfterUnwind
     );
 
     /// @param sender address that initiated liquidate
@@ -113,13 +126,18 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param positionId id of the liquidated position
     /// @param mint total amount burned (-) at liquidate
     /// @param price liquidation price
+    /// @param oiAfterLiquidate oi after liquidate
+    /// @param oiSharesAfterLiquidate oi shares after liquidate
     event Liquidate(
         address indexed sender,
         address indexed owner,
         uint256 positionId,
         int256 mint,
-        uint256 price
+        uint256 price,
+        uint256 oiAfterLiquidate,
+        uint256 oiSharesAfterLiquidate
     );
+
     /// @param sender address that initiated withdraw (owns position)
     /// @param positionId id of withdrawn position
     /// @param collateral total amount of collateral withdrawn
@@ -182,6 +200,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         require(collateral >= params.get(Risk.Parameters.MinCollateral), "OVV1:collateral<min");
 
         uint256 oi;
+        uint256 oiShares;
         uint256 debt;
         uint256 price;
         uint256 tradingFee;
@@ -222,7 +241,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
             // add new position's open interest to the side's aggregate oi value
             // and increase number of oi shares issued
-            uint256 oiShares = _addToOiAggregates(oi, capOi, isLong);
+            oiShares = _addToOiAggregates(oi, capOi, isLong);
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing
@@ -256,7 +275,16 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit build event
-        emit Build(msg.sender, positionId_, oi, debt, isLong, price);
+        emit Build(
+            msg.sender,
+            positionId_,
+            oi,
+            debt,
+            isLong,
+            price,
+            isLong ? oiLong : oiShort,
+            isLong ? oiLongShares : oiShortShares
+        );
 
         // transfer in the OV collateral needed to back the position + fees
         // trading fees charged as a percentage on notional size of position
@@ -281,13 +309,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         uint256 cost;
         uint256 price;
         uint256 tradingFee;
+        Position.Info memory pos;
         // avoids stack too deep
         {
             // call to update before any effects
             Oracle.Data memory data = update();
 
             // check position exists
-            Position.Info memory pos = positions.get(msg.sender, positionId);
+            pos = positions.get(msg.sender, positionId);
             require(pos.exists(), "OVV1:!position");
 
             // cache for gas savings
@@ -362,7 +391,15 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         }
 
         // emit unwind event
-        emit Unwind(msg.sender, positionId, fraction, int256(value) - int256(cost), price);
+        emit Unwind(
+            msg.sender,
+            positionId,
+            fraction,
+            int256(value) - int256(cost),
+            price,
+            pos.isLong ? oiLong : oiShort,
+            pos.isLong ? oiLongShares : oiShortShares
+        );
 
         // mint or burn the pnl for the position
         if (value >= cost) {
@@ -386,10 +423,11 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         uint256 liquidationFee;
         uint256 marginToBurn;
         uint256 marginRemaining;
+        Position.Info memory pos;
         // avoids stack too deep
         {
             // check position exists
-            Position.Info memory pos = positions.get(owner, positionId);
+            pos = positions.get(owner, positionId);
             require(pos.exists(), "OVV1:!position");
 
             // call to update before any effects
@@ -456,7 +494,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             owner,
             positionId,
             int256(value) - int256(cost) - int256(marginToBurn),
-            price
+            price,
+            pos.isLong ? oiLong : oiShort,
+            pos.isLong ? oiLongShares : oiShortShares
         );
 
         // burn the pnl for the position + insurance margin
