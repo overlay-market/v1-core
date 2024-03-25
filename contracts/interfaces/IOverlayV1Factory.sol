@@ -45,4 +45,7 @@ interface IOverlayV1Factory {
 
     // fee repository setter
     function setFeeRecipient(address _feeRecipient) external;
+
+    // Arbitrum sequencer check
+    function isUpAndGracePeriodPassed() external view returns (bool);
 }

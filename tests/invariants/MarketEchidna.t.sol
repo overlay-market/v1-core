@@ -6,6 +6,7 @@ import {OverlayV1Market} from "../../contracts/OverlayV1Market.sol";
 import {OverlayV1Token} from "../../contracts/OverlayV1Token.sol";
 import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFactoryMock.sol";
 import {OverlayV1FeedMock} from "../../contracts/mocks/OverlayV1FeedMock.sol";
+import {AggregatorMock} from "../../contracts/mocks/AggregatorMock.sol";
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
 import {TestUtils} from "./TestUtils.sol";
 
@@ -33,6 +34,7 @@ contract MarketEchidna {
     OverlayV1Market market;
     OverlayV1Token ovl;
     OverlayV1FeedMock feed;
+    AggregatorMock sequencer_oracle;
 
     // make these constant to match Echidna config
     address constant ALICE = address(0x1000000000000000000000000000000000000000);
@@ -42,9 +44,11 @@ contract MarketEchidna {
     uint256 constant CAP_NOTIONAL = 8e23;
 
     constructor() {
+        // Add sequencer Mock
+        sequencer_oracle = new AggregatorMock();
         // create contracts to be tested
         ovl = new OverlayV1Token();
-        factory = new OverlayV1Factory(address(ovl), address(0x111));
+        factory = new OverlayV1Factory(address(ovl), address(0x111), address(sequencer_oracle), 0);
         // market will be later deployed by factory
 
         // ovl config; fund test accounts

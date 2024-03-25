@@ -2,8 +2,14 @@ import pytest
 from brownie import (
     OverlayV1Factory, OverlayV1Market,
     OverlayV1Deployer, OverlayV1Token, OverlayV1FeedFactoryMock,
-    web3
+    web3, Contract
 )
+
+
+@pytest.fixture(scope="module")
+def sequencer_aggregator():
+    # Arbitrum One sequencer aggregator
+    yield Contract.from_explorer("0xFdB631F5EE196F0ed6FAa767959853A9F217697D")
 
 
 @pytest.fixture(scope="module")
@@ -61,12 +67,19 @@ def guardian_role():
     yield web3.solidityKeccak(['string'], ["GUARDIAN"])
 
 
+@pytest.fixture(scope="module")
+def risk_manager_role():
+    yield web3.solidityKeccak(['string'], ["RISK_MANAGER"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, minter_role, request):
+def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        tok.grantRole(risk_manager_role, gov, {"from": gov})
 
         # mint the token then renounce minter role
         tok.grantRole(minter_role, gov, {"from": gov})
@@ -143,12 +156,14 @@ def feed_three(feed_factory):
 
 @pytest.fixture(scope="module")
 def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
-                   guardian_role, feed_factory, feed_three):
+                   guardian_role, feed_factory, feed_three,
+                   sequencer_aggregator):
 
     def create_factory(tok=ov, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
         # create the market factory
-        factory = gov.deploy(OverlayV1Factory, tok, recipient)
+        factory = gov.deploy(OverlayV1Factory, tok, recipient,
+                             sequencer_aggregator.address, 0)
 
         # grant market factory token admin role
         tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})

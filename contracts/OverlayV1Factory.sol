@@ -6,6 +6,7 @@ import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1FeedFactory.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import "./libraries/Risk.sol";
 
@@ -65,6 +66,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // market deployer
     IOverlayV1Deployer public immutable deployer;
 
+    // sequencer oracle
+    AggregatorV3Interface public sequencerOracle;
+    uint256 public gracePeriod;
+
     // fee related quantities
     address public feeRecipient;
 
@@ -82,6 +87,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
     event FeedFactoryAdded(address indexed user, address feedFactory);
     event FeedFactoryRemoved(address indexed user, address feedFactory);
     event FeeRecipientUpdated(address indexed user, address recipient);
+
+    // events for sequencer oracle
+    event SequencerOracleUpdated(address indexed newOracle);
+    event GracePeriodUpdated(uint256 newGracePeriod);
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
@@ -101,7 +110,18 @@ contract OverlayV1Factory is IOverlayV1Factory {
         _;
     }
 
-    constructor(address _ov, address _feeRecipient) {
+    // risk manager modifier for risk parameters
+    modifier onlyRiskManager() {
+        require(ov.hasRole(RISK_MANAGER_ROLE, msg.sender), "OVV1: !riskManager");
+        _;
+    }
+
+    constructor(
+        address _ov,
+        address _feeRecipient,
+        address _sequencerOracle,
+        uint256 _gracePeriod
+    ) {
         // set ov
         ov = IOverlayV1Token(_ov);
 
@@ -110,6 +130,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
         // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer(_ov);
+
+        // set the sequencer oracle
+        sequencerOracle = AggregatorV3Interface(_sequencerOracle);
+        gracePeriod = _gracePeriod;
     }
 
     /// @dev adds a supported feed factory
@@ -181,7 +205,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     /// @notice Setter for per-market risk parameters adjustable by governance
     function setRiskParam(address feed, Risk.Parameters name, uint256 value)
         external
-        onlyGovernor
+        onlyRiskManager
     {
         _checkRiskParam(name, value);
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
@@ -213,5 +237,24 @@ contract OverlayV1Factory is IOverlayV1Factory {
         OverlayV1Market market = OverlayV1Market(getMarket[feed]);
         market.shutdown();
         emit EmergencyShutdown(msg.sender, address(market));
+    }
+
+    /**
+     * @notice Checks the sequencer oracle is healthy: is up and grace period passed.
+     * @return True if the SequencerOracle is up and the grace period passed, false otherwise
+     */
+    function isUpAndGracePeriodPassed() external view returns (bool) {
+        (, int256 answer,, uint256 lastUpdateTimestamp,) = sequencerOracle.latestRoundData();
+        return answer == 0 && block.timestamp - lastUpdateTimestamp > gracePeriod;
+    }
+
+    function setSequencerOracle(address newSequencerOracle) public onlyGovernor {
+        sequencerOracle = AggregatorV3Interface(newSequencerOracle);
+        emit SequencerOracleUpdated(newSequencerOracle);
+    }
+
+    function setGracePeriod(uint256 newGracePeriod) public onlyGovernor {
+        gracePeriod = newGracePeriod;
+        emit GracePeriodUpdated(newGracePeriod);
     }
 }
