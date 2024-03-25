@@ -56,12 +56,13 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         require(posIds.length > 0, "No positions to unwind");
         uint256 posId = posIds[posIds.length - 1];
 
-        (,,,,bool isLong,,,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        (,,,, bool isLong,,,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
 
         hevm.prank(msg.sender);
         market.unwind(posId, fraction, isLong ? 0 : type(uint256).max);
 
-        (,,,,,,,uint16 fractionRemaining) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        (,,,,,,, uint16 fractionRemaining) =
+            market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
 
         // remove the position if fully unwound
         if (fractionRemaining == 0) posIds.pop();
@@ -72,7 +73,7 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         require(posIds.length > 0, "No positions to liquidate");
         uint256 posId = posIds[posIds.length - 1];
 
-        (,,,,bool isLong,,,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        (,,,, bool isLong,,,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
 
         // adjust the price so that position becomes liquidatable
         setPrice(isLong ? feed.price() / 2 : feed.price() * 2);
@@ -86,11 +87,7 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
     // Helper functions
 
-    function _getOiAndShares(bool isLong)
-        internal
-        view
-        returns (uint256 oi, uint256 oiShares)
-    {
+    function _getOiAndShares(bool isLong) internal view returns (uint256 oi, uint256 oiShares) {
         oi = isLong ? market.oiLong() : market.oiShort();
         oiShares = isLong ? market.oiLongShares() : market.oiShortShares();
     }
@@ -113,9 +110,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         // calculate the expected oi and oi shares
         uint256 posOi = collateral * 1e18 / feed.price();
-        uint256 posOiShares = (oiBefore == 0 || oiSharesBefore == 0)
-            ? posOi
-            : oiSharesBefore * posOi / oiBefore;
+        uint256 posOiShares =
+            (oiBefore == 0 || oiSharesBefore == 0) ? posOi : oiSharesBefore * posOi / oiBefore;
 
         (uint256 oiAfter, uint256 oiSharesAfter) = _getOiAndShares(isLong);
 
@@ -133,7 +129,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         (uint256 oiBefore, uint256 oiSharesBefore) = _getOiAndShares(isLong);
 
-        (,,,,,,uint240 posOiShares,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        (,,,,,, uint240 posOiShares,) =
+            market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
         uint256 posOi = oiSharesBefore == 0 ? 0 : oiBefore * posOiShares / oiSharesBefore;
 
         // unwind the whole position
@@ -156,7 +153,8 @@ contract MarketEchidnaAdvanced is MarketEchidna {
 
         (uint256 oiBefore, uint256 oiSharesBefore) = _getOiAndShares(isLong);
 
-        (,,,,,,uint240 posOiShares,) = market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
+        (,,,,,, uint240 posOiShares,) =
+            market.positions(keccak256(abi.encodePacked(msg.sender, posId)));
         uint256 posOi = oiSharesBefore == 0 ? 0 : oiBefore * posOiShares / oiSharesBefore;
 
         // adjust the price so that position becomes liquidatable
@@ -174,8 +172,14 @@ contract MarketEchidnaAdvanced is MarketEchidna {
     }
 
     // Invariant 5) Sum of open position's oi shares should be equal to market's total oi shares
-    
-    event InvariantOiSharesSum(uint256 numPositions, uint256 sumLongExpected, uint256 sumLong, uint256 sumShortExpected, uint256 sumShort);
+
+    event InvariantOiSharesSum(
+        uint256 numPositions,
+        uint256 sumLongExpected,
+        uint256 sumLong,
+        uint256 sumShortExpected,
+        uint256 sumShort
+    );
 
     function check_oi_shares_sum() public {
         uint256 numPositions;
@@ -186,21 +190,22 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         for (uint256 i = 0; i < senders.length; i++) {
             // iterate over all the positions of the sender
             for (uint256 j = 0; j < positions[senders[i]].length; j++) {
-                (,,,,bool isLong,,uint240 oiShares,) = market.positions(keccak256(
-                    abi.encodePacked(senders[i], positions[senders[i]][j])
-                ));
+                (,,,, bool isLong,, uint240 oiShares,) = market.positions(
+                    keccak256(abi.encodePacked(senders[i], positions[senders[i]][j]))
+                );
 
-                if (isLong)
+                if (isLong) {
                     sumOiLongShares += oiShares;
-                else
+                } else {
                     sumOiShortShares += oiShares;
+                }
 
                 numPositions++;
             }
         }
 
         // FIXME: echidna breaks the invariant (parameters are not bounded on this output).
-        // check_oi_shares_sum(): failed!💥  
+        // check_oi_shares_sum(): failed!💥
         //   Call sequence, shrinking 1675/5000:
         //     buildWrapper(false,0)
         //     unwind(29678335934853632302057079988033485840348142661768149768981112452983)
@@ -211,7 +216,13 @@ contract MarketEchidnaAdvanced is MarketEchidna {
         //
         // The issue is that, after unwinding a position, its fractionRemaining can be set to 0 (ie. the position is effectively closed) while its oiShares are still greater than 0.
         // Example position: fractionRemaining = 0 ; oiShares = 1.73e12
-        emit InvariantOiSharesSum(numPositions, market.oiLongShares(), sumOiLongShares, market.oiShortShares(), sumOiShortShares);
+        emit InvariantOiSharesSum(
+            numPositions,
+            market.oiLongShares(),
+            sumOiLongShares,
+            market.oiShortShares(),
+            sumOiShortShares
+        );
 
         assert(sumOiLongShares == market.oiLongShares());
         assert(sumOiShortShares == market.oiShortShares());
