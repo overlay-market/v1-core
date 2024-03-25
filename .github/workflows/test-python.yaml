@@ -54,7 +54,7 @@ jobs:
         uses: actions/setup-node@v4
 
       - name: Install Ganache
-        run: npm install -g ganache-cli@7.9.2
+        run: npm install -g ganache@7.9.2
 
       - name: Setup Python
         uses: actions/setup-python@v2
