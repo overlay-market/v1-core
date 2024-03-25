@@ -143,6 +143,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param collateral total amount of collateral withdrawn
     event EmergencyWithdraw(address indexed sender, uint256 positionId, uint256 collateral);
 
+    /// @param newDpUpperLimit new value for dpUpperLimit
+    event CacheRiskCalc(uint256 newDpUpperLimit);
+
     constructor() {
         (address _ov, address _feed, address _factory) =
             IOverlayV1Deployer(msg.sender).parameters();
@@ -964,6 +967,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             uint256 _priceDriftUpperLimit = value;
             uint256 pow = _priceDriftUpperLimit * data.macroWindow;
             dpUpperLimit = pow.expUp(); // e**(pow)
+            emit CacheRiskCalc(dpUpperLimit);
         }
     }
 
