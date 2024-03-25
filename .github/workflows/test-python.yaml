@@ -51,7 +51,7 @@ jobs:
           key: compiler-cache
 
       - name: Setup Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
 
       - name: Install Ganache
         run: npm install -g ganache-cli@7.9.2
