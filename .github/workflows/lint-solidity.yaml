@@ -1,31 +1,30 @@
-name: Overlay V1 Core Lint Solidity
+name: Overlay V1 Core Format Solidity
 
 on:
   push:
     branches:
       - main
+      - staging
   pull_request:
     branches:
       - main
+      - staging
 
 jobs:
-  solidity-lint:
+  solidity-format:
     runs-on: ubuntu-latest
-    name: Solidity Lint
+    name: Solidity Format
     steps:
-      - name: Check out source repository
-        uses: actions/checkout@v2
-
-      - name: Setup node.js
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
         with:
-          node-version: '17.x'
+          submodules: recursive
 
-      - name: Install node.js dependencies
-        run: npm install
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
-      - name: Run formater check on *.sol and *.json
-        run: npm run format:check
-
-      - name: run linter check on *.sol file
-        run: npm run hint
+      - name: Run Forge fmt
+        run: |
+          forge fmt --check
+        id: format

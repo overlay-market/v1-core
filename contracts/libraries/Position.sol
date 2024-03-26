@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-import "../libraries/uniswap/v3-core/FullMath.sol";
+import "v3-core/libraries/FullMath.sol";
 import "./FixedCast.sol";
 import "./FixedPoint.sol";
 import "./Tick.sol";
@@ -33,11 +33,11 @@ library Position {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice Retrieves a position from positions mapping
-    function get(
-        mapping(bytes32 => Info) storage self,
-        address owner,
-        uint256 id
-    ) internal view returns (Info memory position_) {
+    function get(mapping(bytes32 => Info) storage self, address owner, uint256 id)
+        internal
+        view
+        returns (Info memory position_)
+    {
         position_ = self[keccak256(abi.encodePacked(owner, id))];
     }
 
@@ -83,7 +83,7 @@ library Position {
     /// @notice Whether the position exists
     /// @dev Is false if position has been liquidated or fraction remaining == 0
     function exists(Info memory self) internal pure returns (bool exists_) {
-        return (!self.liquidated && self.fractionRemaining > 0);
+        return (self.fractionRemaining > 0);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -102,7 +102,6 @@ library Position {
         pure
         returns (uint16)
     {
-        require(fractionRemoved <= ONE, "OVLV1:fraction>max");
         uint256 fractionRemaining = _fractionRemaining(self).mulDown(ONE - fractionRemoved);
         return fractionRemaining.toUint16Fixed();
     }
@@ -134,11 +133,11 @@ library Position {
     /// @notice Computes the amount of shares of open interest to issue
     /// @notice a newly built position
     /// @dev use mulDiv
-    function calcOiShares(
-        uint256 oi,
-        uint256 oiTotalOnSide,
-        uint256 oiTotalSharesOnSide
-    ) internal pure returns (uint256 oiShares_) {
+    function calcOiShares(uint256 oi, uint256 oiTotalOnSide, uint256 oiTotalSharesOnSide)
+        internal
+        pure
+        returns (uint256 oiShares_)
+    {
         oiShares_ = (oiTotalOnSide == 0 || oiTotalSharesOnSide == 0)
             ? oi
             : FullMath.mulDiv(oi, oiTotalSharesOnSide, oiTotalOnSide);
@@ -163,8 +162,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function notionalInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 notionalForRemaining = _notionalInitial(self).mulUp(fractionRemaining);
+        uint256 notionalForRemaining = _notionalInitial(self).mulUp(_fractionRemaining(self));
         return notionalForRemaining.mulUp(fraction);
     }
 
@@ -172,8 +170,7 @@ library Position {
     /// @notice accounting for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function oiInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(fractionRemaining);
+        uint256 oiInitialForRemaining = _oiInitial(self).mulUp(_fractionRemaining(self));
         return oiInitialForRemaining.mulUp(fraction);
     }
 
@@ -190,8 +187,7 @@ library Position {
     /// @notice for amount of position remaining
     /// @dev use mulUp to avoid rounding leftovers on unwind
     function debtInitial(Info memory self, uint256 fraction) internal pure returns (uint256) {
-        uint256 fractionRemaining = _fractionRemaining(self);
-        uint256 debtForRemaining = _debtInitial(self).mulUp(fractionRemaining);
+        uint256 debtForRemaining = _debtInitial(self).mulUp(_fractionRemaining(self));
         return debtForRemaining.mulUp(fraction);
     }
 
@@ -251,9 +247,8 @@ library Position {
             // val = notionalInitial * oiCurrent / oiInitial
             //       + oiCurrent * min[currentPrice, entryPrice * (1 + capPayoff)]
             //       - oiCurrent * entryPrice - debt
-            val_ =
-                posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial) +
-                Math.min(
+            val_ = posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial)
+                + Math.min(
                     posOiCurrent.mulUp(currentPrice),
                     posOiCurrent.mulUp(posEntryPrice).mulUp(ONE + capPayoff)
                 );
@@ -263,9 +258,8 @@ library Position {
             // NOTE: capPayoff >= 1, so no need to include w short
             // val = notionalInitial * oiCurrent / oiInitial + oiCurrent * entryPrice
             //       - oiCurrent * currentPrice - debt
-            val_ =
-                posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial) +
-                posOiCurrent.mulUp(posEntryPrice);
+            val_ = posNotionalInitial.mulUp(posOiCurrent).divUp(posOiInitial)
+                + posOiCurrent.mulUp(posEntryPrice);
             // floor to 0
             val_ = val_.subFloor(posDebt + posOiCurrent.mulUp(currentPrice));
         }
@@ -281,14 +275,8 @@ library Position {
         uint256 currentPrice,
         uint256 capPayoff
     ) internal pure returns (uint256 notionalWithPnl_) {
-        uint256 posValue = value(
-            self,
-            fraction,
-            oiTotalOnSide,
-            oiTotalSharesOnSide,
-            currentPrice,
-            capPayoff
-        );
+        uint256 posValue =
+            value(self, fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
         uint256 posDebt = debtInitial(self, fraction);
         notionalWithPnl_ = posValue + posDebt;
     }
@@ -305,12 +293,7 @@ library Position {
         uint256 tradingFeeRate
     ) internal pure returns (uint256 tradingFee_) {
         uint256 posNotional = notionalWithPnl(
-            self,
-            fraction,
-            oiTotalOnSide,
-            oiTotalSharesOnSide,
-            currentPrice,
-            capPayoff
+            self, fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff
         );
         tradingFee_ = posNotional.mulUp(tradingFeeRate);
     }
@@ -330,20 +313,14 @@ library Position {
         uint256 fraction = ONE;
         uint256 posNotionalInitial = notionalInitial(self, fraction);
 
-        if (self.liquidated || self.fractionRemaining == 0) {
+        if (self.fractionRemaining == 0) {
             // already been liquidated or doesn't exist
             // latter covers edge case of val == 0 and MM + liq fee == 0
             return false;
         }
 
-        uint256 val = value(
-            self,
-            fraction,
-            oiTotalOnSide,
-            oiTotalSharesOnSide,
-            currentPrice,
-            capPayoff
-        );
+        uint256 val =
+            value(self, fraction, oiTotalOnSide, oiTotalSharesOnSide, currentPrice, capPayoff);
         uint256 maintenanceMargin = posNotionalInitial.mulUp(maintenanceMarginFraction);
         uint256 liquidationFee = val.mulDown(liquidationFeeRate);
         can_ = val < maintenanceMargin + liquidationFee;

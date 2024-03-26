@@ -28,7 +28,7 @@ def test_cap_notional_back_run_bound(market, feed):
     average_block_time = market.params(RiskParameter.AVERAGE_BLOCK_TIME.value)
     _, _, macro_window, _, _, _, reserve_micro, _ = data
 
-    # check back run bound is macroWindowInBlocks * reserveInOvl * 2 * delta
+    # check back run bound is macroWindowInBlocks * reserveInOv * 2 * delta
     # when has reserve
     window = Decimal(macro_window) / Decimal(average_block_time)
     expect = int(Decimal(2) * delta * Decimal(reserve_micro) * window)
@@ -42,16 +42,20 @@ def test_cap_notional_adjusted_for_bounds(market, feed):
     cap_notional = market.params(idx)
     data = feed.latest()
 
-    # calculate cap notional bounds:
-    # 1. front run bound; 2. back run bound
-    cap_notional_front_run_bound = market.frontRunBound(data)
-    cap_notional_back_run_bound = market.backRunBound(data)
+    _, _, _, _, _, _, _, has_reserve = data
 
-    # expect is the min of all cap quantities
-    expect = min(cap_notional, cap_notional_front_run_bound,
-                 cap_notional_back_run_bound)
-    actual = market.capNotionalAdjustedForBounds(data, cap_notional)
-    assert actual == expect
+    # NOTE: this test assumes `data.hasReserve` is true
+    if has_reserve:
+        # calculate cap notional bounds:
+        # 1. front run bound; 2. back run bound
+        cap_notional_front_run_bound = market.frontRunBound(data)
+        cap_notional_back_run_bound = market.backRunBound(data)
+
+        # expect is the min of all cap quantities
+        expect = min(cap_notional, cap_notional_front_run_bound,
+                     cap_notional_back_run_bound)
+        actual = market.capNotionalAdjustedForBounds(data, cap_notional)
+        assert actual == expect
 
 
 def test_cap_notional_adjusted_for_bounds_when_no_reserve(market, feed):
@@ -152,7 +156,7 @@ def test_cap_oi_adjusted_for_circuit_breaker(market, feed):
 
 
 def test_cap_oi_adjusted_for_circuit_breaker_after_mint(
-        ovl, alice, rando, mock_market, mock_feed, factory, gov):
+        ov, alice, rando, mock_market, mock_feed, factory, gov):
     # set circuit breaker mint target much lower to see effects
     idx_mint = RiskParameter.CIRCUIT_BREAKER_MINT_TARGET.value
     mint_target = int(Decimal(1000) * Decimal(1e18))
@@ -182,7 +186,7 @@ def test_cap_oi_adjusted_for_circuit_breaker_after_mint(
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ovl.approve(mock_market, approve_collateral, {"from": alice})
+    ov.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value

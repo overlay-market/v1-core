@@ -1,17 +1,12 @@
 # use Ganache's forked mainnet mode as the default network
 networks:
-  default: mainnet-fork
+  default: arbitrum-main-fork
 
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
 
 # automatically load the local .env file
 dotenv: .env
-
-# require OpenZepplin, Uniswap Contracts
-dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.5.0
-  - Uniswap/v3-core@1.0.0
 
 # path remapping to support imports from GitHub/NPM
 compiler:
@@ -20,5 +15,6 @@ compiler:
     optimizer:
       runs: 800
     remappings:
-      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.5.0"
-      - "@uniswap/v3-core=Uniswap/v3-core@1.0.0"
+      - "@openzeppelin/=lib/openzeppelin-contracts/"
+      - "@chainlink/=lib/chainlink/"
+      - "v3-core/=lib/v3-core/contracts/"

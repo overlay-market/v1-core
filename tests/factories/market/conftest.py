@@ -2,8 +2,14 @@ import pytest
 from brownie import (
     OverlayV1Factory, OverlayV1Market,
     OverlayV1Deployer, OverlayV1Token, OverlayV1FeedFactoryMock,
-    web3
+    web3, Contract
 )
+
+
+@pytest.fixture(scope="module")
+def sequencer_aggregator():
+    # Arbitrum One sequencer aggregator
+    yield Contract.from_explorer("0xFdB631F5EE196F0ed6FAa767959853A9F217697D")
 
 
 @pytest.fixture(scope="module")
@@ -61,12 +67,19 @@ def guardian_role():
     yield web3.solidityKeccak(['string'], ["GUARDIAN"])
 
 
+@pytest.fixture(scope="module")
+def risk_manager_role():
+    yield web3.solidityKeccak(['string'], ["RISK_MANAGER"])
+
+
 @pytest.fixture(scope="module", params=[8000000])
-def create_token(gov, alice, bob, minter_role, request):
+def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
     sup = request.param
 
     def create_token(supply=sup):
         tok = gov.deploy(OverlayV1Token)
+
+        tok.grantRole(risk_manager_role, gov, {"from": gov})
 
         # mint the token then renounce minter role
         tok.grantRole(minter_role, gov, {"from": gov})
@@ -81,7 +94,7 @@ def create_token(gov, alice, bob, minter_role, request):
 
 
 @pytest.fixture(scope="module")
-def ovl(create_token):
+def ov(create_token):
     yield create_token()
 
 
@@ -90,7 +103,7 @@ def ovl(create_token):
      2000000000000000000, 2000000000000000000, 3000000000000000000,
      3000000000000000000)
 ])
-def create_feed_factory(gov, request, ovl):
+def create_feed_factory(gov, request, ov):
     """
     Creates a new feed factory and deploys three mock feeds for testing.
     Below, third mock is used in creating a market for test_setters.py
@@ -98,7 +111,7 @@ def create_feed_factory(gov, request, ovl):
     (micro, macro, price_one, reserve_one, price_two,
      reserve_two, price_three, reserve_three) = request.param
 
-    def create_feed_factory(tok=ovl, micro_window=micro, macro_window=macro,
+    def create_feed_factory(tok=ov, micro_window=micro, macro_window=macro,
                             mock_price_one=price_one,
                             mock_reserve_one=reserve_one,
                             mock_price_two=price_two,
@@ -142,13 +155,15 @@ def feed_three(feed_factory):
 
 
 @pytest.fixture(scope="module")
-def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
-                   guardian_role, feed_factory, feed_three):
+def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
+                   guardian_role, feed_factory, feed_three,
+                   sequencer_aggregator):
 
-    def create_factory(tok=ovl, recipient=fee_recipient, feeds=feed_factory,
+    def create_factory(tok=ov, recipient=fee_recipient, feeds=feed_factory,
                        feed=feed_three):
         # create the market factory
-        factory = gov.deploy(OverlayV1Factory, tok, recipient)
+        factory = gov.deploy(OverlayV1Factory, tok, recipient,
+                             sequencer_aggregator.address, 0)
 
         # grant market factory token admin role
         tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
@@ -176,7 +191,7 @@ def create_factory(gov, guardian, fee_recipient, request, ovl, governor_role,
         trade_fee = 750000000000000
         min_collateral = 100000000000000
         price_drift_upper_limit = 10000000000000  # 0.001% per sec
-        average_block_time = 14
+        average_block_time = 250
 
         params = (k, lmbda, delta, cap_payoff, cap_notional, cap_leverage,
                   circuit_breaker_window, circuit_breaker_mint_target,

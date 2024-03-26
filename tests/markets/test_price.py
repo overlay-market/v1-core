@@ -75,7 +75,7 @@ def test_bid_reverts_when_slippage_greater_than_max(market, rando):
     # check reverts when volume produces slippage greater than max
     volume = Decimal(max_volume) * Decimal(1 + tol)
     input_volume = volume * Decimal(1e18)
-    with reverts("OVLV1:slippage>max"):
+    with reverts("OVV1:slippage>max"):
         market.bid(data, input_volume)
 
     # check does not revert when volume produces slippage about equal to max
@@ -152,7 +152,7 @@ def test_ask_reverts_when_impact_greater_than_max_slippage(market, rando):
     # check reverts when volume produces slippage greater than max
     volume = Decimal(max_volume) * Decimal(1 + tol)
     input_volume = volume * Decimal(1e18)
-    with reverts("OVLV1:slippage>max"):
+    with reverts("OVV1:slippage>max"):
         market.ask(data, input_volume)
 
     # check does not revert when volume produces slippage about equal to max

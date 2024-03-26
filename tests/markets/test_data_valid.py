@@ -33,7 +33,7 @@ def test_data_is_valid_when_dp_less_than_lower_limit(market, feed):
     # check data is not valid when price is less than lower limit
     pow = Decimal(drift) * Decimal(macro_window) * Decimal(1+tol)
     price_ago = int(price_now * exp(pow))
-    data = (1643583611, 600, macro_window, 2569091057405103628119,
+    data = (1643583611, micro_window, macro_window, 2569091057405103628119,
             price_now, price_ago,
             4677792160494647834844974, True)
 
@@ -62,7 +62,7 @@ def test_data_is_valid_when_dp_greater_than_upper_limit(market, feed):
     price_ago = 2562676671798193257266
 
     # check data is not valid when price is greater than upper limit
-    pow = Decimal(drift) * Decimal(3000) * Decimal(1+tol)
+    pow = Decimal(drift) * Decimal(macro_window) * Decimal(1+tol)
     price_now = int(price_ago * exp(pow))
     data = (1643583611, micro_window, macro_window, 2569091057405103628119,
             price_now, price_ago,
