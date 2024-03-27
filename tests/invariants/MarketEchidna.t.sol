@@ -5,6 +5,7 @@ import {OverlayV1Factory} from "../../contracts/OverlayV1Factory.sol";
 import {OverlayV1Market} from "../../contracts/OverlayV1Market.sol";
 import {OverlayV1Token} from "../../contracts/OverlayV1Token.sol";
 import {OverlayV1FeedFactoryMock} from "../../contracts/mocks/OverlayV1FeedFactoryMock.sol";
+import {OverlayV1FeedMock} from "../../contracts/mocks/OverlayV1FeedMock.sol";
 import {AggregatorMock} from "../../contracts/mocks/AggregatorMock.sol";
 import {GOVERNOR_ROLE, MINTER_ROLE} from "../../contracts/interfaces/IOverlayV1Token.sol";
 import {TestUtils} from "./TestUtils.sol";
@@ -18,22 +19,26 @@ interface IHevm {
 // solc-select install 0.8.10
 // solc-select use 0.8.10
 //
-// run from base project directory with:
+// run with echidna from base project directory with:
 // echidna tests/invariants/MarketEchidna.t.sol --contract MarketEchidna --config tests/invariants/MarketEchidna.yaml
+//
+// run with medusa from base project directory with:
+// medusa fuzz
 //
 // Reference: https://github.com/overlay-market/v1-core/blob/main/tests/markets/conftest.py
 contract MarketEchidna {
-    IHevm hevm = IHevm(address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
+    IHevm hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
     // contracts required for test
     OverlayV1Factory factory;
     OverlayV1Market market;
     OverlayV1Token ovl;
+    OverlayV1FeedMock feed;
     AggregatorMock sequencer_oracle;
 
     // make these constant to match Echidna config
-    address public constant ALICE = address(0x1000000000000000000000000000000000000000);
-    address public constant BOB = address(0x2000000000000000000000000000000000000000);
+    address constant ALICE = address(0x1000000000000000000000000000000000000000);
+    address constant BOB = address(0x2000000000000000000000000000000000000000);
 
     uint256 constant MIN_COLLATERAL = 1e14;
     uint256 constant CAP_NOTIONAL = 8e23;
@@ -46,13 +51,10 @@ contract MarketEchidna {
         factory = new OverlayV1Factory(address(ovl), address(0x111), address(sequencer_oracle), 0);
         // market will be later deployed by factory
 
-        // ovl config
-        uint256 ovlSupply = 8_000_000e18;
+        // ovl config; fund test accounts
         ovl.grantRole(MINTER_ROLE, address(this));
-        ovl.mint(address(this), ovlSupply);
-        ovl.renounceRole(MINTER_ROLE, address(this));
-        ovl.transfer(ALICE, ovlSupply / 2);
-        ovl.transfer(BOB, ovlSupply / 2);
+        ovl.mint(ALICE, 4_000_000e18);
+        ovl.mint(BOB, 4_000_000e18);
 
         // factory config
         ovl.grantRole(GOVERNOR_ROLE, address(this));
@@ -62,7 +64,7 @@ contract MarketEchidna {
         factory.addFeedFactory(address(feedFactory));
 
         // market config and deployment
-        address feed = feedFactory.deployFeed({price: 1e29, reserve: 2_000_000e18});
+        feed = OverlayV1FeedMock(feedFactory.deployFeed({price: 1e25, reserve: 2_000_000e18}));
         uint256[15] memory params = [
             uint256(122000000000), // k
             500000000000000000, // lmbda
@@ -78,22 +80,21 @@ contract MarketEchidna {
             750000000000000, // tradingFeeRate
             MIN_COLLATERAL, // minCollateral
             25000000000000, // priceDriftUpperLimit
-            250 // averageBlockTime // FIXME: this will be different in Arbitrum
+            250 // averageBlockTime
         ];
-        market = OverlayV1Market(factory.deployMarket(address(feedFactory), feed, params));
+        market = OverlayV1Market(factory.deployMarket(address(feedFactory), address(feed), params));
         hevm.prank(ALICE);
-        ovl.approve(address(market), ovlSupply / 2);
+        ovl.approve(address(market), type(uint256).max);
         hevm.prank(BOB);
-        ovl.approve(address(market), ovlSupply / 2);
+        ovl.approve(address(market), type(uint256).max);
     }
 
     // Invariant 1) `oiOverweight * oiUnderweight` remains constant after funding payments
 
     // event to raise if the invariant is broken
-    event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter);
+    event OiAfterFunding(uint256 oiProductBefore, uint256 oiProductAfter, uint256 price);
 
-    function invariant_oi_product_after_funding() public returns (bool) {
-        uint256 lastUpdate = market.timestampUpdateLast();
+    function check_oi_product_after_funding(uint256 timeElapsed) public {
         uint256 oiLong = market.oiLong();
         uint256 oiShort = market.oiShort();
         uint256 oiOverweightBefore = oiLong > oiShort ? oiLong : oiShort;
@@ -104,17 +105,17 @@ contract MarketEchidna {
         (uint256 oiOverweightAfter, uint256 oiUnderweightAfter) = market.oiAfterFunding({
             oiOverweight: oiOverweightBefore,
             oiUnderweight: oiUnderweightBefore,
-            // FIXME: block.timestamp is always 0 in the test
-            // timeElapsed: block.timestamp - lastUpdate
-            timeElapsed: 1
+            timeElapsed: timeElapsed
         });
 
         uint256 oiProductAfter = oiOverweightAfter * oiUnderweightAfter;
 
         // only visible when invariant fails
-        emit OiAfterFunding(oiProductBefore, oiProductAfter);
+        emit OiAfterFunding(oiProductBefore, oiProductAfter, feed.price());
 
-        // 0.5% tolerance
-        return (TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 0.5e16));
+        // 10% tolerance
+        assert(TestUtils.isApproxEqRel(oiProductBefore, oiProductAfter, 10e16));
+
+        revert(); // revert state changes during the invariant check
     }
 }
