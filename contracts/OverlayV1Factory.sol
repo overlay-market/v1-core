@@ -126,7 +126,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         ov = IOverlayV1Token(_ov);
 
         // set the fee recipient
-        feeRecipient = _feeRecipient;
+        _setFeeRecipient(_feeRecipient);
 
         // create a new deployer to use when deploying markets
         deployer = new OverlayV1Deployer(_ov);
@@ -215,6 +215,10 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @notice Setter for fee repository
     function setFeeRecipient(address _feeRecipient) external onlyGovernor {
+        _setFeeRecipient(_feeRecipient);
+    }
+
+    function _setFeeRecipient(address _feeRecipient) internal {
         require(_feeRecipient != address(0), "OVV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
