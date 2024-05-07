@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {OverlayV1Factory} from "../contracts/OverlayV1Factory.sol";
+import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
 
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
 // 2. Run with:
 // $ source .env
-// $ forge script script/Create.s.sol:CreateMarketScript --rpc-url $RPC --verify -vvvv --broadcast
+// $ forge script scripts/Create.s.sol:CreateMarketScript --rpc-url $RPC --verify -vvvv --broadcast
 
 contract CreateMarketScript is Script {
     // TODO: update values as needed
@@ -33,6 +33,7 @@ contract CreateMarketScript is Script {
     ];
 
     function run() external {
+        // NOTE: this should be the private key of the GOVERNOR
         uint256 DEPLOYER_PK = vm.envUint("DEPLOYER_PK");
 
         OverlayV1Factory factory = OverlayV1Factory(FACTORY);
@@ -41,10 +42,12 @@ contract CreateMarketScript is Script {
 
         // <!---- START DEPLOYMENT ---->
         
-        factory.deployMarket(FEED_FACTORY, FEED, MARKET_PARAMS);
+        address market = factory.deployMarket(FEED_FACTORY, FEED, MARKET_PARAMS);
 
         // <!-- END DEPLOYMENT -->
 
         vm.stopBroadcast();
+
+        console2.log("Market deployed at:", market);
     }
 }

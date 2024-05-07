@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {OverlayV1Token} from "../contracts/OverlayV1Token.sol";
-import {MINTER_ROLE, GOVERNOR_ROLE} from "../contracts/interfaces/IOverlayV1Token.sol";
-import {OverlayV1Factory} from "../contracts/OverlayV1Factory.sol";
+import {OverlayV1Token} from "contracts/OverlayV1Token.sol";
+import {MINTER_ROLE, GOVERNOR_ROLE} from "contracts/interfaces/IOverlayV1Token.sol";
+import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
 
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
 // 2. Deploy with:
 // $ source .env
-// $ forge script script/Deploy.s.sol:DeployScript --rpc-url $RPC --verify -vvvv --broadcast
+// $ forge script scripts/Deploy.s.sol:DeployScript --rpc-url $RPC --verify -vvvv --broadcast
 
 contract DeployScript is Script {
     bytes32 constant ADMIN_ROLE = 0x00;
@@ -54,5 +54,8 @@ contract DeployScript is Script {
         // <!-- END DEPLOYMENT -->
 
         vm.stopBroadcast();
+
+        console2.log("Token deployed at:", address(ovl));
+        console2.log("Factory deployed at:", address(factory));
     }
 }
