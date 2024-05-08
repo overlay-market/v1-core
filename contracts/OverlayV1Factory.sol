@@ -132,7 +132,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         deployer = new OverlayV1Deployer(_ov);
 
         // set the sequencer oracle
-        sequencerOracle = AggregatorV3Interface(_sequencerOracle);
+        _setSequencerOracle(_sequencerOracle);
         _setGracePeriod(_gracePeriod);
     }
 
@@ -253,8 +253,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     function setSequencerOracle(address newSequencerOracle) public onlyGovernor {
-        sequencerOracle = AggregatorV3Interface(newSequencerOracle);
-        emit SequencerOracleUpdated(newSequencerOracle);
+        _setSequencerOracle(newSequencerOracle);
     }
 
     function setGracePeriod(uint256 newGracePeriod) public onlyGovernor {
@@ -264,5 +263,13 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function _setGracePeriod(uint256 newGracePeriod) internal {
         gracePeriod = newGracePeriod;
         emit GracePeriodUpdated(newGracePeriod);
+    }
+
+    function _setSequencerOracle(address newSequencerOracle) internal {
+        require(
+            newSequencerOracle != address(0), "OVV1: sequencerOracle should not be zero address"
+        );
+        sequencerOracle = AggregatorV3Interface(newSequencerOracle);
+        emit SequencerOracleUpdated(newSequencerOracle);
     }
 }
