@@ -7,7 +7,7 @@ import {OverlayV1ChainlinkFeedFactory} from "contracts/feeds/chainlink/OverlayV1
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
 // 2. Run with:
 // $ source .env
-// $ forge script scripts/Create.s.sol:CreateFeed --rpc-url $RPC --verify -vvvv --broadcast
+// $ forge script scripts/feeds/chainlink/Create.s.sol:CreateFeed --rpc-url $RPC --verify -vvvv --broadcast
 
 contract CreateFeed is Script {
     // TODO: update values as needed

@@ -11,6 +11,7 @@ import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
 
 contract CreateMarketScript is Script {
     // TODO: update values as needed
+    // NOTE: the periphery contracts should be deployed before running this script
     address constant FACTORY = 0xc10e8E06b1b8DADB8E94120650414AFfedD17aF9;
     address constant FEED_FACTORY = 0x0000000000000000000000000000000000000000;
     address constant FEED = 0x0000000000000000000000000000000000000000;
