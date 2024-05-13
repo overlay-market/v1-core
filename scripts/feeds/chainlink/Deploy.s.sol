@@ -7,7 +7,8 @@ import {ArbSepoliaConfig} from "scripts/config/ArbSepolia.config.sol";
 import {ArbMainnetConfig} from "scripts/config/ArbMainnet.config.sol";
 
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
-// 2. Run with:
+// 2. Update the config file for the network you are deploying to.
+// 3. Run with:
 // $ source .env
 // $ forge script scripts/feeds/chainlink/Deploy.s.sol:DeployFeedFactory --rpc-url $RPC --verify -vvvv --broadcast
 
