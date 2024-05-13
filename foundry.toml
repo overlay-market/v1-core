@@ -10,6 +10,13 @@ test = "tests"
 script = "scripts"
 out = "forge-out"
 libs = ["lib"]
+# Defender deployments
+# Ref: https://docs.openzeppelin.com/defender/v2/tutorial/deploy
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
+fs_permissions = [{ access = "read", path = "forge-out" }]
 
 remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
