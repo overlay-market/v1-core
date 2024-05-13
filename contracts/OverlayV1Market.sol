@@ -146,6 +146,10 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param newDpUpperLimit new value for dpUpperLimit
     event CacheRiskCalc(uint256 newDpUpperLimit);
 
+    /// @param oiLong oiLong after public update
+    /// @param oiShort oiShort after public update
+    event PublicUpdate(uint256 oiLong, uint256 oiShort);
+
     constructor() {
         (address _ov, address _feed, address _factory) =
             IOverlayV1Deployer(msg.sender).parameters();
@@ -207,7 +211,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // avoids stack too deep
         {
             // call to update before any effects
-            Oracle.Data memory data = update();
+            Oracle.Data memory data = _update();
 
             // calculate notional, oi, and trading fees. fees charged on notional
             // and added to collateral transferred in
@@ -313,7 +317,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // avoids stack too deep
         {
             // call to update before any effects
-            Oracle.Data memory data = update();
+            Oracle.Data memory data = _update();
 
             // check position exists
             pos = positions.get(msg.sender, positionId);
@@ -431,7 +435,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             require(pos.exists(), "OVV1:!position");
 
             // call to update before any effects
-            Oracle.Data memory data = update();
+            Oracle.Data memory data = _update();
 
             // cache for gas savings
             uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
@@ -511,7 +515,12 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
-    function update() public whenNotPaused returns (Oracle.Data memory) {
+    function update() external returns (Oracle.Data memory data) {
+        data = _update();
+        emit PublicUpdate(oiLong, oiShort);
+    }
+
+    function _update() private whenNotPaused returns (Oracle.Data memory) {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 

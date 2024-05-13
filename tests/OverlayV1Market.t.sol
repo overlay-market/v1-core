@@ -171,4 +171,34 @@ contract MarketTest is Test {
 
         assertEq(ov.balanceOf(address(market)), 0);
     }
+
+    event PublicUpdate(uint256 oiLong, uint256 oiShort);
+
+    function testUpdate() public {
+        vm.startPrank(USER);
+
+        ov.approve(address(market), type(uint256).max);
+        market.build(1e18, 1e18, true, type(uint256).max);
+
+        uint256 oiLong = market.oiLong();
+        uint256 oiShort = market.oiShort();
+        uint256 timeElapsed = block.timestamp - market.timestampUpdateLast();
+        bool isLongOverweight = oiLong > oiShort;
+        uint256 oiOverweight = isLongOverweight ? oiLong : oiShort;
+        uint256 oiUnderweight = isLongOverweight ? oiShort : oiLong;
+
+        (oiOverweight, oiUnderweight) =
+            market.oiAfterFunding(oiOverweight, oiUnderweight, timeElapsed);
+        uint256 newoiLong = isLongOverweight ? oiOverweight : oiUnderweight;
+        uint256 newoiShort = isLongOverweight ? oiUnderweight : oiOverweight;
+
+        vm.expectEmit(false, false, false, true);
+        emit PublicUpdate(newoiLong, newoiShort);
+        market.update();
+
+        vm.stopPrank();
+
+        assertEq(market.oiLong(), newoiLong);
+        assertEq(market.oiShort(), newoiShort);
+    }
 }
