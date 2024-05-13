@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {OverlayV1ChainlinkFeedFactory} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
+import {ArbSepoliaConfig} from "scripts/config/ArbSepolia.config.sol";
+import {ArbMainnetConfig} from "scripts/config/ArbMainnet.config.sol";
 
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
 // 2. Run with:
@@ -10,11 +12,6 @@ import {OverlayV1ChainlinkFeedFactory} from "contracts/feeds/chainlink/OverlayV1
 // $ forge script scripts/feeds/chainlink/Deploy.s.sol:DeployFeedFactory --rpc-url $RPC --verify -vvvv --broadcast
 
 contract DeployFeedFactory is Script {
-    // TODO: update values as needed
-    address constant OVL = 0x0000000000000000000000000000000000000000;
-    uint256 constant MICRO_WINDOW = 600;
-    uint256 constant MACRO_WINDOW = 3600;
-
     function run() external {
         uint256 DEPLOYER_PK = vm.envUint("DEPLOYER_PK");
 
@@ -22,7 +19,11 @@ contract DeployFeedFactory is Script {
 
         // <!---- START DEPLOYMENT ---->
         
-        OverlayV1ChainlinkFeedFactory feedFactory = new OverlayV1ChainlinkFeedFactory(OVL, MICRO_WINDOW, MACRO_WINDOW);
+        OverlayV1ChainlinkFeedFactory feedFactory = new OverlayV1ChainlinkFeedFactory(
+            ArbSepoliaConfig.OVL,
+            ArbSepoliaConfig.MICRO_WINDOW,
+            ArbSepoliaConfig.MACRO_WINDOW
+        );
 
         // <!-- END DEPLOYMENT -->
 
