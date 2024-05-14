@@ -1,0 +1,7 @@
+{
+  "feedAddress": "0x1594F325afc4f8dc4E4ad0A3F758f48B1F72930a",
+  "heartbeat": 60,
+  "macroWindowThreshold": 1,
+  "microWindowThreshold": 1,
+  "targetValue": 5
+}
