@@ -211,7 +211,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // avoids stack too deep
         {
             // call to update before any effects
-            Oracle.Data memory data = _update();
+            Oracle.Data memory data = update();
 
             // calculate notional, oi, and trading fees. fees charged on notional
             // and added to collateral transferred in
@@ -317,7 +317,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // avoids stack too deep
         {
             // call to update before any effects
-            Oracle.Data memory data = _update();
+            Oracle.Data memory data = update();
 
             // check position exists
             pos = positions.get(msg.sender, positionId);
@@ -435,7 +435,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             require(pos.exists(), "OVV1:!position");
 
             // call to update before any effects
-            Oracle.Data memory data = _update();
+            Oracle.Data memory data = update();
 
             // cache for gas savings
             uint256 oiTotalOnSide = pos.isLong ? oiLong : oiShort;
@@ -515,11 +515,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @dev updates market: pays funding and fetches freshest data from feed
     /// @dev update is called every time market is interacted with
-    function update() external returns (Oracle.Data memory data) {
-        data = _update();
-    }
-
-    function _update() internal whenNotPaused returns (Oracle.Data memory) {
+    function update() public whenNotPaused returns (Oracle.Data memory) {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 
