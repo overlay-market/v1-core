@@ -148,7 +148,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
     /// @param oiLong oiLong after public update
     /// @param oiShort oiShort after public update
-    event PublicUpdate(uint256 oiLong, uint256 oiShort);
+    event Update(uint256 oiLong, uint256 oiShort);
 
     constructor() {
         (address _ov, address _feed, address _factory) =
@@ -517,10 +517,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @dev update is called every time market is interacted with
     function update() external returns (Oracle.Data memory data) {
         data = _update();
-        emit PublicUpdate(oiLong, oiShort);
     }
 
-    function _update() private whenNotPaused returns (Oracle.Data memory) {
+    function _update() internal whenNotPaused returns (Oracle.Data memory) {
         // pay funding for time elasped since last interaction w market
         _payFunding();
 
@@ -533,6 +532,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         Oracle.Data memory data = IOverlayV1Feed(feed).latest();
         require(dataIsValid(data), "OVV1:!data");
 
+        emit Update(oiLong, oiShort);
         // return the latest data from feed
         return data;
     }

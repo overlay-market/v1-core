@@ -172,9 +172,9 @@ contract MarketTest is Test {
         assertEq(ov.balanceOf(address(market)), 0);
     }
 
-    event PublicUpdate(uint256 oiLong, uint256 oiShort);
+    event Update(uint256 oiLong, uint256 oiShort);
 
-    function testUpdate() public {
+    function testUpdateEventEmitting() public {
         vm.startPrank(USER);
 
         ov.approve(address(market), type(uint256).max);
@@ -193,7 +193,7 @@ contract MarketTest is Test {
         uint256 newoiShort = isLongOverweight ? oiUnderweight : oiOverweight;
 
         vm.expectEmit(false, false, false, true);
-        emit PublicUpdate(newoiLong, newoiShort);
+        emit Update(newoiLong, newoiShort);
         market.update();
 
         vm.stopPrank();
