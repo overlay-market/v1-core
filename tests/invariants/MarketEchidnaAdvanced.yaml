@@ -13,8 +13,8 @@ sender: ["0x1000000000000000000000000000000000000000", "0x2000000000000000000000
 # fuzzer executes
 corpusDir: "./tests/invariants/coverage-echidna"
 
-# use same prefix as Foundry invariant tests
-prefix: "invariant_"
+# use assertion mode to include dynamic parameters in the invariant checks
+testMode: assertion
 
 # increase number of works to speed up test
 workers: 10

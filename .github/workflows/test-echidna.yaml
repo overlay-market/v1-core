@@ -1,0 +1,36 @@
+name: Echidna Test
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main, staging ]
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  test:      
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Foundry
+      uses: foundry-rs/foundry-toolchain@v1
+      with:
+        version: nightly
+
+    - name: Compile contracts
+      run: |
+        forge build --build-info
+
+    - name: Run Echidna
+      uses: crytic/echidna-action@v2
+      with:
+        files: .
+        contract: MarketEchidnaAdvanced
+        config: tests/invariants/MarketEchidnaAdvanced.yaml
+        crytic-args: --ignore-compile --foundry-out-directory forge-out
