@@ -129,4 +129,21 @@ contract TruflationFeedTest is Test {
             assertLt(data.priceOverMacroWindow, config.macroWindowCeiling);
         }
     }
+
+    function test_AnswerValueIsNotStale() public {
+        (uint80 latestRoundId,,,,) = feed.latestRoundData();
+        int256 answer;
+        int256 previousAnswer = type(int256).max;
+
+        for (uint80 index = latestRoundId; index > latestRoundId - config.roundCount; index--) {
+            (, answer,,,) = feed.getRoundData(index);
+
+            console2.log("Round ID: ", index);
+            console2.log("Answer: ", answer);
+            console2.log("-----------------");
+
+            assertNotEq(answer, previousAnswer);
+            previousAnswer = answer;
+        }
+    }
 }
