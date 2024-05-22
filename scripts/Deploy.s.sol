@@ -24,7 +24,7 @@ contract DeployScript is Script {
         vm.startBroadcast(DEPLOYER_PK);
 
         // <!---- START DEPLOYMENT ---->
-        
+
         // 1. Deploy token contract
         OverlayV1Token ovl = new OverlayV1Token();
 
