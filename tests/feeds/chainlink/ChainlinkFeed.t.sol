@@ -6,7 +6,7 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../../../contracts/feeds/chainlink/OverlayV1ChainlinkFeed.sol";
 import "../../../contracts/libraries/Oracle.sol";
 
-contract TruflationFeedTest is Test {
+contract ChainlinkFeedTest is Test {
     using Oracle for Oracle.Data;
     using stdJson for string;
 
@@ -27,21 +27,21 @@ contract TruflationFeedTest is Test {
         uint8 roundCount;
     }
 
-    string truflationRPC;
+    string chainlinkRPC;
     JsonConfig config;
     AggregatorV3Interface feed;
 
     function setUp() public {
         string memory root = vm.projectRoot();
-        string memory path = append(root, "/config/truflationFeed.json");
+        string memory path = append(root, "/config/chainlinkFeed.json");
         string memory json = vm.readFile(path);
         bytes memory jsonBytes = json.parseRaw("");
 
         config = abi.decode(jsonBytes, (JsonConfig));
         feed = AggregatorV3Interface(config.feedAddress);
 
-        truflationRPC = vm.envString("TRUFLATION_RPC");
-        vm.createSelectFork(truflationRPC, config.blockNumber);
+        chainlinkRPC = vm.envString("CHAINLINK_RPC");
+        vm.createSelectFork(chainlinkRPC, config.blockNumber);
     }
 
     function test_ConsecutiveRoundId() public {
@@ -112,7 +112,7 @@ contract TruflationFeedTest is Test {
 
     function test_TWAP() public {
         for (uint80 index = 0; index < config.roundCount; index++) {
-            vm.createSelectFork(truflationRPC, config.blockNumber - index);
+            vm.createSelectFork(chainlinkRPC, config.blockNumber - index);
 
             OverlayV1ChainlinkFeed wrappedFeed = new OverlayV1ChainlinkFeed(
                 address(0), config.feedAddress, 600, 3600, config.heartbeat
