@@ -40,7 +40,7 @@ contract ChainlinkFeedTest is Test {
         config = abi.decode(jsonBytes, (JsonConfig));
         feed = AggregatorV3Interface(config.feedAddress);
 
-        chainlinkRPC = vm.envString("CHAINLINK_RPC");
+        chainlinkRPC = vm.envString("SEPOLIA_RPC");
         vm.createSelectFork(chainlinkRPC, config.blockNumber);
     }
 
