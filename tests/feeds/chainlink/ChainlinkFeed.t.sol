@@ -15,8 +15,8 @@ contract ChainlinkFeedTest is Test {
     }
 
     struct JsonConfig {
-        uint256 answerValueCeiling;
-        uint256 answerValueFloor;
+        int256 answerDesiredValue;
+        int256 answerPercentageDriftTolerance;
         uint64 blockNumber;
         address feedAddress;
         uint256 heartbeat;
@@ -59,12 +59,20 @@ contract ChainlinkFeedTest is Test {
 
     function test_AnswerValue() public {
         (uint80 latestRoundId,,,,) = feed.latestRoundData();
+        int256 answerCeiling;
+        int256 answerFloor;
+        int256 answerDriftAbsolute;
 
         for (uint80 index = latestRoundId; index > latestRoundId - config.roundCount; index--) {
-            (,,, uint256 answer,) = feed.getRoundData(index);
+            (, int256 answer,,,) = feed.getRoundData(index);
 
-            assertGt(answer, config.answerValueFloor);
-            assertLt(answer, config.answerValueCeiling);
+            answerDriftAbsolute =
+                config.answerDesiredValue * config.answerPercentageDriftTolerance / 100;
+            answerCeiling = config.answerDesiredValue + answerDriftAbsolute;
+            answerFloor = config.answerDesiredValue - answerDriftAbsolute;
+
+            assertLt(answer, answerCeiling);
+            assertGt(answer, answerFloor);
         }
     }
 
