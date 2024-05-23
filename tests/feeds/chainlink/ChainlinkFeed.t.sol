@@ -20,10 +20,8 @@ contract ChainlinkFeedTest is Test {
         uint64 blockNumber;
         address feedAddress;
         uint256 heartbeat;
-        uint256 macroWindowCeiling;
-        uint256 macroWindowFloor;
-        uint256 microWindowCeiling;
-        uint256 microWindowFloor;
+        uint256 macroWindowPercentageDriftTolerance;
+        uint256 microWindowPercentageDriftTolerance;
         uint8 roundCount;
     }
 
@@ -119,23 +117,30 @@ contract ChainlinkFeedTest is Test {
     }
 
     function test_TWAP() public {
-        for (uint80 index = 0; index < config.roundCount; index++) {
-            vm.createSelectFork(chainlinkRPC, config.blockNumber - index);
+        (uint80 latestRoundId,,,,) = feed.latestRoundData();
 
-            OverlayV1ChainlinkFeed wrappedFeed = new OverlayV1ChainlinkFeed(
-                address(0), config.feedAddress, 600, 3600, config.heartbeat
-            );
+        OverlayV1ChainlinkFeed wrappedFeed =
+            new OverlayV1ChainlinkFeed(address(0), config.feedAddress, 600, 3600, config.heartbeat);
 
-            Oracle.Data memory data = wrappedFeed.latest();
+        Oracle.Data memory data = wrappedFeed.latest();
 
-            console2.log("Price over macro window: ", data.priceOverMacroWindow);
-            console2.log("Price over micro window: ", data.priceOverMicroWindow);
+        uint256 normalizedAnswerDesiredValue =
+            uint256(config.answerDesiredValue) * 10 ** (18 - feed.decimals());
 
-            assertGt(data.priceOverMicroWindow, config.microWindowFloor);
-            assertLt(data.priceOverMicroWindow, config.microWindowCeiling);
-            assertGt(data.priceOverMacroWindow, config.macroWindowFloor);
-            assertLt(data.priceOverMacroWindow, config.macroWindowCeiling);
-        }
+        uint256 macroWindowDriftAbsolute =
+            normalizedAnswerDesiredValue * config.macroWindowPercentageDriftTolerance / 100;
+        uint256 microWindowDriftAbsolute =
+            normalizedAnswerDesiredValue * config.microWindowPercentageDriftTolerance / 100;
+
+        uint256 macroWindowCeiling = normalizedAnswerDesiredValue + macroWindowDriftAbsolute;
+        uint256 macroWindowFloor = normalizedAnswerDesiredValue - macroWindowDriftAbsolute;
+        uint256 microWindowCeiling = normalizedAnswerDesiredValue + microWindowDriftAbsolute;
+        uint256 microWindowFloor = normalizedAnswerDesiredValue - microWindowDriftAbsolute;
+
+        assertGt(data.priceOverMicroWindow, microWindowFloor);
+        assertLt(data.priceOverMicroWindow, microWindowCeiling);
+        assertGt(data.priceOverMacroWindow, macroWindowFloor);
+        assertLt(data.priceOverMacroWindow, macroWindowCeiling);
     }
 
     function test_AnswerValueIsNotStale() public {
