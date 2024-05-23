@@ -204,7 +204,6 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         require(collateral >= params.get(Risk.Parameters.MinCollateral), "OVV1:collateral<min");
 
         uint256 oi;
-        uint256 oiShares;
         uint256 debt;
         uint256 price;
         uint256 tradingFee;
@@ -245,7 +244,7 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
 
             // add new position's open interest to the side's aggregate oi value
             // and increase number of oi shares issued
-            oiShares = _addToOiAggregates(oi, capOi, isLong);
+            uint256 oiShares = _addToOiAggregates(oi, capOi, isLong);
 
             // assemble position info data
             // check position is not immediately liquidatable prior to storing

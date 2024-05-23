@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {OverlayV1ChainlinkFeedFactory} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
+import {OverlayV1ChainlinkFeedFactory} from
+    "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
 import {ArbSepoliaConfig} from "scripts/config/ArbSepolia.config.sol";
 import {ArbMainnetConfig} from "scripts/config/ArbMainnet.config.sol";
 
@@ -22,11 +23,12 @@ contract CreateFeed is Script {
 
         vm.startBroadcast(DEPLOYER_PK);
 
-        OverlayV1ChainlinkFeedFactory feedFactory = OverlayV1ChainlinkFeedFactory(ArbSepoliaConfig.FEED_FACTORY);
+        OverlayV1ChainlinkFeedFactory feedFactory =
+            OverlayV1ChainlinkFeedFactory(ArbSepoliaConfig.FEED_FACTORY);
 
         // <!---- START DEPLOYMENT ---->
 
-        address feed = feedFactory.deployFeed(AGGREGATOR, HEARTBEAT);        
+        address feed = feedFactory.deployFeed(AGGREGATOR, HEARTBEAT);
 
         // <!-- END DEPLOYMENT -->
 
