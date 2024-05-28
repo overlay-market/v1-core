@@ -159,4 +159,59 @@ contract ChainlinkFeedTest is Test {
             previousAnswer = answer;
         }
     }
+
+    function test_updatedAtAsSameAsBlockTimestamp() public {
+        (uint80 latestRoundId,,, uint256 updatedAt,) = feed.latestRoundData();
+
+        console2.log("updatedAt timestamp: ", updatedAt);
+        console2.log("updatedAt block: ", findBlockByTimestamp(updatedAt));
+        console2.log("block.timestamp: ", block.timestamp);
+        console2.log("block.number: ", block.number);
+        console2.log("latestRoundId: ", latestRoundId);
+        console2.log("-----------------");
+
+        uint256 updatedAtBlock = findBlockByTimestamp(updatedAt);
+        vm.createSelectFork(chainlinkRPC, updatedAtBlock - 1);
+
+        (uint80 newRoundId,, uint256 newUpdatedAt,,) = feed.latestRoundData();
+        console2.log("new updatedAt timestamp: ", newUpdatedAt);
+        console2.log("new RoundId: ", newRoundId);
+
+        assertNotEq(newRoundId, latestRoundId);
+    }
+
+    function findBlockByTimestamp(uint256 targetTimestamp) internal returns (uint256) {
+        uint256 latestBlockNumber = block.number;
+        uint256 step = 5000;
+        uint256 low = 0;
+        uint256 high = latestBlockNumber - 20_000;
+
+        while (true) {
+            uint256 highTimestamp = getBlockTimestamp(high);
+            if (highTimestamp >= targetTimestamp || high >= latestBlockNumber) {
+                break;
+            }
+            low = high;
+            high = high + step < latestBlockNumber ? high + step : latestBlockNumber;
+        }
+
+        while (low < high) {
+            uint256 mid = (low + high) / 2;
+            uint256 midTimestamp = getBlockTimestamp(mid);
+
+            if (midTimestamp < targetTimestamp) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+
+        return low;
+    }
+
+    function getBlockTimestamp(uint256 blockNumber) internal returns (uint256) {
+        vm.createSelectFork(chainlinkRPC, blockNumber);
+
+        return block.timestamp;
+    }
 }
