@@ -17,6 +17,7 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
     oi_short = oi_short * Decimal(1e18)
     oi_overweight = oi_long if oi_long >= oi_short else oi_short
     oi_underweight = oi_short if oi_long >= oi_short else oi_long
+    oi_invariant = oi_overweight*oi_underweight
 
     oi = oi_overweight + oi_underweight
     oi_imb = oi_overweight - oi_underweight
@@ -28,7 +29,7 @@ def test_oi_after_funding(market, oi_long, oi_short, dt):
     expect_oi_imb = oi_imb * Decimal(exp(-2*k*dt))
 
     expect_oi_overweight = int((expect_oi + expect_oi_imb) / 2)
-    expect_oi_underweight = int((expect_oi - expect_oi_imb) / 2)
+    expect_oi_underweight = int(oi_invariant/expect_oi_overweight)
 
     # get actual oi values long and short
     actual_oi_overweight, actual_oi_underweight = market.oiAfterFunding(

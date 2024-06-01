@@ -10,6 +10,7 @@ from .utils import (
     get_position_key,
     mid_from_feed,
     tick_to_price,
+    oi_after_funding,
     RiskParameter
 )
 
@@ -30,7 +31,6 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
-
     # calculate expected pos info data
     idx_trade = RiskParameter.TRADING_FEE_RATE.value
     trading_fee_rate = Decimal(market.params(idx_trade) / 1e18)
@@ -54,6 +54,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
+    init_time = tx.timestamp
     pos_id = tx.return_value
 
     # get position info
@@ -71,26 +72,13 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(market.oiLong())
+    oi_short = Decimal(market.oiShort())
     chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
 
     # calculate current oi, debt values of position
-    expect_total_oi = market.oiLong() if is_long \
-        else market.oiShort()
-    expect_total_oi_shares = market.oiLongShares() if is_long \
-        else market.oiShortShares()
-    expect_oi_initial = Decimal(expect_notional) * \
-        Decimal(1e18) / Decimal(expect_mid_price)
-    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(expect_total_oi_shares)
-
-    # calculate position attributes at the current time for fraction
-    # ignore payoff cap
-    unwound_oi = fraction * expect_oi_current
-    unwound_oi_shares = fraction * expect_oi_shares
-    unwound_oi_initial = fraction * expect_oi_initial
-    unwound_notional = fraction * Decimal(expect_notional)
-    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
 
     # input values for unwind
     input_pos_id = pos_id
@@ -100,9 +88,35 @@ def test_unwind_updates_position(market, feed, alice, rando, ovl,
     # NOTE: setting to min/max here, so never reverts with slippage>max
     input_price_limit = 0 if is_long else 2**256-1
 
+    expect_total_oi_shares = market.oiLongShares() if is_long \
+        else market.oiShortShares()
+
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
                        {"from": alice})
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    expect_total_oi = oi_long if is_long \
+        else oi_short
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
+    expect_oi_current = (expect_total_oi*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_oi = fraction * expect_oi_current
+    unwound_oi_shares = fraction * expect_oi_shares
+    unwound_oi_initial = fraction * expect_oi_initial
+    unwound_notional = fraction * Decimal(expect_notional)
+    unwound_cost = fraction * Decimal(expect_notional - expect_debt)
 
     # calculate expected exit price
     data = feed.latest()
@@ -221,6 +235,10 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -232,19 +250,10 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(market.oiLong())
+    oi_short = Decimal(market.oiShort())
     chain.mine(timedelta=86400)
     _ = market.update({"from": rando})
-
-    # calculate current oi, debt values of position
-    expect_total_oi = market.oiLong() if is_long else market.oiShort()
-    expect_total_oi_shares = market.oiLongShares() if is_long \
-        else market.oiShortShares()
-    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(expect_total_oi_shares)
-
-    # calculate expected oi, debt removed
-    unwound_oi = int(fraction * expect_oi_current)
-    unwound_oi_shares = int(fraction * Decimal(expect_oi_shares))
 
     # input values for unwind
     input_pos_id = pos_id
@@ -254,9 +263,31 @@ def test_unwind_removes_oi(market, feed, alice, rando, ovl,
     # NOTE: setting to min/max here, so never reverts with slippage>max
     input_price_limit = 0 if is_long else 2**256-1
 
+    # get oi shares total before unwind
+    expect_total_oi_shares = market.oiLongShares() if is_long \
+        else market.oiShortShares()
+
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
                        {"from": alice})
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long else oi_short
+
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+
+    # calculate expected oi, debt removed
+    unwound_oi = int(fraction * expect_oi_current)
+    unwound_oi_shares = int(fraction * Decimal(expect_oi_shares))
 
     # get actual oi values after unwind
     actual_total_oi = market.oiLong() if is_long else market.oiShort()
@@ -582,7 +613,9 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
-
+    init_time = tx.timestamp
+    oi_long = Decimal(market.oiLong())
+    oi_short = Decimal(market.oiShort())
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -599,16 +632,12 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # after unwind.
     # NOTE: update() tests in test_update.py
     chain.mine(timedelta=86400)
-    _ = market.update({"from": rando})
+    tx = market.update({"from": rando})
 
-    # calculate current oi, debt values of position
-    expect_total_oi = market.oiLong() if is_long else market.oiShort()
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     expect_total_oi_shares = market.oiLongShares() if is_long \
         else market.oiShortShares()
-    expect_oi_initial = Decimal(expect_notional) * \
-        Decimal(1e18) / Decimal(expect_mid_price)
-    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(expect_total_oi_shares)
 
     # input values for unwind
     input_pos_id = pos_id
@@ -621,6 +650,21 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
     # unwind fraction of shares
     tx = market.unwind(input_pos_id, input_fraction, input_price_limit,
                        {"from": alice})
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long else oi_short
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
 
     # get expected exit price
     price = tx.events["Unwind"]["price"]
@@ -1009,6 +1053,10 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1024,6 +1072,8 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     _ = mock_market.update({"from": rando})
 
@@ -1032,11 +1082,34 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
         else mock_feed.price() / price_multiplier
     mock_feed.setPrice(price, {"from": rando})
 
-    # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    # get total oi shares
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
+    # unwind fraction of shares
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
+    expect_exit_price = tx.events["Unwind"]['price']
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long \
+        else oi_short
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
     expect_oi_initial = Decimal(expect_notional) * \
@@ -1051,19 +1124,6 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
     unwound_debt = fraction * Decimal(expect_debt)
     unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
         - unwound_debt
-
-    # input values for unwind
-    input_pos_id = pos_id
-    input_fraction = int(fraction * Decimal(1e18))
-
-    # NOTE: slippage tests in test_slippage.py
-    # NOTE: setting to min/max here, so never reverts with slippage>max
-    input_price_limit = 0 if is_long else 2**256-1
-
-    # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
-                            {"from": alice})
-    expect_exit_price = tx.events["Unwind"]['price']
 
     unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
                                 - Decimal(expect_entry_price)) / Decimal(1e18)
@@ -1123,6 +1183,10 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1138,6 +1202,8 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     _ = mock_market.update({"from": rando})
 
@@ -1146,11 +1212,34 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
         else mock_feed.price() / price_multiplier
     mock_feed.setPrice(price, {"from": rando})
 
-    # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    # get total oi shares
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
+    # unwind fraction of shares
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
+    expect_exit_price = tx.events["Unwind"]['price']
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long \
+        else oi_short
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
     expect_oi_initial = Decimal(expect_notional) * \
@@ -1165,19 +1254,6 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
     unwound_debt = fraction * Decimal(expect_debt)
     unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
         - unwound_debt
-
-    # input values for unwind
-    input_pos_id = pos_id
-    input_fraction = int(fraction * Decimal(1e18))
-
-    # NOTE: slippage tests in test_slippage.py
-    # NOTE: setting to min/max here, so never reverts with slippage>max
-    input_price_limit = 0 if is_long else 2**256-1
-
-    # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
-                            {"from": alice})
-    expect_exit_price = tx.events["Unwind"]['price']
 
     unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
                                 - Decimal(expect_entry_price)) / Decimal(1e18)
@@ -1242,6 +1318,10 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1257,6 +1337,8 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     _ = mock_market.update({"from": rando})
 
@@ -1264,11 +1346,34 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     price = mock_feed.price() * price_multiplier
     mock_feed.setPrice(price, {"from": rando})
 
-    # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    # get current total oi shares
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
+
+    # input values for unwind
+    input_pos_id = pos_id
+    input_fraction = int(fraction * Decimal(1e18))
+
+    # NOTE: slippage tests in test_slippage.py
+    # NOTE: setting to min/max here, so never reverts with slippage>max
+    input_price_limit = 0 if is_long else 2**256-1
+
+    # unwind fraction of shares
+    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
+                            {"from": alice})
+    expect_exit_price = tx.events["Unwind"]['price']
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long \
+        else oi_short
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
         / Decimal(expect_total_oi_shares)
     expect_oi_initial = Decimal(expect_notional) * \
@@ -1283,19 +1388,6 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
     unwound_debt = fraction * Decimal(expect_debt)
     unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
         - unwound_debt
-
-    # input values for unwind
-    input_pos_id = pos_id
-    input_fraction = int(fraction * Decimal(1e18))
-
-    # NOTE: slippage tests in test_slippage.py
-    # NOTE: setting to min/max here, so never reverts with slippage>max
-    input_price_limit = 0 if is_long else 2**256-1
-
-    # unwind fraction of shares
-    tx = mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
-                            {"from": alice})
-    expect_exit_price = tx.events["Unwind"]['price']
 
     # impose payoff cap on pnl
     idx_cap_payoff = RiskParameter.CAP_PAYOFF.value
@@ -1359,6 +1451,10 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1374,6 +1470,8 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # Use update() to update state to query values for checks vs expected
     # after unwind.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     _ = mock_market.update({"from": rando})
 
@@ -1388,24 +1486,9 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
         else mock_feed.price() / price_multiplier
     mock_feed.setPrice(price, {"from": rando})
 
-    # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    # get current total oi shares
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
-    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
-        / Decimal(expect_total_oi_shares)
-    expect_oi_initial = Decimal(expect_notional) * \
-        Decimal(1e18) / Decimal(expect_mid_price)
-
-    # calculate position attributes at the current time for fraction
-    # ignore payoff cap
-    unwound_oi = fraction * expect_oi_current
-    unwound_oi_initial = fraction * expect_oi_initial
-    unwound_notional = fraction * expect_notional
-    unwound_debt = fraction * Decimal(expect_debt)
-    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
-        - unwound_debt
 
     # input values for unwind
     input_pos_id = pos_id
@@ -1422,6 +1505,31 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # get exit price and amount burnt
     expect_exit_price = tx.events["Unwind"]['price']
     actual_burn = -tx.events["Unwind"]['mint']
+
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
+    # calculate current oi, debt values of position
+    expect_total_oi = oi_long if is_long \
+        else oi_short
+    expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
+        / Decimal(expect_total_oi_shares)
+    expect_oi_initial = Decimal(expect_notional) * \
+        Decimal(1e18) / Decimal(expect_mid_price)
+
+    # calculate position attributes at the current time for fraction
+    # ignore payoff cap
+    unwound_oi = fraction * expect_oi_current
+    unwound_oi_initial = fraction * expect_oi_initial
+    unwound_notional = fraction * expect_notional
+    unwound_debt = fraction * Decimal(expect_debt)
+    unwound_collateral = unwound_notional * (unwound_oi / unwound_oi_initial) \
+        - unwound_debt
 
     unwound_cost = fraction * Decimal(expect_notional - expect_debt)
     unwound_pnl = unwound_oi * (Decimal(expect_exit_price)
@@ -1805,6 +1913,10 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1820,12 +1932,22 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     tx = mock_market.update({"from": rando})
 
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
     # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    expect_total_oi = oi_long if is_long \
+        else oi_short
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
@@ -1922,6 +2044,10 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
 
+    init_time = tx.timestamp
+
+    k = Decimal(mock_market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # get position info
     pos_key = get_position_key(alice.address, pos_id)
     (expect_notional, expect_debt, expect_mid_tick, expect_entry_tick,
@@ -1937,12 +2063,22 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
     # Use update() to update state to query values for checks vs expected
     # after liquidate.
     # NOTE: update() tests in test_update.py
+    oi_long = Decimal(mock_market.oiLong())
+    oi_short = Decimal(mock_market.oiShort())
     chain.mine(timedelta=86400)
     tx = mock_market.update({"from": rando})
 
+    update_time = tx.timestamp
+
+    oi_long, oi_short = oi_after_funding(
+        int(update_time) - int(init_time),
+        oi_long,
+        oi_short,
+        k)
+
     # calculate current oi, debt values of position
-    expect_total_oi = mock_market.oiLong() if is_long \
-        else mock_market.oiShort()
+    expect_total_oi = oi_long if is_long \
+        else oi_short
     expect_total_oi_shares = mock_market.oiLongShares() if is_long \
         else mock_market.oiShortShares()
     expect_oi_current = (Decimal(expect_total_oi)*Decimal(expect_oi_shares)) \
@@ -2067,6 +2203,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
     approve_collateral_bob = int((input_total_notional_short
                                   * (1 + trading_fee_rate)))
 
+    k = Decimal(market.params(RiskParameter.K.value)) / Decimal(1e18)
+
     # approve market for spending then build
     ovl.approve(market, approve_collateral_alice, {"from": alice})
     ovl.approve(market, approve_collateral_bob, {"from": bob})
@@ -2126,6 +2264,9 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         # Use update() to update state to query values for checks vs expected
         # after unwind.
         # NOTE: update() tests in test_update.py
+        oi_long = Decimal(market.oiLong())
+        oi_short = Decimal(market.oiShort())
+        init_time = market.timestampUpdateLast()
         chain.mine(timedelta=86400)
         _ = market.update({"from": rando})
 
@@ -2143,7 +2284,6 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
         input_price_limit_trader = 0 if is_alice else 2**256-1
 
         # cache current aggregate oi and oi shares for comparison later
-        expect_total_oi = market.oiLong() if is_alice else market.oiShort()
         expect_total_oi_shares = market.oiLongShares() if is_alice \
             else market.oiShortShares()
 
@@ -2155,8 +2295,18 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
          expect_fraction_remaining) = expect_pos
 
         # unwind fraction of position for trader
-        _ = market.unwind(id, input_fraction, input_price_limit_trader,
-                          {"from": trader})
+        unwind_tx = market.unwind(id, input_fraction, input_price_limit_trader,
+                                  {"from": trader})
+
+        update_time = unwind_tx.timestamp
+
+        oi_long, oi_short = oi_after_funding(
+            int(update_time) - int(init_time),
+            oi_long,
+            oi_short,
+            k)
+
+        expect_total_oi = oi_long if is_alice else oi_short
 
         # get updated actual position attributes
         actual_pos = market.positions(pos_key)
