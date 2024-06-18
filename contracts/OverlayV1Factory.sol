@@ -18,7 +18,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // risk param bounds
     // NOTE: 1bps = 1e14
     uint256[15] public PARAMS_MIN = [
-        0.000_004e14, // MIN_K = ~ 0.1 bps / 8 hr
+        0, // MIN_K = 0
         0.01e18, // MIN_LMBDA = 0.01
         1e14, // MIN_DELTA = 0.01% (1 bps)
         1e18, // MIN_CAP_PAYOFF = 1x
@@ -30,24 +30,24 @@ contract OverlayV1Factory is IOverlayV1Factory {
         0.01e18, // MIN_MAINTENANCE_MARGIN_BURN_RATE = 1%
         0.001e18, // MIN_LIQUIDATION_FEE_RATE = 0.10% (10 bps)
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
-        0.000_001e18, // MIN_MINIMUM_COLLATERAL = 1e-6 OV
+        0.000_1e18, // MIN_MINIMUM_COLLATERAL = 1e-4 OV
         0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
-        250 // MIN_AVERAGE_BLOCK_TIME = 0.25s
+        100 // MIN_AVERAGE_BLOCK_TIME = 0.1s
     ];
     uint256[15] public PARAMS_MAX = [
         0.04e14, // MAX_K = ~ 1000 bps / 8 hr
         10e18, // MAX_LMBDA = 10
         200e14, // MAX_DELTA = 2% (200 bps)
         100e18, // MAX_CAP_PAYOFF = 100x
-        8_000_000e18, // MAX_CAP_NOTIONAL = 8,000,000 OV (initial supply)
-        20e18, // MAX_CAP_LEVERAGE = 20x
+        88_888_888e18, // MAX_CAP_NOTIONAL = 88,888,888 OV (initial supply)
+        100e18, // MAX_CAP_LEVERAGE = 100x
         31536000, // MAX_CIRCUIT_BREAKER_WINDOW = 365 days
-        8_000_000e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 8,000,000 OV
+        88_888_888e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 88,888,888 OV (initial supply)
         0.2e18, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
         0.5e18, // MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
         0.2e18, // MAX_LIQUIDATION_FEE_RATE = 20.00% (2000 bps)
-        50e14, // MAX_TRADING_FEE_RATE = 0.50% (50 bps)
-        1e18, // MAX_MINIMUM_COLLATERAL = 1 OV
+        100e14, // MAX_TRADING_FEE_RATE = 1% (100 bps)
+        100_000e18, // MAX_MINIMUM_COLLATERAL = 100,000 OV
         1e14, // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
         3600000 // MAX_AVERAGE_BLOCK_TIME = 1h (arbitrary but large)
     ];
