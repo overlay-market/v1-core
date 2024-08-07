@@ -20,7 +20,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     uint256[15] public PARAMS_MIN = [
         0, // MIN_K = 0
         0.01e18, // MIN_LMBDA = 0.01
-        1e14, // MIN_DELTA = 0.01% (1 bps)
+        0, // MIN_DELTA = 0.01% (1 bps)
         1e18, // MIN_CAP_PAYOFF = 1x
         0, // MIN_CAP_NOTIONAL = 0 OV
         1e18, // MIN_CAP_LEVERAGE = 1x
