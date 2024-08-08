@@ -72,7 +72,7 @@ def risk_manager_role():
     yield web3.solidityKeccak(['string'], ["RISK_MANAGER"])
 
 
-@pytest.fixture(scope="module", params=[8000000])
+@pytest.fixture(scope="module", params=[88888888])
 def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
     sup = request.param
 
