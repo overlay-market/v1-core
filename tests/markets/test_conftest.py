@@ -5,7 +5,7 @@ def test_ov_fixture(ov):
     assert ov.decimals() == 18
     assert ov.name() == "Overlay"
     assert ov.symbol() == "OV"
-    assert ov.totalSupply() == 8000000000000000000000000
+    assert ov.totalSupply() == 88888888000000000000000000
 
 
 def test_token_fixtures(uni):
