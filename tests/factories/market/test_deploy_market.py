@@ -373,6 +373,13 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
         # check deploys with param equal to max
         expect_param = factory.PARAMS_MAX(i)
         expect_params[i] = expect_param
+
+        # If i is 5, set risk params for indices 2, 8, and 10 to their minimum values
+        if i == 5:
+            for j in [2, 8, 10]:
+                min_param = factory.PARAMS_MIN(j)
+                expect_params[j] = min_param
+                
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
