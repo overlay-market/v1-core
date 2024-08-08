@@ -135,7 +135,8 @@ def test_set_risk_param_reverts_when_greater_than_max(factory, market, gov):
         # check can set param when equal to max
         expect_param = factory.PARAMS_MAX(i)
 
-        # If i is 5, set risk params for indices 2, 8, and 10 to their minimum values
+        # If i is 5, set risk params for indices 2, 8, and 10
+        # to their minimum values
         if i == 5:
             for j in [2, 8, 10]:
                 min_param = factory.PARAMS_MIN(j)
