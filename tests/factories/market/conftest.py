@@ -166,7 +166,7 @@ def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
                              sequencer_aggregator.address, 0)
 
         # grant market factory token admin role
-        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory.address, {"from": gov})
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(governor_role, gov, {"from": gov})
