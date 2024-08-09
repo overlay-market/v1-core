@@ -42,7 +42,7 @@ def governor_role():
     yield web3.solidityKeccak(['string'], ["GOVERNOR"])
 
 
-@pytest.fixture(scope="module", params=[8000000])
+@pytest.fixture(scope="module", params=[88888888])
 def create_token(gov, alice, bob, minter_role, request):
     sup = request.param
 

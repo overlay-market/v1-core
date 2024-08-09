@@ -72,7 +72,7 @@ def risk_manager_role():
     yield web3.solidityKeccak(['string'], ["RISK_MANAGER"])
 
 
-@pytest.fixture(scope="module", params=[8000000])
+@pytest.fixture(scope="module", params=[88888888])
 def create_token(gov, alice, bob, minter_role, risk_manager_role, request):
     sup = request.param
 
@@ -166,7 +166,7 @@ def create_factory(gov, guardian, fee_recipient, request, ov, governor_role,
                              sequencer_aggregator.address, 0)
 
         # grant market factory token admin role
-        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory, {"from": gov})
+        tok.grantRole(tok.DEFAULT_ADMIN_ROLE(), factory.address, {"from": gov})
 
         # grant gov the governor role on token to access factory methods
         tok.grantRole(governor_role, gov, {"from": gov})
