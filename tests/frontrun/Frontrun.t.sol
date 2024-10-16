@@ -55,7 +55,7 @@ contract FrontrunTest is Test {
     function setUp() public {
         setUpConfig();
 
-        vm.writeFile("frontrun_results.csv", "waitBlocks,profit\n");
+        vm.writeFile("tests/frontrun/frontrun_results.csv", "waitBlocks,profit\n");
 
         ov = new OverlayV1Token();
 
@@ -137,7 +137,7 @@ contract FrontrunTest is Test {
     function writeDataToCSV(uint256 waitBlocks, int256 profit) internal {
         string memory csvLine =
             string(abi.encodePacked(vm.toString(waitBlocks), ",", vm.toString(profit)));
-        vm.writeLine("frontrun_results.csv", csvLine);
+        vm.writeLine("tests/frontrun/frontrun_results.csv", csvLine);
     }
 
     function setUpMarket() private {
