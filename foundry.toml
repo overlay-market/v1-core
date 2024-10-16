@@ -20,4 +20,12 @@ remappings = [
 [fuzz]
 runs = 1000
 
+[rpc_endpoints]
+arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
+bartio = "${BARTIO_RPC}"
+imola = "${IMOLA_RPC}"
+
+[etherscan]
+arbitrum-sepolia = { key = "${ARBISCAN_API_KEY}" }
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
