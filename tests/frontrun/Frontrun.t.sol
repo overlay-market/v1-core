@@ -9,6 +9,7 @@ import {AggregatorMock} from "contracts/mocks/AggregatorMock.sol";
 import {OverlayV1ChainlinkFeed} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeed.sol";
 import {OverlayV1ChainlinkFeedFactory} from
     "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
+import "contracts/libraries/Oracle.sol";
 
 contract FrontrunTest is Test {
     bytes32 constant ADMIN_ROLE = 0x00;
@@ -27,7 +28,7 @@ contract FrontrunTest is Test {
     }
 
     struct JsonConfig {
-        // Blockchain's block time times 10. Ethereum = 120, Arbitrum = 26.
+        // Blockchain's block time times 10. Ethereum = 120, Arbitrum = 2.
         // We have to multiple by ten so we can save precision.
         uint256 blockTime;
         uint256 frontrunCollateral;
@@ -71,7 +72,7 @@ contract FrontrunTest is Test {
     }
 
     function testFuzz_FrontrunAttempt(uint256 waitBlocks) public {
-        // Limit waitBlock values from 1 to 100
+        // Limit waitBlock values from 1 to 500
         waitBlocks = bound(waitBlocks, 1, 500);
 
         // Initialize market with two positions
@@ -118,11 +119,15 @@ contract FrontrunTest is Test {
         vm.prank(USER1);
         market.unwind(positionId, 1e18, 0);
 
+        Oracle.Data memory data2 = feed.latest();
+        console2.log("priceOverMicroWindow", int256(data2.priceOverMicroWindow));
+        console2.log("priceOverMacroWindow", int256(data2.priceOverMacroWindow));
+
         // Profit
         uint256 finalBalance = ov.balanceOf(USER1);
         int256 profit = int256(finalBalance) - int256(initialBalance);
 
-        console2.log("Unwound at block:", block.number);
+        console2.log("Unwound at block time:", block.timestamp);
         console2.log("Profit:", profit);
 
         // Write data into `frontrun_results.csv`
@@ -176,7 +181,7 @@ contract FrontrunTest is Test {
         setupInitialPrices();
 
         feedFactory = new OverlayV1ChainlinkFeedFactory(address(ov), 600, 3600);
-        feed = OverlayV1ChainlinkFeed(feedFactory.deployFeed(address(aggregator), 60 minutes));
+        feed = OverlayV1ChainlinkFeed(feedFactory.deployFeed(address(aggregator), 120 minutes));
         ov.grantRole(GOVERNOR_ROLE, GOVERNOR);
     }
 
@@ -190,7 +195,7 @@ contract FrontrunTest is Test {
     function updateAggregatorPrice(uint80 roundId, uint256 price) private {
         aggregator.setData(roundId, int256(price));
         vm.roll(block.number + 1);
-        vm.warp(block.timestamp + (config.blockTime / BLOCK_TIME_MULTIPLIER));
+        vm.warp(block.timestamp + 1);
     }
 
     function setUpConfig() private {
