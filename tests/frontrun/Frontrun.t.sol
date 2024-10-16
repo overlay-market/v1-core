@@ -55,7 +55,7 @@ contract FrontrunTest is Test {
     function setUp() public {
         setUpConfig();
 
-        vm.writeFile("tests/frontrun/frontrun_results.csv", "waitBlocks,profit\n");
+        vm.writeFile("tests/frontrun/frontrun_results.csv", "waitTimeToUnwind,profit,priceOverMicroWindow,priceOverMacroWindow\n");
 
         ov = new OverlayV1Token();
 
@@ -71,9 +71,9 @@ contract FrontrunTest is Test {
         setUpMarket();
     }
 
-    function testFuzz_FrontrunAttempt(uint256 waitBlocks) public {
-        // Limit waitBlock values from 1 to 500
-        waitBlocks = bound(waitBlocks, 1, 500);
+    function testFuzz_FrontrunAttempt(uint256 waitTimeToUnwind) public {
+        // Limit waitTimeToUnwind values from 1 to 500
+        waitTimeToUnwind = bound(waitTimeToUnwind, 1, 1000);
 
         // Initialize market with two positions
         vm.startPrank(USER);
@@ -99,21 +99,25 @@ contract FrontrunTest is Test {
         uint256 positionId = market.build(
             config.frontrunCollateral, config.frontrunLeverage, true, type(uint256).max
         );
+        uint256 buildTimestamp = block.timestamp;
+        uint256 buildBlock = block.number;
         vm.stopPrank();
 
-        // Wait for specified time
-        vm.warp(block.timestamp + config.waitTime);
-        vm.roll(block.number + config.waitTime * BLOCK_TIME_MULTIPLIER / config.blockTime);
+        if (waitTimeToUnwind > config.waitTime) {
+            // Wait for specified time
+            vm.warp(block.timestamp + config.waitTime);
+            vm.roll(block.number + config.waitTime * BLOCK_TIME_MULTIPLIER / config.blockTime);
 
-        // Price returns back to normal
-        updateAggregatorPrice(currentRoundId + 2, config.initialPrice);
+            // Price returns back to normal
+            updateAggregatorPrice(aggregator.latestRoundId() + 1, config.initialPrice);
+        }
 
-        // Wait `waitBlocks` amount
-        vm.roll(block.number + waitBlocks);
-        vm.warp(block.timestamp + config.blockTime * waitBlocks / BLOCK_TIME_MULTIPLIER);
+        // Wait `waitTimeToUnwind`
+        vm.warp(buildTimestamp + waitTimeToUnwind);
+        vm.roll(buildBlock + waitTimeToUnwind * BLOCK_TIME_MULTIPLIER / config.blockTime);
 
         // Update the price again to not get `stale price`
-        updateAggregatorPrice(currentRoundId + 3, config.initialPrice);
+        updateAggregatorPrice(aggregator.latestRoundId() + 1, config.initialPrice);
 
         // Unwind
         vm.prank(USER1);
@@ -131,12 +135,13 @@ contract FrontrunTest is Test {
         console2.log("Profit:", profit);
 
         // Write data into `frontrun_results.csv`
-        writeDataToCSV(waitBlocks, profit);
+        writeDataToCSV(waitTimeToUnwind, profit);
     }
 
-    function writeDataToCSV(uint256 waitBlocks, int256 profit) internal {
+    function writeDataToCSV(uint256 waitTimeToUnwind, int256 profit) internal {
+        Oracle.Data memory data = feed.latest();
         string memory csvLine =
-            string(abi.encodePacked(vm.toString(waitBlocks), ",", vm.toString(profit)));
+            string(abi.encodePacked(vm.toString(waitTimeToUnwind), ",", vm.toString(profit), ",", vm.toString(data.priceOverMicroWindow), ",", vm.toString(data.priceOverMacroWindow)));
         vm.writeLine("tests/frontrun/frontrun_results.csv", csvLine);
     }
 
@@ -150,7 +155,7 @@ contract FrontrunTest is Test {
         params[0] = 122000000000; // k
         params[1] = 500000000000000000; // lmbda
         params[2] = 2500000000000000; // delta
-        params[3] = 5000000000000000000; // capPayoff
+        params[3] = 50000000000000000000; // capPayoff
         params[4] = 8e23; // capNotional
         params[5] = 5000000000000000000; // capLeverage
         params[6] = 2592000; // circuitBreakerWindow
