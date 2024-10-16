@@ -6,6 +6,5 @@
   "initialCollateral": 10000000000000000000,
   "initialLeverage": 5000000000000000000,
   "initialPrice": 100000000000000000000,
-  "priceSpike": 150000000000000000000,
-  "waitTime": 300
+  "priceSpike": 150000000000000000000
 }

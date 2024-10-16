@@ -38,7 +38,6 @@ contract FrontrunTest is Test {
         uint256 initialLeverage;
         uint256 initialPrice;
         uint256 priceSpike;
-        uint256 waitTime;
     }
 
     JsonConfig config;
@@ -55,7 +54,7 @@ contract FrontrunTest is Test {
     function setUp() public {
         setUpConfig();
 
-        vm.writeFile("tests/frontrun/frontrun_results.csv", "waitTimeToUnwind,profit,priceOverMicroWindow,priceOverMacroWindow\n");
+        vm.writeFile("tests/frontrun/frontrun_results.csv", "waitTimeToUnwind,timeToCorrectPrice,profit,priceOverMicroWindow,priceOverMacroWindow\n");
 
         ov = new OverlayV1Token();
 
@@ -71,9 +70,11 @@ contract FrontrunTest is Test {
         setUpMarket();
     }
 
-    function testFuzz_FrontrunAttempt(uint256 waitTimeToUnwind) public {
+    function testFuzz_FrontrunAttempt(uint256 waitTimeToUnwind, uint256 timeToCorrectPriceInMinutes) public {
         // Limit waitTimeToUnwind values from 1 to 500
         waitTimeToUnwind = bound(waitTimeToUnwind, 1, 1000);
+        timeToCorrectPriceInMinutes = bound(timeToCorrectPriceInMinutes, 1, 10); // up to 10 minutes
+        uint256 timeToCorrectPrice = timeToCorrectPriceInMinutes * 60;
 
         // Initialize market with two positions
         vm.startPrank(USER);
@@ -103,10 +104,10 @@ contract FrontrunTest is Test {
         uint256 buildBlock = block.number;
         vm.stopPrank();
 
-        if (waitTimeToUnwind > config.waitTime) {
+        if (waitTimeToUnwind > timeToCorrectPrice) {
             // Wait for specified time
-            vm.warp(block.timestamp + config.waitTime);
-            vm.roll(block.number + config.waitTime * BLOCK_TIME_MULTIPLIER / config.blockTime);
+            vm.warp(block.timestamp + timeToCorrectPrice);
+            vm.roll(block.number + timeToCorrectPrice * BLOCK_TIME_MULTIPLIER / config.blockTime);
 
             // Price returns back to normal
             updateAggregatorPrice(aggregator.latestRoundId() + 1, config.initialPrice);
@@ -135,13 +136,13 @@ contract FrontrunTest is Test {
         console2.log("Profit:", profit);
 
         // Write data into `frontrun_results.csv`
-        writeDataToCSV(waitTimeToUnwind, profit);
+        writeDataToCSV(waitTimeToUnwind, profit, timeToCorrectPrice);
     }
 
-    function writeDataToCSV(uint256 waitTimeToUnwind, int256 profit) internal {
+    function writeDataToCSV(uint256 waitTimeToUnwind, int256 profit, uint256 timeToCorrectPrice) internal {
         Oracle.Data memory data = feed.latest();
         string memory csvLine =
-            string(abi.encodePacked(vm.toString(waitTimeToUnwind), ",", vm.toString(profit), ",", vm.toString(data.priceOverMicroWindow), ",", vm.toString(data.priceOverMacroWindow)));
+            string(abi.encodePacked(vm.toString(waitTimeToUnwind), ",", vm.toString(timeToCorrectPrice), ",", vm.toString(profit), ",", vm.toString(data.priceOverMicroWindow), ",", vm.toString(data.priceOverMacroWindow)));
         vm.writeLine("tests/frontrun/frontrun_results.csv", csvLine);
     }
 
