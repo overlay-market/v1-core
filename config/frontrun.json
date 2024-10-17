@@ -1,7 +1,7 @@
 {
   "blockTime": 2,
-  "frontrunCollateral": 50000000000000000000,
-  "frontrunLeverage": 2000000000000000000,
+  "frontrunCollateral": 100000000000000000000,
+  "frontrunLeverage": 5000000000000000000,
   "initialBalance": 1000000000000000000000,
   "initialCollateral": 10000000000000000000,
   "initialLeverage": 5000000000000000000,
