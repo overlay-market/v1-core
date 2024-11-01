@@ -8,6 +8,7 @@ import "./interfaces/IOverlayV1Factory.sol";
 import "./interfaces/IOverlayV1Market.sol";
 import "./interfaces/IOverlayV1Token.sol";
 import "./interfaces/feeds/IOverlayV1Feed.sol";
+import "./interfaces/callback/IOverlayMarketLiquidateCallback.sol";
 
 import "./libraries/FixedCast.sol";
 import "./libraries/FixedPoint.sol";
@@ -506,6 +507,11 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             pos.isLong ? oiLong : oiShort,
             pos.isLong ? oiLongShares : oiShortShares
         );
+
+        // if the owner of the potision has LIQUIDATE_CALLBACK_ROLE, make a callback
+        if (ov.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
+            IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId);
+        }
 
         // burn the pnl for the position + insurance margin
         ov.burn(cost - value + marginToBurn);
