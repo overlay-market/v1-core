@@ -433,6 +433,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         uint256 marginToBurn;
         uint256 marginRemaining;
         Position.Info memory pos;
+
+        // if the owner of the potision has LIQUIDATE_CALLBACK_ROLE, make a callback
+        // must be executed before the new postion state si stored
+        // moved to the top of the script to avoid stack too deep
+        if (ov.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
+            IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId);
+        }
+
         // avoids stack too deep
         {
             // check position exists
@@ -507,11 +515,6 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
             pos.isLong ? oiLong : oiShort,
             pos.isLong ? oiLongShares : oiShortShares
         );
-
-        // if the owner of the potision has LIQUIDATE_CALLBACK_ROLE, make a callback
-        if (ov.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
-            IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId);
-        }
 
         // burn the pnl for the position + insurance margin
         ov.burn(cost - value + marginToBurn);
