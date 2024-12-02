@@ -30,7 +30,7 @@ def main():
     Deploys new OverlayV1Token and OverlayV1Factory contracts.
 
     Grants token admin rights to the factory to enable deploying of markets
-    with mint and burn priveleges. Grants token admin rights to governor and
+    with mint and burn privileges. Grants token admin rights to governor and
     renounces all token rights for deployer.
     """
     click.echo(f"You are using the '{network.show_active()}' network")
