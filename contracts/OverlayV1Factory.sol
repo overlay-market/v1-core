@@ -169,7 +169,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
         // initialize the new market
         IOverlayV1Market(market_).initialize(params);
 
-        // grant market mint and burn priveleges on ov
+        // grant market mint and burn privileges on ov
         ov.grantRole(MINTER_ROLE, market_);
         ov.grantRole(BURNER_ROLE, market_);
 
