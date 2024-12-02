@@ -23,7 +23,7 @@ export ARBISCAN_TOKEN=<ETHERSCAN_TOKEN>
 
 ```
 # add Arbitrum Fork
-brownie networks add Development arbitrum-main-fork name="Ganache-CLI (Aribtrum-Mainnet Fork)" host=http://127.0.0.1 cmd=ganache-cli accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
+brownie networks add Development arbitrum-main-fork name="Ganache-CLI (Arbitrum-Mainnet Fork)" host=http://127.0.0.1 cmd=ganache-cli accounts=10 evm_version=istanbul fork=arbitrum-main mnemonic=brownie port=8545
 ```
 
 ```
