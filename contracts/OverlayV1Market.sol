@@ -151,6 +151,8 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     /// @param oiShort oiShort after public update
     event Update(uint256 oiLong, uint256 oiShort);
 
+    event LiquidateCallbackFailed(address owner, uint256 positionId);
+
     constructor() {
         (address _ov, address _feed, address _factory) =
             IOverlayV1Deployer(msg.sender).parameters();
@@ -435,10 +437,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         Position.Info memory pos;
 
         // if the owner of the potision has LIQUIDATE_CALLBACK_ROLE, make a callback
-        // must be executed before the new postion state si stored
-        // moved to the top of the script to avoid stack too deep
+        // must be executed before the new postion state is stored
+        // attempt the callback without reverting on failure
         if (ov.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
-            IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId);
+            try IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId) {
+
+            } catch {
+                emit LiquidateCallbackFailed(owner, positionId);
+            }
         }
 
         // avoids stack too deep
