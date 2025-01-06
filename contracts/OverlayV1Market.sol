@@ -673,14 +673,14 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
     }
 
     /// @dev bound on notional cap to mitigate front-running attack
-    /// @dev bound = lmbda * reserveInOv
+    /// @dev bound = lmbda * reserveInOvl
     function frontRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 lmbda = params.get(Risk.Parameters.Lmbda);
         return lmbda.mulDown(data.reserveOverMicroWindow);
     }
 
     /// @dev bound on notional cap to mitigate back-running attack
-    /// @dev bound = macroWindowInBlocks * reserveInOv * 2 * delta
+    /// @dev bound = macroWindowInBlocks * reserveInOvl * 2 * delta
     function backRunBound(Oracle.Data memory data) public view returns (uint256) {
         uint256 averageBlockTime = params.get(Risk.Parameters.AverageBlockTime);
         uint256 window = (data.macroWindow * ONE * TO_MS) / averageBlockTime;

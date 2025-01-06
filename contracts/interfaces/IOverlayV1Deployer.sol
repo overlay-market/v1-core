@@ -8,5 +8,5 @@ interface IOverlayV1Deployer {
 
     function deploy(address feed) external returns (address);
 
-    function parameters() external view returns (address ov_, address feed_, address factory_);
+    function parameters() external view returns (address ovl_, address feed_, address factory_);
 }

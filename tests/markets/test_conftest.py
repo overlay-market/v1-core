@@ -1,7 +1,7 @@
 from .utils import RiskParameter
 
 
-def test_ov_fixture(ovl):
+def test_ovl_fixture(ovl):
     assert ovl.decimals() == 18
     assert ovl.name() == "Overlay"
     assert ovl.symbol() == "OVL"

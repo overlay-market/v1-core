@@ -28,7 +28,7 @@ def test_cap_notional_back_run_bound(market, feed):
     average_block_time = market.params(RiskParameter.AVERAGE_BLOCK_TIME.value)
     _, _, macro_window, _, _, _, reserve_micro, _ = data
 
-    # check back run bound is macroWindowInBlocks * reserveInOv * 2 * delta
+    # check back run bound is macroWindowInBlocks * reserveInOvl * 2 * delta
     # when has reserve
     window = Decimal(macro_window) / Decimal(average_block_time)
     expect = int(Decimal(2) * delta * Decimal(reserve_micro) * window)
