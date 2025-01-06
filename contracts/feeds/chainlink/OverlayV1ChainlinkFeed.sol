@@ -6,7 +6,7 @@ import "../../interfaces/IOverlayV1Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 contract OverlayV1ChainlinkFeed is OverlayV1Feed {
-    IOverlayV1Token public immutable ov;
+    IOverlayV1Token public immutable ovl;
     AggregatorV3Interface public immutable aggregator;
     uint8 public immutable decimals;
     uint256 public heartbeat;
@@ -15,12 +15,12 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     event HeartbeatSet(uint256 heartbeat);
 
     modifier onlyGovernor() {
-        require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
+        require(ovl.hasRole(GOVERNOR_ROLE, msg.sender), "OVLV1: !governor");
         _;
     }
 
     constructor(
-        address _ov,
+        address _ovl,
         address _aggregator,
         uint256 _microWindow,
         uint256 _macroWindow,
@@ -32,7 +32,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         decimals = aggregator.decimals();
         description = aggregator.description();
         _setHeartbeat(_heartbeat);
-        ov = IOverlayV1Token(_ov);
+        ovl = IOverlayV1Token(_ovl);
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {

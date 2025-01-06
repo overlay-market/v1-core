@@ -22,15 +22,15 @@ contract OverlayV1Factory is IOverlayV1Factory {
         0.01e18, // MIN_LMBDA = 0.01
         0, // MIN_DELTA = 0
         1e18, // MIN_CAP_PAYOFF = 1x
-        0, // MIN_CAP_NOTIONAL = 0 OV
+        0, // MIN_CAP_NOTIONAL = 0 OVL
         1e18, // MIN_CAP_LEVERAGE = 1x
         86400, // MIN_CIRCUIT_BREAKER_WINDOW = 1 day
-        0, // MIN_CIRCUIT_BREAKER_MINT_TARGET = 0 OV
+        0, // MIN_CIRCUIT_BREAKER_MINT_TARGET = 0 OVL
         0.01e18, // MIN_MAINTENANCE_MARGIN_FRACTION = 1%
         0.01e18, // MIN_MAINTENANCE_MARGIN_BURN_RATE = 1%
         0.001e18, // MIN_LIQUIDATION_FEE_RATE = 0.10% (10 bps)
         1e14, // MIN_TRADING_FEE_RATE = 0.01% (1 bps)
-        0.000_1e18, // MIN_MINIMUM_COLLATERAL = 1e-4 OV
+        0.000_1e18, // MIN_MINIMUM_COLLATERAL = 1e-4 OVL
         0.01e14, // MIN_PRICE_DRIFT_UPPER_LIMIT = 0.01 bps/s
         100 // MIN_AVERAGE_BLOCK_TIME = 0.1s
     ];
@@ -39,15 +39,15 @@ contract OverlayV1Factory is IOverlayV1Factory {
         10e18, // MAX_LMBDA = 10
         200e14, // MAX_DELTA = 2% (200 bps)
         100e18, // MAX_CAP_PAYOFF = 100x
-        88_888_888e18, // MAX_CAP_NOTIONAL = 88,888,888 OV (initial supply)
+        88_888_888e18, // MAX_CAP_NOTIONAL = 88,888,888 OVL (initial supply)
         99e18, // MAX_CAP_LEVERAGE = 99x
         31536000, // MAX_CIRCUIT_BREAKER_WINDOW = 365 days
-        88_888_888e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 88,888,888 OV (initial supply)
+        88_888_888e18, // MAX_CIRCUIT_BREAKER_MINT_TARGET = 88,888,888 OVL (initial supply)
         0.2e18, // MAX_MAINTENANCE_MARGIN_FRACTION = 20%
         0.5e18, // MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
         0.2e18, // MAX_LIQUIDATION_FEE_RATE = 20.00% (2000 bps)
         100e14, // MAX_TRADING_FEE_RATE = 1% (100 bps)
-        100_000e18, // MAX_MINIMUM_COLLATERAL = 100,000 OV
+        100_000e18, // MAX_MINIMUM_COLLATERAL = 100,000 OVL
         1e14, // MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
         3600000 // MAX_AVERAGE_BLOCK_TIME = 1h (arbitrary but large)
     ];
@@ -60,8 +60,8 @@ contract OverlayV1Factory is IOverlayV1Factory {
     // event for emergency shutdown
     event EmergencyShutdown(address indexed user, address indexed market);
 
-    // ov token
-    IOverlayV1Token public immutable ov;
+    // ovl token
+    IOverlayV1Token public immutable ovl;
 
     // market deployer
     IOverlayV1Deployer public immutable deployer;
@@ -94,42 +94,42 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     // governor modifier for governance sensitive functions
     modifier onlyGovernor() {
-        require(ov.hasRole(GOVERNOR_ROLE, msg.sender), "OVV1: !governor");
+        require(ovl.hasRole(GOVERNOR_ROLE, msg.sender), "OVLV1: !governor");
         _;
     }
 
     // governor modifier for governance sensitive functions
     modifier onlyGuardian() {
-        require(ov.hasRole(GUARDIAN_ROLE, msg.sender), "OVV1: !guardian");
+        require(ovl.hasRole(GUARDIAN_ROLE, msg.sender), "OVLV1: !guardian");
         _;
     }
 
     // pauser modifier for pausable functions
     modifier onlyPauser() {
-        require(ov.hasRole(PAUSER_ROLE, msg.sender), "OVV1: !pauser");
+        require(ovl.hasRole(PAUSER_ROLE, msg.sender), "OVLV1: !pauser");
         _;
     }
 
     // risk manager modifier for risk parameters
     modifier onlyRiskManager() {
-        require(ov.hasRole(RISK_MANAGER_ROLE, msg.sender), "OVV1: !riskManager");
+        require(ovl.hasRole(RISK_MANAGER_ROLE, msg.sender), "OVLV1: !riskManager");
         _;
     }
 
     constructor(
-        address _ov,
+        address _ovl,
         address _feeRecipient,
         address _sequencerOracle,
         uint256 _gracePeriod
     ) {
-        // set ov
-        ov = IOverlayV1Token(_ov);
+        // set ovl
+        ovl = IOverlayV1Token(_ovl);
 
         // set the fee recipient
         _setFeeRecipient(_feeRecipient);
 
         // create a new deployer to use when deploying markets
-        deployer = new OverlayV1Deployer(_ov);
+        deployer = new OverlayV1Deployer(_ovl);
 
         // set the sequencer oracle
         sequencerOracle = AggregatorV3Interface(_sequencerOracle);
@@ -138,14 +138,14 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @dev adds a supported feed factory
     function addFeedFactory(address feedFactory) external onlyGovernor {
-        require(!isFeedFactory[feedFactory], "OVV1: feed factory already supported");
+        require(!isFeedFactory[feedFactory], "OVLV1: feed factory already supported");
         isFeedFactory[feedFactory] = true;
         emit FeedFactoryAdded(msg.sender, feedFactory);
     }
 
     /// @dev removes a supported feed factory
     function removeFeedFactory(address feedFactory) external onlyGovernor {
-        require(isFeedFactory[feedFactory], "OVV1: address not feed factory");
+        require(isFeedFactory[feedFactory], "OVLV1: address not feed factory");
         isFeedFactory[feedFactory] = false;
         emit FeedFactoryRemoved(msg.sender, feedFactory);
     }
@@ -169,9 +169,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
         // initialize the new market
         IOverlayV1Market(market_).initialize(params);
 
-        // grant market mint and burn priveleges on ov
-        ov.grantRole(MINTER_ROLE, market_);
-        ov.grantRole(BURNER_ROLE, market_);
+        // grant market mint and burn priveleges on ovl
+        ovl.grantRole(MINTER_ROLE, market_);
+        ovl.grantRole(BURNER_ROLE, market_);
 
         // store market registry record for given feed
         // and record address as a deployed market
@@ -182,9 +182,9 @@ contract OverlayV1Factory is IOverlayV1Factory {
 
     /// @notice checks market doesn't exist on feed and feed is from a supported factory
     function _checkFeed(address feedFactory, address feed) private view {
-        require(getMarket[feed] == address(0), "OVV1: market already exists");
-        require(isFeedFactory[feedFactory], "OVV1: feed factory not supported");
-        require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVV1: feed does not exist");
+        require(getMarket[feed] == address(0), "OVLV1: market already exists");
+        require(isFeedFactory[feedFactory], "OVLV1: feed factory not supported");
+        require(IOverlayV1FeedFactory(feedFactory).isFeed(feed), "OVLV1: feed does not exist");
     }
 
     /// @notice Checks all risk params are within acceptable bounds
@@ -199,7 +199,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     function _checkRiskParam(Risk.Parameters name, uint256 value) private view {
         uint256 minValue = PARAMS_MIN.get(name);
         uint256 maxValue = PARAMS_MAX.get(name);
-        require(value >= minValue && value <= maxValue, "OVV1: param out of bounds");
+        require(value >= minValue && value <= maxValue, "OVLV1: param out of bounds");
     }
 
     /// @notice Setter for per-market risk parameters adjustable by governance
@@ -219,7 +219,7 @@ contract OverlayV1Factory is IOverlayV1Factory {
     }
 
     function _setFeeRecipient(address _feeRecipient) internal {
-        require(_feeRecipient != address(0), "OVV1: feeRecipient should not be zero address");
+        require(_feeRecipient != address(0), "OVLV1: feeRecipient should not be zero address");
         feeRecipient = _feeRecipient;
         emit FeeRecipientUpdated(msg.sender, _feeRecipient);
     }
