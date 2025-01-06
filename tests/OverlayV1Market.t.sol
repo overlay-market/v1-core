@@ -24,21 +24,21 @@ contract MarketTest is Test {
     address constant FEED = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
     address constant SEQUENCER_ORACLE = 0xFdB631F5EE196F0ed6FAa767959853A9F217697D;
 
-    OverlayV1Token ov;
+    OverlayV1Token ovl;
     OverlayV1Factory factory;
     OverlayV1Market market;
     OverlayV1Deployer deployer;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
-        ov = new OverlayV1Token();
-        factory = new OverlayV1Factory(address(ov), FEE_RECIPIENT, SEQUENCER_ORACLE, 0);
+        ovl = new OverlayV1Token();
+        factory = new OverlayV1Factory(address(ovl), FEE_RECIPIENT, SEQUENCER_ORACLE, 0);
 
-        ov.grantRole(ADMIN, address(factory));
-        ov.grantRole(ADMIN, GOVERNOR);
-        ov.grantRole(MINTER_ROLE, GOVERNOR);
-        ov.grantRole(GOVERNOR_ROLE, GOVERNOR);
-        ov.grantRole(PAUSER_ROLE, PAUSER);
+        ovl.grantRole(ADMIN, address(factory));
+        ovl.grantRole(ADMIN, GOVERNOR);
+        ovl.grantRole(MINTER_ROLE, GOVERNOR);
+        ovl.grantRole(GOVERNOR_ROLE, GOVERNOR);
+        ovl.grantRole(PAUSER_ROLE, PAUSER);
 
         uint256[15] memory params;
         params[0] = 115740740740;
@@ -62,14 +62,14 @@ contract MarketTest is Test {
 
         market = OverlayV1Market(factory.deployMarket(FEED_FACTORY, FEED, params));
 
-        ov.mint(USER, 100e18);
+        ovl.mint(USER, 100e18);
     }
 
     // Test pausable markets
 
     function testPause() public {
         vm.startPrank(USER);
-        ov.approve(address(market), type(uint256).max);
+        ovl.approve(address(market), type(uint256).max);
         // Build postion 0
         market.build(1e18, 1e18, true, type(uint256).max);
         // Build postion 1
@@ -128,7 +128,7 @@ contract MarketTest is Test {
 
         vm.startPrank(USER);
 
-        ov.approve(address(market), type(uint256).max);
+        ovl.approve(address(market), type(uint256).max);
         // Build postion 0
         market.build(1e18, 1e18, true, type(uint256).max);
         // Build postion 1
@@ -140,36 +140,36 @@ contract MarketTest is Test {
         // Unwind _fraction of postion 1
         market.unwind(1, _fraction, 0);
 
-        vm.expectRevert("OVV1: !shutdown");
+        vm.expectRevert("OVLV1: !shutdown");
         market.emergencyWithdraw(1);
 
         vm.startPrank(GOVERNOR);
-        vm.expectRevert("OVV1: !guardian");
+        vm.expectRevert("OVLV1: !guardian");
         factory.shutdown(FEED);
 
-        ov.grantRole(GUARDIAN_ROLE, GOVERNOR);
+        ovl.grantRole(GUARDIAN_ROLE, GOVERNOR);
         factory.shutdown(FEED);
 
         vm.startPrank(USER);
-        vm.expectRevert("OVV1: shutdown");
+        vm.expectRevert("OVLV1: shutdown");
         market.build(1e18, 1e18, true, type(uint256).max);
-        vm.expectRevert("OVV1: shutdown");
+        vm.expectRevert("OVLV1: shutdown");
         market.unwind(1, 1e18, 0);
-        vm.expectRevert("OVV1: shutdown");
+        vm.expectRevert("OVLV1: shutdown");
         market.liquidate(USER, 1);
 
-        uint256 balanceBefore = ov.balanceOf(USER);
+        uint256 balanceBefore = ovl.balanceOf(USER);
         (uint96 notionalInitial,,,,,,, uint16 fractionRemaining) =
             market.positions(keccak256(abi.encodePacked(USER, uint256(1))));
         market.emergencyWithdraw(1);
-        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ov.balanceOf(USER));
-        balanceBefore = ov.balanceOf(USER);
+        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ovl.balanceOf(USER));
+        balanceBefore = ovl.balanceOf(USER);
         (notionalInitial,,,,,,, fractionRemaining) =
             market.positions(keccak256(abi.encodePacked(USER, uint256(2))));
         market.emergencyWithdraw(2);
-        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ov.balanceOf(USER));
+        assertEq(balanceBefore + notionalInitial * fractionRemaining / 1e4, ovl.balanceOf(USER));
 
-        assertEq(ov.balanceOf(address(market)), 0);
+        assertEq(ovl.balanceOf(address(market)), 0);
     }
 
     event Update(uint256 oiLong, uint256 oiShort);
@@ -177,7 +177,7 @@ contract MarketTest is Test {
     function testUpdateEventEmitting() public {
         vm.startPrank(USER);
 
-        ov.approve(address(market), type(uint256).max);
+        ovl.approve(address(market), type(uint256).max);
         market.build(1e18, 1e18, true, type(uint256).max);
 
         uint256 oiLong = market.oiLong();

@@ -25,7 +25,7 @@ def isolation(fn_isolation):
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_updates_position(market, feed, alice, rando, ov,
+def test_unwind_updates_position(market, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -51,7 +51,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -162,7 +162,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ov,
     # unwind fraction of shares again
     # check remaining fraction is (1 - fraction)**2
     if fraction == int(1e18):
-        with reverts("OVV1:!position"):
+        with reverts("OVLV1:!position"):
             _ = market.unwind(input_pos_id, input_fraction, input_price_limit,
                               {"from": alice})
     else:
@@ -190,7 +190,7 @@ def test_unwind_updates_position(market, feed, alice, rando, ov,
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_removes_oi(market, feed, alice, rando, ov,
+def test_unwind_removes_oi(market, feed, alice, rando, ovl,
                            fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -216,7 +216,7 @@ def test_unwind_removes_oi(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -283,7 +283,7 @@ def test_unwind_removes_oi(market, feed, alice, rando, ov,
     assert actual_unwound_oi_shares == actual_unwound_pos_oi_shares
 
 
-def test_unwind_updates_market(market, alice, ov):
+def test_unwind_updates_market(market, alice, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -310,7 +310,7 @@ def test_unwind_updates_market(market, alice, ov):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -346,7 +346,7 @@ def test_unwind_updates_market(market, alice, ov):
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_registers_volume(market, feed, alice, rando, ov,
+def test_unwind_registers_volume(market, feed, alice, rando, ovl,
                                  fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -372,7 +372,7 @@ def test_unwind_registers_volume(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -459,7 +459,7 @@ def test_unwind_registers_volume(market, feed, alice, rando, ov,
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_registers_mint_or_burn(market, feed, alice, rando, ov,
+def test_unwind_registers_mint_or_burn(market, feed, alice, rando, ovl,
                                        fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -485,7 +485,7 @@ def test_unwind_registers_mint_or_burn(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -552,7 +552,7 @@ def test_unwind_registers_mint_or_burn(market, feed, alice, rando, ov,
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_executes_transfers(market, feed, alice, rando, ov,
+def test_unwind_executes_transfers(market, feed, alice, rando, ovl,
                                    factory, fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -578,7 +578,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -703,7 +703,7 @@ def test_unwind_executes_transfers(market, feed, alice, rando, ov,
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ov,
+def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ovl,
                                           fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -729,7 +729,7 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -749,8 +749,8 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ov,
     tx = market.update({"from": rando})
 
     # priors actual values
-    expect_balance_alice = ov.balanceOf(alice)
-    expect_balance_market = ov.balanceOf(market)
+    expect_balance_alice = ovl.balanceOf(alice)
+    expect_balance_market = ovl.balanceOf(market)
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
@@ -783,8 +783,8 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ov,
     expect_balance_alice += expect_value_out
     expect_balance_market -= expect_value
 
-    actual_balance_alice = ov.balanceOf(alice)
-    actual_balance_market = ov.balanceOf(market)
+    actual_balance_alice = ovl.balanceOf(alice)
+    actual_balance_market = ovl.balanceOf(market)
 
     assert int(actual_balance_alice) == approx(expect_balance_alice)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -792,7 +792,7 @@ def test_unwind_transfers_value_to_trader(market, feed, alice, rando, ov,
 
 @given(is_long=strategy('bool'))
 def test_unwind_transfers_full_value_to_trader_when_fraction_one(
-        market, feed, alice, rando, ov, is_long):
+        market, feed, alice, rando, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -818,7 +818,7 @@ def test_unwind_transfers_full_value_to_trader_when_fraction_one(
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -838,8 +838,8 @@ def test_unwind_transfers_full_value_to_trader_when_fraction_one(
     tx = market.update({"from": rando})
 
     # priors actual values
-    expect_balance_alice = ov.balanceOf(alice)
-    expect_balance_market = ov.balanceOf(market)
+    expect_balance_alice = ovl.balanceOf(alice)
+    expect_balance_market = ovl.balanceOf(market)
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
@@ -872,8 +872,8 @@ def test_unwind_transfers_full_value_to_trader_when_fraction_one(
     expect_balance_alice += expect_value_out
     expect_balance_market -= expect_value
 
-    actual_balance_alice = ov.balanceOf(alice)
-    actual_balance_market = ov.balanceOf(market)
+    actual_balance_alice = ovl.balanceOf(alice)
+    actual_balance_market = ovl.balanceOf(market)
 
     assert int(actual_balance_alice) == approx(expect_balance_alice)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -883,7 +883,7 @@ def test_unwind_transfers_full_value_to_trader_when_fraction_one(
     fraction=strategy('decimal', min_value='0.0001', max_value='1.0000',
                       places=4),
     is_long=strategy('bool'))
-def test_unwind_transfers_trading_fees(market, feed, alice, rando, ov,
+def test_unwind_transfers_trading_fees(market, feed, alice, rando, ovl,
                                        factory, fraction, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -909,7 +909,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -930,8 +930,8 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ov,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect_balance_recipient = ov.balanceOf(recipient)
-    expect_balance_market = ov.balanceOf(market)
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(market)
 
     # calculate position attributes at the current time for fraction
     # ignore payoff cap
@@ -962,8 +962,8 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ov,
     expect_balance_recipient += expect_trade_fee
     expect_balance_market -= expect_value
 
-    actual_balance_recipient = ov.balanceOf(recipient)
-    actual_balance_market = ov.balanceOf(market)
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(market)
 
     assert int(actual_balance_recipient) == approx(expect_balance_recipient)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -978,7 +978,7 @@ def test_unwind_transfers_trading_fees(market, feed, alice, rando, ov,
                               max_value='5.0000', places=4))
 def test_unwind_mints_when_profitable(mock_market, mock_feed,
                                       alice, rando,
-                                      ov, fraction, is_long,
+                                      ovl, fraction, is_long,
                                       price_multiplier):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -1004,7 +1004,7 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1092,7 +1092,7 @@ def test_unwind_mints_when_profitable(mock_market, mock_feed,
                               max_value='1.50000', places=4))
 def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                                           alice, rando,
-                                          ov, fraction, is_long,
+                                          ovl, fraction, is_long,
                                           price_multiplier):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -1118,7 +1118,7 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1210,7 +1210,7 @@ def test_unwind_burns_when_not_profitable(mock_market, mock_feed,
                               max_value='10.0000', places=4))
 def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
                                                    alice, rando,
-                                                   ov, fraction,
+                                                   ovl, fraction,
                                                    price_multiplier):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -1237,7 +1237,7 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1321,7 +1321,7 @@ def test_unwind_mints_when_greater_than_cap_payoff(mock_market, mock_feed,
 def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
                                                             mock_feed, alice,
                                                             factory, rando,
-                                                            ov):
+                                                            ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(5.0)
@@ -1354,7 +1354,7 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1379,9 +1379,9 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect_balance_recipient = ov.balanceOf(recipient)
-    expect_balance_market = ov.balanceOf(mock_market)
-    expect_balance_alice = ov.balanceOf(alice)
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(mock_market)
+    expect_balance_alice = ovl.balanceOf(alice)
 
     # change price by factor
     price = mock_feed.price() * price_multiplier if is_long \
@@ -1444,9 +1444,9 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
     # check amount burnt + unwound_value sent to recipient == unwound_cost
     assert approx(int(unwound_cost)) == actual_burn + int(unwound_value)
 
-    actual_balance_recipient = ov.balanceOf(recipient)
-    actual_balance_market = ov.balanceOf(mock_market)
-    actual_balance_alice = ov.balanceOf(alice)
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(mock_market)
+    actual_balance_alice = ovl.balanceOf(alice)
 
     assert int(actual_balance_recipient) == approx(expect_balance_recipient)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -1456,7 +1456,7 @@ def test_unwind_transfers_fees_when_fees_greater_than_value(mock_market,
 # test for when value is underwater and unwind
 def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
                                                               mock_feed, alice,
-                                                              rando, ov,
+                                                              rando, ovl,
                                                               factory):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -1490,7 +1490,7 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1511,9 +1511,9 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect_balance_recipient = ov.balanceOf(recipient)
-    expect_balance_market = ov.balanceOf(mock_market)
-    expect_balance_alice = ov.balanceOf(alice)
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(mock_market)
+    expect_balance_alice = ovl.balanceOf(alice)
 
     # change price by factor
     price = mock_feed.price() * price_multiplier if is_long \
@@ -1557,16 +1557,16 @@ def test_unwind_floors_value_to_zero_when_position_underwater(mock_market,
     expect_balance_recipient += expect_trade_fee
     expect_balance_market -= expect_value
 
-    actual_balance_recipient = ov.balanceOf(recipient)
-    actual_balance_market = ov.balanceOf(mock_market)
-    actual_balance_alice = ov.balanceOf(alice)
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(mock_market)
+    actual_balance_alice = ovl.balanceOf(alice)
 
     assert int(actual_balance_recipient) == approx(expect_balance_recipient)
     assert int(actual_balance_market) == approx(expect_balance_market)
     assert int(actual_balance_alice) == approx(expect_balance_alice)
 
 
-def test_unwind_reverts_when_fraction_zero(market, alice, ov):
+def test_unwind_reverts_when_fraction_zero(market, alice, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1592,7 +1592,7 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ov):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1603,13 +1603,13 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ov):
 
     # check unwind reverts when fraction is zero
     input_fraction = 0
-    with reverts("OVV1:fraction<min"):
+    with reverts("OVLV1:fraction<min"):
         market.unwind(pos_id, input_fraction, input_price_limit,
                       {"from": alice})
 
     # check unwind also reverts when fraction is zero after toUint16Fixed cast
     input_fraction = int(1e14) - 1
-    with reverts("OVV1:fraction<min"):
+    with reverts("OVLV1:fraction<min"):
         market.unwind(pos_id, input_fraction, input_price_limit,
                       {"from": alice})
 
@@ -1619,7 +1619,7 @@ def test_unwind_reverts_when_fraction_zero(market, alice, ov):
                   {"from": alice})
 
 
-def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ov):
+def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1645,7 +1645,7 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ov):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1656,7 +1656,7 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ov):
 
     # check unwind reverts when fraction is 1 more than 1e18
     input_fraction = 1000000000000000001
-    with reverts("OVV1:fraction>max"):
+    with reverts("OVLV1:fraction>max"):
         market.unwind(pos_id, input_fraction, input_price_limit,
                       {"from": alice})
 
@@ -1665,7 +1665,7 @@ def test_unwind_reverts_when_fraction_greater_than_one(market, alice, ov):
     market.unwind(pos_id, input_fraction, input_price_limit, {"from": alice})
 
 
-def test_unwind_reverts_when_not_position_owner(market, alice, bob, ov):
+def test_unwind_reverts_when_not_position_owner(market, alice, bob, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1691,7 +1691,7 @@ def test_unwind_reverts_when_not_position_owner(market, alice, bob, ov):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1702,24 +1702,24 @@ def test_unwind_reverts_when_not_position_owner(market, alice, bob, ov):
 
     # check unwind reverts when bob attempts
     input_fraction = 1000000000000000000
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         market.unwind(pos_id, input_fraction, input_price_limit, {"from": bob})
 
     # check unwind succeeds when alice attempts
     market.unwind(pos_id, input_fraction, input_price_limit, {"from": alice})
 
 
-def test_unwind_reverts_when_position_never_built(market, alice, ov):
+def test_unwind_reverts_when_position_never_built(market, alice, ovl):
     pos_id = 100
 
     # check unwind reverts when position does not exist since never built
     input_fraction = 1000000000000000000
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         market.unwind(pos_id, input_fraction, 0, {"from": alice})
 
 
 def test_unwind_reverts_when_position_already_unwound_fully(
-        market, alice, ov):
+        market, alice, ovl):
     # build a position and unwind it fully
     # check unwind reverts after unwound fully (fractionRemaining == 0)
     # position build attributes
@@ -1747,7 +1747,7 @@ def test_unwind_reverts_when_position_already_unwound_fully(
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     tx = market.build(input_collateral, input_leverage, input_is_long,
                       input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1761,7 +1761,7 @@ def test_unwind_reverts_when_position_already_unwound_fully(
     market.unwind(pos_id, input_fraction, input_price_limit, {"from": alice})
 
     # Attempting to unwind again should revert
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         market.unwind(pos_id, input_fraction,
                       input_price_limit, {"from": alice})
 
@@ -1769,7 +1769,7 @@ def test_unwind_reverts_when_position_already_unwound_fully(
 @given(is_long=strategy('bool'))
 def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
                                                  is_long,
-                                                 factory, alice, rando, ov):
+                                                 factory, alice, rando, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1800,7 +1800,7 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1878,7 +1878,7 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
     # check attempting to unwind after liquidate reverts
     input_fraction = 1000000000000000000
     input_price_limit = 0 if is_long else 2**256-1
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         mock_market.unwind(input_pos_id, input_fraction, input_price_limit,
                            {"from": alice})
 
@@ -1886,7 +1886,7 @@ def test_unwind_reverts_when_position_liquidated(mock_market, mock_feed,
 @given(is_long=strategy('bool'))
 def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
                                                    is_long, factory,
-                                                   alice, rando, ov):
+                                                   alice, rando, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1917,7 +1917,7 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1989,7 +1989,7 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
 
     # check attempting to unwind when liquidatable reverts
     input_fraction = 1000000000000000000
-    with reverts("OVV1:liquidatable"):
+    with reverts("OVLV1:liquidatable"):
         mock_market.unwind(input_pos_id, input_fraction, 0, {"from": alice})
 
     # check attempting to unwind succeeds when no longer liquidatable
@@ -2008,7 +2008,7 @@ def test_unwind_reverts_when_position_liquidatable(mock_market, mock_feed,
                             {"from": alice})
 
 
-def test_unwind_reverts_when_has_shutdown(factory, feed, market, ov,
+def test_unwind_reverts_when_has_shutdown(factory, feed, market, ovl,
                                           alice, guardian):
     # build inputs
     input_collateral = int(1e18)
@@ -2020,7 +2020,7 @@ def test_unwind_reverts_when_has_shutdown(factory, feed, market, ov,
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ov.approve(market, 2**256 - 1, {"from": alice})
+    ovl.approve(market, 2**256 - 1, {"from": alice})
 
     # build one position prior to shutdown
     tx = market.build(input_collateral, input_leverage, input_is_long,
@@ -2038,12 +2038,12 @@ def test_unwind_reverts_when_has_shutdown(factory, feed, market, ov,
     factory.shutdown(feed, {"from": guardian})
 
     # attempt to unwind again
-    with reverts("OVV1: shutdown"):
+    with reverts("OVLV1: shutdown"):
         market.unwind(input_pos_id, input_fraction, input_price_limit,
                       {"from": alice})
 
 
-def test_multiple_unwind_unwinds_multiple_positions(market, factory, ov,
+def test_multiple_unwind_unwinds_multiple_positions(market, factory, ovl,
                                                     alice, bob, rando):
     # loop through 10 times
     n = 10
@@ -2068,8 +2068,8 @@ def test_multiple_unwind_unwinds_multiple_positions(market, factory, ov,
                                   * (1 + trading_fee_rate)))
 
     # approve market for spending then build
-    ov.approve(market, approve_collateral_alice, {"from": alice})
-    ov.approve(market, approve_collateral_bob, {"from": bob})
+    ovl.approve(market, approve_collateral_alice, {"from": alice})
+    ovl.approve(market, approve_collateral_bob, {"from": bob})
 
     # per trade notional values
     notional_alice = total_notional_long / Decimal(n)

@@ -25,23 +25,24 @@ contract SequencerTest is Test {
     address constant FEED = 0x46B4143CAf2fE2965349FCa53730e83f91247E2C;
     AggregatorMock sequencer_oracle;
 
-    OverlayV1Token ov;
+    OverlayV1Token ovl;
     OverlayV1Factory factory;
     OverlayV1Market market;
     OverlayV1Deployer deployer;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
-        ov = new OverlayV1Token();
+        ovl = new OverlayV1Token();
         sequencer_oracle = new AggregatorMock();
-        factory =
-            new OverlayV1Factory(address(ov), FEE_RECIPIENT, address(sequencer_oracle), 30 minutes);
+        factory = new OverlayV1Factory(
+            address(ovl), FEE_RECIPIENT, address(sequencer_oracle), 30 minutes
+        );
 
-        ov.grantRole(ADMIN, address(factory));
-        ov.grantRole(ADMIN, GOVERNOR);
-        ov.grantRole(MINTER_ROLE, GOVERNOR);
-        ov.grantRole(GOVERNOR_ROLE, GOVERNOR);
-        ov.grantRole(PAUSER_ROLE, PAUSER);
+        ovl.grantRole(ADMIN, address(factory));
+        ovl.grantRole(ADMIN, GOVERNOR);
+        ovl.grantRole(MINTER_ROLE, GOVERNOR);
+        ovl.grantRole(GOVERNOR_ROLE, GOVERNOR);
+        ovl.grantRole(PAUSER_ROLE, PAUSER);
 
         uint256[15] memory params;
         params[0] = 115740740740;
@@ -65,14 +66,14 @@ contract SequencerTest is Test {
 
         market = OverlayV1Market(factory.deployMarket(FEED_FACTORY, FEED, params));
 
-        ov.mint(USER, 100e18);
+        ovl.mint(USER, 100e18);
     }
 
     function testSequencerDown() public {
         sequencer_oracle.setData(1, 1); //Sequencer Down
         vm.startPrank(USER);
-        ov.approve(address(market), type(uint256).max);
-        vm.expectRevert("OVV1:!sequencer");
+        ovl.approve(address(market), type(uint256).max);
+        vm.expectRevert("OVLV1:!sequencer");
         market.build(1e18, 1e18, true, type(uint256).max);
 
         vm.stopPrank();
@@ -101,6 +102,6 @@ contract SequencerTest is Test {
         vm.startPrank(USER);
         market.unwind(0, 1e18, 0);
 
-        assertLt(ov.balanceOf(USER), 100e18);
+        assertLt(ovl.balanceOf(USER), 100e18);
     }
 }

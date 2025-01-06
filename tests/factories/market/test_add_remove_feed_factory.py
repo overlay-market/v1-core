@@ -17,7 +17,7 @@ def test_add_feed_factory_adds_factory(factory, rando, gov):
 
 def test_add_feed_factory_reverts_when_not_gov(factory, charlie, alice):
     # check reverts when non governor account attempts to add
-    with reverts("OVV1: !governor"):
+    with reverts("OVLV1: !governor"):
         _ = factory.addFeedFactory(charlie, {"from": alice})
 
 
@@ -27,7 +27,7 @@ def test_add_feed_factory_reverts_when_factory_already_exists(factory,
     assert factory.isFeedFactory(feed_factory) is True
 
     # check reverts when already supporting factory
-    with reverts("OVV1: feed factory already supported"):
+    with reverts("OVLV1: feed factory already supported"):
         _ = factory.addFeedFactory(feed_factory, {"from": gov})
 
 
@@ -47,12 +47,12 @@ def test_remove_feed_factory_reverts_when_not_gov(factory, rando, gov):
 
     assert factory.isFeedFactory(rando) is True
 
-    with reverts("OVV1: !governor"):
+    with reverts("OVLV1: !governor"):
         _ = factory.removeFeedFactory(rando, {"from": rando})
 
 
 def test_remove_feed_factory_reverts_when_not_feed_factory(factory,
                                                            alice,
                                                            gov):
-    with reverts("OVV1: address not feed factory"):
+    with reverts("OVLV1: address not feed factory"):
         _ = factory.removeFeedFactory(alice, {"from": gov})

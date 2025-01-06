@@ -38,5 +38,5 @@ def test_deploy_feed_reverts_when_feed_already_exists(factory, alice):
     assert factory.isFeed(feed) is True
 
     # check reverts when attempt to deploy again
-    with reverts("OVV1: feed already exists"):
+    with reverts("OVLV1: feed already exists"):
         _ = factory.deployFeed(price, reserve, {"from": alice})

@@ -22,7 +22,7 @@ def isolation(fn_isolation):
 
 @given(is_long=strategy('bool'))
 def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
-                                    ov, is_long):
+                                    ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -50,7 +50,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -197,7 +197,7 @@ def test_liquidate_updates_position(mock_market, mock_feed, alice, rando,
 
 
 @given(is_long=strategy('bool'))
-def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ov,
+def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ovl,
                               is_long):
     # position build attributes
     notional_initial = Decimal(1000)
@@ -226,7 +226,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ov,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -330,7 +330,7 @@ def test_liquidate_removes_oi(mock_market, mock_feed, alice, rando, ov,
     assert actual_liq_oi_shares == actual_liq_pos_oi_shares
 
 
-def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ov):
+def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -359,7 +359,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ov):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -445,7 +445,7 @@ def test_liquidate_updates_market(mock_market, mock_feed, alice, rando, ov):
 
 @given(is_long=strategy('bool'))
 def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
-                                         ov, is_long):
+                                         ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -474,7 +474,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -579,7 +579,7 @@ def test_liquidate_registers_zero_volume(mock_market, mock_feed, alice, rando,
 
 @given(is_long=strategy('bool'))
 def test_liquidate_registers_mint_or_burn(mock_market, mock_feed, alice, rando,
-                                          ov, is_long):
+                                          ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -608,7 +608,7 @@ def test_liquidate_registers_mint_or_burn(mock_market, mock_feed, alice, rando,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -729,7 +729,7 @@ def test_liquidate_registers_mint_or_burn(mock_market, mock_feed, alice, rando,
 
 @given(is_long=strategy('bool'))
 def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
-                                      factory, ov, is_long):
+                                      factory, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -758,7 +758,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -914,7 +914,7 @@ def test_liquidate_executes_transfers(mock_market, mock_feed, alice, rando,
 # TODO: check for correctness again
 @given(is_long=strategy('bool'))
 def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
-                                               rando, ov, is_long):
+                                               rando, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -943,7 +943,7 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1016,8 +1016,8 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
     mock_feed.setPrice(liq_price, {"from": rando})
 
     # priors actual values
-    expect_balance_rando = ov.balanceOf(rando)
-    expect_balance_market = ov.balanceOf(mock_market)
+    expect_balance_rando = ovl.balanceOf(rando)
+    expect_balance_market = ovl.balanceOf(mock_market)
 
     # calculate position attributes at the current time
     # ignore payoff cap
@@ -1059,8 +1059,8 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
     expect_balance_rando += expect_liq_fee
     expect_balance_market -= expect_cost_plus_mint
 
-    actual_balance_rando = ov.balanceOf(rando)
-    actual_balance_market = ov.balanceOf(mock_market)
+    actual_balance_rando = ovl.balanceOf(rando)
+    actual_balance_market = ovl.balanceOf(mock_market)
 
     assert int(actual_balance_rando) == approx(
         expect_balance_rando, rel=1.05e-6)
@@ -1071,7 +1071,7 @@ def test_liquidate_transfers_fee_to_liquidator(mock_market, mock_feed, alice,
 # TODO: check for correctness again
 @given(is_long=strategy('bool'))
 def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
-                                              factory, rando, ov, is_long):
+                                              factory, rando, ovl, is_long):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1100,7 +1100,7 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1174,8 +1174,8 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect_balance_recipient = ov.balanceOf(recipient)
-    expect_balance_market = ov.balanceOf(mock_market)
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(mock_market)
 
     # input values for liquidate
     input_owner = alice.address
@@ -1223,8 +1223,8 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
     expect_balance_recipient += expect_margin_remaining
     expect_balance_market -= expect_cost_plus_mint
 
-    actual_balance_recipient = ov.balanceOf(recipient)
-    actual_balance_market = ov.balanceOf(mock_market)
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(mock_market)
 
     assert int(actual_balance_recipient) == approx(
         expect_balance_recipient, rel=1.05e-6)
@@ -1235,7 +1235,7 @@ def test_liquidate_transfers_remaining_margin(mock_market, mock_feed, alice,
 def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
                                                                  mock_feed,
                                                                  alice, rando,
-                                                                 ov, factory):
+                                                                 ovl, factory):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(5.0)
@@ -1268,7 +1268,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1305,9 +1305,9 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
     # priors actual values
     recipient = factory.feeRecipient()
-    expect_balance_recipient = ov.balanceOf(recipient)
-    expect_balance_market = ov.balanceOf(mock_market)
-    expect_balance_rando = ov.balanceOf(rando)
+    expect_balance_recipient = ovl.balanceOf(recipient)
+    expect_balance_market = ovl.balanceOf(mock_market)
+    expect_balance_rando = ovl.balanceOf(rando)
 
     # calculate position attributes at the current time
     # ignore payoff cap
@@ -1342,9 +1342,9 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
     expect_balance_recipient += expect_liq_fee
     expect_balance_market -= expect_value
 
-    actual_balance_recipient = ov.balanceOf(recipient)
-    actual_balance_market = ov.balanceOf(mock_market)
-    actual_balance_rando = ov.balanceOf(rando)
+    actual_balance_recipient = ovl.balanceOf(recipient)
+    actual_balance_market = ovl.balanceOf(mock_market)
+    actual_balance_rando = ovl.balanceOf(rando)
 
     assert int(actual_balance_recipient) == approx(expect_balance_recipient)
     assert int(actual_balance_market) == approx(expect_balance_market)
@@ -1353,7 +1353,7 @@ def test_liquidate_floors_value_to_zero_when_position_underwater(mock_market,
 
 def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
                                                    alice, bob,
-                                                   rando, ov):
+                                                   rando, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1382,7 +1382,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1457,7 +1457,7 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
     # check liquidate reverts when owner is assumed to be bob
     input_owner = bob.address
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # check liquidate succeeds when owner is specified as alice
@@ -1466,17 +1466,17 @@ def test_liquidate_reverts_when_not_position_owner(mock_market, mock_feed,
 
 
 def test_liquidate_reverts_when_position_not_exists(mock_market, alice, rando,
-                                                    ov):
+                                                    ovl):
     pos_id = 100
 
     # check liquidate reverts when position does not exist
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         mock_market.liquidate(alice, pos_id, {"from": rando})
 
 
 def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
                                                     alice, rando,
-                                                    ov):
+                                                    ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1505,7 +1505,7 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1583,13 +1583,13 @@ def test_liquidate_reverts_when_position_liquidated(mock_market, mock_feed,
     mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # check attempting to liquidate again reverts
-    with reverts("OVV1:!position"):
+    with reverts("OVLV1:!position"):
         mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
 
 def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
                                                           mock_feed, alice,
-                                                          rando, ov):
+                                                          rando, ovl):
     # position build attributes
     notional_initial = Decimal(1000)
     leverage = Decimal(1.5)
@@ -1618,7 +1618,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(mock_market, approve_collateral, {"from": alice})
+    ovl.approve(mock_market, approve_collateral, {"from": alice})
     tx = mock_market.build(input_collateral, input_leverage, input_is_long,
                            input_price_limit, {"from": alice})
     pos_id = tx.return_value
@@ -1692,7 +1692,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
     input_owner = alice.address
 
     # check attempting to liquidate position reverts when not liquidatable
-    with reverts("OVV1:!liquidatable"):
+    with reverts("OVLV1:!liquidatable"):
         mock_market.liquidate(input_owner, input_pos_id, {"from": rando})
 
     # calculate the liquidation price factor
@@ -1728,7 +1728,7 @@ def test_liquidate_reverts_when_position_not_liquidatable(mock_market,
 
 
 def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
-                                             ov, alice, guardian, rando):
+                                             ovl, alice, guardian, rando):
     # build inputs
     input_collateral = int(1e18)
     input_leverage = int(2e18)
@@ -1739,7 +1739,7 @@ def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
     input_price_limit = 2**256-1
 
     # approve market for spending before build. use max
-    ov.approve(mock_market, 2**256 - 1, {"from": alice})
+    ovl.approve(mock_market, 2**256 - 1, {"from": alice})
 
     # build two positions prior to shutdown
     tx_0 = mock_market.build(input_collateral, input_leverage, input_is_long,
@@ -1763,7 +1763,7 @@ def test_liquidate_reverts_when_has_shutdown(factory, mock_feed, mock_market,
     factory.shutdown(mock_feed, {"from": guardian})
 
     # attempt to liquidate
-    with reverts("OVV1: shutdown"):
+    with reverts("OVLV1: shutdown"):
         mock_market.liquidate(alice, input_pos_id_1, {"from": rando})
 
 

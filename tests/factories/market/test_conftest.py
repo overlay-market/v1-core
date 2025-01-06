@@ -1,7 +1,7 @@
-def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
+def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ovl,
                          gov, market, deployer, governor_role):
-    # check ov immutable set
-    assert factory.ov() == ov
+    # check ovl immutable set
+    assert factory.ovl() == ovl
 
     # check fee recipient set
     assert factory.feeRecipient() == fee_recipient
@@ -10,11 +10,11 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
     assert factory.deployer() != "0x0000000000000000000000000000000000000000"
     assert deployer.factory() == factory
 
-    # check factory has been given admin role on ov token
-    assert ov.hasRole(ov.DEFAULT_ADMIN_ROLE(), factory) is True
+    # check factory has been given admin role on ovl token
+    assert ovl.hasRole(ovl.DEFAULT_ADMIN_ROLE(), factory) is True
 
-    # check gov has been given governance role on ov token
-    assert ov.hasRole(governor_role, gov) is True
+    # check gov has been given governance role on ovl token
+    assert ovl.hasRole(governor_role, gov) is True
 
     # check feed factory has been added to registry
     assert factory.isFeedFactory(feed_factory) is True
@@ -29,15 +29,15 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
         10000000000000000,  # MIN_LMBDA = 0.01
         0,  # MIN_DELTA = 0
         1000000000000000000,  # MIN_CAP_PAYOFF = 1x
-        0,  # MIN_CAP_NOTIONAL = 0 OV
+        0,  # MIN_CAP_NOTIONAL = 0 OVL
         1000000000000000000,  # MIN_CAP_LEVERAGE= 1x
         86400,  # MIN_CIRCUIT_BREAKER_WINDOW= 1 day
-        0,  # MIN_CIRCUIT_BREAKER_MINT_TARGET= 0 OV
+        0,  # MIN_CIRCUIT_BREAKER_MINT_TARGET= 0 OVL
         10000000000000000,  # MIN_MAINTENANCE_MARGIN_FRACTION = 1 %
         10000000000000000,  # MIN_MAINTENANCE_MARGIN_BURN_RATE = 1 %
         1000000000000000,  # MIN_LIQUIDATION_FEE_RATE = 0.10 % (10 bps)
         100000000000000,  # MIN_TRADING_FEE_RATE = 0.01 % (1 bps)
-        100000000000000,  # MIN_MINIMUM_COLLATERAL= 1e-4 OV
+        100000000000000,  # MIN_MINIMUM_COLLATERAL= 1e-4 OVL
         1000000000000,  # MIN_PRICE_DRIFT_UPPER_LIMIT= 0.01 bps/s
         100  # MIN_AVERAGE_BLOCK_TIME = 0.1s
     ]
@@ -52,17 +52,17 @@ def test_factory_fixture(factory, fee_recipient, feed_factory, feed_three, ov,
         10000000000000000000,  # MAX_LMBDA = 10
         20000000000000000,  # MAX_DELTA = 2% (200 bps)
         100000000000000000000,  # MAX_CAP_PAYOFF = 100x
-        # MAX_CAP_NOTIONAL = 88,888,888 OV (initial supply)
+        # MAX_CAP_NOTIONAL = 88,888,888 OVL (initial supply)
         88888888000000000000000000,
         99000000000000000000,  # MAX_CAP_LEVERAGE = 99x
         31536000,  # MAX_CIRCUIT_BREAKER_WINDOW = 365 days
-        # MAX_CIRCUIT_BREAKER_MINT_TARGET = 88,888,888 OV
+        # MAX_CIRCUIT_BREAKER_MINT_TARGET = 88,888,888 OVL
         88888888000000000000000000,
         200000000000000000,  # MAX_MAINTENANCE_MARGIN_FRACTION = 20%
         500000000000000000,  # MAX_MAINTENANCE_MARGIN_BURN_RATE = 50%
         200000000000000000,  # MAX_LIQUIDATION_FEE_RATE = 20.00% (1000 bps)
         10000000000000000,  # MAX_TRADING_FEE_RATE = 1% (100 bps)
-        100000000000000000000000,  # MAX_MINIMUM_COLLATERAL = 100,000 OV
+        100000000000000000000000,  # MAX_MINIMUM_COLLATERAL = 100,000 OVL
         100000000000000,  # MAX_PRICE_DRIFT_UPPER_LIMIT = 1 bps/s
         3600000  # MAX_AVERAGE_BLOCK_TIME = 1h
     ]
@@ -83,10 +83,10 @@ def test_feed_factory_fixture(feed_factory, feed_one, feed_two, feed_three):
     assert feed_factory.isFeed(feed_three) is True
 
 
-def test_market_fixture(market, factory, feed_three, ov, gov):
+def test_market_fixture(market, factory, feed_three, ovl, gov):
     # check params set properly
     # NOTE: market fixture uses feed three
-    assert market.ov() == ov
+    assert market.ovl() == ovl
     assert market.factory() == factory
     assert market.feed() == feed_three
 
