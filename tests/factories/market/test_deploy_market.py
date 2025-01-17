@@ -12,7 +12,7 @@ def isolation(fn_isolation):
     pass
 
 
-def test_deploy_market_creates_market(factory, feed_factory, feed_one, ov,
+def test_deploy_market_creates_market(factory, feed_factory, feed_one, ovl,
                                       minter_role, burner_role, gov):
     # NOTE: feed_one will have a successfully deployed market on it for
     # remainder of test_deploy_market.py
@@ -61,9 +61,9 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ov,
     assert expect_market == actual_market
     assert factory.isMarket(expect_market) is True
 
-    # check market granted mint/burn roles on ov
-    assert ov.hasRole(minter_role, actual_market) is True
-    assert ov.hasRole(burner_role, actual_market) is True
+    # check market granted mint/burn roles on ovl
+    assert ovl.hasRole(minter_role, actual_market) is True
+    assert ovl.hasRole(burner_role, actual_market) is True
 
     # check event emitted
     assert 'MarketDeployed' in tx.events
@@ -79,7 +79,7 @@ def test_deploy_market_creates_market(factory, feed_factory, feed_one, ov,
     market_contract = OverlayV1Market.at(actual_market)
 
     # check immutables set in constructor
-    assert market_contract.ov() == ov
+    assert market_contract.ovl() == ovl
     assert market_contract.feed() == expect_feed
     assert market_contract.factory() == factory
 
@@ -128,7 +128,7 @@ def test_deploy_market_reverts_when_not_gov(factory, feed_factory, feed_two,
                      expect_average_block_time]
 
     # check can't deploy from rando account
-    with reverts("OVV1: !governor"):
+    with reverts("OVLV1: !governor"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -177,7 +177,7 @@ def test_deploy_market_reverts_when_market_already_exists(factory,
                      expect_average_block_time]
 
     # check can't deploy from rando account
-    with reverts("OVV1: market already exists"):
+    with reverts("OVLV1: market already exists"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -222,7 +222,7 @@ def test_deploy_market_reverts_when_feed_factory_not_supported(factory, rando,
                      expect_average_block_time]
 
     # check can't deploy with rando factory feed
-    with reverts("OVV1: feed factory not supported"):
+    with reverts("OVLV1: feed factory not supported"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -265,7 +265,7 @@ def test_deploy_market_reverts_when_feed_does_not_exist(factory, feed_factory,
                      expect_average_block_time]
 
     # check can't deploy with rando feed not in factory feed registry
-    with reverts("OVV1: feed does not exist"):
+    with reverts("OVLV1: feed does not exist"):
         _ = factory.deployMarket(
             expect_feed_factory,
             expect_feed,
@@ -308,7 +308,7 @@ def test_deploy_market_reverts_when_param_less_than_min(factory, feed_factory,
         expect_param = factory.PARAMS_MIN(i) - 1
         if expect_param >= 0:
             expect_params[i] = expect_param
-            with reverts("OVV1: param out of bounds"):
+            with reverts("OVLV1: param out of bounds"):
                 _ = factory.deployMarket(
                     expect_feed_factory,
                     expect_feed,
@@ -362,7 +362,7 @@ def test_deploy_market_reverts_when_param_greater_than_max(factory, feed_one,
         # check can't deploy with param greater than max
         expect_param = factory.PARAMS_MAX(i) + 1
         expect_params[i] = expect_param
-        with reverts("OVV1: param out of bounds"):
+        with reverts("OVLV1: param out of bounds"):
             _ = factory.deployMarket(
                 expect_feed_factory,
                 expect_feed,

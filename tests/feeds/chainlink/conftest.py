@@ -57,7 +57,7 @@ def create_token(gov, alice, bob, minter_role, request):
 
 
 @pytest.fixture(scope="module")
-def ov(create_token):
+def ovl(create_token):
     yield create_token()
 
 
@@ -78,11 +78,11 @@ def mock_aggregator(create_mock_aggregator):
 
 
 @pytest.fixture(scope="module", params=[(600, 3600)])
-def create_chainlink_feed(ov, gov, mock_aggregator, request):
+def create_chainlink_feed(ovl, gov, mock_aggregator, request):
     micro, macro = request.param
     aggregator_address = mock_aggregator.address
 
-    def create_chainlink_feed(tok=ov, aggregator=aggregator_address,
+    def create_chainlink_feed(tok=ovl, aggregator=aggregator_address,
                               micro_window=micro, macro_window=macro):
         feed = gov.deploy(OverlayV1ChainlinkFeed, tok, aggregator,
                           micro_window, macro_window, 3601)

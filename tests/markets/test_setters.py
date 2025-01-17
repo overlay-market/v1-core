@@ -47,7 +47,7 @@ def test_set_risk_param(market, factory):
         chain.undo()
 
 
-def test_set_risk_param_pays_funding(market, feed, factory, ov, alice):
+def test_set_risk_param_pays_funding(market, feed, factory, ovl, alice):
     # risk params
     expect_params = [
         2220000000000,  # expect_k
@@ -93,7 +93,7 @@ def test_set_risk_param_pays_funding(market, feed, factory, ov, alice):
 
     # approve then build
     # NOTE: build() tests in test_build.py
-    ov.approve(market, approve_collateral, {"from": alice})
+    ovl.approve(market, approve_collateral, {"from": alice})
     _ = market.build(input_collateral, input_leverage, input_is_long,
                      input_price_limit, {"from": alice})
 
@@ -165,7 +165,7 @@ def test_set_risk_param_caches_calc(market, feed, factory):
 
 def test_set_risk_param_reverts_when_not_factory(market, alice):
     expect_k = 2220000000000
-    with reverts("OVV1: !factory"):
+    with reverts("OVLV1: !factory"):
         _ = market.setRiskParam(0, expect_k, {"from": alice})
 
 
@@ -186,7 +186,7 @@ def test_set_delta_reverts_when_max_lev_liquidatable(market, factory):
 
     # check reverts when delta just above max
     input_delta = int(max_delta * Decimal(1e18) * Decimal(1 + tol))
-    with reverts("OVV1: max lev immediately liquidatable"):
+    with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_delta, input_delta, {"from": factory})
 
     # check doesn't revert when delta just below max
@@ -215,7 +215,7 @@ def test_set_cap_leverage_reverts_when_max_lev_liquidatable(market, factory):
 
     # check reverts when one cap leverage greater than max
     input_cap_leverage = int(max_cap_leverage * Decimal(1e18) * Decimal(1+tol))
-    with reverts("OVV1: max lev immediately liquidatable"):
+    with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_cap_leverage, input_cap_leverage,
                             {"from": factory})
 
@@ -248,7 +248,7 @@ def test_set_maintenance_margin_fraction_reverts_when_max_lev_liquidatable(
 
     # check reverts when mmf greater than max
     input_mmf = int(max_mmf * Decimal(1e18) * Decimal(1 + tol))
-    with reverts("OVV1: max lev immediately liquidatable"):
+    with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_mmf, input_mmf, {"from": factory})
 
     # check doesn't revert when maitenance margin fraction less than max
@@ -279,7 +279,7 @@ def test_set_liquidation_fee_rate_reverts_when_max_lev_liquidatable(
 
     # check reverts when greater than liquidationFeeRate max
     input_lfr = int(max_lfr * Decimal(1e18) * Decimal(1 + tol))
-    with reverts("OVV1: max lev immediately liquidatable"):
+    with reverts("OVLV1: max lev immediately liquidatable"):
         market.setRiskParam(idx_lfr, input_lfr, {"from": factory})
 
     # check doesn't revert when liquidation fee rate less than max
@@ -304,7 +304,7 @@ def test_set_price_drift_upper_limit_reverts_when_exceeds_max_exp(
         + 1
 
     # check reverts when one more than max
-    with reverts("OVV1: price drift exceeds max exp"):
+    with reverts("OVLV1: price drift exceeds max exp"):
         market.setRiskParam(
             idx_price_drift_upper_limit, max_price_drift_upper_limit,
             {"from": factory})

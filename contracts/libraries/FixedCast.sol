@@ -14,7 +14,7 @@ library FixedCast {
     /// @dev decreases precision by 14 decimals
     function toUint16Fixed(uint256 value) internal pure returns (uint16) {
         uint256 ret256 = value / PRECISION_CHANGER;
-        require(ret256 <= type(uint16).max, "OVV1: FixedCast out of bounds");
+        require(ret256 <= type(uint16).max, "OVLV1: FixedCast out of bounds");
         return uint16(ret256);
     }
 }

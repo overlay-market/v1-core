@@ -15,9 +15,9 @@ abstract contract OverlayV1FeedFactory is IOverlayV1FeedFactory {
 
     constructor(uint256 _microWindow, uint256 _macroWindow) {
         // sanity checks on micro and macroWindow
-        require(_microWindow > 0, "OVV1: microWindow == 0");
-        require(_macroWindow >= _microWindow, "OVV1: macroWindow < microWindow");
-        require(_macroWindow <= 86400, "OVV1: macroWindow > 1 day");
+        require(_microWindow > 0, "OVLV1: microWindow == 0");
+        require(_macroWindow >= _microWindow, "OVLV1: macroWindow < microWindow");
+        require(_macroWindow <= 86400, "OVLV1: macroWindow > 1 day");
 
         microWindow = _microWindow;
         macroWindow = _macroWindow;

@@ -21,7 +21,7 @@ library Tick {
     /// @dev -41e18/ln(1.0001), 130e18/ln(1.0001), respectively (w some buffer)
     function priceToTick(uint256 price) internal pure returns (int24) {
         int256 tick256 = price.logDown(PRICE_BASE);
-        require(tick256 >= MIN_TICK_256 && tick256 <= MAX_TICK_256, "OVV1: tick out of bounds");
+        require(tick256 >= MIN_TICK_256 && tick256 <= MAX_TICK_256, "OVLV1: tick out of bounds");
 
         // tick256 is FixedPoint format with 18 decimals. Divide by ONE
         // then truncate to int24
@@ -37,7 +37,7 @@ library Tick {
         // tick needs to be converted to Fixed point format with 18 decimals
         // to use FixedPoint powUp
         int256 tick256 = int256(tick) * int256(ONE);
-        require(tick256 >= MIN_TICK_256 && tick256 <= MAX_TICK_256, "OVV1: tick out of bounds");
+        require(tick256 >= MIN_TICK_256 && tick256 <= MAX_TICK_256, "OVLV1: tick out of bounds");
 
         uint256 pow = uint256(tick256.abs());
         return (tick256 >= 0 ? PRICE_BASE.powDown(pow) : ONE.divDown(PRICE_BASE.powUp(pow)));
