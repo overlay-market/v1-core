@@ -42,5 +42,5 @@ def test_to_uint16_fixed_reverts_when_gt_max(fixed_cast):
     # should fail for type(uint16).max + 1
     value = 2**16
     input_value = value * Decimal(1e14)
-    with reverts("OVV1: FixedCast out of bounds"):
+    with reverts("OVLV1: FixedCast out of bounds"):
         fixed_cast.toUint16Fixed(input_value)

@@ -33,5 +33,5 @@ def test_roles(token, gov, minter, burner, governor, admin, market,
 def test_erc20(token):
     assert token.decimals() == 18
     assert token.name() == "Overlay"
-    assert token.symbol() == "OV"
+    assert token.symbol() == "OVL"
     assert token.totalSupply() == 88888888 * 1e18

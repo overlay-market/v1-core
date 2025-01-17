@@ -37,24 +37,24 @@ def main():
     dev = accounts.load(click.prompt(
         "Account", type=click.Choice(accounts.load())))
 
-    # deploy OV
-    ov = OverlayV1Token.deploy({"from": dev}, publish_source=True)
-    click.echo(f"OV Token deployed [{ov.address}]")
+    # deploy OVL
+    ovl = OverlayV1Token.deploy({"from": dev}, publish_source=True)
+    click.echo(f"OVL Token deployed [{ovl.address}]")
 
     # deploy market factory
     factory = OverlayV1Factory.deploy(
-        ov, FEE_RECIPIENT, {"from": dev}, publish_source=True)
+        ovl, FEE_RECIPIENT, {"from": dev}, publish_source=True)
     click.echo(f"Factory deployed [{factory.address}]")
 
     # grant market factory admin role to grant minter + burner roles to markets
     # on deployMarket calls
-    ov.grantRole(_role(ADMIN), factory, {"from": dev})
+    ovl.grantRole(_role(ADMIN), factory, {"from": dev})
 
     # grant admin rights to gov
-    ov.grantRole(_role(ADMIN), GOV, {"from": dev})
-    ov.grantRole(_role(MINTER), GOV, {"from": dev})
-    ov.grantRole(_role(GOVERNOR), GOV, {"from": dev})
-    click.echo(f"OV Token roles granted to [{GOV}]")
+    ovl.grantRole(_role(ADMIN), GOV, {"from": dev})
+    ovl.grantRole(_role(MINTER), GOV, {"from": dev})
+    ovl.grantRole(_role(GOVERNOR), GOV, {"from": dev})
+    click.echo(f"OVL Token roles granted to [{GOV}]")
 
     # renounce admin rights so only gov has roles
-    ov.renounceRole(_role(ADMIN), dev, {"from": dev})
+    ovl.renounceRole(_role(ADMIN), dev, {"from": dev})

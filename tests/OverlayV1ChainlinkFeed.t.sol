@@ -12,17 +12,17 @@ contract MarketTest is Test {
     AggregatorMock aggregator;
     OverlayV1ChainlinkFeed feed;
     OverlayV1ChainlinkFeedFactory feedFactory;
-    OverlayV1Token ov;
+    OverlayV1Token ovl;
     bytes32 constant GOVERNOR_ROLE = keccak256("GOVERNOR");
     address immutable GOVERNOR = makeAddr("governor");
 
     function setUp() public {
         vm.createSelectFork(vm.envString("RPC"), 169_490_320);
-        ov = new OverlayV1Token();
+        ovl = new OverlayV1Token();
         aggregator = new AggregatorMock();
-        feedFactory = new OverlayV1ChainlinkFeedFactory(address(ov), 600, 3600);
+        feedFactory = new OverlayV1ChainlinkFeedFactory(address(ovl), 600, 3600);
         feed = OverlayV1ChainlinkFeed(feedFactory.deployFeed(address(aggregator), 60 minutes));
-        ov.grantRole(GOVERNOR_ROLE, GOVERNOR);
+        ovl.grantRole(GOVERNOR_ROLE, GOVERNOR);
     }
 
     function testStalePrice() public {
