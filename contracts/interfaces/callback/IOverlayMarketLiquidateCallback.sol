@@ -6,7 +6,5 @@ interface IOverlayMarketLiquidateCallback {
     /// @notice Called to `owner` after executing a liquidation.
     /// amount0Delta and amount1Delta can both be 0 if no tokens were swapped.
     /// @param positionId The positionId of the liquidated position
-    function overlayMarketLiquidateCallback(
-        uint256 positionId
-    ) external;
+    function overlayMarketLiquidateCallback(uint256 positionId) external;
 }

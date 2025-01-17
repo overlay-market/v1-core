@@ -439,10 +439,9 @@ contract OverlayV1Market is IOverlayV1Market, Pausable {
         // if the owner of the potision has LIQUIDATE_CALLBACK_ROLE, make a callback
         // must be executed before the new postion state is stored
         // attempt the callback without reverting on failure
-        if (ov.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
-            try IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId) {
-
-            } catch {
+        if (ovl.hasRole(LIQUIDATE_CALLBACK_ROLE, owner)) {
+            try IOverlayMarketLiquidateCallback(owner).overlayMarketLiquidateCallback(positionId) {}
+            catch {
                 emit LiquidateCallbackFailed(owner, positionId);
             }
         }
