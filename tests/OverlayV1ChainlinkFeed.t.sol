@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {AggregatorMock} from "contracts/mocks/AggregatorMock.sol";
+import "contracts/libraries/Oracle.sol";
 import {OverlayV1ChainlinkFeed} from "contracts/feeds/chainlink/OverlayV1ChainlinkFeed.sol";
 import {OverlayV1ChainlinkFeedFactory} from
     "contracts/feeds/chainlink/OverlayV1ChainlinkFeedFactory.sol";
@@ -61,5 +62,34 @@ contract MarketTest is Test {
 
         vm.expectRevert();
         feed.setHeartbeat(60 minutes);
+    }
+
+    function testPriceCalculationConsistency() public {
+        aggregator.setData(1, 10e8);
+
+        skip(3600);
+
+        Oracle.Data memory stdData = feed.latest();
+        assertEq(stdData.priceOverMicroWindow, 10e18);
+        assertEq(stdData.priceOverMacroWindow, 10e18);
+        assertEq(stdData.priceOneMacroWindowAgo, 0);
+
+        aggregator.setData(2, 12e8);
+
+        skip(3000);
+
+        stdData = feed.latest();
+
+        uint256 expectedMicroPrice = 12 * 1e18;
+
+        uint256 microPart = 10 * 600 * 1e18;
+        uint256 macroPart = 12 * 3000 * 1e18;
+        uint256 expectedMacroPrice = (microPart + macroPart) / 3600;
+
+        uint256 expectedMacroAgoPrice = uint256(10 * 3000 * 1e18) / 3600;
+
+        assertApproxEqRel(stdData.priceOverMicroWindow, expectedMicroPrice, 1e14);
+        assertApproxEqRel(stdData.priceOverMacroWindow, expectedMacroPrice, 1e14);
+        assertApproxEqRel(stdData.priceOneMacroWindowAgo, expectedMacroAgoPrice, 1e14);
     }
 }
