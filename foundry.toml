@@ -23,6 +23,7 @@ runs = 1000
 [rpc_endpoints]
 arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 bartio = "${BARTIO_RPC}"
+berachain = "${BERACHAIN_MAINNET_RPC}"
 imola = "${IMOLA_RPC}"
 
 [etherscan]

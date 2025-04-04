@@ -4,6 +4,7 @@ import subprocess
 CHAIN_CONFIG = {
     'arbitrum-sepolia': {'rpc': 'arbitrum-sepolia'},
     'bartio': {'rpc': 'bartio'},
+    'berachain': {'rpc': 'berachain'},
     'imola': {'rpc': 'imola'},
     'local': {'rpc': 'local'}
 }

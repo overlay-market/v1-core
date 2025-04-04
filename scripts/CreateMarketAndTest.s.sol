@@ -3,10 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {OverlayV1Factory} from "contracts/OverlayV1Factory.sol";
-import {ArbSepoliaConfig} from "scripts/config/ArbSepolia.config.sol";
-import {ArbMainnetConfig} from "scripts/config/ArbMainnet.config.sol";
-import {BartioConfig} from "scripts/config/Bartio.config.sol";
-import {ImolaMovementConfig} from "scripts/config/ImolaMovement.config.sol";
 
 // 1. Set required environment variables: ETHERSCAN_API_KEY, DEPLOYER_PK, RPC.
 // 2. Update the config file for the network you are deploying to.
@@ -63,6 +59,8 @@ contract CreateMarketAndTest is Script {
             DEPLOYER_PK = vm.envUint("DEPLOYER_PK");
         } else if (compareStrings(_network, "bartio")) {
             DEPLOYER_PK = vm.envUint("DEPLOYER_PK_BARTIO");
+        } else if (compareStrings(_network, "berachain")) {
+            DEPLOYER_PK = vm.envUint("DEPLOYER_PK");
         } else if (compareStrings(_network, "imola")) {
             DEPLOYER_PK = vm.envUint("DEPLOYER_PK_IMOLA");
         } else if (compareStrings(_network, "arbitrum-sepolia")) {
@@ -96,6 +94,9 @@ contract CreateMarketAndTest is Script {
         if (compareStrings(_network, "local")) {
             v1FactoryAddress = address(0);
             feedFactory = address(0);
+        } else if (compareStrings(_network, "berachain")) {
+            v1FactoryAddress = 0xc5F85207a16FB6634eAd4f17Ad5222F122e8F0De;
+            feedFactory = 0x7A6F3ec4F70A3079d460e096A5e6373b30be6649;
         } else if (compareStrings(_network, "bartio")) {
             v1FactoryAddress = 0xBe048017966c2787f548De1Df5834449eC4c4f50;
             feedFactory = 0xc0dE47Cbb26C2e19B82f9E205b0b0FfcD7947290;
