@@ -188,4 +188,46 @@ contract OverlayV1ChainlinkFeedZeroTest is BaseChainlinkFeedTest {
         assertTrue(expectedMacroPrice < expectedMicroPriceRaw, "Macro should be less than micro");
         assertEq(data.priceOverMicroWindow, expectedSpotPrice, "Should select max value (spot)");
     }
+
+    // Test where the pricing function selects microWindow price instead of spot price
+    function testZeroSelectsMicroWindowPrice() public {
+        // Set initial price
+        aggregator.setData(1, 10e8);
+        skip(3600);
+
+        // Create a scenario with decreasing price trend
+        aggregator.setData(2, 8e8);
+        skip(400); // Most of microWindow with price at 8e8
+
+        // Price rebounds quickly at the end of microWindow
+        // This creates a situation where spot > microWindow but overall trend is down
+        aggregator.setData(3, 9e8);
+        skip(200);
+
+        Oracle.Data memory data = feed.latest();
+
+        // Expected values
+        // - Spot price is 9e8 (scaled to 9e18)
+        // - MicroWindow TWAP is (8e18 * 400 + 9e18 * 200) / 600 = 8.33e18
+        // - MacroWindow is close to 10e18 with a bit of lower prices
+
+        uint256 expectedSpotPrice = 9e18;
+        uint256 expectedMicroPrice = uint256(8e18 * 400 + 9e18 * 200) / 600; // ~8.33e18
+
+        console2.log("Macro Price:", data.priceOverMacroWindow);
+        console2.log("Micro Price Raw:", expectedMicroPrice);
+        console2.log("Spot Price:", expectedSpotPrice);
+        console2.log("Actual MicroWindow:", data.priceOverMicroWindow);
+
+        // Since overall trend is down (macro > micro), result should be min(spot, micro) = micro
+        assertTrue(
+            data.priceOverMacroWindow > expectedMicroPrice, "Macro should be greater than micro"
+        );
+        assertTrue(
+            expectedSpotPrice > data.priceOverMicroWindow, "Result should be less than spot price"
+        );
+        assertApproxEqRel(
+            data.priceOverMicroWindow, expectedMicroPrice, 1e14, "Should select microWindow price"
+        );
+    }
 }
