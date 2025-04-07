@@ -4,8 +4,9 @@ pragma solidity 0.8.10;
 import "../OverlayV1Feed.sol";
 import "../../interfaces/IOverlayV1Token.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract OverlayV1ChainlinkFeed is OverlayV1Feed {
+contract OverlayV1ChainlinkFeedZero is OverlayV1Feed {
     IOverlayV1Token public immutable ovl;
     AggregatorV3Interface public immutable aggregator;
     uint8 public immutable decimals;
@@ -36,7 +37,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
     }
 
     function _fetch() internal view virtual override returns (Oracle.Data memory) {
-        (uint80 roundId,,, uint256 updatedAt,) = aggregator.latestRoundData();
+        (uint80 roundId, int256 spotPrice,, uint256 updatedAt,) = aggregator.latestRoundData();
 
         if (updatedAt < block.timestamp - heartbeat) revert("stale price feed");
 
@@ -44,7 +45,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             uint256 priceOverMicroWindow,
             uint256 priceOverMacroWindow,
             uint256 priceOneMacroWindowAgo
-        ) = _getAveragePrice(roundId);
+        ) = _getAveragePrice(roundId, spotPrice);
 
         return Oracle.Data({
             timestamp: block.timestamp,
@@ -58,7 +59,7 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
         });
     }
 
-    function _getAveragePrice(uint80 roundId)
+    function _getAveragePrice(uint80 roundId, int256 spotPrice)
         internal
         view
         returns (
@@ -122,6 +123,11 @@ contract OverlayV1ChainlinkFeed is OverlayV1Feed {
             (sumOfPriceMacroWindow * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
         priceOneMacroWindowAgo =
             (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
+
+        uint256 scaledSpotPrice = uint256(spotPrice) * 10 ** (18 - uint256(aggregator.decimals()));
+        priceOverMicroWindow = priceOverMacroWindow > priceOverMicroWindow
+            ? Math.min(scaledSpotPrice, priceOverMicroWindow)
+            : Math.max(scaledSpotPrice, priceOverMicroWindow);
     }
 
     function setHeartbeat(uint256 _heartbeat) external onlyGovernor {

@@ -2,10 +2,13 @@
 pragma solidity 0.8.10;
 
 import "../OverlayV1FeedFactory.sol";
-import "./OverlayV1ChainlinkFeed.sol";
+import "./OverlayV1ChainlinkFeedZero.sol";
 import "../../interfaces/feeds/chainlink/IOverlayV1ChainlinkFeedFactory.sol";
 
-contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, OverlayV1FeedFactory {
+contract OverlayV1ChainlinkFeedZeroFactory is
+    IOverlayV1ChainlinkFeedFactory,
+    OverlayV1FeedFactory
+{
     address public immutable ovl;
     // registry of feeds; for a given aggregator pair, returns associated feed
     mapping(address => address) public getFeed;
@@ -30,7 +33,7 @@ contract OverlayV1ChainlinkFeedFactory is IOverlayV1ChainlinkFeedFactory, Overla
 
         // Create a new Feed contract
         _feed = address(
-            new OverlayV1ChainlinkFeed(ovl, _aggregator, microWindow, macroWindow, _heartbeat)
+            new OverlayV1ChainlinkFeedZero(ovl, _aggregator, microWindow, macroWindow, _heartbeat)
         );
 
         // store feed registry record for _aggregator and record address as deployed feed
