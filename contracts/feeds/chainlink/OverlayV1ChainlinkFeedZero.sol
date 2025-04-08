@@ -125,9 +125,14 @@ contract OverlayV1ChainlinkFeedZero is OverlayV1Feed {
             (sumOfPriceMacroWindowAgo * (10 ** 18)) / (macroWindow * 10 ** aggregator.decimals());
 
         uint256 scaledSpotPrice = uint256(spotPrice) * 10 ** (18 - uint256(aggregator.decimals()));
-        priceOverMicroWindow = priceOverMacroWindow > priceOverMicroWindow
-            ? Math.min(scaledSpotPrice, priceOverMicroWindow)
-            : Math.max(scaledSpotPrice, priceOverMicroWindow);
+
+        if (priceOverMacroWindow > priceOverMicroWindow) {
+            priceOverMicroWindow = Math.min(scaledSpotPrice, priceOverMicroWindow);
+        } else if (priceOverMacroWindow < priceOverMicroWindow) {
+            priceOverMicroWindow = Math.max(scaledSpotPrice, priceOverMicroWindow);
+        } else {
+            priceOverMicroWindow = scaledSpotPrice;
+        }
     }
 
     function setHeartbeat(uint256 _heartbeat) external onlyGovernor {

@@ -230,4 +230,63 @@ contract OverlayV1ChainlinkFeedZeroTest is BaseChainlinkFeedTest {
             data.priceOverMicroWindow, expectedMicroPrice, 1e14, "Should select microWindow price"
         );
     }
+
+    // Test for the case when macroWindow equals microWindow
+    function testWhenMacroEqualsMicro() public {
+        // Set initial price
+        aggregator.setData(1, 10e8);
+
+        // We'll update the price at regular intervals
+        // This ensures we don't trigger the stale price feed check
+        for (uint256 i = 0; i < 12; i++) {
+            skip(600); // Skip 10 minutes at a time
+            // Update the price with the same value but advancing the timestamp
+            aggregator.setData(uint80(1 + i), int256(10e8));
+        }
+
+        // Confirm that macro and micro are equal
+        Oracle.Data memory initialData = feed.latest();
+        assertApproxEqRel(
+            initialData.priceOverMacroWindow,
+            initialData.priceOverMicroWindow,
+            1e14,
+            "Macro and micro should be equal initially"
+        );
+
+        console2.log("Initial Macro Price:", initialData.priceOverMacroWindow);
+        console2.log("Initial Micro Price:", initialData.priceOverMicroWindow);
+
+        // Now set a different spot price
+        int256 newSpotPrice = 12e8; // Different than the TWAP values
+        aggregator.setData(uint80(13), newSpotPrice);
+
+        // Get the latest data
+        Oracle.Data memory data = feed.latest();
+
+        // Expected values - cast the spot price to uint256 for calculations
+        uint256 expectedSpotPrice =
+            uint256(newSpotPrice) * 10 ** (18 - uint256(aggregator.decimals())); // 12e18
+
+        console2.log("Macro Price:", data.priceOverMacroWindow);
+        console2.log("Micro Price from TWAPs:", data.priceOverMacroWindow); // Should be mostly the same as macro still
+        console2.log("Spot Price:", expectedSpotPrice);
+        console2.log("Actual Micro Window:", data.priceOverMicroWindow);
+
+        // With our new equality condition, when macro == micro, the result should be spot price
+        assertApproxEqRel(
+            data.priceOverMacroWindow,
+            initialData.priceOverMacroWindow,
+            1e14,
+            "Macro window should still be approximately the same"
+        );
+
+        // The key test: when macro equals micro, the result should be the spot price
+        // regardless of whether it's higher or lower
+        assertApproxEqRel(
+            data.priceOverMicroWindow,
+            expectedSpotPrice,
+            1e14,
+            "When macro equals micro, result should be spot price"
+        );
+    }
 }
