@@ -128,8 +128,10 @@ contract OverlayV1ChainlinkFeedZero is OverlayV1Feed {
 
         if (priceOverMacroWindow > priceOverMicroWindow) {
             priceOverMicroWindow = Math.min(scaledSpotPrice, priceOverMicroWindow);
+            priceOverMacroWindow = Math.max(scaledSpotPrice, priceOverMacroWindow);
         } else if (priceOverMacroWindow < priceOverMicroWindow) {
             priceOverMicroWindow = Math.max(scaledSpotPrice, priceOverMicroWindow);
+            priceOverMacroWindow = Math.min(scaledSpotPrice, priceOverMacroWindow);
         } else {
             priceOverMicroWindow = scaledSpotPrice;
         }
