@@ -25,6 +25,7 @@ arbitrum-sepolia = "${ARBITRUM_SEPOLIA_RPC}"
 bartio = "${BARTIO_RPC}"
 berachain = "${BERACHAIN_MAINNET_RPC}"
 imola = "${IMOLA_RPC}"
+bsc-testnet = "${BSC_TESTNET_RPC}"
 
 [etherscan]
 arbitrum-sepolia = { key = "${ARBISCAN_API_KEY}" }

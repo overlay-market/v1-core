@@ -65,6 +65,8 @@ contract CreateMarketAndTest is Script {
             DEPLOYER_PK = vm.envUint("DEPLOYER_PK_IMOLA");
         } else if (compareStrings(_network, "arbitrum-sepolia")) {
             DEPLOYER_PK = vm.envUint("DEPLOYER_PK_ARB_SEPOLIA");
+        } else if (compareStrings(_network, "bsc-testnet")) {
+            DEPLOYER_PK = vm.envUint("DEPLOYER_PK");
         } else {
             revert("Unsupported network");
         }
@@ -106,6 +108,9 @@ contract CreateMarketAndTest is Script {
         } else if (compareStrings(_network, "arbitrum-sepolia")) {
             v1FactoryAddress = 0xa2dBe262D27647243Ac3187d05DBF6c3C6ECC14D;
             feedFactory = 0x21a84b9a5b746Fe85e13f11E745960DBEdB247B1;
+        } else if (compareStrings(_network, "bsc-testnet")) {
+            v1FactoryAddress = 0xB49a63B267515FC1D8232604d05Db4D8Daf00648;
+            feedFactory = 0x5c2ebF19BF87193dA632bA2D62E2C6c039D5fB1B;
         } else {
             revert("Unsupported network");
         }

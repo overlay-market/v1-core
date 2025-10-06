@@ -6,6 +6,7 @@ CHAIN_CONFIG = {
     'bartio': {'rpc': 'bartio'},
     'berachain': {'rpc': 'berachain'},
     'imola': {'rpc': 'imola'},
+    'bsc-testnet': {'rpc': 'bsc-testnet'},
     'local': {'rpc': 'local'}
 }
 
