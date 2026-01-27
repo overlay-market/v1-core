@@ -40,7 +40,7 @@ abstract contract BaseChainlinkFeedTest is Test {
      * @dev Common setup for all feed tests
      */
     function setUp() public virtual {
-        vm.createSelectFork(vm.envString("RPC"), 169_490_320);
+        vm.warp(86400000); // 1000 days in seconds
         ovl = new OverlayV1Token();
         aggregator = new AggregatorMock();
         feed = createFeed(address(aggregator), address(ovl), DEFAULT_HEARTBEAT);
@@ -50,7 +50,7 @@ abstract contract BaseChainlinkFeedTest is Test {
     /**
      * @dev Test that the feed reverts when price data is stale
      */
-    function testStalePrice() public {
+    function testStalePrice() public virtual {
         aggregator.setData(1, 105);
 
         skip(59 minutes);
@@ -74,7 +74,7 @@ abstract contract BaseChainlinkFeedTest is Test {
     /**
      * @dev Test basic price calculation consistency
      */
-    function testPriceCalculationConsistency() public {
+    function testPriceCalculationConsistency() public virtual {
         aggregator.setData(1, 10e8);
 
         skip(3600);
